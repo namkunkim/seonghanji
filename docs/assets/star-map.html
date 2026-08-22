@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星漢志 — 성계도(星系圖)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gothic+A1:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#15110E;
+  --ink-2:#1C1714;
+  --ink-3:#241D19;
+  --rub:#E6DECF;
+  --rub-2:#B8AE9D;
+  --rub-3:#7C7365;
+  --zhu:#BE3A2E;
+  --zhu-2:#8A2A21;
+  --jade:#4E8F80;
+  --jade-2:#2E5951;
+  --gold:#C0973F;
+  --line:#2E2621;
+  --display:"Nanum Myeongjo",'Apple SD Gothic Neo',serif;
+  --ui:"Gothic A1",'Apple SD Gothic Neo',sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--ink);
+  color:var(--rub);
+  font-family:var(--ui);
+  font-weight:300;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 50% 0%, #201A16 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
+}
+
+/* ── 제기(題記) ── */
+.plate{
+  border-bottom:1px solid var(--line);
+  padding:26px 30px 20px;
+  display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;
+}
+.plate-l{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+.seal{
+  font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.18em;
+  color:var(--rub);background:var(--zhu);
+  padding:7px 10px 6px;line-height:1;writing-mode:vertical-rl;
+  border-radius:1px;
+}
+h1{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:.02em;line-height:1}
+h1 small{display:block;font-size:12px;font-weight:400;letter-spacing:.42em;color:var(--rub-3);margin-top:9px;font-family:var(--ui)}
+.plate-note{font-size:11.5px;color:var(--rub-3);line-height:1.9;max-width:330px;text-align:right;letter-spacing:.01em}
+
+/* ── 레이아웃 ── */
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 348px;min-height:calc(100% - 104px)}
+.chart{position:relative;padding:14px 8px 0}
+svg.map{width:100%;height:auto;display:block;touch-action:manipulation}
+
+/* ── 항로 ── */
+.route{fill:none;stroke-linecap:round}
+.route.fast{stroke:var(--jade-2);stroke-width:2.6}
+.route.fast-core{stroke:var(--jade);stroke-width:1.1;opacity:.85}
+.route.canal{stroke:var(--jade-2);stroke-width:1.6;stroke-dasharray:7 6;opacity:.8}
+.route.corr{stroke:var(--zhu-2);stroke-width:2.2;opacity:.9}
+.route.corr-core{stroke:var(--zhu);stroke-width:.9;stroke-dasharray:3 5;opacity:.9}
+.route.thin{stroke:var(--rub-3);stroke-width:1;stroke-dasharray:2 7;opacity:.42}
+.route.base{opacity:.32}
+
+/* ── 성계 ── */
+.sys{cursor:pointer}
+.sys .disc{fill:var(--ink-2);stroke:var(--rub-2);stroke-width:1.2;transition:all .22s ease}
+.sys .halo{fill:none;stroke:var(--gold);stroke-width:.9;opacity:.55}
+.sys .han{font-family:var(--display);font-weight:700;fill:var(--rub);text-anchor:middle;font-size:17px;pointer-events:none}
+.sys .kor{font-family:var(--ui);font-weight:400;fill:var(--rub-3);text-anchor:middle;font-size:9.5px;letter-spacing:.14em;pointer-events:none}
+.sys:hover .disc,.sys.on .disc{fill:var(--zhu);stroke:var(--rub);stroke-width:1.6}
+.sys:hover .han,.sys.on .han{fill:#fff}
+.sys.on .halo{opacity:1;stroke-width:1.6}
+.sys .hit{fill:transparent}
+.sys.frontier .disc{stroke-dasharray:3 3;stroke:var(--rub-3)}
+.sys.frontier .han{font-size:13px;fill:var(--rub-2)}
+
+/* ── 관문 ── */
+.gate{pointer-events:none}
+.gate rect{fill:var(--ink);stroke:var(--zhu);stroke-width:1.1}
+.gate text{font-family:var(--display);font-size:8.5px;fill:var(--zhu);text-anchor:middle;font-weight:700}
+
+.rlabel{font-family:var(--ui);font-size:8.5px;fill:var(--rub-3);letter-spacing:.2em;text-anchor:middle;pointer-events:none}
+.pulse{pointer-events:none}
+
+/* ── 패널 ── */
+aside{
+  border-left:1px solid var(--line);
+  background:linear-gradient(180deg,var(--ink-2),var(--ink));
+  padding:26px 26px 34px;display:flex;flex-direction:column;gap:20px;
+}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--zhu);text-transform:uppercase}
+.p-han{font-family:var(--display);font-weight:800;font-size:40px;line-height:1;letter-spacing:.04em}
+.p-off{font-size:11px;color:var(--rub-3);letter-spacing:.18em;margin-top:8px}
+.grade{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;padding:4px 9px;border:1px solid currentColor;margin-top:14px}
+.g-t{color:var(--gold)} .g-1{color:var(--jade)} .g-2{color:var(--rub-3)} .g-f{color:var(--zhu)}
+.row{border-top:1px solid var(--line);padding-top:13px}
+.row dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:var(--rub-3);margin-bottom:6px}
+.row dd{font-size:13px;line-height:1.75;color:var(--rub)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:3px}
+.tag{font-size:11px;border:1px solid var(--line);padding:3px 8px;color:var(--rub-2);background:var(--ink-3)}
+.tag.c{border-color:var(--zhu-2);color:#E09A92}
+.note{font-size:12px;line-height:1.85;color:var(--rub-2);border-left:2px solid var(--zhu);padding-left:13px}
+.hint{font-size:12.5px;color:var(--rub-3);line-height:1.9}
+
+/* ── 조작 ── */
+.controls{position:absolute;left:26px;bottom:22px;display:flex;flex-direction:column;gap:14px}
+button{
+  font-family:var(--ui);font-size:11.5px;letter-spacing:.16em;color:var(--rub);
+  background:var(--ink-2);border:1px solid var(--line);padding:9px 15px;cursor:pointer;
+  transition:all .2s;
+}
+button:hover{border-color:var(--zhu);color:#fff}
+button[aria-pressed="true"]{background:var(--zhu);border-color:var(--zhu);color:#fff}
+button:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+.legend{display:flex;flex-direction:column;gap:7px;font-size:10.5px;color:var(--rub-3);letter-spacing:.06em}
+.legend div{display:flex;align-items:center;gap:9px}
+.swatch{width:26px;height:0;border-top:2.4px solid}
+.swatch.f{border-color:var(--jade)}
+.swatch.c{border-color:var(--zhu);border-top-style:dashed}
+.swatch.t{border-color:var(--rub-3);border-top-style:dotted}
+.dot-g{width:10px;height:10px;border:1.4px solid var(--gold);border-radius:50%}
+
+@media (max-width:940px){
+  .wrap{grid-template-columns:1fr}
+  aside{border-left:0;border-top:1px solid var(--line)}
+  .controls{position:static;flex-direction:row;flex-wrap:wrap;align-items:center;padding:0 20px 20px;gap:20px}
+  .legend{flex-direction:row;flex-wrap:wrap;gap:14px}
+  h1{font-size:26px}
+  .plate-note{text-align:left;max-width:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="plate">
+  <div class="plate-l">
+    <div class="seal">星漢志</div>
+    <h1>星系圖<small>성 계 도</small></h1>
+  </div>
+  <p class="plate-note">
+    한제국 십구성역(十九星域) 항로 및 회랑 배치도.<br>
+    성계를 눌러 상세를 확인한다. 회랑이 놓인 국경은 통과가 강제되며,<br>
+    회랑이 없는 인접 성계끼리는 저효율의 기저 항로로 이어진다.<br>
+    <b style="color:#C0973F;font-weight:400">형주</b>가 태양계이며, 지구는 그 안의 구지(舊地)다.
+  </p>
+</header>
+
+<div class="wrap">
+<div class="chart">
+<svg class="map" viewBox="0 0 1000 790" role="img" aria-label="성한지 성계 지도">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#BE3A2E" stop-opacity=".38"/>
+      <stop offset="100%" stop-color="#BE3A2E" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 성진(星塵) -->
+  <g id="dust" opacity=".5"></g>
+
+  <!-- ══ 항로 ══ -->
+  <!-- ══ 기저 저효율 항로 (모든 인접 성계) ══ -->
+  <g id="base">
+    <path class="route thin base" id="b1" d="M572 330 L560 205"/>
+    <path class="route thin base" id="b2" d="M572 330 L548 414"/>
+    <path class="route thin base" id="b3" d="M648 404 L692 318"/>
+    <path class="route thin base" id="b4" d="M424 436 L548 414"/>
+    <path class="route thin base" id="b5" d="M648 404 L548 414"/>
+    <path class="route thin base" id="b6" d="M692 318 L668 232"/>
+    <path class="route thin base" id="b7" d="M692 318 L798 388"/>
+    <path class="route thin base" id="b8" d="M806 290 L668 232"/>
+    <path class="route thin base" id="b9" d="M806 290 L798 388"/>
+    <path class="route thin base" id="b10" d="M742 128 L560 205"/>
+    <path class="route thin base" id="b11" d="M424 318 L560 205"/>
+    <path class="route thin base" id="b12" d="M766 506 Q702 618 608 684"/>
+    <path class="route thin base" id="b16" d="M726 446 Q660 486 592 502"/>
+    <path class="route thin base" id="b17" d="M692 318 L648 404"/>
+    <path class="route thin base" id="b13" d="M352 652 Q480 692 608 684"/>
+    <path class="route thin base" id="b14" d="M668 232 L742 128"/>
+  </g>
+
+  <g id="routes">
+    <!-- 황하 대항로 -->
+    <path class="route fast" id="r-h1" d="M272 262 L424 318"/>
+    <path class="route fast" id="r-h2" d="M424 318 L572 330"/>
+    <path class="route fast" id="r-h3" d="M572 330 L692 318"/>
+    <path class="route fast" id="r-h4" d="M692 318 L806 290"/>
+    <path class="route fast-core" d="M272 262 L424 318 L572 330 L692 318 L806 290"/>
+    <!-- 관도망 -->
+    <path class="route fast" id="r-g1" d="M572 330 L668 232"/>
+    <path class="route fast" id="r-g2" d="M572 330 L648 404"/>
+    <path class="route fast-core" d="M572 330 L668 232"/>
+    <path class="route fast-core" d="M572 330 L648 404"/>
+    <!-- 회수 -->
+    <path class="route fast" id="r-w1" d="M648 404 L726 446"/>
+    <path class="route fast" id="r-w2" d="M726 446 L798 388"/>
+    <path class="route fast-core" d="M648 404 L726 446 L798 388"/>
+    <!-- 장강 대항로 -->
+    <path class="route fast" id="r-c1" d="M330 528 Q450 552 572 502"/>
+    <path class="route fast" id="r-c2" d="M572 502 Q670 520 766 506"/>
+    <path class="route fast-core" d="M330 528 Q450 552 572 502 Q670 520 766 506"/>
+    <!-- 한수 -->
+    <path class="route fast" id="r-a1" d="M548 414 L572 502"/>
+    <path class="route fast-core" d="M548 414 L572 502"/>
+    <!-- 영거 운하 -->
+    <path class="route canal" id="r-y1" d="M572 502 Q560 600 608 684"/>
+
+    <!-- ══ 회랑 ══ -->
+    <!-- 검각 -->
+    <path class="route corr" id="c-jg" d="M424 436 Q360 468 330 528"/>
+    <path class="route corr-core" d="M424 436 Q360 468 330 528"/>
+    <!-- 진령삼도 -->
+    <path class="route corr" d="M424 318 Q400 372 424 436"/>
+    <path class="route corr" d="M424 318 Q436 376 424 436" opacity=".55"/>
+    <path class="route corr" d="M424 318 Q412 374 424 436" opacity=".55"/>
+    <path class="route corr-core" d="M424 318 Q400 372 424 436"/>
+    <!-- 기산도 -->
+    <path class="route corr" id="c-qs" d="M272 262 Q300 380 424 436"/>
+    <path class="route corr-core" d="M272 262 Q300 380 424 436"/>
+    <!-- 무관 -->
+    <path class="route corr" id="c-wg" d="M424 318 Q490 344 548 414"/>
+    <path class="route corr-core" d="M424 318 Q490 344 548 414"/>
+    <!-- 정형 -->
+    <path class="route corr" id="c-jx" d="M560 205 Q612 200 668 232"/>
+    <path class="route corr-core" d="M560 205 Q612 200 668 232"/>
+    <!-- 노룡 -->
+    <path class="route corr" id="c-ll" d="M742 128 Q800 102 852 110"/>
+    <path class="route corr-core" d="M742 128 Q800 102 852 110"/>
+    <!-- 하서 -->
+    <path class="route corr" id="c-hx" d="M272 262 Q198 234 130 225"/>
+    <path class="route corr-core" d="M272 262 Q198 234 130 225"/>
+    <!-- 남중산도 -->
+    <path class="route corr" id="c-nz" d="M330 528 Q326 596 352 652"/>
+    <path class="route corr-core" d="M330 528 Q326 596 352 652"/>
+    <!-- 합비회랑 -->
+    <path class="route corr" id="c-hf" d="M726 446 L766 506"/>
+    <path class="route corr-core" d="M726 446 L766 506"/>
+    <!-- 오령 -->
+    <path class="route corr" id="c-wl" d="M572 502 Q612 596 608 684" opacity=".75"/>
+  </g>
+
+  <!-- 항로 명칭 -->
+  <g id="rlabels">
+    <text class="rlabel" x="500" y="308" transform="rotate(2 500 308)">황 하 대 항 로</text>
+    <text class="rlabel" x="452" y="546">장 강 대 항 로</text>
+    <text class="rlabel" x="600" y="552" fill="#C0973F">태 양 계</text>
+    <text class="rlabel" x="536" y="464" transform="rotate(76 536 464)">한 수</text>
+    <text class="rlabel" x="682" y="410" transform="rotate(30 682 410)">회 수</text>
+    <text class="rlabel" x="618" y="286" transform="rotate(-40 618 286)">관 도</text>
+    <text class="rlabel" x="462" y="378" transform="rotate(82 462 378)" fill="#8A2A21">진령삼도</text>
+    <text class="rlabel" x="352" y="486" transform="rotate(-46 352 486)" fill="#8A2A21">검 각</text>
+    <text class="rlabel" x="196" y="228" fill="#8A2A21">하 서 회 랑</text>
+    <text class="rlabel" x="800" y="88" fill="#8A2A21">노 룡</text>
+    <text class="rlabel" x="612" y="188" fill="#8A2A21">정 형</text>
+    <text class="rlabel" x="300" y="600" transform="rotate(76 300 600)" fill="#8A2A21">남중산도</text>
+    <text class="rlabel" x="654" y="600" transform="rotate(70 654 600)" fill="#8A2A21">오 령</text>
+    <text class="rlabel" x="318" y="352" transform="rotate(52 318 352)" fill="#8A2A21">기산도</text>
+    <text class="rlabel" x="566" y="604" transform="rotate(80 566 604)">영거운하</text>
+    <text class="rlabel" x="478" y="352" transform="rotate(28 478 352)" fill="#8A2A21">무 관</text>
+  </g>
+
+  <!-- 관문 -->
+  <g id="gates"></g>
+  <!-- 항행 시연 -->
+  <g id="pulses" class="pulse"></g>
+  <!-- 성계 -->
+  <g id="systems"></g>
+</svg>
+
+<div class="controls">
+  <button id="btn-sail" aria-pressed="false">항행 시연 시작</button>
+  <div class="legend">
+    <div><span class="swatch f"></span> 고속항로 — 대하·관도</div>
+    <div><span class="swatch c"></span> 회랑 — 통과 강제 험지</div>
+    <div><span class="swatch t"></span> 기저 항로 — 회랑 없는 인접쌍</div>
+    <div><span class="dot-g"></span> 특급 성계</div>
+  </div>
+</div>
+</div>
+
+<aside id="panel">
+  <div>
+    <p class="eyebrow" id="p-eyebrow">十九星域</p>
+    <h2 class="p-han" id="p-han">星系圖</h2>
+    <p class="p-off" id="p-off">성 계 도</p>
+  </div>
+  <p class="hint" id="p-hint">
+    좌측 성계를 선택하면 지구형 행성, 접경 회랑, 전략적 성격을 확인할 수 있다.<br><br>
+    <span style="color:var(--rub-2)">항행 시연</span>을 켜면 3단 속도가 드러난다.
+    <b style="color:#7BC4B2;font-weight:500">고속항로</b>는 미끄러지고,
+    <b style="color:#E07A6E;font-weight:500">회랑</b>은 3~5배 느리며,
+    <b style="color:#9A9084;font-weight:500">기저 항로</b>는 그보다 더 느리다.<br><br>
+    <b style="color:var(--rub-2);font-weight:500">회랑은 통과가 강제된다.</b> 우회로는 없다 —
+    검각을 막으면 성도로 드는 길이 사라진다. 회랑이 없는 인접 성계끼리만 기저 항로로 이어진다.
+  </p>
+  <div id="p-body" style="display:none;flex-direction:column;gap:18px"></div>
+</aside>
+</div>
+
+<script>
+const SYS = {
+  sy:{x:572,y:330,han:"司隸",kor:"사예",off:"중앙성역",grade:"특급",
+      planets:["낙양","장안"],col:["홍농","하내","하동","경조"],
+      corr:["함곡회랑","호뢰관문","무관회랑"],routes:["황하 대항로","위수 항로","관도망 결절"],
+      note:"황제 소재. 정통성의 물리적 위치. 관도망이 여기서 방사되어, 사예를 쥔 자는 중원 전역에 병력을 신속 전개한다."},
+  yz:{x:648,y:404,han:"豫州",kor:"예주",off:"예주성역",grade:"1급",
+      planets:["허(許)"],col:["영천","여남","진국","초"],
+      corr:["호뢰관문"],routes:["관도망","회수 항로 — 회남 방면"],
+      note:"허도가 위치한 성계. 황제를 옮겨 모시는 순간 정통성의 무게중심이 사예에서 이곳으로 이동한다."},
+  ez:{x:692,y:318,han:"兗州",kor:"연주",off:"연주성역",grade:"2급",
+      planets:["진류"],col:["동군","복양","제음","태산"],
+      corr:["호뢰관문"],routes:["황하 대항로"],
+      note:"조조의 최초 근거지. 황하 항로의 중간 결절이나 방어 지형이 없어 지키기 어렵다."},
+  cz:{x:806,y:290,han:"靑州",kor:"청주",off:"청주성역",grade:"2급",
+      planets:["임치"],col:["북해","제남","평원","동래"],
+      corr:[],routes:["황하 대항로 동쪽 종점"],
+      note:"황건 잔당의 근거지. 청주병(靑州兵) 자원 획득처로, 병력 보충 속도가 높은 대신 규율이 낮다."},
+  xz:{x:798,y:388,han:"徐州",kor:"서주",off:"서주성역",grade:"2급",
+      planets:["하비"],col:["팽성","광릉","낭야","동해"],
+      corr:[],routes:["회수 항로"],
+      note:"중원과 강동을 잇는 회수 축의 중간. 방어 지형이 빈약해 주인이 자주 바뀐다."},
+  jz:{x:668,y:232,han:"冀州",kor:"기주",off:"기주성역",grade:"특급",
+      planets:["업(鄴)"],col:["한단","중산","상산","발해"],
+      corr:["정형회랑"],routes:["관도망"],
+      note:"최대 인구·생산력. 원소의 기반이자 이후 조조의 심장부. 이 성계를 쥐지 못하면 화북 통일은 성립하지 않는다."},
+  uz:{x:742,y:128,han:"幽州",kor:"유주",off:"유주성역",grade:"1급",
+      planets:["계(薊)"],col:["어양","우북평","요서","요동"],
+      corr:["노룡회랑","정형회랑"],routes:["저효율 연결"],
+      note:"북방 변경. 오환·선비와 접하며, 노룡회랑 너머 요동은 동이 연합의 권역이다. 기병 자원 확보처."},
+  bz:{x:560,y:205,han:"幷州",kor:"병주",off:"병주성역",grade:"2급",
+      planets:["진양"],col:["상당","안문","서하","오원"],
+      corr:["정형회랑"],routes:["태행 동로(저효율)"],
+      note:"흉노 오부(五部)가 거주하는 성계. 이역 인물 접점이자, 정형회랑으로 기주와 격리되어 있다."},
+  oz:{x:424,y:318,han:"雍州",kor:"옹주",off:"옹주성역",grade:"1급",
+      planets:["장안 서부"],col:["천수","안정","무도","부풍"],
+      corr:["함곡회랑","진령삼도","기산도","무관회랑"],routes:["황하 대항로","위수 항로"],
+      note:"관중. 회랑 네 개가 모이는 최다 접경 성계로, 촉의 북벌은 전부 이곳을 향한다."},
+  lz:{x:272,y:262,han:"涼州",kor:"양주",off:"양주성역(涼)",grade:"2급",
+      planets:["무위"],col:["금성","농서","돈황","주천"],
+      corr:["하서회랑","기산도"],routes:["황하 대항로 기점"],
+      note:"서량. 강족·저족과 접하며 기병 자원이 풍부하다. 하서회랑 너머가 서역이며, 서방권(로마) 접촉의 유일 관문이다."},
+  iz:{x:330,y:528,han:"益州",kor:"익주",off:"익주성역",grade:"특급",
+      planets:["성도"],col:["파군","재동","건위","강주","남중"],
+      corr:["검각회랑","남중산도"],routes:["장강 대항로 상류 — 이릉협도 관문"],
+      note:"한중·형주·남중 세 방향으로만 이어진다. 서북의 양주(涼)와는 애초에 연결이 없다 — 지도에 길이 그려져 있지 않다. 검각만 지키면 성도는 안전하다. 등애가 없다면."},
+  hj:{x:424,y:436,han:"漢中",kor:"한중",off:"한중성역",grade:"특급",
+      planets:["남정(南鄭)"],col:["면양","양평관","상용","방릉","무도"],
+      corr:["검각회랑","진령삼도","기산도"],routes:["기저 항로 — 남양"],
+      note:"회랑 세 개가 모이는 최다 접경 성계. 익주의 목구멍이자 관중 진출의 발판이다. 자체 국력은 작으나, 잃으면 촉은 방어에 갇히고 얻으면 북벌이 성립한다."},
+  hz:{x:572,y:502,han:"荊州",kor:"형주",off:"형주성역",grade:"특급",
+      planets:["양양","강릉","구지(舊地) — 지구"],col:["강하","장사","무릉","계양","영릉","형혹(熒惑) — 화성","태음(太陰) — 달"],
+      corr:["오령회랑","이릉협도","양번관문"],routes:["장강 대항로","한수 연결로","영거 운하"],
+      note:"남북 두 대항로를 잇는 유일한 통로이자 인류의 고향이다. 항로가 여기 모이는 이유는 지리가 아니라 역사에 있다 — 인류가 이 별에서 퍼져나갔기 때문이다. 그 대가로 지구는 가장 자주 짓밟히는 땅이 되었다. 적벽은 지구 궤도에서 벌어지고, 관우의 북벌은 고향을 지키려는 진격이며, 여몽의 백의도강은 고향의 탈취다. 부분 점령이 가장 빈번한 성계이기도 해서, 지구는 오가 화성은 위가 쥔 분단 상태가 성립한다."},
+  ny:{x:548,y:414,han:"南陽",kor:"남양",off:"남양성역",grade:"1급",
+      planets:["완(宛)"],col:["신야","육양","박망","섭"],
+      corr:["무관회랑","양번관문"],routes:["한수 연결로","기저 항로 — 사예·예주·한중"],
+      note:"후한 최대 인구군이자 광무제의 고향, 사실상 제2의 수도. 사예·형주·옹주가 만나는 결절이다. 원술이 기병하고, 장수가 지켰고, 조조가 세 번 쳤다가 전위와 조앙을 잃었으며, 관우 북벌의 표적이 된 곳."},
+  az:{x:766,y:506,han:"揚州",kor:"양주",off:"오회성역(吳會)",grade:"특급",
+      planets:["건업","오(吳)"],col:["회계","예장","단양","오정"],
+      corr:["합비회랑"],routes:["장강 대항로 하류"],
+      note:"오의 존립 기반. 북상하려면 반드시 합비회랑을 지나야 한다. 산월 토벌로 병력을 충당하는 「내부 개척」 루트를 가진 유일 성계."},
+  hn:{x:726,y:446,han:"淮南",kor:"회남",off:"회남성역",grade:"1급",
+      planets:["수춘(壽春)"],col:["합비","여강","구강","종리"],
+      corr:["합비회랑"],routes:["회수 항로"],
+      note:"원술이 칭제한 무대. 손책의 출발점이기도 하다. 합비를 보유해 오의 북상을 틀어막는 위치이며, 위·오 대치선의 최전선이 된다."},
+  gz:{x:608,y:684,han:"交州",kor:"교주",off:"교주성역",grade:"2급",
+      planets:["교지"],col:["남해","창오","구진","일남"],
+      corr:["오령회랑"],routes:["영거 운하"],
+      note:"남방 격리 성계. 원거리 교역 수입이 크고, 해상 경로로 서방권과 닿을 여지가 있다."},
+  nz:{x:352,y:652,han:"南中",kor:"남중",off:"남중성역",grade:"2급",
+      planets:["미개척"],col:["월수","장가","익주군","영창"],
+      corr:["남중산도"],routes:["기저 항로 — 교주"],
+      note:"촉의 후방. 옹개·고정·주포의 동시 반란이 발생하는 지역이며, 맹획 회유 없이는 영구 불안정 상태가 지속된다."},
+  ld:{x:852,y:110,han:"遼東",kor:"요동",off:"요동성역",grade:"1급",
+      planets:["양평"],col:["현도","낙랑","대방","요서"],
+      corr:["노룡회랑"],routes:["없음 — 회랑 전용"],
+      note:"노룡회랑 하나로만 중원과 이어지는 회랑 전용 성계. 회랑을 잃으면 완전 고립되고, 지키면 중원의 혼란에서 벗어난다. 공손씨 삼대의 근거지이자 동이 연합의 관문으로, 고구려·부여·백제·왜로 이어지는 동이권 인물의 접점이다."},
+  xy:{x:130,y:225,han:"西域",kor:"서역",off:"서융 권역",grade:"변경",frontier:true,
+      planets:["미개척"],col:["선선","구자","우전","대월지"],
+      corr:["하서회랑"],routes:["없음 — 회랑 전용"],
+      note:"하서회랑 하나로만 중원과 이어지는 회랑 전용 권역. 서방권으로 가는 관문. 대월지(쿠샨)를 거쳐 사산조·로마와 닿는다. 통과 자체가 국가 단위 외교 사건이 된다."}
+};
+
+const GATES = [
+  {x:498,y:324,t:"函谷"},{x:632,y:324,t:"虎牢"},
+  {x:452,y:544,t:"夷陵"},{x:764,y:470,t:"合肥"},{x:586,y:458,t:"襄樊"}
+];
+
+const svgNS="http://www.w3.org/2000/svg";
+const el=(n,a={})=>{const e=document.createElementNS(svgNS,n);for(const k in a)e.setAttribute(k,a[k]);return e;};
+
+// 성진
+const dust=document.getElementById("dust");
+for(let i=0;i<190;i++){
+  const c=el("circle",{cx:(Math.random()*1000).toFixed(1),cy:(Math.random()*790).toFixed(1),
+    r:(Math.random()*1.1+.2).toFixed(2),fill:"#E6DECF",opacity:(Math.random()*.34+.05).toFixed(2)});
+  dust.appendChild(c);
+}
+
+// 관문
+const gates=document.getElementById("gates");
+GATES.forEach(g=>{
+  const gg=el("g",{class:"gate"});
+  gg.appendChild(el("rect",{x:g.x-17,y:g.y-9,width:34,height:18,rx:1}));
+  const t=el("text",{x:g.x,y:g.y+3.4});t.textContent=g.t;gg.appendChild(t);
+  gates.appendChild(gg);
+});
+
+// 성계
+const sysG=document.getElementById("systems");
+const TOP=["sy","jz","iz","hz","az","hj"];
+Object.entries(SYS).forEach(([id,s])=>{
+  const g=el("g",{class:"sys"+(s.frontier?" frontier":""),"data-id":id,tabindex:"0",role:"button",
+                  "aria-label":s.kor+" 성계"});
+  const r=s.frontier?18:24;
+  if(TOP.includes(id)) g.appendChild(el("circle",{class:"halo",cx:s.x,cy:s.y,r:r+7}));
+  g.appendChild(el("circle",{class:"disc",cx:s.x,cy:s.y,r:r}));
+  const h=el("text",{class:"han",x:s.x,y:s.y+5});h.textContent=s.han;g.appendChild(h);
+  const k=el("text",{class:"kor",x:s.x,y:s.y+r+14});k.textContent=s.kor;g.appendChild(k);
+  g.appendChild(el("circle",{class:"hit",cx:s.x,cy:s.y,r:r+10}));
+  sysG.appendChild(g);
+});
+
+// 패널
+const P={eyebrow:document.getElementById("p-eyebrow"),han:document.getElementById("p-han"),
+  off:document.getElementById("p-off"),hint:document.getElementById("p-hint"),body:document.getElementById("p-body")};
+const GC={"특급":"g-t","1급":"g-1","2급":"g-2","변경":"g-f"};
+
+function row(dt,html){return `<div class="row"><dt>${dt}</dt><dd>${html}</dd></div>`;}
+function chips(arr,cls=""){return `<div class="tags">${arr.map(a=>`<span class="tag ${cls}">${a}</span>`).join("")}</div>`;}
+
+function show(id){
+  const s=SYS[id];
+  document.querySelectorAll(".sys").forEach(n=>n.classList.toggle("on",n.dataset.id===id));
+  P.eyebrow.textContent=s.off;
+  P.han.textContent=s.han;
+  P.off.textContent=s.kor+(s.frontier?" · 변경 권역":" 성계");
+  P.hint.style.display="none";
+  P.body.style.display="flex";
+  P.body.innerHTML=
+    `<span class="grade ${GC[s.grade]}">${s.grade==="변경"?"변경 권역":"전략 "+s.grade}</span>`+
+    row("지구형 행성",chips(s.planets))+
+    row("식민지 · 거점",chips(s.col))+
+    (s.corr.length?row("접경 회랑",chips(s.corr,"c")):"")+
+    row("항로",chips(s.routes))+
+    `<p class="note">${s.note}</p>`;
+}
+document.querySelectorAll(".sys").forEach(n=>{
+  n.addEventListener("click",()=>show(n.dataset.id));
+  n.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();show(n.dataset.id);}});
+});
+
+// ── 항행 시연 ──
+const FAST=["r-h1","r-h2","r-h3","r-h4","r-g1","r-g2","r-w1","r-w2","r-c1","r-c2","r-a1"];
+const CORR=["c-jg","c-qs","c-jx","c-ll","c-hx","c-nz","c-wl","c-wg"];
+const BASE=["b1","b2","b3","b4","b5","b6","b7","b8","b9","b10","b11","b12","b13","b14","b16","b17"];
+const pulses=document.getElementById("pulses");
+const btn=document.getElementById("btn-sail");
+let running=false,raf=null,fleet=[];
+const reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function build(){
+  pulses.innerHTML="";fleet=[];
+  const mk=(ids,speed,color)=>ids.forEach(id=>{
+    const path=document.getElementById(id);if(!path)return;
+    const L=path.getTotalLength();
+    const dot=el("circle",{r:3.4,fill:color,opacity:.95});
+    const tail=el("circle",{r:6.5,fill:"url(#glow)"});
+    pulses.appendChild(tail);pulses.appendChild(dot);
+    fleet.push({path,L,dot,tail,speed,d:Math.random()*L});
+  });
+  mk(BASE,0.24,"#9A9084");
+  mk(CORR,0.40,"#E07A6E");
+  mk(FAST,1.55,"#7BC4B2");
+}
+function tick(){
+  fleet.forEach(f=>{
+    f.d+=f.speed;if(f.d>f.L)f.d=0;
+    const p=f.path.getPointAtLength(f.d);
+    f.dot.setAttribute("cx",p.x);f.dot.setAttribute("cy",p.y);
+    f.tail.setAttribute("cx",p.x);f.tail.setAttribute("cy",p.y);
+  });
+  raf=requestAnimationFrame(tick);
+}
+btn.addEventListener("click",()=>{
+  running=!running;
+  btn.setAttribute("aria-pressed",String(running));
+  btn.textContent=running?"항행 시연 정지":"항행 시연 시작";
+  if(running){build();if(!reduce)tick();else fleet.forEach(f=>{
+      const p=f.path.getPointAtLength(f.L*.5);
+      f.dot.setAttribute("cx",p.x);f.dot.setAttribute("cy",p.y);
+      f.tail.setAttribute("cx",p.x);f.tail.setAttribute("cy",p.y);});}
+  else{cancelAnimationFrame(raf);pulses.innerHTML="";}
+});
+</script>
+</body>
+</html>

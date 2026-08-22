@@ -1,0 +1,21 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Build (추후 코드 추가 시)
+build/
+dist/
+node_modules/
+*.log
+
+# 임시
+tmp/
+*.tmp
+*.bak
