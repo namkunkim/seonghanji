@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>星漢志 — 성계도(星系圖)</title>
+<title>SEONGHANJI — 성계도</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gothic+A1:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -38,7 +38,7 @@ body{
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
 }
 
-/* ── 제기(題記) ── */
+/* ── 제기 ── */
 .plate{
   border-bottom:1px solid var(--line);
   padding:26px 30px 20px;
@@ -146,14 +146,14 @@ button:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
 
 <header class="plate">
   <div class="plate-l">
-    <div class="seal">星漢志</div>
-    <h1>星系圖<small>성 계 도</small></h1>
+    <div class="seal">성한지</div>
+    <h1>성계도</h1>
   </div>
   <p class="plate-note">
-    한제국 십구성역(十九星域) 항로 및 회랑 배치도.<br>
+    한제국 십구성역 항로 및 회랑 배치도.<br>
     성계를 눌러 상세를 확인한다. 회랑이 놓인 국경은 통과가 강제되며,<br>
     회랑이 없는 인접 성계끼리는 저효율의 기저 항로로 이어진다.<br>
-    <b style="color:#C0973F;font-weight:400">형주</b>가 태양계이며, 지구는 그 안의 구지(舊地)다.
+    <b style="color:#C0973F;font-weight:400">형주</b>가 태양계이며, 지구는 그 안의 구지다.
   </p>
 </header>
 
@@ -167,7 +167,7 @@ button:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
     </radialGradient>
   </defs>
 
-  <!-- 성진(星塵) -->
+  <!-- 성진 -->
   <g id="dust" opacity=".5"></g>
 
   <!-- ══ 항로 ══ -->
@@ -292,8 +292,8 @@ button:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
 
 <aside id="panel">
   <div>
-    <p class="eyebrow" id="p-eyebrow">十九星域</p>
-    <h2 class="p-han" id="p-han">星系圖</h2>
+    <p class="eyebrow" id="p-eyebrow">십구성역</p>
+    <h2 class="p-han" id="p-han">성계도</h2>
     <p class="p-off" id="p-off">성 계 도</p>
   </div>
   <p class="hint" id="p-hint">
@@ -311,91 +311,91 @@ button:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
 
 <script>
 const SYS = {
-  sy:{x:572,y:330,han:"司隸",kor:"사예",off:"중앙성역",grade:"특급",
+  sy:{x:572,y:330,kor:"사예",off:"중앙성역",grade:"특급",
       planets:["낙양","장안"],col:["홍농","하내","하동","경조"],
       corr:["함곡회랑","호뢰관문","무관회랑"],routes:["황하 대항로","위수 항로","관도망 결절"],
       note:"황제 소재. 정통성의 물리적 위치. 관도망이 여기서 방사되어, 사예를 쥔 자는 중원 전역에 병력을 신속 전개한다."},
-  yz:{x:648,y:404,han:"豫州",kor:"예주",off:"예주성역",grade:"1급",
-      planets:["허(許)"],col:["영천","여남","진국","초"],
+  yz:{x:648,y:404,kor:"예주",off:"예주성역",grade:"1급",
+      planets:["허"],col:["영천","여남","진국","초"],
       corr:["호뢰관문"],routes:["관도망","회수 항로 — 회남 방면"],
       note:"허도가 위치한 성계. 황제를 옮겨 모시는 순간 정통성의 무게중심이 사예에서 이곳으로 이동한다."},
-  ez:{x:692,y:318,han:"兗州",kor:"연주",off:"연주성역",grade:"2급",
+  ez:{x:692,y:318,kor:"연주",off:"연주성역",grade:"2급",
       planets:["진류"],col:["동군","복양","제음","태산"],
       corr:["호뢰관문"],routes:["황하 대항로"],
       note:"조조의 최초 근거지. 황하 항로의 중간 결절이나 방어 지형이 없어 지키기 어렵다."},
-  cz:{x:806,y:290,han:"靑州",kor:"청주",off:"청주성역",grade:"2급",
+  cz:{x:806,y:290,kor:"청주",off:"청주성역",grade:"2급",
       planets:["임치"],col:["북해","제남","평원","동래"],
       corr:[],routes:["황하 대항로 동쪽 종점"],
-      note:"황건 잔당의 근거지. 청주병(靑州兵) 자원 획득처로, 병력 보충 속도가 높은 대신 규율이 낮다."},
-  xz:{x:798,y:388,han:"徐州",kor:"서주",off:"서주성역",grade:"2급",
+      note:"황건 잔당의 근거지. 청주병 자원 획득처로, 병력 보충 속도가 높은 대신 규율이 낮다."},
+  xz:{x:798,y:388,kor:"서주",off:"서주성역",grade:"2급",
       planets:["하비"],col:["팽성","광릉","낭야","동해"],
       corr:[],routes:["회수 항로"],
       note:"중원과 강동을 잇는 회수 축의 중간. 방어 지형이 빈약해 주인이 자주 바뀐다."},
-  jz:{x:668,y:232,han:"冀州",kor:"기주",off:"기주성역",grade:"특급",
-      planets:["업(鄴)"],col:["한단","중산","상산","발해"],
+  jz:{x:668,y:232,kor:"기주",off:"기주성역",grade:"특급",
+      planets:["업"],col:["한단","중산","상산","발해"],
       corr:["정형회랑"],routes:["관도망"],
       note:"최대 인구·생산력. 원소의 기반이자 이후 조조의 심장부. 이 성계를 쥐지 못하면 화북 통일은 성립하지 않는다."},
-  uz:{x:742,y:128,han:"幽州",kor:"유주",off:"유주성역",grade:"1급",
-      planets:["계(薊)"],col:["어양","우북평","요서","요동"],
+  uz:{x:742,y:128,kor:"유주",off:"유주성역",grade:"1급",
+      planets:["계"],col:["어양","우북평","요서","요동"],
       corr:["노룡회랑","정형회랑"],routes:["저효율 연결"],
       note:"북방 변경. 오환·선비와 접하며, 노룡회랑 너머 요동은 동이 연합의 권역이다. 기병 자원 확보처."},
-  bz:{x:560,y:205,han:"幷州",kor:"병주",off:"병주성역",grade:"2급",
+  bz:{x:560,y:205,kor:"병주",off:"병주성역",grade:"2급",
       planets:["진양"],col:["상당","안문","서하","오원"],
       corr:["정형회랑"],routes:["태행 동로(저효율)"],
-      note:"흉노 오부(五部)가 거주하는 성계. 이역 인물 접점이자, 정형회랑으로 기주와 격리되어 있다."},
-  oz:{x:424,y:318,han:"雍州",kor:"옹주",off:"옹주성역",grade:"1급",
+      note:"흉노 오부가 거주하는 성계. 이역 인물 접점이자, 정형회랑으로 기주와 격리되어 있다."},
+  oz:{x:424,y:318,kor:"옹주",off:"옹주성역",grade:"1급",
       planets:["장안 서부"],col:["천수","안정","무도","부풍"],
       corr:["함곡회랑","진령삼도","기산도","무관회랑"],routes:["황하 대항로","위수 항로"],
       note:"관중. 회랑 네 개가 모이는 최다 접경 성계로, 촉의 북벌은 전부 이곳을 향한다."},
-  lz:{x:272,y:262,han:"涼州",kor:"양주",off:"양주성역(涼)",grade:"2급",
+  lz:{x:272,y:262,kor:"양주",off:"양주성역",grade:"2급",
       planets:["무위"],col:["금성","농서","돈황","주천"],
       corr:["하서회랑","기산도"],routes:["황하 대항로 기점"],
       note:"서량. 강족·저족과 접하며 기병 자원이 풍부하다. 하서회랑 너머가 서역이며, 서방권(로마) 접촉의 유일 관문이다."},
-  iz:{x:330,y:528,han:"益州",kor:"익주",off:"익주성역",grade:"특급",
+  iz:{x:330,y:528,kor:"익주",off:"익주성역",grade:"특급",
       planets:["성도"],col:["파군","재동","건위","강주","남중"],
       corr:["검각회랑","남중산도"],routes:["장강 대항로 상류 — 이릉협도 관문"],
-      note:"한중·형주·남중 세 방향으로만 이어진다. 서북의 양주(涼)와는 애초에 연결이 없다 — 지도에 길이 그려져 있지 않다. 검각만 지키면 성도는 안전하다. 등애가 없다면."},
-  hj:{x:424,y:436,han:"漢中",kor:"한중",off:"한중성역",grade:"특급",
-      planets:["남정(南鄭)"],col:["면양","양평관","상용","방릉","무도"],
+      note:"한중·형주·남중 세 방향으로만 이어진다. 서북의 양주와는 애초에 연결이 없다 — 지도에 길이 그려져 있지 않다. 검각만 지키면 성도는 안전하다. 등애가 없다면."},
+  hj:{x:424,y:436,kor:"한중",off:"한중성역",grade:"특급",
+      planets:["남정"],col:["면양","양평관","상용","방릉","무도"],
       corr:["검각회랑","진령삼도","기산도"],routes:["기저 항로 — 남양"],
       note:"회랑 세 개가 모이는 최다 접경 성계. 익주의 목구멍이자 관중 진출의 발판이다. 자체 국력은 작으나, 잃으면 촉은 방어에 갇히고 얻으면 북벌이 성립한다."},
-  hz:{x:572,y:502,han:"荊州",kor:"형주",off:"형주성역",grade:"특급",
-      planets:["양양","강릉","구지(舊地) — 지구"],col:["강하","장사","무릉","계양","영릉","형혹(熒惑) — 화성","태음(太陰) — 달"],
+  hz:{x:572,y:502,kor:"형주",off:"형주성역",grade:"특급",
+      planets:["양양","강릉","구지 — 지구"],col:["강하","장사","무릉","계양","영릉","형혹 — 화성","태음 — 달"],
       corr:["오령회랑","이릉협도","양번관문"],routes:["장강 대항로","한수 연결로","영거 운하"],
       note:"남북 두 대항로를 잇는 유일한 통로이자 인류의 고향이다. 항로가 여기 모이는 이유는 지리가 아니라 역사에 있다 — 인류가 이 별에서 퍼져나갔기 때문이다. 그 대가로 지구는 가장 자주 짓밟히는 땅이 되었다. 적벽은 지구 궤도에서 벌어지고, 관우의 북벌은 고향을 지키려는 진격이며, 여몽의 백의도강은 고향의 탈취다. 부분 점령이 가장 빈번한 성계이기도 해서, 지구는 오가 화성은 위가 쥔 분단 상태가 성립한다."},
-  ny:{x:548,y:414,han:"南陽",kor:"남양",off:"남양성역",grade:"1급",
-      planets:["완(宛)"],col:["신야","육양","박망","섭"],
+  ny:{x:548,y:414,kor:"남양",off:"남양성역",grade:"1급",
+      planets:["완"],col:["신야","육양","박망","섭"],
       corr:["무관회랑","양번관문"],routes:["한수 연결로","기저 항로 — 사예·예주·한중"],
       note:"후한 최대 인구군이자 광무제의 고향, 사실상 제2의 수도. 사예·형주·옹주가 만나는 결절이다. 원술이 기병하고, 장수가 지켰고, 조조가 세 번 쳤다가 전위와 조앙을 잃었으며, 관우 북벌의 표적이 된 곳."},
-  az:{x:766,y:506,han:"揚州",kor:"양주",off:"오회성역(吳會)",grade:"특급",
-      planets:["건업","오(吳)"],col:["회계","예장","단양","오정"],
+  az:{x:766,y:506,kor:"오회",off:"오회성역",grade:"특급",
+      planets:["건업","오"],col:["회계","예장","단양","오정"],
       corr:["합비회랑"],routes:["장강 대항로 하류"],
       note:"오의 존립 기반. 북상하려면 반드시 합비회랑을 지나야 한다. 산월 토벌로 병력을 충당하는 「내부 개척」 루트를 가진 유일 성계."},
-  hn:{x:726,y:446,han:"淮南",kor:"회남",off:"회남성역",grade:"1급",
-      planets:["수춘(壽春)"],col:["합비","여강","구강","종리"],
+  hn:{x:726,y:446,kor:"회남",off:"회남성역",grade:"1급",
+      planets:["수춘"],col:["합비","여강","구강","종리"],
       corr:["합비회랑"],routes:["회수 항로"],
       note:"원술이 칭제한 무대. 손책의 출발점이기도 하다. 합비를 보유해 오의 북상을 틀어막는 위치이며, 위·오 대치선의 최전선이 된다."},
-  gz:{x:608,y:684,han:"交州",kor:"교주",off:"교주성역",grade:"2급",
+  gz:{x:608,y:684,kor:"교주",off:"교주성역",grade:"2급",
       planets:["교지"],col:["남해","창오","구진","일남"],
       corr:["오령회랑"],routes:["영거 운하"],
       note:"남방 격리 성계. 원거리 교역 수입이 크고, 해상 경로로 서방권과 닿을 여지가 있다."},
-  nz:{x:352,y:652,han:"南中",kor:"남중",off:"남중성역",grade:"2급",
+  nz:{x:352,y:652,kor:"남중",off:"남중성역",grade:"2급",
       planets:["미개척"],col:["월수","장가","익주군","영창"],
       corr:["남중산도"],routes:["기저 항로 — 교주"],
       note:"촉의 후방. 옹개·고정·주포의 동시 반란이 발생하는 지역이며, 맹획 회유 없이는 영구 불안정 상태가 지속된다."},
-  ld:{x:852,y:110,han:"遼東",kor:"요동",off:"요동성역",grade:"1급",
+  ld:{x:852,y:110,kor:"요동",off:"요동성역",grade:"1급",
       planets:["양평"],col:["현도","낙랑","대방","요서"],
       corr:["노룡회랑"],routes:["없음 — 회랑 전용"],
       note:"노룡회랑 하나로만 중원과 이어지는 회랑 전용 성계. 회랑을 잃으면 완전 고립되고, 지키면 중원의 혼란에서 벗어난다. 공손씨 삼대의 근거지이자 동이 연합의 관문으로, 고구려·부여·백제·왜로 이어지는 동이권 인물의 접점이다."},
-  xy:{x:130,y:225,han:"西域",kor:"서역",off:"서융 권역",grade:"변경",frontier:true,
+  xy:{x:130,y:225,kor:"서역",off:"서융 권역",grade:"변경",frontier:true,
       planets:["미개척"],col:["선선","구자","우전","대월지"],
       corr:["하서회랑"],routes:["없음 — 회랑 전용"],
       note:"하서회랑 하나로만 중원과 이어지는 회랑 전용 권역. 서방권으로 가는 관문. 대월지(쿠샨)를 거쳐 사산조·로마와 닿는다. 통과 자체가 국가 단위 외교 사건이 된다."}
 };
 
 const GATES = [
-  {x:498,y:324,t:"函谷"},{x:632,y:324,t:"虎牢"},
-  {x:452,y:544,t:"夷陵"},{x:764,y:470,t:"合肥"},{x:586,y:458,t:"襄樊"}
+  {x:498,y:324,t:"함곡"},{x:632,y:324,t:"호뢰"},
+  {x:452,y:544,t:"이릉"},{x:764,y:470,t:"합비"},{x:586,y:458,t:"양번"}
 ];
 
 const svgNS="http://www.w3.org/2000/svg";
@@ -427,8 +427,7 @@ Object.entries(SYS).forEach(([id,s])=>{
   const r=s.frontier?18:24;
   if(TOP.includes(id)) g.appendChild(el("circle",{class:"halo",cx:s.x,cy:s.y,r:r+7}));
   g.appendChild(el("circle",{class:"disc",cx:s.x,cy:s.y,r:r}));
-  const h=el("text",{class:"han",x:s.x,y:s.y+5});h.textContent=s.han;g.appendChild(h);
-  const k=el("text",{class:"kor",x:s.x,y:s.y+r+14});k.textContent=s.kor;g.appendChild(k);
+  const h=el("text",{class:"han",x:s.x,y:s.y+5});h.textContent=s.kor;g.appendChild(h);
   g.appendChild(el("circle",{class:"hit",cx:s.x,cy:s.y,r:r+10}));
   sysG.appendChild(g);
 });
@@ -445,8 +444,8 @@ function show(id){
   const s=SYS[id];
   document.querySelectorAll(".sys").forEach(n=>n.classList.toggle("on",n.dataset.id===id));
   P.eyebrow.textContent=s.off;
-  P.han.textContent=s.han;
-  P.off.textContent=s.kor+(s.frontier?" · 변경 권역":" 성계");
+  P.han.textContent=s.kor;
+  P.off.textContent=s.frontier?"변경 권역":"성계";
   P.hint.style.display="none";
   P.body.style.display="flex";
   P.body.innerHTML=
