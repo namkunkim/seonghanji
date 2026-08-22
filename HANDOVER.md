@@ -99,7 +99,8 @@
 | `04-campaign/world-state.md` | 세계 상태 4형 · 분기 폭발 방지 | |
 | `04-campaign/function-events.md` | 기능 이벤트 40종 | |
 | `04-campaign/endings.md` | 엔딩 사분면 · 결정점 7 · 시즌 종료 | |
-| `04-campaign/scenario-setup.md` | 6시나리오 × 권역 배치 · 토호 · 유랑 | |
+| `04-campaign/scenario-setup.md` | 6시나리오 × 권역 배치(**기본형**) · 토호 · 유랑 | |
+| `04-campaign/world-state-setup.md` | 세계 상태별 시작 배치 **21개** | **신규(2026-08-23, J8)** |
 | `04-campaign/scenario-190.md` | 시나리오 1 Timeline (ACT 16) | |
 | `04-campaign/scenario-200-208.md` | 시나리오 2·3 Timeline | |
 | `04-campaign/scenario-219.md` | 시나리오 4 Timeline (ACT 18) | |
@@ -129,7 +130,7 @@
 
 | # | 작업 | 규모 |
 |---|---|---|
-| B1 | **세계 상태 4형 × 6시나리오 시작 배치표** | 24개 |
+| ~~B1~~ | ~~**세계 상태 4형 × 6시나리오 시작 배치표**~~ | **완료 (J8, 2026-08-23). 실제 21개** — 190은 계승할 이전 상태가 없어 1형만 성립. `world-state-setup.md` |
 | B2 | 인물 소속 배치표 | 406명 × 6시나리오 |
 | B3 | 세력별 엔딩 변주 | 48문단 |
 | B4 | 이벤트 연출 텍스트 | 40종 |
