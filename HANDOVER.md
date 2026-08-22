@@ -91,7 +91,8 @@
 | `02-characters/dispositions.md` | 성향 5종 · **상성 매트릭스 개정판** | |
 | `02-characters/generals-stats.md` | 명장 150 스탯 수치 | |
 | `02-characters/foreign-90-stats.md` | 이역 인물 90(실제 93) 스탯 | **신규(2026-08-22)** |
-| `03-systems/combat.md` | 5페이즈 · 사기 · 일기토 | |
+| `03-systems/combat.md` | 5페이즈 · 사기 · 일기토 · **함종 비용** | |
+| `03-systems/ship-specs.md` | 함급·제원 · 무장 · 탑재기 · 지휘 한도 · 편성 · **진형 7종** | **신규(2026-08-23, J3)** |
 | `03-systems/partial-occupation.md` | 권역 45 · 항로 귀속 | |
 | `03-systems/diplomacy.md` | 동이 연합 · 대월지 · 중원 동맹 | |
 | `03-systems/time-and-monetization.md` | 시간표 + 과금 원칙 | **확정** |
