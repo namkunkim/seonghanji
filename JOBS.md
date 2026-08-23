@@ -468,7 +468,7 @@ V-11에서 강습모함 계수를 낮추지 않고 유지점으로 상쇄한 것
   40종 × 연출 텍스트는 `function-events.md`(현재 v0.2 기준 약 40KB)를 두 배 이상 불린다
 - **완료 기준**: 40종 전체, [FIXED]/[LIKELY]/[CHOICE] 분류에 맞는 톤 유지
 
-**결과 요약** (2026-08-23 완료 · 산출물 `docs/05-narrative/event-scripts.md` · 상세는 `DECISIONS.md` V-17):
+**결과 요약** (2026-08-23 완료 · 산출물 `docs/05-narrative/event-scripts.md` · 상세는 `DECISIONS.md` V-19):
 
 1. **두 요구가 정면으로 부딪쳤다.** `world-state.md` §2는 「이름이 아니라 역할」을 요구하고,
    같은 문서 §2.3은 「누가 하느냐에 따라 서술이 달라진다」를 요구한다. 이름을 쓰면 세 형에서
