@@ -57,6 +57,7 @@
 | 掠奪 / 약탈 | 약탈 | **Plunder** |
 | 一騎討 / 일기토 | 일기토 | **Duel** |
 | 士氣 / 사기 | 사기 | Morale |
+| 連營 / 연영 | 연영도 | **Encampment Sprawl** |
 | 節義·名士·實務·野心·無賴 | 절의·명사·실무·야심·무뢰 | Loyalist / Noble / Pragmatist / Ambitious / Mercenary |
 
 ---
