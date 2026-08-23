@@ -30,10 +30,14 @@
 ```
 1. HANDOVER.md          ← 이 파일
 2. CLAUDE.md            ← 불가침 원칙 · 표기 규칙 · 함정
-3. docs/DECISIONS.md    ← 기각된 안과 그 이유
-4. docs/00-overview/design-overview.md   ← 통합 기획서
-5. docs/assets/star-map.html             ← 브라우저로 열 것
+3. docs/INDEX.md        ← 전체 색인 · 핵심 수치 한눈에
+4. docs/DECISIONS.md    ← 기각된 안과 그 이유 (V-01~V-21)
+5. docs/00-overview/design-overview.md   ← 통합 기획서 (§11이 현황)
+6. docs/assets/star-map.html             ← 브라우저로 열 것
 ```
+
+> **무언가를 만들기 전에 `docs/INDEX.md`를 먼저 본다.**
+> 설계가 끝난 상태라 「없을 것 같은 것」이 대개 이미 있다.
 
 ---
 
