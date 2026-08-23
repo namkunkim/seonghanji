@@ -51,9 +51,9 @@
 
 **한자 병기는 폐지되었다.** `구지(舊地)` → `구지`
 
-> ⚠ **표기 개정은 부분 적용 상태다.**
-> `05-narrative/epilogues.md`와 `00-overview/glossary.md`만 적용됨.
-> 나머지 문서는 한자가 남아 있다. **일괄 변환 작업이 미완료 과제로 남아 있다.**
+> ✅ **표기 개정은 2026-08-22에 전 문서 적용 완료되었다** (23개 문서 + `assets/star-map.html`).
+> 예외 둘: `glossary.md`와 `DECISIONS.md`는 **신·구 대조와 결정 기록이 목적**이라
+> 한자를 의도적으로 남긴다. 상세: `docs/DECISIONS.md` V-07·V-08.
 
 ### 서사 텍스트 집필 지침
 
@@ -142,40 +142,53 @@
 
 ## 7. 다음 작업
 
-`HANDOVER.md` §다음 작업 참조. 요약하면:
+`HANDOVER.md` §4 참조. 요약하면:
 
-**수치화**
-- 일반 무장 256인 스탯 · 이역 인물 90인 스탯
-- 기능 이벤트 40종 임계값
-- 사기 산식 · 계략 성공률 · 동원율 계수 · 함종 비용
-- 각 ACT 실시간 소요 (약 90개)
+**설계는 끝났다.** `JOBS.md` 큐 12개(J1~J12)가 2026-08-23에 전부 닫혔고,
+그 뒤 남아 있던 설계 충돌 3건도 정리했다 — 사기 범위 · 이릉협도 화공 · 219 일극형 판정.
+**수치·물량·표기가 모두 완료 상태다.**
 
-**물량**
-- 세계 상태 4형 × 6시나리오 시작 배치표 (24개)
-- 인물 소속 배치표 (406명 × 6시나리오)
-- 세력별 엔딩 변주 48문단
-- 이벤트 연출 텍스트 40종
+**다음은 프로토타입 코드다.**
 
-**미착수**
-- 표기 개정 일괄 적용 (한자 제거)
-- 기동병기 상세 · 튜토리얼 · 아트/사운드 방향
-- 프로토타입 코드
+그 밖의 미착수 영역:
+- 기동병기 상세 (에이스 판정)
+- 튜토리얼·온보딩
+- 아트·사운드 방향
+- 특수 엔딩 5종의 세력 변주 (최소 Extinction 4계열)
+
+> ⚠ **완료된 것을 다시 만들지 말 것.** 「일반 무장 스탯」·「ACT 실시간」·
+> 「세계 상태 배치표」 같은 항목은 전부 산출물이 있다. `docs/INDEX.md`에서 먼저 확인한다.
+
+> ⚠ **동시 세션 주의.** 2026-08-23에 네 세션이 병렬로 돌면서 **커밋 사고가 양방향으로 두 번** 났다.
+> `git commit`은 인덱스 전체를 커밋하므로, `git add <파일>` 뒤에 그냥 `commit`하면
+> 다른 세션이 스테이징해 둔 것까지 딸려 간다.
+> **커밋은 `git commit -- <경로>` 형태로 경로를 명시한다.**
+> 또 **문서 전역 눈금(스케일·범위 정의)은 신설 전에 확인한다** — 천명 눈금을 두 세션이
+> 각자 만들어 한쪽을 철회해야 했다. 상세: `JOBS.md` §4 검토 포인트 5.
 
 ---
 
 ## 8. 저장소 구조
 
+**전체 색인은 `docs/INDEX.md`에 있다.** 여기서는 구조만 적는다.
+
 ```
 docs/
-├── 00-overview/    design-overview.md (통합 기획서) · glossary.md (용어)
-├── 01-world/       star-map.md · region-power.md
-├── 02-characters/  generals-150 · officers-256 · dispositions · generals-stats
-├── 03-systems/     combat · partial-occupation · diplomacy · time-and-monetization
-├── 04-campaign/    world-state · function-events · endings · scenario-setup
+├── INDEX.md        ← 전체 색인 · 핵심 수치 한눈에
+├── DECISIONS.md    ← 기각안 6 · 변경 이력 21 (재론 금지 사유의 정본)
+├── 00-overview/    design-overview · glossary
+├── 01-world/       star-map · region-power
+├── 02-characters/  generals-150 · generals-stats · officers-256
+│                   foreign-90-stats · dispositions
+├── 03-systems/     combat · ship-specs · partial-occupation
+│                   diplomacy · time-and-monetization
+├── 04-campaign/    world-state · world-state-setup · character-assignments
+│                   function-events · endings · scenario-setup
 │                   scenario-190 · scenario-200-208 · scenario-219 · scenario-228-263
-├── 05-narrative/   prologue.md · epilogues.md
-├── 06-tech/        ai-design.md · ui-design.md
+├── 05-narrative/   prologue · epilogues · ending-variations
+│                   interludes · event-scripts
+├── 06-tech/        ai-design · ui-design
 └── assets/         star-map.html (브라우저로 열어볼 것)
 ```
 
-**처음 읽는 순서:** `HANDOVER.md` → `docs/00-overview/design-overview.md` → `docs/assets/star-map.html`
+**처음 읽는 순서:** `HANDOVER.md` → `docs/INDEX.md` → `docs/assets/star-map.html`
