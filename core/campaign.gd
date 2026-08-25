@@ -537,3 +537,60 @@ func leader() -> String:
 		if top == "" or mobs[fid] > mobs[top]:
 			top = fid
 	return top
+
+
+## ---------------------------------------------------------------- 세력별 목표
+##
+## §11.1 의 「세력별 승률」을 재려면 **무엇이 승리인지**가 필요하다.
+##
+## **실동원 1위로 재면 안 된다.** 웅크린 세력이 이긴다 —
+## 익주는 회랑으로 봉쇄되고 전화 0.95 로 온전한데 확장하지 않으니
+## 신복속도 원정 부담도 지지 않는다. 2026-08-25 실측에서 **유장이 67% 로 최강**이었다.
+##
+## `endings.md` §6 이 답을 갖고 있다.
+##
+## > **오의 분치 엔딩은 페널티가 없다.** 손권의 「할거」 특성이 원전 그대로
+## > 「병립 지향」이므로, 오만은 분치를 정당한 목표로 삼을 수 있다.
+##
+## **승리 조건은 세력마다 다르다.** 그것이 두 주제축이 살아 있다는 뜻이다 —
+## 「통일 vs 분권」은 모두가 같은 것을 노릴 때는 질문이 되지 않는다.
+##
+## 시나리오 3 의 고유 목표는 **「남북 대치」**(§5)다.
+##   조조 — 그 대치를 **깬다**. 중부권 또는 건업권을 얻으면 남하 성공
+##   손권 — 그 대치를 **유지한다**. 존속하고 일극형을 막으면 분치
+##   그 외 — **존속한다**. 본거지를 지키는 것이 목표다
+func achieved(fid: String) -> bool:
+	var f: Faction = factions.get(fid)
+	if f == null or not f.alive:
+		return false                       # 소멸은 절사 (§3.4)
+
+	var by_name := {}
+	for rid in data.region_ids:
+		by_name[data.regions[rid]["name"]] = rid
+
+	match fid:
+		"조조":
+			# 남북 대치 돌파 — 강동이나 강릉에 닿았는가
+			for nm in ["건업권", "중부권"]:
+				if world.region_states[by_name[nm]].owner == "조조":
+					return true
+			return false
+		"손권":
+			# 존속 + 병립. **분치는 오의 정당한 목표다**
+			if world.region_states[by_name["건업권"]].owner != "손권":
+				return false
+			return world_state() != "일극형"
+		_:
+			# 본거지 성계의 권역을 하나라도 지켰는가
+			for rid in f.regions:
+				if data.system_of(rid) == f.capital_system:
+					return true
+			return false
+
+
+## 세력별 달성 여부 전부
+func achievements() -> Dictionary:
+	var out := {}
+	for fid in faction_ids:
+		out[fid] = achieved(fid)
+	return out

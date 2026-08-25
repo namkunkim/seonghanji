@@ -26,6 +26,7 @@ func _init() -> void:
 	var leaders := {}
 	var early := 0
 	var historical := 0
+	var wins := {}                 # 세력 → 목표 달성 횟수
 	var total_battles := 0
 	var total_captures := 0
 	var total_ticks := 0
@@ -39,6 +40,11 @@ func _init() -> void:
 		var ld := c.leader()
 		if c.historical_outcome():
 			historical += 1
+		for fid in c.faction_ids:
+			if not wins.has(fid):
+				wins[fid] = 0
+			if c.achieved(fid):
+				wins[fid] += 1
 		states[ws] = int(states.get(ws, 0)) + 1
 		leaders[ld] = int(leaders.get(ld, 0)) + 1
 		if c.end_reason == "조기 종료":
@@ -60,7 +66,24 @@ func _init() -> void:
 		print("  %-8s %3d회  %5.1f%%" % [k, states[k], states[k] * 100.0 / RUNS])
 	print("")
 
-	print("최강 세력 분포")
+	# **세력별 목표 달성률** — §11.1 의 「승률」은 이쪽이다.
+	# 실동원 1위로 재면 웅크린 세력이 이긴다 (Campaign.achieved 주석 참조).
+	print("세력별 목표 달성률")
+	print("  %-10s %6s   %s" % ["세력", "달성", "목표"])
+	var goal := {
+		"조조": "남북 대치 돌파 (중부권/건업권 획득)",
+		"손권": "존속 + 병립 유지 (분치)",
+	}
+	var wk: Array = wins.keys()
+	wk.sort()
+	var rates: Array[int] = []
+	for k in wk:
+		var g: String = goal.get(k, "본거지 존속")
+		print("  %-10s %5.1f%%   %s" % [k, wins[k] * 100.0 / RUNS, g])
+		rates.append(int(wins[k]))
+	print("")
+
+	print("최강 실동원 분포 (참고 — 승률 아님)")
 	var lk: Array = leaders.keys()
 	lk.sort()
 	for k in lk:
@@ -89,12 +112,8 @@ func _init() -> void:
 		pass_count += 1
 	print("  조기 종료율 %5.1f%%  목표 20%% 이하  %s" % [early_pct, "통과" if ok_early else "미달"])
 
-	# 세력별 편차 — 한 번이라도 최강이 된 세력들 사이의 최대·최소 비
-	# ⚠ §11.1 의 「세력별 승률」이 **어느 세력 집합**을 뜻하는지 문서가 밝히지 않았다.
-	#   변경 소국(공손강·사섭)까지 넣으면 편차가 커진다 — 해석이 필요하다
-	var vals: Array[int] = []
-	for k in lk:
-		vals.append(int(leaders[k]))
+	# 세력별 편차 — **목표 달성률**로 잰다. 최강 실동원이 아니다.
+	var vals := rates.duplicate()
 	vals.sort()
 	checks += 1
 	var ok_spread := false
