@@ -1,0 +1,259 @@
+[
+  {
+    "id": "COR-01",
+    "name": "함곡회랑",
+    "scale": "대회랑",
+    "sides": [
+      [
+        "SYS-01"
+      ],
+      [
+        "SYS-09"
+      ]
+    ],
+    "multiplier": 5.0,
+    "source": "함곡관·동관",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-02",
+    "name": "검각회랑",
+    "scale": "대회랑",
+    "sides": [
+      [
+        "SYS-12"
+      ],
+      [
+        "RGN-05"
+      ]
+    ],
+    "multiplier": 5.0,
+    "source": "검각·금우도",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-03",
+    "name": "진령삼도",
+    "scale": "대회랑",
+    "sides": [
+      [
+        "SYS-09"
+      ],
+      [
+        "SYS-12"
+      ]
+    ],
+    "multiplier": 5.0,
+    "source": "자오도·야곡도·산관도",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-04",
+    "name": "이릉협도",
+    "scale": "대회랑",
+    "sides": [
+      [
+        "SYS-11"
+      ],
+      [
+        "SYS-13"
+      ]
+    ],
+    "multiplier": 5.0,
+    "source": "장강 삼협",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-05",
+    "name": "합비회랑",
+    "scale": "대회랑",
+    "sides": [
+      [
+        "SYS-15"
+      ],
+      [
+        "SYS-16"
+      ]
+    ],
+    "multiplier": 5.0,
+    "source": "합비·소호",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-06",
+    "name": "양번관문",
+    "scale": "대회랑",
+    "sides": [
+      [
+        "SYS-13"
+      ],
+      [
+        "SYS-14"
+      ]
+    ],
+    "multiplier": 5.0,
+    "source": "양양·번성",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-07",
+    "name": "정형회랑",
+    "scale": "대회랑",
+    "sides": [
+      [
+        "SYS-06"
+      ],
+      [
+        "SYS-08"
+      ]
+    ],
+    "multiplier": 5.0,
+    "source": "태행팔형",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-08",
+    "name": "호뢰관문",
+    "scale": "중회랑",
+    "sides": [
+      [
+        "SYS-01"
+      ],
+      [
+        "SYS-03",
+        "SYS-02"
+      ]
+    ],
+    "multiplier": 3.0,
+    "source": "호뢰관·사수관",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-09",
+    "name": "관도관문",
+    "scale": "중회랑",
+    "sides": [
+      [
+        "SYS-01",
+        "SYS-03"
+      ],
+      [
+        "SYS-06"
+      ]
+    ],
+    "multiplier": 3.0,
+    "source": "관도·백마·연진",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-10",
+    "name": "무관회랑",
+    "scale": "중회랑",
+    "sides": [
+      [
+        "SYS-09"
+      ],
+      [
+        "SYS-14"
+      ]
+    ],
+    "multiplier": 3.0,
+    "source": "무관",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-11",
+    "name": "기산도",
+    "scale": "중회랑",
+    "sides": [
+      [
+        "SYS-09"
+      ],
+      [
+        "SYS-12"
+      ]
+    ],
+    "multiplier": 3.0,
+    "source": "기산",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-12",
+    "name": "노룡회랑",
+    "scale": "중회랑",
+    "sides": [
+      [
+        "SYS-07"
+      ],
+      [
+        "SYS-18"
+      ]
+    ],
+    "multiplier": 3.0,
+    "source": "노룡새·백랑산",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-13",
+    "name": "오령회랑",
+    "scale": "중회랑",
+    "sides": [
+      [
+        "SYS-13"
+      ],
+      [
+        "SYS-17"
+      ]
+    ],
+    "multiplier": 3.0,
+    "source": "오령",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-14",
+    "name": "하서회랑",
+    "scale": "중회랑",
+    "sides": [
+      [
+        "SYS-10"
+      ],
+      [
+        "EXT:서역"
+      ]
+    ],
+    "multiplier": 3.0,
+    "source": "하서주랑",
+    "effect": null,
+    "canal": null
+  },
+  {
+    "id": "COR-15",
+    "name": "남중산도",
+    "scale": "중회랑",
+    "sides": [
+      [
+        "SYS-11"
+      ],
+      [
+        "SYS-19"
+      ]
+    ],
+    "multiplier": 3.0,
+    "source": "노수·오도",
+    "effect": null,
+    "canal": null
+  }
+]

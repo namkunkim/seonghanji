@@ -1,0 +1,62 @@
+[
+  {
+    "id": "SCN-01",
+    "year": 190,
+    "name": "군웅할거",
+    "act_count": 14,
+    "faction_count": 19,
+    "duration_hours": 53.0,
+    "occupancy": 0.88,
+    "objective": "세력 확립"
+  },
+  {
+    "id": "SCN-02",
+    "year": 200,
+    "name": "관도 전야",
+    "act_count": 12,
+    "faction_count": 10,
+    "duration_hours": 43.0,
+    "occupancy": 0.9,
+    "objective": "하북 결전"
+  },
+  {
+    "id": "SCN-03",
+    "year": 208,
+    "name": "적벽 전야",
+    "act_count": 10,
+    "faction_count": 9,
+    "duration_hours": 31.5,
+    "occupancy": 0.88,
+    "objective": "남북 대치"
+  },
+  {
+    "id": "SCN-04",
+    "year": 219,
+    "name": "삼국 정립",
+    "act_count": 12,
+    "faction_count": 4,
+    "duration_hours": 59.0,
+    "occupancy": 0.82,
+    "objective": "형주 쟁탈"
+  },
+  {
+    "id": "SCN-05",
+    "year": 228,
+    "name": "출사표",
+    "act_count": 11,
+    "faction_count": 4,
+    "duration_hours": 69.0,
+    "occupancy": 0.88,
+    "objective": "북벌 또는 저지"
+  },
+  {
+    "id": "SCN-06",
+    "year": 263,
+    "name": "천하통일",
+    "act_count": 9,
+    "faction_count": 3,
+    "duration_hours": 49.0,
+    "occupancy": 0.91,
+    "objective": "최종 국면"
+  }
+]

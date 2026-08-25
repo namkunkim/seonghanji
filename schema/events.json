@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/events.json",
+  "title": "기능 이벤트",
+  "description": "기능 이벤트 40. F-01~F-40 기존 체계 유지 (data-model.md §2.2)",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "name",
+      "classification"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "$ref": "_defs.json#/$defs/fId"
+      },
+      "name": {
+        "type": "string"
+      },
+      "classification": {
+        "enum": [
+          "FIXED",
+          "LIKELY",
+          "CHOICE"
+        ]
+      },
+      "gauge": {
+        "enum": [
+          "천명",
+          "패권압력",
+          "동맹신뢰도",
+          "권역안정도"
+        ],
+        "description": "J5 신설 눈금 넷"
+      },
+      "threshold": {
+        "type": [
+          "number",
+          "null"
+        ]
+      },
+      "condition": {
+        "type": "string"
+      },
+      "effect": {
+        "type": "string"
+      },
+      "scenarios": {
+        "type": "array",
+        "items": {
+          "$ref": "_defs.json#/$defs/scnId"
+        }
+      }
+    }
+  },
+  "minItems": 1
+}

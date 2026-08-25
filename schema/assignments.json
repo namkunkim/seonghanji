@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/assignments.json",
+  "title": "인물 배치",
+  "description": "399명 x 6시나리오. character-assignments.md §3. 208 등장 309명 (명장 120 + 일반 189)",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "character",
+      "scenario",
+      "status"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "character": {
+        "$ref": "_defs.json#/$defs/chrId"
+      },
+      "scenario": {
+        "$ref": "_defs.json#/$defs/scnId"
+      },
+      "status": {
+        "enum": [
+          "소속",
+          "미등장",
+          "사망",
+          "재야"
+        ]
+      },
+      "faction": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "status가 소속일 때만"
+      },
+      "region": {
+        "anyOf": [
+          {
+            "$ref": "_defs.json#/$defs/rgnId"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "minItems": 1
+}

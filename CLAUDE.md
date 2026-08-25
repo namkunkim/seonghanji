@@ -63,7 +63,11 @@
 - 화자(사가)는 확신하지 않는다. 「나는 알지 못한다」
 - 아이러니는 병치로 만든다
 - 숫자는 건조하게
-- **SF 어휘 최소화.** 「우주」「은하」「행성계」 금지 — 이 세계 사람들에게 성간 항행은 일상이다
+- **SF 어휘 최소화.** **서사 텍스트 본문에 한한다.** 「우주」「은하」「행성계」 금지 —
+  이 세계 사람들에게 성간 항행은 일상이다. 성역·권역·회랑·항로·함대·구지를 쓴다
+  → **기획·시스템 문서와 UI 문구에는 적용하지 않는다.** 주제축 「은하는 반드시 하나여야
+  하는가」·「우주 SF × 삼국지」가 그 예다 (2026-08-24 범위 명시. 규칙 변경이 아니라,
+  범위 없는 「금지」 표현이 전역 금지로 오독되어 온 것을 바로잡은 것)
 
 ---
 
@@ -175,7 +179,7 @@
 ```
 docs/
 ├── INDEX.md        ← 전체 색인 · 핵심 수치 한눈에
-├── DECISIONS.md    ← 기각안 6 · 변경 이력 21 (재론 금지 사유의 정본)
+├── DECISIONS.md    ← 기각안 6 · 변경 이력 31 (재론 금지 사유의 정본)
 ├── 00-overview/    design-overview · glossary
 ├── 01-world/       star-map · region-power
 ├── 02-characters/  generals-150 · generals-stats · officers-256
@@ -188,7 +192,56 @@ docs/
 ├── 05-narrative/   prologue · epilogues · ending-variations
 │                   interludes · event-scripts
 ├── 06-tech/        ai-design · ui-design
+├── 07-production/  dev-requirements · data-model · roadmap-solo
+│                   asset-ledger · m0-report · requirements
 └── assets/         star-map.html (브라우저로 열어볼 것)
 ```
 
 **처음 읽는 순서:** `HANDOVER.md` → `docs/INDEX.md` → `docs/assets/star-map.html`
+
+---
+
+## 9. 설치된 스킬 (2026-08-24)
+
+`.agents/skills/`에 5개. `.claude/skills/`는 그쪽을 가리키는 심링크다.
+설치·갱신은 `npx skills add <owner/repo> -s <이름> -y --full-depth`.
+
+| 스킬 | 부르는 때 | 이 저장소에서의 용도 |
+|---|---|---|
+| **domain-modeling** | 용어를 정하거나 되돌리기 어려운 결정을 남길 때 | `glossary.md`를 정본 용어집으로, `DECISIONS.md`를 ADR로 운용. **`dev-requirements.md` §3.4 ID 체계** 확정에 쓴다 |
+| **oblique-worldbuilding** | 인용·기록물·에피그래프를 쓸 때 | **Extinction 4계열 세력 변주** 등 미착수 서사. 기록자의 Position·Need·Lens·**Blindness**로 서술 |
+| **korean-spell-check** | 한국어 문서 교정 | 신규·개정 문서 교정. **⚠ 외부 전송 주의 — 아래 참조** |
+| **governance-systems** | 세력 구조를 검산할 때 | 배치 감사용. **신규 설계용이 아니다** |
+| **design-doc-mermaid** | 결정을 비교·시각화할 때 | `dev-requirements.md` §2.2·§4.3 등 **미정 결정**을 다이어그램으로 대조 |
+
+### 프로젝트 전용 스킬 3개 — `.claude/skills/` (자작, git 추적)
+
+| 스킬 | 부르는 때 | 용도 |
+|---|---|---|
+| **asset-sourcing** | 에셋을 구하거나 만들 때 · 라이선스 확인 | 항목별 **자작/무료/외주** 판정 + `asset-ledger.md` 대장 기록. 「무료 ≠ 상용 가능」 |
+| **probability-disclosure** | 과금·뽑기·확률 설계 시 | **초빙권 뽑기**의 확률정보 표시 의무 점검. `dev-requirements.md` §7.2 [중대] |
+| **doc-data-check** | 문서 수정 후 · 커밋 전 · 데이터셋 작업 시 | 정본 수치 대조 · 표기 규칙 · 서사 SF 어휘 0회 · **알려진 함정 5종** |
+
+> 설치 스킬은 `.agents/skills/`(심링크 무시), 전용 스킬은 `.claude/skills/`(추적).
+> `.gitignore`가 설치분 5개만 이름으로 제외한다.
+
+### 예제 — 이렇게 부르고, 이런 것이 나온다
+
+| 스킬 | 이렇게 부른다 | 나오는 것 | 요점 |
+|---|---|---|---|
+| **domain-modeling** | 「권역·성계·성역을 코드에서 뭐라 부를지 정하자」 | ① `glossary.md`에 「권역(Region) — 45개, 지배의 최소 단위」 등재 ② **「성역」이 문서마다 다른 뜻으로 쓰인다**고 즉시 지적 ③ 확정안을 `DECISIONS.md`에 ADR로 | 용어를 **정할 때**만 부른다. 코드가 없어도 작동한다 |
+| **oblique-worldbuilding** | 「조조 세력 Extinction 엔딩의 에피그래프를 써줘」 | 승상부 말단 서기의 **보급 대장 한 장**.<br>Position=말단 서기 / Need=상부는 건재하다고 믿어야 한다 / Lens=회계 장부 / **Blindness=함대가 왜 미귀환인지 모른다**<br>→ 수령란만 비어 있고 숫자는 건조하다 | 「멸망했다」를 **쓰지 않고** 보여준다. §3 검사 후 반영 |
+| **korean-spell-check** | 「이 문단 맞춤법 봐줘」 | 「할수있다 → 할 수 있다」 식 교정 목록 | **대상은 실무 문서만.** 서사 원고는 금지 (아래 규칙 3) |
+| **governance-systems** | 「219년 조조 세력 배치를 안티패턴으로 훑어줘」 | 「**Administrative Implausibility** — 회랑 셋 너머 권역을 직할로 두고 있다」 식 지적 목록 | **지적을 받는 도구지 고치는 도구가 아니다.** §2와 충돌하면 기각 |
+| **design-doc-mermaid** | 「§2.2 지연 산출 대 상시 틱을 시퀀스 다이어그램으로 비교해줘」 | 두 안의 `sequenceDiagram` 2개 + 차이 대조표 | **미정 결정에만.** 확정된 것은 그리지 않는다 |
+
+### 운용 규칙
+
+1. **불가침 원칙(§2)이 스킬보다 우선한다.** `governance-systems`가 권역 45개나 회랑
+   강도를 문제 삼아도 바꾸지 않는다. 지적은 `DECISIONS.md`에 기각 사유로 남긴다.
+2. **`oblique-worldbuilding` 출력은 §3 검사 후 반영한다.**
+   `grep -c "우주\|은하\|행성계" docs/05-narrative/*.md` — 지침 줄 제외 전부 0이어야 한다.
+3. **`korean-spell-check`는 본문을 외부 서비스(`nara-speller.co.kr`)로 보낸다.**
+   해당 서비스는 **비상업적 용도**로 안내되어 있다. 이 프로젝트는 상용 게임이므로
+   **미공개 서사 텍스트에는 쓰지 않는다.** 쓰려면 이용 조건을 먼저 확인할 것.
+4. **다이어그램은 결정을 비교할 때만 그린다.** 확정된 것을 그리면 §4.4 정합성 부담만 는다.

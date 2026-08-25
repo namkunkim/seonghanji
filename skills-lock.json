@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "design-doc-mermaid": {
+      "source": "spillwavesolutions/design-doc-mermaid",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "36e44f50fdbfd9e0868c1237ba879395646f42f7db780fe59f1bf4c35947869b"
+    },
+    "domain-modeling": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/domain-modeling/SKILL.md",
+      "computedHash": "336547f3ff285e822fc70b69b170dc58bceef9c8ed5fad18de0046287d6be837"
+    },
+    "governance-systems": {
+      "source": "jwynia/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/creative/fiction/worldbuilding/governance-systems/SKILL.md",
+      "computedHash": "f6ccdb262957ed8ba637233946b3b7d2b32c36cbf3c5844f65ea3edc72197c62"
+    },
+    "korean-spell-check": {
+      "source": "nomadamas/k-skill",
+      "sourceType": "github",
+      "skillPath": "korean-spell-check/SKILL.md",
+      "computedHash": "eaf85f5606cf7e1762d46cb43817ea4a97c2e57769733f4f70195e188b03a0d5"
+    },
+    "oblique-worldbuilding": {
+      "source": "jwynia/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/creative/fiction/worldbuilding/oblique-worldbuilding/SKILL.md",
+      "computedHash": "2e4e287edd8b9bcc1cfc9d67ec8f7f84aaf23b8e5e3c90b520ac6cf8e6ebee17"
+    }
+  }
+}

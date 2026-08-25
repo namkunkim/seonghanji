@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/acts.json",
+  "title": "ACT",
+  "description": "ACT 68. 전역 연속 ID. 시나리오 소속은 속성 (data-model.md §2.4)",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "scenario",
+      "no",
+      "type",
+      "duration_hours"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "$ref": "_defs.json#/$defs/actId"
+      },
+      "scenario": {
+        "$ref": "_defs.json#/$defs/scnId"
+      },
+      "no": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "시나리오 내 표시 번호. ID가 아니다"
+      },
+      "type": {
+        "enum": [
+          "개막",
+          "결정",
+          "기동",
+          "회전",
+          "공략",
+          "소모",
+          "종료"
+        ]
+      },
+      "duration_hours": {
+        "type": "number",
+        "minimum": 0
+      },
+      "title": {
+        "type": "string"
+      }
+    }
+  },
+  "minItems": 1
+}

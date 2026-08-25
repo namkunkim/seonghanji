@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/routes.json",
+  "title": "항로",
+  "description": "성계 간 연결망. star-map.md §4.5 인접 관계표가 정본. 회랑 연결도 포함해야 도달성 검사가 성립하므로, 회랑 간선은 corridor 로 가리킨다",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "connects",
+      "kind"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "$ref": "_defs.json#/$defs/rteId"
+      },
+      "connects": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "anyOf": [
+            {
+              "$ref": "_defs.json#/$defs/sysId"
+            },
+            {
+              "type": "string",
+              "pattern": "^EXT:"
+            }
+          ]
+        },
+        "description": "성계 둘. 서역처럼 19성계 밖이면 EXT:서역"
+      },
+      "kind": {
+        "enum": [
+          "고속항로",
+          "고속항로+관문",
+          "기저항로",
+          "회랑"
+        ],
+        "description": "고속항로+관문은 대항로가 관문(호뢰·관도·양번)을 지나는 간선. x1.5 = 68분 (time-and-monetization.md §3.1)"
+      },
+      "multiplier": {
+        "type": [
+          "number",
+          "null"
+        ],
+        "minimum": 1,
+        "description": "기준 단위 45분. 고속 x1 · 기저 x4. 회랑은 corridor 쪽 배율을 쓴다"
+      },
+      "corridor": {
+        "anyOf": [
+          {
+            "$ref": "_defs.json#/$defs/corId"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "kind 가 회랑일 때 해당 회랑"
+      }
+    }
+  },
+  "minItems": 1
+}

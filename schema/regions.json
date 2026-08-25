@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/regions.json",
+  "title": "권역",
+  "description": "권역 45. region-power.md §2. 불가침 §2-7 — 수를 줄이지 않는다",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "name",
+      "system",
+      "population",
+      "production",
+      "income",
+      "defense"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "$ref": "_defs.json#/$defs/rgnId"
+      },
+      "name": {
+        "type": "string"
+      },
+      "system": {
+        "$ref": "_defs.json#/$defs/sysId"
+      },
+      "is_seat": {
+        "type": "boolean",
+        "description": "성계 치소 (문서의 별표)"
+      },
+      "population": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "production": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "income": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "dev_potential": {
+        "anyOf": [
+          {
+            "$ref": "_defs.json#/$defs/level"
+          },
+          {
+            "const": "없음"
+          }
+        ],
+        "description": "개발여지. 태양계권은 개발이 아니라 복구 대상"
+      },
+      "defense": {
+        "$ref": "_defs.json#/$defs/level"
+      },
+      "adjacent": {
+        "type": "array",
+        "items": {
+          "$ref": "_defs.json#/$defs/rgnId"
+        }
+      },
+      "notes": {
+        "type": "string"
+      },
+      "strongholds": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "소속 거점 (partial-occupation.md §2.1)"
+      },
+      "routes_hosted": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "이 권역에 귀속된 항로·관문. star-map.md §5 — 「항로·회랑은 특정 권역에 귀속되므로 한 권역만 빼앗아 항로를 끊을 수 있다」"
+      }
+    }
+  },
+  "minItems": 1
+}

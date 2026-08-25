@@ -1,0 +1,80 @@
+[
+  {
+    "id": "SHP-01",
+    "name": "강습모함",
+    "ship_class": "모함",
+    "length_m": 1300,
+    "phase_coefficients": {
+      "contact": 0.7,
+      "barrage": 0.6,
+      "engagement": 0.8,
+      "assault": 2.0,
+      "resolution": 1.0
+    }
+  },
+  {
+    "id": "SHP-02",
+    "name": "공성함",
+    "ship_class": "공성함",
+    "length_m": 1250,
+    "phase_coefficients": {
+      "contact": 0.5,
+      "barrage": 1.2,
+      "engagement": 0.6,
+      "assault": 0.8,
+      "resolution": 0.5
+    }
+  },
+  {
+    "id": "SHP-03",
+    "name": "포격함",
+    "ship_class": "주력함",
+    "length_m": 1100,
+    "phase_coefficients": {
+      "contact": 0.9,
+      "barrage": 1.8,
+      "engagement": 0.7,
+      "assault": 0.5,
+      "resolution": 0.8
+    }
+  },
+  {
+    "id": "SHP-04",
+    "name": "전열함",
+    "ship_class": "주력함",
+    "length_m": 950,
+    "phase_coefficients": {
+      "contact": 0.8,
+      "barrage": 1.0,
+      "engagement": 1.6,
+      "assault": 0.9,
+      "resolution": 1.1
+    }
+  },
+  {
+    "id": "SHP-05",
+    "name": "보급함",
+    "ship_class": "지원함",
+    "length_m": 1000,
+    "phase_coefficients": {
+      "contact": 0.4,
+      "barrage": 0.4,
+      "engagement": 0.5,
+      "assault": 0.4,
+      "resolution": null
+    }
+  },
+  {
+    "id": "SHP-06",
+    "name": "전자전함",
+    "ship_class": "초계함",
+    "length_m": 240,
+    "phase_coefficients": {
+      "contact": 1.9,
+      "barrage": 1.1,
+      "engagement": 0.9,
+      "assault": 0.7,
+      "resolution": 0.6
+    }
+  }
+]

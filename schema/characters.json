@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/characters.json",
+  "title": "인물",
+  "description": "인물 492. 계층은 속성이지 정체성이 아니다 — 접두사를 나누지 않는다 (data-model.md §2.3)",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "name",
+      "tier",
+      "stats",
+      "disposition"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "$ref": "_defs.json#/$defs/chrId"
+      },
+      "name": {
+        "type": "string"
+      },
+      "tier": {
+        "enum": [
+          "명장",
+          "일반무장",
+          "이역"
+        ],
+        "description": "속성. V-05에서 120 → 150으로 재조정된 이력이 있다"
+      },
+      "stats": {
+        "type": "object",
+        "required": [
+          "통솔",
+          "무력",
+          "지력",
+          "정치",
+          "매력"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "통솔": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "무력": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "지력": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "정치": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "매력": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        }
+      },
+      "disposition": {
+        "enum": [
+          "절의",
+          "명사",
+          "실무",
+          "야심",
+          "무뢰"
+        ],
+        "description": "dispositions.md §2"
+      },
+      "traits": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "era": {
+        "enum": [
+          "전기",
+          "중기",
+          "후기"
+        ]
+      },
+      "origin_faction": {
+        "type": "string"
+      }
+    }
+  },
+  "minItems": 1
+}

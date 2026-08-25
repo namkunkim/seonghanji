@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/systems.json",
+  "title": "성계",
+  "description": "성계 19. star-map.md §1. 성역은 같은 대상의 행정 명칭이며 별도 ID를 갖지 않는다",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "name",
+      "display_name",
+      "grade",
+      "regions"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "$ref": "_defs.json#/$defs/sysId"
+      },
+      "name": {
+        "type": "string",
+        "description": "성계명 (형주)"
+      },
+      "display_name": {
+        "type": "string",
+        "description": "성역명 (형주성역 · 중앙성역)"
+      },
+      "display_no": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "문서 표시 번호 11-b 등. ID가 아니다 (data-model.md §2.5)"
+      },
+      "split_from": {
+        "anyOf": [
+          {
+            "$ref": "_defs.json#/$defs/sysId"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "분리·승격 이력"
+      },
+      "grade": {
+        "$ref": "_defs.json#/$defs/grade"
+      },
+      "terran_planets": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "지구형 행성"
+      },
+      "regions": {
+        "type": "array",
+        "items": {
+          "$ref": "_defs.json#/$defs/rgnId"
+        },
+        "minItems": 1
+      }
+    }
+  },
+  "minItems": 1
+}

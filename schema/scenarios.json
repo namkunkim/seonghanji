@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/scenarios.json",
+  "title": "시나리오",
+  "description": "시나리오 6. 단기판은 SCN-03 하나만 쓴다",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "year",
+      "name",
+      "act_count",
+      "faction_count"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "$ref": "_defs.json#/$defs/scnId"
+      },
+      "year": {
+        "type": "integer"
+      },
+      "name": {
+        "type": "string"
+      },
+      "act_count": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "faction_count": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "duration_hours": {
+        "type": "number",
+        "description": "ACT 소요 합"
+      },
+      "occupancy": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "ACT 점유율. 나머지가 자유 행동 구간"
+      },
+      "objective": {
+        "type": "string"
+      }
+    }
+  },
+  "minItems": 1
+}

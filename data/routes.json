@@ -1,0 +1,372 @@
+[
+  {
+    "id": "RTE-001",
+    "connects": [
+      "EXT:서역",
+      "SYS-10"
+    ],
+    "kind": "회랑",
+    "multiplier": 3.0,
+    "corridor": "COR-14"
+  },
+  {
+    "id": "RTE-002",
+    "connects": [
+      "SYS-01",
+      "SYS-02"
+    ],
+    "kind": "고속항로+관문",
+    "multiplier": 1.5,
+    "corridor": "COR-08"
+  },
+  {
+    "id": "RTE-003",
+    "connects": [
+      "SYS-01",
+      "SYS-03"
+    ],
+    "kind": "고속항로+관문",
+    "multiplier": 1.5,
+    "corridor": "COR-08"
+  },
+  {
+    "id": "RTE-004",
+    "connects": [
+      "SYS-01",
+      "SYS-06"
+    ],
+    "kind": "고속항로+관문",
+    "multiplier": 1.5,
+    "corridor": "COR-09"
+  },
+  {
+    "id": "RTE-005",
+    "connects": [
+      "SYS-01",
+      "SYS-08"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-006",
+    "connects": [
+      "SYS-01",
+      "SYS-09"
+    ],
+    "kind": "회랑",
+    "multiplier": 5.0,
+    "corridor": "COR-01"
+  },
+  {
+    "id": "RTE-007",
+    "connects": [
+      "SYS-01",
+      "SYS-14"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-008",
+    "connects": [
+      "SYS-02",
+      "SYS-03"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-009",
+    "connects": [
+      "SYS-02",
+      "SYS-05"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-010",
+    "connects": [
+      "SYS-02",
+      "SYS-14"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-011",
+    "connects": [
+      "SYS-02",
+      "SYS-16"
+    ],
+    "kind": "고속항로",
+    "multiplier": 1.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-012",
+    "connects": [
+      "SYS-03",
+      "SYS-04"
+    ],
+    "kind": "고속항로",
+    "multiplier": 1.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-013",
+    "connects": [
+      "SYS-03",
+      "SYS-05"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-014",
+    "connects": [
+      "SYS-03",
+      "SYS-06"
+    ],
+    "kind": "회랑",
+    "multiplier": 3.0,
+    "corridor": "COR-09"
+  },
+  {
+    "id": "RTE-015",
+    "connects": [
+      "SYS-04",
+      "SYS-05"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-016",
+    "connects": [
+      "SYS-04",
+      "SYS-06"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-017",
+    "connects": [
+      "SYS-05",
+      "SYS-16"
+    ],
+    "kind": "고속항로",
+    "multiplier": 1.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-018",
+    "connects": [
+      "SYS-06",
+      "SYS-07"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-019",
+    "connects": [
+      "SYS-06",
+      "SYS-08"
+    ],
+    "kind": "회랑",
+    "multiplier": 5.0,
+    "corridor": "COR-07"
+  },
+  {
+    "id": "RTE-020",
+    "connects": [
+      "SYS-07",
+      "SYS-08"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-021",
+    "connects": [
+      "SYS-07",
+      "SYS-18"
+    ],
+    "kind": "회랑",
+    "multiplier": 3.0,
+    "corridor": "COR-12"
+  },
+  {
+    "id": "RTE-022",
+    "connects": [
+      "SYS-08",
+      "SYS-09"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-023",
+    "connects": [
+      "SYS-09",
+      "SYS-10"
+    ],
+    "kind": "고속항로",
+    "multiplier": 1.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-024",
+    "connects": [
+      "SYS-09",
+      "SYS-12"
+    ],
+    "kind": "회랑",
+    "multiplier": 5.0,
+    "corridor": "COR-03"
+  },
+  {
+    "id": "RTE-025",
+    "connects": [
+      "SYS-09",
+      "SYS-12"
+    ],
+    "kind": "회랑",
+    "multiplier": 3.0,
+    "corridor": "COR-11"
+  },
+  {
+    "id": "RTE-026",
+    "connects": [
+      "SYS-09",
+      "SYS-14"
+    ],
+    "kind": "회랑",
+    "multiplier": 3.0,
+    "corridor": "COR-10"
+  },
+  {
+    "id": "RTE-027",
+    "connects": [
+      "SYS-11",
+      "SYS-12"
+    ],
+    "kind": "회랑",
+    "multiplier": 5.0,
+    "corridor": "COR-02"
+  },
+  {
+    "id": "RTE-028",
+    "connects": [
+      "SYS-11",
+      "SYS-13"
+    ],
+    "kind": "회랑",
+    "multiplier": 5.0,
+    "corridor": "COR-04"
+  },
+  {
+    "id": "RTE-029",
+    "connects": [
+      "SYS-11",
+      "SYS-19"
+    ],
+    "kind": "회랑",
+    "multiplier": 3.0,
+    "corridor": "COR-15"
+  },
+  {
+    "id": "RTE-030",
+    "connects": [
+      "SYS-12",
+      "SYS-14"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-031",
+    "connects": [
+      "SYS-13",
+      "SYS-14"
+    ],
+    "kind": "고속항로+관문",
+    "multiplier": 1.5,
+    "corridor": "COR-06"
+  },
+  {
+    "id": "RTE-032",
+    "connects": [
+      "SYS-13",
+      "SYS-15"
+    ],
+    "kind": "고속항로",
+    "multiplier": 1.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-033",
+    "connects": [
+      "SYS-13",
+      "SYS-16"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-034",
+    "connects": [
+      "SYS-13",
+      "SYS-17"
+    ],
+    "kind": "회랑",
+    "multiplier": 3.0,
+    "corridor": "COR-13"
+  },
+  {
+    "id": "RTE-035",
+    "connects": [
+      "SYS-15",
+      "SYS-16"
+    ],
+    "kind": "회랑",
+    "multiplier": 5.0,
+    "corridor": "COR-05"
+  },
+  {
+    "id": "RTE-036",
+    "connects": [
+      "SYS-15",
+      "SYS-17"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  },
+  {
+    "id": "RTE-037",
+    "connects": [
+      "SYS-17",
+      "SYS-19"
+    ],
+    "kind": "기저항로",
+    "multiplier": 4.0,
+    "corridor": null
+  }
+]

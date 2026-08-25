@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/formations.json",
+  "title": "진형",
+  "description": "진형 7. ship-specs.md §5",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "name",
+      "width",
+      "coefficients",
+      "required_command"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "$ref": "_defs.json#/$defs/frmId"
+      },
+      "name": {
+        "type": "string"
+      },
+      "directive": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "대응 지시. 팔진은 없음"
+      },
+      "width": {
+        "enum": [
+          "최협",
+          "협",
+          "중",
+          "광",
+          "가변"
+        ]
+      },
+      "coefficients": {
+        "$ref": "_defs.json#/$defs/phaseCoeff"
+      },
+      "required_command": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "요구 통솔. 팔진 90 + 전용"
+      },
+      "requires_trait": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "팔진 전용 조건"
+      }
+    }
+  },
+  "minItems": 1
+}

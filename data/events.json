@@ -1,0 +1,402 @@
+[
+  {
+    "id": "F-01",
+    "name": "질서의 공백",
+    "classification": "FIXED",
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-02",
+    "name": "상징의 쟁탈",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-03",
+    "name": "상징의 발견",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-04",
+    "name": "참칭",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-05",
+    "name": "격상 선언",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-06",
+    "name": "형식을 갖춘 왕조 교체",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-07",
+    "name": "견제 연합의 결성",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-08",
+    "name": "연합 교섭",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-09",
+    "name": "최강자의 분열 외교",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-10",
+    "name": "연합의 해체",
+    "classification": "LIKELY",
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-11",
+    "name": "동맹 신뢰도 청산",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-12",
+    "name": "동맹의 배후 기습",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-13",
+    "name": "고립과 비지화",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-14",
+    "name": "동맹 복원",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-15",
+    "name": "요충 쟁탈",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-16",
+    "name": "최강자의 관문을 향한 도박적 공세",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-17",
+    "name": "약자의 반복 공세",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-18",
+    "name": "보급 거점 강습",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-19",
+    "name": "열세측의 비대칭 결전",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-20",
+    "name": "비인접 침투",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-21",
+    "name": "순류 남정",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-22",
+    "name": "복수 원정과 그 실패",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-23",
+    "name": "관문 방어전",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-24",
+    "name": "요충 위임의 실패",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-25",
+    "name": "최후의 항전",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-26",
+    "name": "항복 결정",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-27",
+    "name": "의사결정 지연",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-28",
+    "name": "내부자의 이탈",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-29",
+    "name": "내부 균열과 이간",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-30",
+    "name": "지도자의 죽음과 후계 공백",
+    "classification": "FIXED",
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-31",
+    "name": "권신의 대두",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-32",
+    "name": "전횡",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-33",
+    "name": "후계 분쟁",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-34",
+    "name": "전공자의 반역",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-35",
+    "name": "토호의 귀부",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-36",
+    "name": "미래를 태우는 통치",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-37",
+    "name": "수도 파괴와 천도",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-38",
+    "name": "이민족 연계",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-39",
+    "name": "후방 반란",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  },
+  {
+    "id": "F-40",
+    "name": "땅 없는 자의 유랑",
+    "classification": null,
+    "gauge": null,
+    "threshold": null,
+    "condition": null,
+    "effect": null,
+    "scenarios": []
+  }
+]

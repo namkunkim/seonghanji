@@ -1,0 +1,298 @@
+[
+  {
+    "id": "SYS-01",
+    "name": "사예",
+    "display_name": "중앙성역",
+    "display_no": "1",
+    "split_from": null,
+    "grade": "특급",
+    "terran_planets": [
+      "낙양",
+      "장안"
+    ],
+    "regions": [
+      "RGN-17",
+      "RGN-18",
+      "RGN-19"
+    ]
+  },
+  {
+    "id": "SYS-02",
+    "name": "예주",
+    "display_name": "예주성역",
+    "display_no": "2",
+    "split_from": null,
+    "grade": "1급",
+    "terran_planets": [
+      "허"
+    ],
+    "regions": [
+      "RGN-12",
+      "RGN-13"
+    ]
+  },
+  {
+    "id": "SYS-03",
+    "name": "연주",
+    "display_name": "연주성역",
+    "display_no": "3",
+    "split_from": null,
+    "grade": "2급",
+    "terran_planets": [
+      "진류"
+    ],
+    "regions": [
+      "RGN-34",
+      "RGN-35"
+    ]
+  },
+  {
+    "id": "SYS-04",
+    "name": "청주",
+    "display_name": "청주성역",
+    "display_no": "4",
+    "split_from": null,
+    "grade": "2급",
+    "terran_planets": [
+      "임치"
+    ],
+    "regions": [
+      "RGN-36",
+      "RGN-37"
+    ]
+  },
+  {
+    "id": "SYS-05",
+    "name": "서주",
+    "display_name": "서주성역",
+    "display_no": "5",
+    "split_from": null,
+    "grade": "2급",
+    "terran_planets": [
+      "하비"
+    ],
+    "regions": [
+      "RGN-38",
+      "RGN-39"
+    ]
+  },
+  {
+    "id": "SYS-06",
+    "name": "기주",
+    "display_name": "기주성역",
+    "display_no": "6",
+    "split_from": null,
+    "grade": "특급",
+    "terran_planets": [
+      "업"
+    ],
+    "regions": [
+      "RGN-14",
+      "RGN-15",
+      "RGN-16"
+    ]
+  },
+  {
+    "id": "SYS-07",
+    "name": "유주",
+    "display_name": "유주성역",
+    "display_no": "7",
+    "split_from": null,
+    "grade": "1급",
+    "terran_planets": [
+      "계"
+    ],
+    "regions": [
+      "RGN-30",
+      "RGN-31"
+    ]
+  },
+  {
+    "id": "SYS-08",
+    "name": "병주",
+    "display_name": "병주성역",
+    "display_no": "8",
+    "split_from": null,
+    "grade": "2급",
+    "terran_planets": [
+      "진양"
+    ],
+    "regions": [
+      "RGN-40",
+      "RGN-41"
+    ]
+  },
+  {
+    "id": "SYS-09",
+    "name": "옹주",
+    "display_name": "옹주성역",
+    "display_no": "9",
+    "split_from": null,
+    "grade": "1급",
+    "terran_planets": [
+      "장안 서부"
+    ],
+    "regions": [
+      "RGN-27",
+      "RGN-28",
+      "RGN-29"
+    ]
+  },
+  {
+    "id": "SYS-10",
+    "name": "양주",
+    "display_name": "양주성역",
+    "display_no": "10",
+    "split_from": null,
+    "grade": "2급",
+    "terran_planets": [
+      "무위"
+    ],
+    "regions": [
+      "RGN-42",
+      "RGN-43"
+    ]
+  },
+  {
+    "id": "SYS-11",
+    "name": "익주",
+    "display_name": "익주성역",
+    "display_no": "11",
+    "split_from": null,
+    "grade": "특급",
+    "terran_planets": [
+      "성도"
+    ],
+    "regions": [
+      "RGN-05",
+      "RGN-06",
+      "RGN-07"
+    ]
+  },
+  {
+    "id": "SYS-12",
+    "name": "한중",
+    "display_name": "한중성역",
+    "display_no": "11-b",
+    "split_from": "SYS-11",
+    "grade": "특급",
+    "terran_planets": [
+      "남정"
+    ],
+    "regions": [
+      "RGN-08",
+      "RGN-09"
+    ]
+  },
+  {
+    "id": "SYS-13",
+    "name": "형주",
+    "display_name": "형주성역",
+    "display_no": "12",
+    "split_from": null,
+    "grade": "특급",
+    "terran_planets": [
+      "양양",
+      "강릉",
+      "구지"
+    ],
+    "regions": [
+      "RGN-01",
+      "RGN-02",
+      "RGN-03",
+      "RGN-04"
+    ]
+  },
+  {
+    "id": "SYS-14",
+    "name": "남양",
+    "display_name": "남양성역",
+    "display_no": "12-b",
+    "split_from": "SYS-13",
+    "grade": "1급",
+    "terran_planets": [
+      "완"
+    ],
+    "regions": [
+      "RGN-25",
+      "RGN-26"
+    ]
+  },
+  {
+    "id": "SYS-15",
+    "name": "오회",
+    "display_name": "오회성역",
+    "display_no": "13",
+    "split_from": null,
+    "grade": "특급",
+    "terran_planets": [
+      "건업",
+      "오"
+    ],
+    "regions": [
+      "RGN-20",
+      "RGN-21",
+      "RGN-22"
+    ]
+  },
+  {
+    "id": "SYS-16",
+    "name": "회남",
+    "display_name": "회남성역",
+    "display_no": "13-b",
+    "split_from": "SYS-15",
+    "grade": "1급",
+    "terran_planets": [
+      "수춘"
+    ],
+    "regions": [
+      "RGN-23",
+      "RGN-24"
+    ]
+  },
+  {
+    "id": "SYS-17",
+    "name": "교주",
+    "display_name": "교주성역",
+    "display_no": "14",
+    "split_from": null,
+    "grade": "2급",
+    "terran_planets": [
+      "교지"
+    ],
+    "regions": [
+      "RGN-44",
+      "RGN-45"
+    ]
+  },
+  {
+    "id": "SYS-18",
+    "name": "요동",
+    "display_name": "요동성역",
+    "display_no": "15",
+    "split_from": "SYS-07",
+    "grade": "1급",
+    "terran_planets": [
+      "양평"
+    ],
+    "regions": [
+      "RGN-32",
+      "RGN-33"
+    ]
+  },
+  {
+    "id": "SYS-19",
+    "name": "남중",
+    "display_name": "남중성역",
+    "display_no": "16",
+    "split_from": "SYS-11",
+    "grade": "2급",
+    "terran_planets": [
+      "미개척"
+    ],
+    "regions": [
+      "RGN-10",
+      "RGN-11"
+    ]
+  }
+]

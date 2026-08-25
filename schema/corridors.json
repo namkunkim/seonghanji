@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/corridors.json",
+  "title": "회랑",
+  "description": "회랑 15. star-map.md §5. 항로와 분리한다 — 스키마가 「×1이 되지 않는다」를 강제하기 위함 (불가침 §2-2)",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "name",
+      "sides",
+      "scale",
+      "multiplier"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "$ref": "_defs.json#/$defs/corId"
+      },
+      "name": {
+        "type": "string"
+      },
+      "scale": {
+        "enum": [
+          "중회랑",
+          "대회랑"
+        ]
+      },
+      "multiplier": {
+        "type": "number",
+        "minimum": 2,
+        "description": "통과 배율. 기준 단위 45분. 중회랑 x3 · 대회랑 x5. 불가침 §2-2 — 어떤 수단으로도 1이 되지 않는다"
+      },
+      "effect": {
+        "type": "string",
+        "description": "게임 효과 (검각: 방어 1/10로 저지)"
+      },
+      "source": {
+        "type": "string",
+        "description": "원전 근거"
+      },
+      "canal": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "영거 운하 등 인공 수로. 유일한 -50% 예외"
+      },
+      "sides": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "_defs.json#/$defs/sysId"
+              },
+              {
+                "$ref": "_defs.json#/$defs/rgnId"
+              },
+              {
+                "type": "string",
+                "pattern": "^EXT:"
+              }
+            ]
+          }
+        },
+        "description": "회랑의 양쪽 끝. 한쪽이 복수 성계인 경우가 있다 — 호뢰관문(사예 ↔ 연주·예주) · 관도관문(사예·연주 ↔ 기주). 검각회랑처럼 끝점이 권역인 경우, 하서회랑처럼 성계 밖(EXT:서역)인 경우도 있다"
+      }
+    }
+  },
+  "minItems": 1
+}

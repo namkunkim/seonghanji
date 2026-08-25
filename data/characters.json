@@ -1,0 +1,8066 @@
+[
+  {
+    "id": "CHR-0001",
+    "name": "가후",
+    "tier": "명장",
+    "stats": {
+      "통솔": 70,
+      "무력": 32,
+      "지력": 97,
+      "정치": 85,
+      "매력": 50
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0002",
+    "name": "견희",
+    "tier": "명장",
+    "stats": {
+      "통솔": 15,
+      "무력": 10,
+      "지력": 68,
+      "정치": 70,
+      "매력": 94
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0003",
+    "name": "곽가",
+    "tier": "명장",
+    "stats": {
+      "통솔": 60,
+      "무력": 15,
+      "지력": 96,
+      "정치": 80,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0004",
+    "name": "곽여왕",
+    "tier": "명장",
+    "stats": {
+      "통솔": 25,
+      "무력": 10,
+      "지력": 85,
+      "정치": 86,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0005",
+    "name": "곽회",
+    "tier": "명장",
+    "stats": {
+      "통솔": 88,
+      "무력": 72,
+      "지력": 85,
+      "정치": 70,
+      "매력": 68
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0006",
+    "name": "관구검",
+    "tier": "명장",
+    "stats": {
+      "통솔": 84,
+      "무력": 74,
+      "지력": 78,
+      "정치": 70,
+      "매력": 65
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0007",
+    "name": "두예",
+    "tier": "명장",
+    "stats": {
+      "통솔": 88,
+      "무력": 60,
+      "지력": 94,
+      "정치": 88,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0008",
+    "name": "등애",
+    "tier": "명장",
+    "stats": {
+      "통솔": 95,
+      "무력": 78,
+      "지력": 93,
+      "정치": 80,
+      "매력": 60
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0009",
+    "name": "만총",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 60,
+      "지력": 85,
+      "정치": 80,
+      "매력": 50
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0010",
+    "name": "문빙",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 70,
+      "지력": 68,
+      "정치": 62,
+      "매력": 65
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0011",
+    "name": "문앙",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 97,
+      "지력": 55,
+      "정치": 35,
+      "매력": 58
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0012",
+    "name": "방덕",
+    "tier": "명장",
+    "stats": {
+      "통솔": 84,
+      "무력": 92,
+      "지력": 62,
+      "정치": 45,
+      "매력": 60
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0013",
+    "name": "변씨",
+    "tier": "명장",
+    "stats": {
+      "통솔": 20,
+      "무력": 10,
+      "지력": 70,
+      "정치": 82,
+      "매력": 85
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0014",
+    "name": "사마사",
+    "tier": "명장",
+    "stats": {
+      "통솔": 90,
+      "무력": 70,
+      "지력": 88,
+      "정치": 85,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0015",
+    "name": "사마소",
+    "tier": "명장",
+    "stats": {
+      "통솔": 88,
+      "무력": 68,
+      "지력": 90,
+      "정치": 90,
+      "매력": 60
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0016",
+    "name": "사마의",
+    "tier": "명장",
+    "stats": {
+      "통솔": 96,
+      "무력": 60,
+      "지력": 97,
+      "정치": 93,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0017",
+    "name": "서황",
+    "tier": "명장",
+    "stats": {
+      "통솔": 90,
+      "무력": 89,
+      "지력": 72,
+      "정치": 58,
+      "매력": 68
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0018",
+    "name": "순욱",
+    "tier": "명장",
+    "stats": {
+      "통솔": 68,
+      "무력": 24,
+      "지력": 95,
+      "정치": 98,
+      "매력": 92
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0019",
+    "name": "순유",
+    "tier": "명장",
+    "stats": {
+      "통솔": 65,
+      "무력": 30,
+      "지력": 94,
+      "정치": 88,
+      "매력": 80
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0020",
+    "name": "신헌영",
+    "tier": "명장",
+    "stats": {
+      "통솔": 20,
+      "무력": 12,
+      "지력": 90,
+      "정치": 80,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0021",
+    "name": "악진",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 85,
+      "지력": 60,
+      "정치": 55,
+      "매력": 60
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0022",
+    "name": "왕기",
+    "tier": "명장",
+    "stats": {
+      "통솔": 84,
+      "무력": 70,
+      "지력": 82,
+      "정치": 76,
+      "매력": 68
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0023",
+    "name": "우금",
+    "tier": "명장",
+    "stats": {
+      "통솔": 88,
+      "무력": 78,
+      "지력": 65,
+      "정치": 62,
+      "매력": 58
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0024",
+    "name": "유엽",
+    "tier": "명장",
+    "stats": {
+      "통솔": 65,
+      "무력": 40,
+      "지력": 92,
+      "정치": 78,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0025",
+    "name": "이전",
+    "tier": "명장",
+    "stats": {
+      "통솔": 80,
+      "무력": 76,
+      "지력": 78,
+      "정치": 70,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0026",
+    "name": "장료",
+    "tier": "명장",
+    "stats": {
+      "통솔": 94,
+      "무력": 93,
+      "지력": 78,
+      "정치": 60,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0027",
+    "name": "장춘화",
+    "tier": "명장",
+    "stats": {
+      "통솔": 30,
+      "무력": 25,
+      "지력": 82,
+      "정치": 78,
+      "매력": 65
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0028",
+    "name": "장합",
+    "tier": "명장",
+    "stats": {
+      "통솔": 89,
+      "무력": 86,
+      "지력": 80,
+      "정치": 55,
+      "매력": 65
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0029",
+    "name": "전예",
+    "tier": "명장",
+    "stats": {
+      "통솔": 86,
+      "무력": 76,
+      "지력": 82,
+      "정치": 78,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0030",
+    "name": "전위",
+    "tier": "명장",
+    "stats": {
+      "통솔": 60,
+      "무력": 97,
+      "지력": 28,
+      "정치": 24,
+      "매력": 45
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0031",
+    "name": "정욱",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 45,
+      "지력": 89,
+      "정치": 85,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0032",
+    "name": "조비",
+    "tier": "명장",
+    "stats": {
+      "통솔": 72,
+      "무력": 64,
+      "지력": 85,
+      "정치": 88,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0033",
+    "name": "조인",
+    "tier": "명장",
+    "stats": {
+      "통솔": 89,
+      "무력": 80,
+      "지력": 70,
+      "정치": 72,
+      "매력": 68
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0034",
+    "name": "조조",
+    "tier": "명장",
+    "stats": {
+      "통솔": 96,
+      "무력": 72,
+      "지력": 91,
+      "정치": 94,
+      "매력": 96
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0035",
+    "name": "조진",
+    "tier": "명장",
+    "stats": {
+      "통솔": 85,
+      "무력": 78,
+      "지력": 72,
+      "정치": 68,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0036",
+    "name": "조홍",
+    "tier": "명장",
+    "stats": {
+      "통솔": 76,
+      "무력": 79,
+      "지력": 45,
+      "정치": 50,
+      "매력": 55
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0037",
+    "name": "조휴",
+    "tier": "명장",
+    "stats": {
+      "통솔": 80,
+      "무력": 76,
+      "지력": 65,
+      "정치": 60,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0038",
+    "name": "종요",
+    "tier": "명장",
+    "stats": {
+      "통솔": 62,
+      "무력": 40,
+      "지력": 85,
+      "정치": 93,
+      "매력": 80
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0039",
+    "name": "종회",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 62,
+      "지력": 94,
+      "정치": 78,
+      "매력": 55
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0040",
+    "name": "진군",
+    "tier": "명장",
+    "stats": {
+      "통솔": 60,
+      "무력": 30,
+      "지력": 85,
+      "정치": 95,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0041",
+    "name": "진태",
+    "tier": "명장",
+    "stats": {
+      "통솔": 86,
+      "무력": 74,
+      "지력": 86,
+      "정치": 72,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0042",
+    "name": "채염",
+    "tier": "명장",
+    "stats": {
+      "통솔": 15,
+      "무력": 8,
+      "지력": 80,
+      "정치": 72,
+      "매력": 88
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0043",
+    "name": "하후돈",
+    "tier": "명장",
+    "stats": {
+      "통솔": 88,
+      "무력": 90,
+      "지력": 62,
+      "정치": 70,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0044",
+    "name": "하후연",
+    "tier": "명장",
+    "stats": {
+      "통솔": 91,
+      "무력": 91,
+      "지력": 65,
+      "정치": 55,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0045",
+    "name": "하후패",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 84,
+      "지력": 68,
+      "정치": 58,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0046",
+    "name": "학소",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 72,
+      "지력": 80,
+      "정치": 62,
+      "매력": 58
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0047",
+    "name": "허저",
+    "tier": "명장",
+    "stats": {
+      "통솔": 70,
+      "무력": 96,
+      "지력": 32,
+      "정치": 28,
+      "매력": 50
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0048",
+    "name": "가충",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 14,
+      "무력": 19,
+      "지력": 73,
+      "정치": 74,
+      "매력": 33
+    },
+    "disposition": "실무",
+    "traits": [
+      "「전권」 사마씨 심복"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0049",
+    "name": "견초",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 59,
+      "무력": 24,
+      "지력": 29,
+      "정치": 80,
+      "매력": 35
+    },
+    "disposition": "실무",
+    "traits": [
+      "「이간」 선비 세력 분열 유도"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0050",
+    "name": "관녕",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 12,
+      "무력": 15,
+      "지력": 50,
+      "정치": 76,
+      "매력": 36
+    },
+    "disposition": "명사",
+    "traits": [
+      "「은일」 등용 극난, 천명 기여"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0051",
+    "name": "국연",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 19,
+      "무력": 30,
+      "지력": 36,
+      "정치": 82,
+      "매력": 35
+    },
+    "disposition": "실무",
+    "traits": [
+      "「경제」"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0052",
+    "name": "궁준",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 81,
+      "무력": 31,
+      "지력": 21,
+      "정치": 41,
+      "매력": 21
+    },
+    "disposition": "절의",
+    "traits": [
+      "대방태수. 기리영 전사"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0053",
+    "name": "노초",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 59,
+      "무력": 40,
+      "지력": 15,
+      "정치": 26,
+      "매력": 24
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0054",
+    "name": "당자",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 72,
+      "무력": 40,
+      "지력": 15,
+      "정치": 27,
+      "매력": 20
+    },
+    "disposition": "야심",
+    "traits": [
+      "오에서 귀순"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0055",
+    "name": "두기",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 19,
+      "무력": 30,
+      "지력": 31,
+      "정치": 81,
+      "매력": 42
+    },
+    "disposition": "실무",
+    "traits": [
+      "「하동 경영」"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0056",
+    "name": "두습",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 15,
+      "무력": 29,
+      "지력": 79,
+      "정치": 78,
+      "매력": 32
+    },
+    "disposition": "실무",
+    "traits": [
+      "「진무」"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0057",
+    "name": "등충",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 50,
+      "무력": 76,
+      "지력": 17,
+      "정치": 19,
+      "매력": 24
+    },
+    "disposition": "실무",
+    "traits": [
+      "「부풍」 등애의 아들"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0058",
+    "name": "모개",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 17,
+      "무력": 27,
+      "지력": 71,
+      "정치": 70,
+      "매력": 38
+    },
+    "disposition": "실무",
+    "traits": [
+      "「봉천자」 협천자 제안자"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0059",
+    "name": "문흠",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 72,
+      "무력": 75,
+      "지력": 18,
+      "정치": 24,
+      "매력": 16
+    },
+    "disposition": "야심",
+    "traits": [
+      "「반란」 관구검과 거병"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0060",
+    "name": "배수",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 18,
+      "무력": 14,
+      "지력": 40,
+      "정치": 81,
+      "매력": 32
+    },
+    "disposition": "실무",
+    "traits": [
+      "「지도」 항로 정밀도 향상"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0061",
+    "name": "병원",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 20,
+      "무력": 16,
+      "지력": 32,
+      "정치": 85,
+      "매력": 33
+    },
+    "disposition": "명사",
+    "traits": [
+      "「명사」"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0062",
+    "name": "사마랑",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 27,
+      "무력": 27,
+      "지력": 38,
+      "정치": 74,
+      "매력": 36
+    },
+    "disposition": "실무",
+    "traits": [
+      "「장형」 사마씨 계보"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0063",
+    "name": "사마부",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 14,
+      "무력": 22,
+      "지력": 36,
+      "정치": 69,
+      "매력": 36
+    },
+    "disposition": "실무",
+    "traits": [
+      "「순신」 찬탈에 소극적"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0064",
+    "name": "사찬",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 76,
+      "무력": 42,
+      "지력": 24,
+      "정치": 29,
+      "매력": 14
+    },
+    "disposition": "실무",
+    "traits": [
+      "등애 부장"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0065",
+    "name": "사환",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 79,
+      "무력": 41,
+      "지력": 19,
+      "정치": 42,
+      "매력": 23
+    },
+    "disposition": "실무",
+    "traits": [
+      "금위"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0066",
+    "name": "서선",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 29,
+      "무력": 23,
+      "지력": 35,
+      "정치": 58,
+      "매력": 39
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0067",
+    "name": "석포",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 58,
+      "무력": 25,
+      "지력": 20,
+      "정치": 31,
+      "매력": 21
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0068",
+    "name": "소칙",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 43,
+      "무력": 27,
+      "지력": 32,
+      "정치": 73,
+      "매력": 25
+    },
+    "disposition": "야심",
+    "traits": [
+      "「하서」 변경 반란 진압"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0069",
+    "name": "순의",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 21,
+      "무력": 23,
+      "지력": 34,
+      "정치": 74,
+      "매력": 32
+    },
+    "disposition": "실무",
+    "traits": [
+      "순욱의 아들"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0070",
+    "name": "신비",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 26,
+      "무력": 20,
+      "지력": 81,
+      "정치": 83,
+      "매력": 29
+    },
+    "disposition": "실무",
+    "traits": [
+      "「지절」 출전 제지 가능"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0071",
+    "name": "양습",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 29,
+      "무력": 27,
+      "지력": 25,
+      "정치": 72,
+      "매력": 38
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「병주 안무」 이민족 통제"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0072",
+    "name": "양호",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 47,
+      "무력": 27,
+      "지력": 31,
+      "정치": 72,
+      "매력": 25
+    },
+    "disposition": "실무",
+    "traits": [
+      "「덕망」 대오 전선"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0073",
+    "name": "여건",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 52,
+      "무력": 33,
+      "지력": 39,
+      "정치": 69,
+      "매력": 28
+    },
+    "disposition": "실무",
+    "traits": [
+      "「청주 진무」"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0074",
+    "name": "왕랑",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 17,
+      "무력": 14,
+      "지력": 81,
+      "정치": 80,
+      "매력": 25
+    },
+    "disposition": "실무",
+    "traits": [
+      "「경학」 군웅 출신"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0075",
+    "name": "왕웅",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 20,
+      "무력": 21,
+      "지력": 38,
+      "정치": 68,
+      "매력": 26
+    },
+    "disposition": "실무",
+    "traits": [
+      "「밀명」 자객 파견 권한"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0076",
+    "name": "왕창",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 41,
+      "무력": 33,
+      "지력": 25,
+      "정치": 67,
+      "매력": 32
+    },
+    "disposition": "실무",
+    "traits": [
+      "「경략」"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0077",
+    "name": "왕충",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 64,
+      "무력": 31,
+      "지력": 23,
+      "정치": 39,
+      "매력": 14
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0078",
+    "name": "위관",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 18,
+      "무력": 17,
+      "지력": 67,
+      "정치": 71,
+      "매력": 34
+    },
+    "disposition": "실무",
+    "traits": [
+      "「감군」 등애·종회 처리"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0079",
+    "name": "위기",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 18,
+      "무력": 29,
+      "지력": 43,
+      "정치": 72,
+      "매력": 38
+    },
+    "disposition": "실무",
+    "traits": [
+      "「염철」 재정"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0080",
+    "name": "유대",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 65,
+      "무력": 31,
+      "지력": 28,
+      "정치": 32,
+      "매력": 20
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0081",
+    "name": "유무",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 48,
+      "무력": 23,
+      "지력": 30,
+      "정치": 69,
+      "매력": 23
+    },
+    "disposition": "실무",
+    "traits": [
+      "낙랑태수. 동이 전선"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0082",
+    "name": "임준",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 30,
+      "무력": 25,
+      "지력": 29,
+      "정치": 77,
+      "매력": 42
+    },
+    "disposition": "실무",
+    "traits": [
+      "「둔전 운영」"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0083",
+    "name": "제갈서",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 82,
+      "무력": 33,
+      "지력": 21,
+      "정치": 28,
+      "매력": 18
+    },
+    "disposition": "실무",
+    "traits": [
+      "「음평 봉쇄」 등애와 불화"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0084",
+    "name": "조순",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 72,
+      "무력": 56,
+      "지력": 16,
+      "정치": 23,
+      "매력": 30
+    },
+    "disposition": "실무",
+    "traits": [
+      "「호표기」 정예 기동 부대 지휘"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0085",
+    "name": "조식",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 29,
+      "무력": 21,
+      "지력": 70,
+      "정치": 70,
+      "매력": 37
+    },
+    "disposition": "실무",
+    "traits": [
+      "「칠보」 문재. 후계 갈등 트리거"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0086",
+    "name": "조안민",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 39,
+      "무력": 77,
+      "지력": 20,
+      "정치": 27,
+      "매력": 22
+    },
+    "disposition": "절의",
+    "traits": [
+      "완성 전사 이벤트"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0087",
+    "name": "조앙",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 69,
+      "무력": 46,
+      "지력": 23,
+      "정치": 34,
+      "매력": 17
+    },
+    "disposition": "절의",
+    "traits": [
+      "「장자」 완성 전사 이벤트"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0088",
+    "name": "조엄",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 16,
+      "무력": 16,
+      "지력": 68,
+      "정치": 69,
+      "매력": 32
+    },
+    "disposition": "실무",
+    "traits": [
+      "「조율」 장수 간 불화 완화"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0089",
+    "name": "조웅",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 12,
+      "무력": 12,
+      "지력": 34,
+      "정치": 80,
+      "매력": 40
+    },
+    "disposition": "실무",
+    "traits": [
+      "병약"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0090",
+    "name": "조지",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 15,
+      "무력": 17,
+      "지력": 38,
+      "정치": 72,
+      "매력": 33
+    },
+    "disposition": "실무",
+    "traits": [
+      "「둔전 창시」 식량 자급"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0091",
+    "name": "조창",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 37,
+      "무력": 72,
+      "지력": 25,
+      "정치": 26,
+      "매력": 29
+    },
+    "disposition": "실무",
+    "traits": [
+      "「황수아」 무력 특화, 정치 부재"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0092",
+    "name": "주령",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 74,
+      "무력": 33,
+      "지력": 30,
+      "정치": 46,
+      "매력": 13
+    },
+    "disposition": "절의",
+    "traits": [
+      "「강직」"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0093",
+    "name": "진교",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 15,
+      "무력": 22,
+      "지력": 36,
+      "정치": 60,
+      "매력": 34
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0094",
+    "name": "창자",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 26,
+      "무력": 25,
+      "지력": 28,
+      "정치": 71,
+      "매력": 38
+    },
+    "disposition": "실무",
+    "traits": [
+      "「돈황」 서역 교역 개통 조건"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0095",
+    "name": "최염",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 23,
+      "무력": 20,
+      "지력": 38,
+      "정치": 80,
+      "매력": 33
+    },
+    "disposition": "절의",
+    "traits": [
+      "「강직」 처형 이벤트"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0096",
+    "name": "하후덕",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 73,
+      "무력": 35,
+      "지력": 29,
+      "정치": 27,
+      "매력": 17
+    },
+    "disposition": "실무",
+    "traits": [
+      "요충 수비"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0097",
+    "name": "하후무",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 12,
+      "무력": 29,
+      "지력": 24,
+      "정치": 76,
+      "매력": 32
+    },
+    "disposition": "실무",
+    "traits": [
+      "「무능」 지휘 페널티"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0098",
+    "name": "하후상",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 76,
+      "무력": 29,
+      "지력": 19,
+      "정치": 29,
+      "매력": 20
+    },
+    "disposition": "실무",
+    "traits": [
+      "「종군」 원정 보조"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0099",
+    "name": "하후은",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 42,
+      "무력": 71,
+      "지력": 14,
+      "정치": 22,
+      "매력": 29
+    },
+    "disposition": "실무",
+    "traits": [
+      "기물 호송"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0100",
+    "name": "한호",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 45,
+      "무력": 39,
+      "지력": 31,
+      "정치": 80,
+      "매력": 27
+    },
+    "disposition": "실무",
+    "traits": [
+      "「둔전 호위」"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0101",
+    "name": "호열",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 63,
+      "무력": 24,
+      "지력": 26,
+      "정치": 25,
+      "매력": 18
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0102",
+    "name": "호준",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 82,
+      "무력": 37,
+      "지력": 27,
+      "정치": 35,
+      "매력": 25
+    },
+    "disposition": "실무",
+    "traits": [
+      "요충 방어"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0103",
+    "name": "화흠",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 18,
+      "무력": 30,
+      "지력": 29,
+      "정치": 78,
+      "매력": 44
+    },
+    "disposition": "명사",
+    "traits": [
+      "「청류」 명사 등용 보조"
+    ],
+    "origin_faction": "위"
+  },
+  {
+    "id": "CHR-0104",
+    "name": "간옹",
+    "tier": "명장",
+    "stats": {
+      "통솔": 25,
+      "무력": 15,
+      "지력": 74,
+      "정치": 70,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0105",
+    "name": "감부인",
+    "tier": "명장",
+    "stats": {
+      "통솔": 10,
+      "무력": 8,
+      "지력": 50,
+      "정치": 60,
+      "매력": 80
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0106",
+    "name": "강유",
+    "tier": "명장",
+    "stats": {
+      "통솔": 92,
+      "무력": 89,
+      "지력": 93,
+      "정치": 78,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0107",
+    "name": "관우",
+    "tier": "명장",
+    "stats": {
+      "통솔": 95,
+      "무력": 97,
+      "지력": 75,
+      "정치": 62,
+      "매력": 93
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0108",
+    "name": "관흥",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 88,
+      "지력": 62,
+      "정치": 58,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0109",
+    "name": "나헌",
+    "tier": "명장",
+    "stats": {
+      "통솔": 84,
+      "무력": 78,
+      "지력": 72,
+      "정치": 68,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0110",
+    "name": "동윤",
+    "tier": "명장",
+    "stats": {
+      "통솔": 40,
+      "무력": 20,
+      "지력": 78,
+      "정치": 90,
+      "매력": 82
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0111",
+    "name": "마대",
+    "tier": "명장",
+    "stats": {
+      "통솔": 80,
+      "무력": 82,
+      "지력": 66,
+      "정치": 60,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0112",
+    "name": "마량",
+    "tier": "명장",
+    "stats": {
+      "통솔": 62,
+      "무력": 30,
+      "지력": 88,
+      "정치": 90,
+      "매력": 86
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0113",
+    "name": "마속",
+    "tier": "명장",
+    "stats": {
+      "통솔": 60,
+      "무력": 45,
+      "지력": 85,
+      "정치": 72,
+      "매력": 68
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0114",
+    "name": "마초",
+    "tier": "명장",
+    "stats": {
+      "통솔": 92,
+      "무력": 97,
+      "지력": 44,
+      "정치": 25,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0115",
+    "name": "미방",
+    "tier": "명장",
+    "stats": {
+      "통솔": 45,
+      "무력": 40,
+      "지력": 50,
+      "정치": 55,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0116",
+    "name": "미부인",
+    "tier": "명장",
+    "stats": {
+      "통솔": 10,
+      "무력": 8,
+      "지력": 48,
+      "정치": 58,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0117",
+    "name": "미축",
+    "tier": "명장",
+    "stats": {
+      "통솔": 25,
+      "무력": 20,
+      "지력": 72,
+      "정치": 78,
+      "매력": 82
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0118",
+    "name": "방통",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 30,
+      "지력": 97,
+      "정치": 80,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0119",
+    "name": "법정",
+    "tier": "명장",
+    "stats": {
+      "통솔": 72,
+      "무력": 40,
+      "지력": 95,
+      "정치": 76,
+      "매력": 50
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0120",
+    "name": "부첨",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 80,
+      "지력": 60,
+      "정치": 55,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0121",
+    "name": "비의",
+    "tier": "명장",
+    "stats": {
+      "통솔": 62,
+      "무력": 30,
+      "지력": 85,
+      "정치": 90,
+      "매력": 88
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0122",
+    "name": "서서",
+    "tier": "명장",
+    "stats": {
+      "통솔": 70,
+      "무력": 45,
+      "지력": 91,
+      "정치": 80,
+      "매력": 76
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0123",
+    "name": "손건",
+    "tier": "명장",
+    "stats": {
+      "통솔": 30,
+      "무력": 20,
+      "지력": 72,
+      "정치": 76,
+      "매력": 80
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0124",
+    "name": "왕평",
+    "tier": "명장",
+    "stats": {
+      "통솔": 88,
+      "무력": 76,
+      "지력": 72,
+      "정치": 62,
+      "매력": 68
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0125",
+    "name": "요화",
+    "tier": "명장",
+    "stats": {
+      "통솔": 76,
+      "무력": 70,
+      "지력": 62,
+      "정치": 60,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0126",
+    "name": "위연",
+    "tier": "명장",
+    "stats": {
+      "통솔": 85,
+      "무력": 90,
+      "지력": 70,
+      "정치": 40,
+      "매력": 45
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0127",
+    "name": "유봉",
+    "tier": "명장",
+    "stats": {
+      "통솔": 70,
+      "무력": 80,
+      "지력": 50,
+      "정치": 45,
+      "매력": 50
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0128",
+    "name": "유비",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 73,
+      "지력": 76,
+      "정치": 80,
+      "매력": 99
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0129",
+    "name": "이엄",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 72,
+      "지력": 78,
+      "정치": 72,
+      "매력": 50
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0130",
+    "name": "장비",
+    "tier": "명장",
+    "stats": {
+      "통솔": 88,
+      "무력": 98,
+      "지력": 45,
+      "정치": 22,
+      "매력": 45
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0131",
+    "name": "장억",
+    "tier": "명장",
+    "stats": {
+      "통솔": 80,
+      "무력": 76,
+      "지력": 62,
+      "정치": 62,
+      "매력": 64
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0132",
+    "name": "장완",
+    "tier": "명장",
+    "stats": {
+      "통솔": 68,
+      "무력": 25,
+      "지력": 80,
+      "정치": 92,
+      "매력": 85
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0133",
+    "name": "장익",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 72,
+      "지력": 68,
+      "정치": 70,
+      "매력": 66
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0134",
+    "name": "제갈량",
+    "tier": "명장",
+    "stats": {
+      "통솔": 92,
+      "무력": 38,
+      "지력": 100,
+      "정치": 95,
+      "매력": 92
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0135",
+    "name": "제갈첨",
+    "tier": "명장",
+    "stats": {
+      "통솔": 65,
+      "무력": 62,
+      "지력": 68,
+      "정치": 72,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0136",
+    "name": "조운",
+    "tier": "명장",
+    "stats": {
+      "통솔": 91,
+      "무력": 96,
+      "지력": 76,
+      "정치": 65,
+      "매력": 88
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0137",
+    "name": "황월영",
+    "tier": "명장",
+    "stats": {
+      "통솔": 15,
+      "무력": 10,
+      "지력": 92,
+      "정치": 72,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0138",
+    "name": "황충",
+    "tier": "명장",
+    "stats": {
+      "통솔": 89,
+      "무력": 93,
+      "지력": 64,
+      "정치": 56,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0139",
+    "name": "곽익",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 50,
+      "무력": 31,
+      "지력": 35,
+      "정치": 74,
+      "매력": 28
+    },
+    "disposition": "명사",
+    "traits": [
+      "「남중 진무」"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0140",
+    "name": "곽준",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 83,
+      "무력": 39,
+      "지력": 17,
+      "정치": 29,
+      "매력": 24
+    },
+    "disposition": "실무",
+    "traits": [
+      "「고수」 가맹 농성"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0141",
+    "name": "관평",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 78,
+      "무력": 81,
+      "지력": 20,
+      "정치": 38,
+      "매력": 29
+    },
+    "disposition": "실무",
+    "traits": [
+      "「부자」 관우 동반 시 보정"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0142",
+    "name": "관흥의 형제 관색",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 40,
+      "무력": 72,
+      "지력": 22,
+      "정치": 23,
+      "매력": 26
+    },
+    "disposition": "절의",
+    "traits": [
+      "(연의 계통, 선택 수록)"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0143",
+    "name": "극정",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 15,
+      "무력": 22,
+      "지력": 39,
+      "정치": 74,
+      "매력": 39
+    },
+    "disposition": "명사",
+    "traits": [
+      "「문한」"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0144",
+    "name": "동궐",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 27,
+      "무력": 20,
+      "지력": 33,
+      "정치": 68,
+      "매력": 41
+    },
+    "disposition": "명사",
+    "traits": [
+      "「보정」"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0145",
+    "name": "등지",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 30,
+      "무력": 26,
+      "지력": 69,
+      "정치": 68,
+      "매력": 34
+    },
+    "disposition": "명사",
+    "traits": [
+      "「사오」 오 동맹 복원"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0146",
+    "name": "마충",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 52,
+      "무력": 29,
+      "지력": 26,
+      "정치": 81,
+      "매력": 27
+    },
+    "disposition": "명사",
+    "traits": [
+      "「남중 안정」"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0147",
+    "name": "맹달",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 50,
+      "무력": 38,
+      "지력": 24,
+      "정치": 81,
+      "매력": 16
+    },
+    "disposition": "야심",
+    "traits": [
+      "「이반」 위·촉 양측 이적"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0148",
+    "name": "번건",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 17,
+      "무력": 29,
+      "지력": 38,
+      "정치": 69,
+      "매력": 31
+    },
+    "disposition": "명사",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0149",
+    "name": "부동",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 32,
+      "무력": 76,
+      "지력": 29,
+      "정치": 27,
+      "매력": 16
+    },
+    "disposition": "절의",
+    "traits": [
+      "「순절」 이릉 전사"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0150",
+    "name": "비시",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 30,
+      "무력": 24,
+      "지력": 37,
+      "정치": 70,
+      "매력": 33
+    },
+    "disposition": "절의",
+    "traits": [
+      "「직언」 관우 설득"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0151",
+    "name": "상랑",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 27,
+      "무력": 29,
+      "지력": 28,
+      "정치": 66,
+      "매력": 38
+    },
+    "disposition": "명사",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0152",
+    "name": "상총",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 88,
+      "무력": 45,
+      "지력": 16,
+      "정치": 42,
+      "매력": 15
+    },
+    "disposition": "실무",
+    "traits": [
+      "「숙련」 출사표 언급"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0153",
+    "name": "양의",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 19,
+      "무력": 23,
+      "지력": 76,
+      "정치": 75,
+      "매력": 32
+    },
+    "disposition": "명사",
+    "traits": [
+      "「보급」 위연과 상성 최악"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0154",
+    "name": "양희",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 24,
+      "무력": 21,
+      "지력": 30,
+      "정치": 69,
+      "매력": 31
+    },
+    "disposition": "명사",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0155",
+    "name": "엄안",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 82,
+      "무력": 32,
+      "지력": 14,
+      "정치": 33,
+      "매력": 15
+    },
+    "disposition": "절의",
+    "traits": [
+      "「노장」 파군 방어"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0156",
+    "name": "여개",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 17,
+      "무력": 20,
+      "지력": 41,
+      "정치": 77,
+      "매력": 33
+    },
+    "disposition": "절의",
+    "traits": [
+      "「고절」 반란 중 절개"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0157",
+    "name": "염우",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 75,
+      "무력": 43,
+      "지력": 21,
+      "정치": 37,
+      "매력": 27
+    },
+    "disposition": "실무",
+    "traits": [
+      "황호와 결탁"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0158",
+    "name": "오반",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 60,
+      "무력": 37,
+      "지력": 15,
+      "정치": 37,
+      "매력": 25
+    },
+    "disposition": "절의",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0159",
+    "name": "오의",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 59,
+      "무력": 31,
+      "지력": 40,
+      "정치": 79,
+      "매력": 37
+    },
+    "disposition": "명사",
+    "traits": [
+      "유장 출신, 외척"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0160",
+    "name": "왕항",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 15,
+      "무력": 28,
+      "지력": 35,
+      "정치": 73,
+      "매력": 26
+    },
+    "disposition": "명사",
+    "traits": [
+      "여개와 동행"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0161",
+    "name": "요립",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 18,
+      "무력": 14,
+      "지력": 69,
+      "정치": 39,
+      "매력": 15
+    },
+    "disposition": "명사",
+    "traits": [
+      "「원망」 유배 이벤트"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0162",
+    "name": "유봉의 부장 맹달 계열",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 79,
+      "무력": 27,
+      "지력": 22,
+      "정치": 36,
+      "매력": 28
+    },
+    "disposition": "실무",
+    "traits": [
+      "상용권 소속"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0163",
+    "name": "유선(촉)",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 28,
+      "무력": 14,
+      "지력": 26,
+      "정치": 68,
+      "매력": 39
+    },
+    "disposition": "명사",
+    "traits": [
+      "「암약」 군주. 능력 최하, 이탈 없음"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0164",
+    "name": "유염",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 21,
+      "무력": 28,
+      "지력": 37,
+      "정치": 71,
+      "매력": 37
+    },
+    "disposition": "명사",
+    "traits": [
+      "「방자」"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0165",
+    "name": "유파",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 14,
+      "무력": 28,
+      "지력": 80,
+      "정치": 81,
+      "매력": 39
+    },
+    "disposition": "명사",
+    "traits": [
+      "「직백전」 화폐 정책"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0166",
+    "name": "이복",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 27,
+      "무력": 23,
+      "지력": 39,
+      "정치": 73,
+      "매력": 40
+    },
+    "disposition": "명사",
+    "traits": [
+      "「탁고」"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0167",
+    "name": "이적",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 24,
+      "무력": 20,
+      "지력": 70,
+      "정치": 70,
+      "매력": 34
+    },
+    "disposition": "명사",
+    "traits": [
+      "「변설」 외교"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0168",
+    "name": "이풍",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 19,
+      "무력": 16,
+      "지력": 41,
+      "정치": 78,
+      "매력": 28
+    },
+    "disposition": "명사",
+    "traits": [
+      "이엄의 아들"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0169",
+    "name": "이회",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 56,
+      "무력": 35,
+      "지력": 31,
+      "정치": 80,
+      "매력": 24
+    },
+    "disposition": "명사",
+    "traits": [
+      "「남중 회유」"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0170",
+    "name": "장남",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 74,
+      "무력": 41,
+      "지력": 23,
+      "정치": 38,
+      "매력": 14
+    },
+    "disposition": "절의",
+    "traits": [
+      "이릉 전사"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0171",
+    "name": "장송",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 20,
+      "무력": 28,
+      "지력": 28,
+      "정치": 77,
+      "매력": 30
+    },
+    "disposition": "야심",
+    "traits": [
+      "「내응」 익주 진입 조건"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0172",
+    "name": "장의",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 74,
+      "무력": 73,
+      "지력": 26,
+      "정치": 40,
+      "매력": 16
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「남정」 이민족 통제"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0173",
+    "name": "장포",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 37,
+      "무력": 76,
+      "지력": 25,
+      "정치": 17,
+      "매력": 18
+    },
+    "disposition": "실무",
+    "traits": [
+      "「부풍」 장비의 아들"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0174",
+    "name": "장표",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 59,
+      "무력": 34,
+      "지력": 21,
+      "정치": 36,
+      "매력": 16
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0175",
+    "name": "종예",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 17,
+      "무력": 21,
+      "지력": 27,
+      "정치": 70,
+      "매력": 42
+    },
+    "disposition": "명사",
+    "traits": [
+      "「사절」"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0176",
+    "name": "주창",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 34,
+      "무력": 73,
+      "지력": 23,
+      "정치": 14,
+      "매력": 14
+    },
+    "disposition": "절의",
+    "traits": [
+      "「종자」 관우 호위"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0177",
+    "name": "진도",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 72,
+      "무력": 78,
+      "지력": 26,
+      "정치": 39,
+      "매력": 15
+    },
+    "disposition": "실무",
+    "traits": [
+      "「백모병」 근위 정예"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0178",
+    "name": "진식",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 59,
+      "무력": 31,
+      "지력": 25,
+      "정치": 36,
+      "매력": 27
+    },
+    "disposition": "절의",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0179",
+    "name": "진지",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 15,
+      "무력": 16,
+      "지력": 36,
+      "정치": 80,
+      "매력": 38
+    },
+    "disposition": "명사",
+    "traits": [
+      "황호와 결탁"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0180",
+    "name": "초주",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 14,
+      "무력": 19,
+      "지력": 74,
+      "정치": 78,
+      "매력": 25
+    },
+    "disposition": "실무",
+    "traits": [
+      "「항론」 **항복 주장 이벤트**"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0181",
+    "name": "팽양",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 29,
+      "무력": 21,
+      "지력": 74,
+      "정치": 28,
+      "매력": 27
+    },
+    "disposition": "명사",
+    "traits": [
+      "「오만」 모반 이벤트"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0182",
+    "name": "풍습",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 67,
+      "무력": 26,
+      "지력": 18,
+      "정치": 30,
+      "매력": 15
+    },
+    "disposition": "절의",
+    "traits": [
+      "이릉 전사"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0183",
+    "name": "황권",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 75,
+      "무력": 28,
+      "지력": 79,
+      "정치": 55,
+      "매력": 18
+    },
+    "disposition": "야심",
+    "traits": [
+      "「선견」 이릉 후 위 귀순"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0184",
+    "name": "황호",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 29,
+      "무력": 24,
+      "지력": 37,
+      "정치": 73,
+      "매력": 18
+    },
+    "disposition": "야심",
+    "traits": [
+      "「전횡」 **보유 시 천명·행정 지속 하락. 해임 곤란**"
+    ],
+    "origin_faction": "촉"
+  },
+  {
+    "id": "CHR-0185",
+    "name": "감녕",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 96,
+      "지력": 70,
+      "정치": 40,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0186",
+    "name": "노숙",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 40,
+      "지력": 92,
+      "정치": 88,
+      "매력": 86
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0187",
+    "name": "능통",
+    "tier": "명장",
+    "stats": {
+      "통솔": 84,
+      "무력": 88,
+      "지력": 64,
+      "정치": 58,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0188",
+    "name": "대교",
+    "tier": "명장",
+    "stats": {
+      "통솔": 10,
+      "무력": 8,
+      "지력": 50,
+      "정치": 55,
+      "매력": 85
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0189",
+    "name": "반장",
+    "tier": "명장",
+    "stats": {
+      "통솔": 74,
+      "무력": 78,
+      "지력": 56,
+      "정치": 50,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0190",
+    "name": "보즐",
+    "tier": "명장",
+    "stats": {
+      "통솔": 70,
+      "무력": 45,
+      "지력": 80,
+      "정치": 85,
+      "매력": 74
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0191",
+    "name": "서성",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 74,
+      "지력": 76,
+      "정치": 68,
+      "매력": 68
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0192",
+    "name": "소교",
+    "tier": "명장",
+    "stats": {
+      "통솔": 10,
+      "무력": 8,
+      "지력": 58,
+      "정치": 56,
+      "매력": 86
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0193",
+    "name": "손견",
+    "tier": "명장",
+    "stats": {
+      "통솔": 92,
+      "무력": 90,
+      "지력": 72,
+      "정치": 68,
+      "매력": 85
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0194",
+    "name": "손권",
+    "tier": "명장",
+    "stats": {
+      "통솔": 76,
+      "무력": 68,
+      "지력": 80,
+      "정치": 88,
+      "매력": 90
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0195",
+    "name": "손노반",
+    "tier": "명장",
+    "stats": {
+      "통솔": 20,
+      "무력": 15,
+      "지력": 80,
+      "정치": 70,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0196",
+    "name": "손상향",
+    "tier": "명장",
+    "stats": {
+      "통솔": 62,
+      "무력": 82,
+      "지력": 55,
+      "정치": 50,
+      "매력": 80
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0197",
+    "name": "손준",
+    "tier": "명장",
+    "stats": {
+      "통솔": 74,
+      "무력": 72,
+      "지력": 70,
+      "정치": 62,
+      "매력": 30
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0198",
+    "name": "손책",
+    "tier": "명장",
+    "stats": {
+      "통솔": 94,
+      "무력": 94,
+      "지력": 70,
+      "정치": 62,
+      "매력": 92
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0199",
+    "name": "여몽",
+    "tier": "명장",
+    "stats": {
+      "통솔": 92,
+      "무력": 80,
+      "지력": 94,
+      "정치": 80,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0200",
+    "name": "여범",
+    "tier": "명장",
+    "stats": {
+      "통솔": 70,
+      "무력": 50,
+      "지력": 76,
+      "정치": 82,
+      "매력": 74
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0201",
+    "name": "오국태",
+    "tier": "명장",
+    "stats": {
+      "통솔": 15,
+      "무력": 10,
+      "지력": 72,
+      "정치": 80,
+      "매력": 88
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0202",
+    "name": "육손",
+    "tier": "명장",
+    "stats": {
+      "통솔": 96,
+      "무력": 68,
+      "지력": 96,
+      "정치": 90,
+      "매력": 85
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0203",
+    "name": "육항",
+    "tier": "명장",
+    "stats": {
+      "통솔": 94,
+      "무력": 70,
+      "지력": 92,
+      "정치": 86,
+      "매력": 82
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0204",
+    "name": "장소",
+    "tier": "명장",
+    "stats": {
+      "통솔": 50,
+      "무력": 25,
+      "지력": 85,
+      "정치": 95,
+      "매력": 82
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0205",
+    "name": "장흠",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 76,
+      "지력": 62,
+      "정치": 60,
+      "매력": 66
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0206",
+    "name": "전종",
+    "tier": "명장",
+    "stats": {
+      "통솔": 76,
+      "무력": 68,
+      "지력": 72,
+      "정치": 76,
+      "매력": 60
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0207",
+    "name": "정보",
+    "tier": "명장",
+    "stats": {
+      "통솔": 84,
+      "무력": 82,
+      "지력": 70,
+      "정치": 72,
+      "매력": 76
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0208",
+    "name": "정봉",
+    "tier": "명장",
+    "stats": {
+      "통솔": 86,
+      "무력": 84,
+      "지력": 70,
+      "정치": 60,
+      "매력": 66
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0209",
+    "name": "제갈각",
+    "tier": "명장",
+    "stats": {
+      "통솔": 80,
+      "무력": 50,
+      "지력": 92,
+      "정치": 72,
+      "매력": 50
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0210",
+    "name": "주연",
+    "tier": "명장",
+    "stats": {
+      "통솔": 84,
+      "무력": 76,
+      "지력": 74,
+      "정치": 70,
+      "매력": 68
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0211",
+    "name": "주유",
+    "tier": "명장",
+    "stats": {
+      "통솔": 96,
+      "무력": 72,
+      "지력": 95,
+      "정치": 85,
+      "매력": 94
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0212",
+    "name": "주태",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 90,
+      "지력": 56,
+      "정치": 50,
+      "매력": 66
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0213",
+    "name": "주환",
+    "tier": "명장",
+    "stats": {
+      "통솔": 86,
+      "무력": 80,
+      "지력": 72,
+      "정치": 62,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0214",
+    "name": "태사자",
+    "tier": "명장",
+    "stats": {
+      "통솔": 86,
+      "무력": 93,
+      "지력": 66,
+      "정치": 58,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0215",
+    "name": "하제",
+    "tier": "명장",
+    "stats": {
+      "통솔": 88,
+      "무력": 78,
+      "지력": 80,
+      "정치": 72,
+      "매력": 68
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0216",
+    "name": "한당",
+    "tier": "명장",
+    "stats": {
+      "통솔": 80,
+      "무력": 80,
+      "지력": 62,
+      "정치": 58,
+      "매력": 66
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0217",
+    "name": "황개",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 85,
+      "지력": 68,
+      "정치": 65,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0218",
+    "name": "감택",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 15,
+      "무력": 27,
+      "지력": 70,
+      "정치": 75,
+      "매력": 28
+    },
+    "disposition": "실무",
+    "traits": [
+      "「밀서」 고육계 보조"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0219",
+    "name": "누현",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 16,
+      "무력": 20,
+      "지력": 25,
+      "정치": 57,
+      "매력": 35
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0220",
+    "name": "능조",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 70,
+      "무력": 70,
+      "지력": 15,
+      "정치": 14,
+      "매력": 20
+    },
+    "disposition": "실무",
+    "traits": [
+      "능통의 부친"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0221",
+    "name": "동습",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 74,
+      "무력": 80,
+      "지력": 22,
+      "정치": 38,
+      "매력": 16
+    },
+    "disposition": "실무",
+    "traits": [
+      "「순직」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0222",
+    "name": "등윤",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 17,
+      "무력": 23,
+      "지력": 72,
+      "정치": 71,
+      "매력": 33
+    },
+    "disposition": "절의",
+    "traits": [
+      "「보정」 손침에게 제거"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0223",
+    "name": "마충(오)",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 29,
+      "무력": 70,
+      "지력": 23,
+      "정치": 30,
+      "매력": 30
+    },
+    "disposition": "실무",
+    "traits": [
+      "「포박」 관우 생포 이벤트"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0224",
+    "name": "만욱",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 17,
+      "무력": 27,
+      "지력": 39,
+      "정치": 72,
+      "매력": 32
+    },
+    "disposition": "실무",
+    "traits": [
+      "손호 옹립"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0225",
+    "name": "반준",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 58,
+      "무력": 33,
+      "지력": 37,
+      "정치": 77,
+      "매력": 34
+    },
+    "disposition": "실무",
+    "traits": [
+      "「무릉 평정」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0226",
+    "name": "보협",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 79,
+      "무력": 39,
+      "지력": 30,
+      "정치": 43,
+      "매력": 19
+    },
+    "disposition": "실무",
+    "traits": [
+      "보즐 계열"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0227",
+    "name": "설종",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 26,
+      "무력": 29,
+      "지력": 29,
+      "정치": 73,
+      "매력": 35
+    },
+    "disposition": "실무",
+    "traits": [
+      "「남방 경략」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0228",
+    "name": "손교",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 77,
+      "무력": 36,
+      "지력": 28,
+      "정치": 30,
+      "매력": 15
+    },
+    "disposition": "실무",
+    "traits": [
+      "「선봉」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0229",
+    "name": "손노육",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 24,
+      "무력": 22,
+      "지력": 41,
+      "정치": 76,
+      "매력": 30
+    },
+    "disposition": "실무",
+    "traits": [
+      "손노반의 자매"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0230",
+    "name": "손소",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 74,
+      "무력": 41,
+      "지력": 18,
+      "정치": 35,
+      "매력": 24
+    },
+    "disposition": "실무",
+    "traits": [
+      "「변경」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0231",
+    "name": "손유",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 62,
+      "무력": 31,
+      "지력": 25,
+      "정치": 37,
+      "매력": 28
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0232",
+    "name": "손정",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 51,
+      "무력": 29,
+      "지력": 24,
+      "정치": 77,
+      "매력": 38
+    },
+    "disposition": "실무",
+    "traits": [
+      "손견의 아우"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0233",
+    "name": "손침",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 54,
+      "무력": 28,
+      "지력": 29,
+      "정치": 76,
+      "매력": 17
+    },
+    "disposition": "야심",
+    "traits": [
+      "「전횡」 **군주 폐립. 세력 자멸 트리거**"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0234",
+    "name": "손패",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 23,
+      "무력": 17,
+      "지력": 32,
+      "정치": 73,
+      "매력": 30
+    },
+    "disposition": "실무",
+    "traits": [
+      "**이궁의 변** 당사자"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0235",
+    "name": "손하",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 62,
+      "무력": 32,
+      "지력": 14,
+      "정치": 30,
+      "매력": 29
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0236",
+    "name": "손호",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 20,
+      "무력": 24,
+      "지력": 34,
+      "정치": 66,
+      "매력": 18
+    },
+    "disposition": "실무",
+    "traits": [
+      "「폭정」 말기 군주"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0237",
+    "name": "손화",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 20,
+      "무력": 19,
+      "지력": 25,
+      "정치": 69,
+      "매력": 30
+    },
+    "disposition": "실무",
+    "traits": [
+      "**이궁의 변** 당사자"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0238",
+    "name": "손환",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 81,
+      "무력": 30,
+      "지력": 17,
+      "정치": 28,
+      "매력": 23
+    },
+    "disposition": "실무",
+    "traits": [
+      "「이릉 분전」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0239",
+    "name": "손휴",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 24,
+      "무력": 23,
+      "지력": 42,
+      "정치": 72,
+      "매력": 42
+    },
+    "disposition": "실무",
+    "traits": [
+      "손침 제거"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0240",
+    "name": "시적",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 20,
+      "무력": 15,
+      "지력": 41,
+      "정치": 83,
+      "매력": 49
+    },
+    "disposition": "실무",
+    "traits": [
+      "「청렴」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0241",
+    "name": "엄준",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 27,
+      "무력": 15,
+      "지력": 38,
+      "정치": 58,
+      "매력": 35
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0242",
+    "name": "여거",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 77,
+      "무력": 33,
+      "지력": 30,
+      "정치": 37,
+      "매력": 26
+    },
+    "disposition": "실무",
+    "traits": [
+      "손침과 대립"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0243",
+    "name": "여대",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 48,
+      "무력": 25,
+      "지력": 35,
+      "정치": 74,
+      "매력": 33
+    },
+    "disposition": "실무",
+    "traits": [
+      "「교주 경략」 남방 안정"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0244",
+    "name": "오찬",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 29,
+      "무력": 22,
+      "지력": 39,
+      "정치": 75,
+      "매력": 40
+    },
+    "disposition": "실무",
+    "traits": [
+      "이궁의 변 희생"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0245",
+    "name": "왕번",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 20,
+      "무력": 20,
+      "지력": 78,
+      "정치": 75,
+      "매력": 31
+    },
+    "disposition": "실무",
+    "traits": [
+      "「천문」 손호에게 처형"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0246",
+    "name": "우번",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 16,
+      "무력": 29,
+      "지력": 75,
+      "정치": 75,
+      "매력": 27
+    },
+    "disposition": "절의",
+    "traits": [
+      "「직언」 유배 이벤트"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0247",
+    "name": "유략",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 65,
+      "무력": 39,
+      "지력": 18,
+      "정치": 33,
+      "매력": 16
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0248",
+    "name": "유찬",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 69,
+      "무력": 72,
+      "지력": 21,
+      "정치": 38,
+      "매력": 27
+    },
+    "disposition": "실무",
+    "traits": [
+      "「기세」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0249",
+    "name": "육개의 종형 육모",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 17,
+      "무력": 16,
+      "지력": 24,
+      "정치": 58,
+      "매력": 30
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0250",
+    "name": "육윤",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 15,
+      "무력": 20,
+      "지력": 41,
+      "정치": 80,
+      "매력": 37
+    },
+    "disposition": "실무",
+    "traits": [
+      "육씨 일족"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0251",
+    "name": "장굉",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 17,
+      "무력": 15,
+      "지력": 74,
+      "정치": 74,
+      "매력": 26
+    },
+    "disposition": "실무",
+    "traits": [
+      "「이장」 장소와 쌍벽"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0252",
+    "name": "장제(오)",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 70,
+      "무력": 35,
+      "지력": 68,
+      "정치": 37,
+      "매력": 27
+    },
+    "disposition": "절의",
+    "traits": [
+      "「최후의 승상」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0253",
+    "name": "전서",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 71,
+      "무력": 41,
+      "지력": 28,
+      "정치": 27,
+      "매력": 20
+    },
+    "disposition": "실무",
+    "traits": [
+      "전종 계열"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0254",
+    "name": "정병",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 23,
+      "무력": 18,
+      "지력": 35,
+      "정치": 58,
+      "매력": 29
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0255",
+    "name": "제갈근",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 14,
+      "무력": 21,
+      "지력": 83,
+      "정치": 79,
+      "매력": 33
+    },
+    "disposition": "실무",
+    "traits": [
+      "「화평」 촉과의 외교. 제갈량의 형"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0256",
+    "name": "조자",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 27,
+      "무력": 28,
+      "지력": 30,
+      "정치": 74,
+      "매력": 33
+    },
+    "disposition": "실무",
+    "traits": [
+      "「사위」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0257",
+    "name": "종리목",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 41,
+      "무력": 31,
+      "지력": 33,
+      "정치": 72,
+      "매력": 37
+    },
+    "disposition": "실무",
+    "traits": [
+      "「산월 진무」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0258",
+    "name": "주거",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 47,
+      "무력": 35,
+      "지력": 33,
+      "정치": 65,
+      "매력": 35
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0259",
+    "name": "주이",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 80,
+      "무력": 29,
+      "지력": 29,
+      "정치": 33,
+      "매력": 19
+    },
+    "disposition": "실무",
+    "traits": [
+      "「수춘 구원」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0260",
+    "name": "주치",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 50,
+      "무력": 36,
+      "지력": 40,
+      "정치": 83,
+      "매력": 36
+    },
+    "disposition": "실무",
+    "traits": [
+      "「원로」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0261",
+    "name": "주환의 부장",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 58,
+      "무력": 29,
+      "지력": 14,
+      "정치": 26,
+      "매력": 14
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0262",
+    "name": "진무",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 33,
+      "무력": 78,
+      "지력": 18,
+      "정치": 23,
+      "매력": 28
+    },
+    "disposition": "실무",
+    "traits": [
+      "「여강 정예」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0263",
+    "name": "하정",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 26,
+      "무력": 29,
+      "지력": 27,
+      "정치": 76,
+      "매력": 23
+    },
+    "disposition": "실무",
+    "traits": [
+      "「간신」 손호 측근"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0264",
+    "name": "호종",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 20,
+      "무력": 23,
+      "지력": 78,
+      "정치": 77,
+      "매력": 27
+    },
+    "disposition": "실무",
+    "traits": [
+      "「사령」 문서"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0265",
+    "name": "화핵",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 21,
+      "무력": 19,
+      "지력": 31,
+      "정치": 73,
+      "매력": 41
+    },
+    "disposition": "실무",
+    "traits": [
+      "「간언」"
+    ],
+    "origin_faction": "오"
+  },
+  {
+    "id": "CHR-0266",
+    "name": "국의",
+    "tier": "명장",
+    "stats": {
+      "통솔": 84,
+      "무력": 80,
+      "지력": 72,
+      "정치": 50,
+      "매력": 48
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0267",
+    "name": "문추",
+    "tier": "명장",
+    "stats": {
+      "통솔": 84,
+      "무력": 90,
+      "지력": 42,
+      "정치": 32,
+      "매력": 52
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0268",
+    "name": "안량",
+    "tier": "명장",
+    "stats": {
+      "통솔": 86,
+      "무력": 91,
+      "지력": 45,
+      "정치": 35,
+      "매력": 55
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0269",
+    "name": "원소",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 68,
+      "지력": 76,
+      "정치": 80,
+      "매력": 92
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0270",
+    "name": "저수",
+    "tier": "명장",
+    "stats": {
+      "통솔": 80,
+      "무력": 40,
+      "지력": 94,
+      "정치": 88,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0271",
+    "name": "전풍",
+    "tier": "명장",
+    "stats": {
+      "통솔": 70,
+      "무력": 35,
+      "지력": 95,
+      "정치": 85,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0272",
+    "name": "고람",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 70,
+      "무력": 30,
+      "지력": 17,
+      "정치": 40,
+      "매력": 18
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "장합과 동반 이탈"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0273",
+    "name": "곽도",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 25,
+      "무력": 16,
+      "지력": 69,
+      "정치": 27,
+      "매력": 30
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「실책」 계략 실패율 높음"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0274",
+    "name": "곽원",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 59,
+      "무력": 32,
+      "지력": 15,
+      "정치": 39,
+      "매력": 17
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0275",
+    "name": "국의의 부장",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 68,
+      "무력": 35,
+      "지력": 22,
+      "정치": 38,
+      "매력": 29
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0276",
+    "name": "마연",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 64,
+      "무력": 38,
+      "지력": 17,
+      "정치": 35,
+      "매력": 15
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0277",
+    "name": "봉기",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 24,
+      "무력": 21,
+      "지력": 73,
+      "정치": 79,
+      "매력": 36
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「참소」 내부 분열 유발"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0278",
+    "name": "순심",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 19,
+      "무력": 20,
+      "지력": 76,
+      "정치": 42,
+      "매력": 21
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「세객」 기주 양도 유도"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0279",
+    "name": "순우경",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 69,
+      "무력": 33,
+      "지력": 24,
+      "정치": 30,
+      "매력": 26
+    },
+    "disposition": "실무",
+    "traits": [
+      "「오소」 보급 거점 수비. 음주 페널티"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0280",
+    "name": "신평",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 19,
+      "무력": 19,
+      "지력": 58,
+      "정치": 58,
+      "매력": 20
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0281",
+    "name": "심배",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 51,
+      "무력": 36,
+      "지력": 37,
+      "정치": 74,
+      "매력": 30
+    },
+    "disposition": "절의",
+    "traits": [
+      "「사수」 업성 최후 방어"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0282",
+    "name": "여광",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 71,
+      "무력": 33,
+      "지력": 29,
+      "정치": 37,
+      "매력": 23
+    },
+    "disposition": "야심",
+    "traits": [
+      "형제. 동반 귀순"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0283",
+    "name": "여상",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 82,
+      "무력": 41,
+      "지력": 23,
+      "정치": 31,
+      "매력": 16
+    },
+    "disposition": "야심",
+    "traits": [
+      "형제. 동반 귀순"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0284",
+    "name": "원담",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 51,
+      "무력": 28,
+      "지력": 31,
+      "정치": 80,
+      "매력": 36
+    },
+    "disposition": "실무",
+    "traits": [
+      "「장자」 후계 분쟁"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0285",
+    "name": "원상",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 51,
+      "무력": 28,
+      "지력": 35,
+      "정치": 70,
+      "매력": 38
+    },
+    "disposition": "실무",
+    "traits": [
+      "「총애」 후계 분쟁"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0286",
+    "name": "원희",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 55,
+      "무력": 36,
+      "지력": 30,
+      "정치": 26,
+      "매력": 29
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0287",
+    "name": "장기",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 66,
+      "무력": 27,
+      "지력": 20,
+      "정치": 29,
+      "매력": 18
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0288",
+    "name": "저곡",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 72,
+      "무력": 28,
+      "지력": 19,
+      "정치": 37,
+      "매력": 27
+    },
+    "disposition": "절의",
+    "traits": [
+      "저수의 아들"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0289",
+    "name": "진림",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 28,
+      "무력": 23,
+      "지력": 82,
+      "정치": 77,
+      "매력": 26
+    },
+    "disposition": "명사",
+    "traits": [
+      "「격문」 **적 세력 천명 하락 유발**"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0290",
+    "name": "한맹",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 69,
+      "무력": 25,
+      "지력": 22,
+      "정치": 25,
+      "매력": 22
+    },
+    "disposition": "실무",
+    "traits": [
+      "보급 호송"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0291",
+    "name": "한복",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 29,
+      "무력": 30,
+      "지력": 37,
+      "정치": 71,
+      "매력": 34
+    },
+    "disposition": "실무",
+    "traits": [
+      "「양도」 기주 이양 이벤트"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0292",
+    "name": "허유",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 29,
+      "무력": 15,
+      "지력": 81,
+      "정치": 43,
+      "매력": 18
+    },
+    "disposition": "야심",
+    "traits": [
+      "「이반」 **관도 결정타 — 조조 귀순 이벤트**"
+    ],
+    "origin_faction": "군웅·원소 진영"
+  },
+  {
+    "id": "CHR-0293",
+    "name": "교유",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 65,
+      "무력": 40,
+      "지력": 18,
+      "정치": 30,
+      "매력": 23
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·원술 진영"
+  },
+  {
+    "id": "CHR-0294",
+    "name": "기령",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 72,
+      "무력": 70,
+      "지력": 18,
+      "정치": 30,
+      "매력": 28
+    },
+    "disposition": "실무",
+    "traits": [
+      "「선봉」 원술군 최강"
+    ],
+    "origin_faction": "군웅·원술 진영"
+  },
+  {
+    "id": "CHR-0295",
+    "name": "뇌박",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 76,
+      "무력": 33,
+      "지력": 14,
+      "정치": 29,
+      "매력": 24
+    },
+    "disposition": "실무",
+    "traits": [
+      "이탈"
+    ],
+    "origin_faction": "군웅·원술 진영"
+  },
+  {
+    "id": "CHR-0296",
+    "name": "양대장",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 19,
+      "무력": 26,
+      "지력": 72,
+      "정치": 42,
+      "매력": 18
+    },
+    "disposition": "실무",
+    "traits": [
+      "「진언」"
+    ],
+    "origin_faction": "군웅·원술 진영"
+  },
+  {
+    "id": "CHR-0297",
+    "name": "양홍",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 20,
+      "무력": 24,
+      "지력": 24,
+      "정치": 58,
+      "매력": 30
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·원술 진영"
+  },
+  {
+    "id": "CHR-0298",
+    "name": "장훈",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 69,
+      "무력": 34,
+      "지력": 27,
+      "정치": 37,
+      "매력": 22
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·원술 진영"
+  },
+  {
+    "id": "CHR-0299",
+    "name": "진란",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 74,
+      "무력": 42,
+      "지력": 28,
+      "정치": 41,
+      "매력": 29
+    },
+    "disposition": "실무",
+    "traits": [
+      "이탈"
+    ],
+    "origin_faction": "군웅·원술 진영"
+  },
+  {
+    "id": "CHR-0300",
+    "name": "곽사",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 73,
+      "무력": 74,
+      "지력": 15,
+      "정치": 25,
+      "매력": 16
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「난정」 이각과 상시 대립"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0301",
+    "name": "번조",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 70,
+      "무력": 28,
+      "지력": 30,
+      "정치": 26,
+      "매력": 26
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0302",
+    "name": "서영",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 77,
+      "무력": 43,
+      "지력": 28,
+      "정치": 35,
+      "매력": 14
+    },
+    "disposition": "실무",
+    "traits": [
+      "「매복」 조조·손견 격파"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0303",
+    "name": "성렴",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 72,
+      "무력": 73,
+      "지력": 17,
+      "정치": 27,
+      "매력": 25
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "여포 부장"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0304",
+    "name": "송헌·위속",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 77,
+      "무력": 35,
+      "지력": 25,
+      "정치": 42,
+      "매력": 13
+    },
+    "disposition": "야심",
+    "traits": [
+      "「배신」 동반"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0305",
+    "name": "왕방",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 60,
+      "무력": 24,
+      "지력": 20,
+      "정치": 25,
+      "매력": 26
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0306",
+    "name": "우보",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 62,
+      "무력": 33,
+      "지력": 30,
+      "정치": 39,
+      "매력": 15
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0307",
+    "name": "위월",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 70,
+      "무력": 68,
+      "지력": 16,
+      "정치": 26,
+      "매력": 19
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0308",
+    "name": "이각",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 68,
+      "무력": 68,
+      "지력": 20,
+      "정치": 34,
+      "매력": 30
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「난정」 장안 장악"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0309",
+    "name": "이몽",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 68,
+      "무력": 30,
+      "지력": 18,
+      "정치": 35,
+      "매력": 22
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0310",
+    "name": "이숙",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 73,
+      "무력": 33,
+      "지력": 74,
+      "정치": 51,
+      "매력": 20
+    },
+    "disposition": "실무",
+    "traits": [
+      "「세객」 여포 회유"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0311",
+    "name": "이유",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 15,
+      "무력": 24,
+      "지력": 74,
+      "정치": 68,
+      "매력": 28
+    },
+    "disposition": "실무",
+    "traits": [
+      "「독계」 폐립·독살 실행"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0312",
+    "name": "장제(동탁·여포)",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 78,
+      "무력": 43,
+      "지력": 25,
+      "정치": 38,
+      "매력": 29
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "장수의 숙부"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0313",
+    "name": "장횡(동탁·여포 진영)",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 54,
+      "무력": 24,
+      "지력": 29,
+      "정치": 25,
+      "매력": 15
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0314",
+    "name": "조성",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 68,
+      "무력": 74,
+      "지력": 18,
+      "정치": 20,
+      "매력": 27
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「사격」"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0315",
+    "name": "추씨",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 19,
+      "무력": 24,
+      "지력": 30,
+      "정치": 76,
+      "매력": 36
+    },
+    "disposition": "실무",
+    "traits": [
+      "완성 사건 인물"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0316",
+    "name": "호진",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 65,
+      "무력": 25,
+      "지력": 21,
+      "정치": 40,
+      "매력": 19
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0317",
+    "name": "화웅",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 75,
+      "무력": 77,
+      "지력": 24,
+      "정치": 27,
+      "매력": 25
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「효장」 관문 수비"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0318",
+    "name": "후성",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 68,
+      "무력": 42,
+      "지력": 17,
+      "정치": 42,
+      "매력": 18
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「배신」 여포 포박"
+    ],
+    "origin_faction": "군웅·동탁·여포 진영"
+  },
+  {
+    "id": "CHR-0319",
+    "name": "괴량",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 24,
+      "무력": 22,
+      "지력": 78,
+      "정치": 79,
+      "매력": 36
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「형양 안정」"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0320",
+    "name": "괴월",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 14,
+      "무력": 23,
+      "지력": 73,
+      "정치": 74,
+      "매력": 25
+    },
+    "disposition": "실무",
+    "traits": [
+      "「모략」 형주 평정"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0321",
+    "name": "등의",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 25,
+      "무력": 27,
+      "지력": 28,
+      "정치": 65,
+      "매력": 40
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0322",
+    "name": "부손",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 19,
+      "무력": 28,
+      "지력": 75,
+      "정치": 73,
+      "매력": 34
+    },
+    "disposition": "실무",
+    "traits": [
+      "「권항」 항복 권유"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0323",
+    "name": "소비",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 73,
+      "무력": 36,
+      "지력": 14,
+      "정치": 36,
+      "매력": 23
+    },
+    "disposition": "실무",
+    "traits": [
+      "「감녕 천거」"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0324",
+    "name": "왕위",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 77,
+      "무력": 41,
+      "지력": 17,
+      "정치": 42,
+      "매력": 24
+    },
+    "disposition": "절의",
+    "traits": [
+      "「직간」"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0325",
+    "name": "유기",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 48,
+      "무력": 38,
+      "지력": 30,
+      "정치": 71,
+      "매력": 38
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「장자」 후계 분쟁. 유비 의탁처"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0326",
+    "name": "유선(유표)",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 16,
+      "무력": 30,
+      "지력": 36,
+      "정치": 68,
+      "매력": 26
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0327",
+    "name": "유종",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 21,
+      "무력": 25,
+      "지력": 29,
+      "정치": 75,
+      "매력": 39
+    },
+    "disposition": "실무",
+    "traits": [
+      "「유주」 항복 이벤트"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0328",
+    "name": "이규",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 29,
+      "무력": 24,
+      "지력": 35,
+      "정치": 64,
+      "매력": 36
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0329",
+    "name": "장윤",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 77,
+      "무력": 39,
+      "지력": 17,
+      "정치": 28,
+      "매력": 16
+    },
+    "disposition": "실무",
+    "traits": [
+      "채모와 동반"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0330",
+    "name": "채모",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 53,
+      "무력": 28,
+      "지력": 25,
+      "정치": 82,
+      "매력": 26
+    },
+    "disposition": "실무",
+    "traits": [
+      "「수군」 항행 지휘. 외척"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0331",
+    "name": "한숭",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 23,
+      "무력": 29,
+      "지력": 37,
+      "정치": 75,
+      "매력": 30
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「사절」"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0332",
+    "name": "황사",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 74,
+      "무력": 37,
+      "지력": 23,
+      "정치": 30,
+      "매력": 15
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "황조의 아들"
+    ],
+    "origin_faction": "군웅·유표 진영"
+  },
+  {
+    "id": "CHR-0333",
+    "name": "고패",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 72,
+      "무력": 25,
+      "지력": 29,
+      "정치": 37,
+      "매력": 28
+    },
+    "disposition": "실무",
+    "traits": [
+      "「관문 수비」 백수관"
+    ],
+    "origin_faction": "군웅·유장·익주 진영"
+  },
+  {
+    "id": "CHR-0334",
+    "name": "냉포",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 68,
+      "무력": 33,
+      "지력": 17,
+      "정치": 30,
+      "매력": 29
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·유장·익주 진영"
+  },
+  {
+    "id": "CHR-0335",
+    "name": "뇌동",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 80,
+      "무력": 30,
+      "지력": 15,
+      "정치": 40,
+      "매력": 24
+    },
+    "disposition": "실무",
+    "traits": [
+      "한중 전투"
+    ],
+    "origin_faction": "군웅·유장·익주 진영"
+  },
+  {
+    "id": "CHR-0336",
+    "name": "두경",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 21,
+      "무력": 18,
+      "지력": 27,
+      "정치": 76,
+      "매력": 41
+    },
+    "disposition": "실무",
+    "traits": [
+      "「참위」"
+    ],
+    "origin_faction": "군웅·유장·익주 진영"
+  },
+  {
+    "id": "CHR-0337",
+    "name": "등현",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 63,
+      "무력": 36,
+      "지력": 16,
+      "정치": 30,
+      "매력": 28
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·유장·익주 진영"
+  },
+  {
+    "id": "CHR-0338",
+    "name": "마한",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 61,
+      "무력": 34,
+      "지력": 14,
+      "정치": 23,
+      "매력": 29
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·유장·익주 진영"
+  },
+  {
+    "id": "CHR-0339",
+    "name": "양회",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 80,
+      "무력": 35,
+      "지력": 20,
+      "정치": 37,
+      "매력": 17
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「관문 수비」 백수관"
+    ],
+    "origin_faction": "군웅·유장·익주 진영"
+  },
+  {
+    "id": "CHR-0340",
+    "name": "오란",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 71,
+      "무력": 33,
+      "지력": 30,
+      "정치": 26,
+      "매력": 19
+    },
+    "disposition": "실무",
+    "traits": [
+      "한중 전투"
+    ],
+    "origin_faction": "군웅·유장·익주 진영"
+  },
+  {
+    "id": "CHR-0341",
+    "name": "왕루",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 26,
+      "무력": 26,
+      "지력": 33,
+      "정치": 71,
+      "매력": 23
+    },
+    "disposition": "절의",
+    "traits": [
+      "「간사」 유비 초빙 반대"
+    ],
+    "origin_faction": "군웅·유장·익주 진영"
+  },
+  {
+    "id": "CHR-0342",
+    "name": "유괴",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 60,
+      "무력": 37,
+      "지력": 25,
+      "정치": 24,
+      "매력": 20
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·유장·익주 진영"
+  },
+  {
+    "id": "CHR-0343",
+    "name": "진복",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 22,
+      "무력": 14,
+      "지력": 79,
+      "정치": 81,
+      "매력": 24
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「변설」 후에 촉 소속"
+    ],
+    "origin_faction": "군웅·유장·익주 진영"
+  },
+  {
+    "id": "CHR-0344",
+    "name": "마완",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 63,
+      "무력": 32,
+      "지력": 20,
+      "정치": 32,
+      "매력": 15
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·서량 진영"
+  },
+  {
+    "id": "CHR-0345",
+    "name": "마철",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 72,
+      "무력": 32,
+      "지력": 16,
+      "정치": 34,
+      "매력": 24
+    },
+    "disposition": "실무",
+    "traits": [
+      "마등의 아들. 처형 이벤트"
+    ],
+    "origin_faction": "군웅·서량 진영"
+  },
+  {
+    "id": "CHR-0346",
+    "name": "마휴",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 76,
+      "무력": 41,
+      "지력": 21,
+      "정치": 37,
+      "매력": 26
+    },
+    "disposition": "실무",
+    "traits": [
+      "마등의 아들. 처형 이벤트"
+    ],
+    "origin_faction": "군웅·서량 진영"
+  },
+  {
+    "id": "CHR-0347",
+    "name": "성의",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 66,
+      "무력": 25,
+      "지력": 27,
+      "정치": 27,
+      "매력": 26
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·서량 진영"
+  },
+  {
+    "id": "CHR-0348",
+    "name": "양추",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 78,
+      "무력": 29,
+      "지력": 17,
+      "정치": 33,
+      "매력": 22
+    },
+    "disposition": "야심",
+    "traits": [
+      "「귀순」"
+    ],
+    "origin_faction": "군웅·서량 진영"
+  },
+  {
+    "id": "CHR-0349",
+    "name": "양흥",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 79,
+      "무력": 27,
+      "지력": 25,
+      "정치": 32,
+      "매력": 26
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "관중 십부"
+    ],
+    "origin_faction": "군웅·서량 진영"
+  },
+  {
+    "id": "CHR-0350",
+    "name": "이감",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 63,
+      "무력": 28,
+      "지력": 26,
+      "정치": 34,
+      "매력": 18
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·서량 진영"
+  },
+  {
+    "id": "CHR-0351",
+    "name": "장횡(서량 진영)",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 79,
+      "무력": 28,
+      "지력": 18,
+      "정치": 28,
+      "매력": 27
+    },
+    "disposition": "실무",
+    "traits": [
+      "관중 십부"
+    ],
+    "origin_faction": "군웅·서량 진영"
+  },
+  {
+    "id": "CHR-0352",
+    "name": "정은",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 60,
+      "무력": 24,
+      "지력": 16,
+      "정치": 34,
+      "매력": 30
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·서량 진영"
+  },
+  {
+    "id": "CHR-0353",
+    "name": "후선",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 62,
+      "무력": 38,
+      "지력": 15,
+      "정치": 40,
+      "매력": 27
+    },
+    "disposition": "실무",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·서량 진영"
+  },
+  {
+    "id": "CHR-0354",
+    "name": "공손범",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 74,
+      "무력": 27,
+      "지력": 22,
+      "정치": 32,
+      "매력": 22
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "종제"
+    ],
+    "origin_faction": "군웅·공손찬 진영"
+  },
+  {
+    "id": "CHR-0355",
+    "name": "공손월",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 73,
+      "무력": 36,
+      "지력": 23,
+      "정치": 28,
+      "매력": 17
+    },
+    "disposition": "실무",
+    "traits": [
+      "종제"
+    ],
+    "origin_faction": "군웅·공손찬 진영"
+  },
+  {
+    "id": "CHR-0356",
+    "name": "관정",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 29,
+      "무력": 16,
+      "지력": 74,
+      "정치": 70,
+      "매력": 28
+    },
+    "disposition": "절의",
+    "traits": [
+      "「순사」"
+    ],
+    "origin_faction": "군웅·공손찬 진영"
+  },
+  {
+    "id": "CHR-0357",
+    "name": "단경",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 66,
+      "무력": 29,
+      "지력": 20,
+      "정치": 31,
+      "매력": 15
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·공손찬 진영"
+  },
+  {
+    "id": "CHR-0358",
+    "name": "선우보",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 58,
+      "무력": 31,
+      "지력": 39,
+      "정치": 77,
+      "매력": 34
+    },
+    "disposition": "야심",
+    "traits": [
+      "「귀순」 조조 편입"
+    ],
+    "origin_faction": "군웅·공손찬 진영"
+  },
+  {
+    "id": "CHR-0359",
+    "name": "엄강",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 77,
+      "무력": 43,
+      "지력": 30,
+      "정치": 43,
+      "매력": 17
+    },
+    "disposition": "실무",
+    "traits": [
+      "「백마의종」 지휘"
+    ],
+    "origin_faction": "군웅·공손찬 진영"
+  },
+  {
+    "id": "CHR-0360",
+    "name": "왕문",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 81,
+      "무력": 36,
+      "지력": 29,
+      "정치": 38,
+      "매력": 12
+    },
+    "disposition": "야심",
+    "traits": [
+      "「이반」"
+    ],
+    "origin_faction": "군웅·공손찬 진영"
+  },
+  {
+    "id": "CHR-0361",
+    "name": "전해",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 51,
+      "무력": 25,
+      "지력": 37,
+      "정치": 72,
+      "매력": 33
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "청주 방면"
+    ],
+    "origin_faction": "군웅·공손찬 진영"
+  },
+  {
+    "id": "CHR-0362",
+    "name": "추단",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 65,
+      "무력": 40,
+      "지력": 20,
+      "정치": 24,
+      "매력": 23
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "—"
+    ],
+    "origin_faction": "군웅·공손찬 진영"
+  },
+  {
+    "id": "CHR-0363",
+    "name": "관해",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 78,
+      "무력": 80,
+      "지력": 22,
+      "정치": 33,
+      "매력": 21
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「황건」 북해 포위"
+    ],
+    "origin_faction": "군웅·기타 군웅"
+  },
+  {
+    "id": "CHR-0364",
+    "name": "교모",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 72,
+      "무력": 37,
+      "지력": 27,
+      "정치": 41,
+      "매력": 18
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "반동탁 연합"
+    ],
+    "origin_faction": "군웅·기타 군웅"
+  },
+  {
+    "id": "CHR-0365",
+    "name": "엄백호",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 77,
+      "무력": 33,
+      "지력": 19,
+      "정치": 41,
+      "매력": 27
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「산적」 강동 토호"
+    ],
+    "origin_faction": "군웅·기타 군웅"
+  },
+  {
+    "id": "CHR-0366",
+    "name": "왕광",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 75,
+      "무력": 39,
+      "지력": 20,
+      "정치": 26,
+      "매력": 18
+    },
+    "disposition": "실무",
+    "traits": [
+      "반동탁 연합"
+    ],
+    "origin_faction": "군웅·기타 군웅"
+  },
+  {
+    "id": "CHR-0367",
+    "name": "장막",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 48,
+      "무력": 28,
+      "지력": 32,
+      "정치": 81,
+      "매력": 29
+    },
+    "disposition": "실무",
+    "traits": [
+      "「연합」 반동탁 발기. 후에 여포와 결탁"
+    ],
+    "origin_faction": "군웅·기타 군웅"
+  },
+  {
+    "id": "CHR-0368",
+    "name": "장초",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 53,
+      "무력": 23,
+      "지력": 26,
+      "정치": 77,
+      "매력": 34
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「연합」 반동탁 발기. 후에 여포와 결탁"
+    ],
+    "origin_faction": "군웅·기타 군웅"
+  },
+  {
+    "id": "CHR-0369",
+    "name": "착융",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 15,
+      "무력": 23,
+      "지력": 31,
+      "정치": 73,
+      "매력": 36
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "「불사」 재물 수탈"
+    ],
+    "origin_faction": "군웅·기타 군웅"
+  },
+  {
+    "id": "CHR-0370",
+    "name": "포신",
+    "tier": "일반무장",
+    "stats": {
+      "통솔": 71,
+      "무력": 39,
+      "지력": 21,
+      "정치": 36,
+      "매력": 17
+    },
+    "disposition": "무뢰",
+    "traits": [
+      "반동탁 연합"
+    ],
+    "origin_faction": "군웅·기타 군웅"
+  },
+  {
+    "id": "CHR-0371",
+    "name": "가비능",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 84,
+      "지력": 72,
+      "정치": 58,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0372",
+    "name": "고순",
+    "tier": "명장",
+    "stats": {
+      "통솔": 86,
+      "무력": 88,
+      "지력": 62,
+      "정치": 45,
+      "매력": 60
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0373",
+    "name": "공손강",
+    "tier": "명장",
+    "stats": {
+      "통솔": 74,
+      "무력": 68,
+      "지력": 72,
+      "정치": 74,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0374",
+    "name": "공손연",
+    "tier": "명장",
+    "stats": {
+      "통솔": 70,
+      "무력": 62,
+      "지력": 68,
+      "정치": 70,
+      "매력": 45
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0375",
+    "name": "공손찬",
+    "tier": "명장",
+    "stats": {
+      "통솔": 84,
+      "무력": 85,
+      "지력": 62,
+      "정치": 55,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0376",
+    "name": "공융",
+    "tier": "명장",
+    "stats": {
+      "통솔": 30,
+      "무력": 20,
+      "지력": 80,
+      "정치": 70,
+      "매력": 88
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0377",
+    "name": "답돈",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 86,
+      "지력": 50,
+      "정치": 40,
+      "매력": 58
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0378",
+    "name": "도겸",
+    "tier": "명장",
+    "stats": {
+      "통솔": 45,
+      "무력": 35,
+      "지력": 62,
+      "정치": 76,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0379",
+    "name": "동탁",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 88,
+      "지력": 62,
+      "정치": 40,
+      "매력": 20
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0380",
+    "name": "마등",
+    "tier": "명장",
+    "stats": {
+      "통솔": 84,
+      "무력": 82,
+      "지력": 62,
+      "정치": 58,
+      "매력": 75
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0381",
+    "name": "맹획",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 90,
+      "지력": 40,
+      "정치": 45,
+      "매력": 72
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0382",
+    "name": "사섭",
+    "tier": "명장",
+    "stats": {
+      "통솔": 55,
+      "무력": 40,
+      "지력": 76,
+      "정치": 86,
+      "매력": 78
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0383",
+    "name": "여포",
+    "tier": "명장",
+    "stats": {
+      "통솔": 90,
+      "무력": 100,
+      "지력": 32,
+      "정치": 18,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0384",
+    "name": "올돌골",
+    "tier": "명장",
+    "stats": {
+      "통솔": 70,
+      "무력": 92,
+      "지력": 25,
+      "정치": 20,
+      "매력": 50
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0385",
+    "name": "왕윤",
+    "tier": "명장",
+    "stats": {
+      "통솔": 40,
+      "무력": 25,
+      "지력": 85,
+      "정치": 88,
+      "매력": 76
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0386",
+    "name": "왕이",
+    "tier": "명장",
+    "stats": {
+      "통솔": 72,
+      "무력": 40,
+      "지력": 76,
+      "정치": 72,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0387",
+    "name": "원술",
+    "tier": "명장",
+    "stats": {
+      "통솔": 60,
+      "무력": 62,
+      "지력": 58,
+      "정치": 60,
+      "매력": 50
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0388",
+    "name": "유요",
+    "tier": "명장",
+    "stats": {
+      "통솔": 55,
+      "무력": 50,
+      "지력": 60,
+      "정치": 68,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0389",
+    "name": "유장",
+    "tier": "명장",
+    "stats": {
+      "통솔": 40,
+      "무력": 30,
+      "지력": 55,
+      "정치": 70,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0390",
+    "name": "유표",
+    "tier": "명장",
+    "stats": {
+      "통솔": 68,
+      "무력": 50,
+      "지력": 76,
+      "정치": 85,
+      "매력": 85
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0391",
+    "name": "장로",
+    "tier": "명장",
+    "stats": {
+      "통솔": 60,
+      "무력": 35,
+      "지력": 70,
+      "정치": 78,
+      "매력": 80
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0392",
+    "name": "장수",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 84,
+      "지력": 62,
+      "정치": 55,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0393",
+    "name": "장연",
+    "tier": "명장",
+    "stats": {
+      "통솔": 80,
+      "무력": 78,
+      "지력": 68,
+      "정치": 55,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0394",
+    "name": "장임",
+    "tier": "명장",
+    "stats": {
+      "통솔": 82,
+      "무력": 80,
+      "지력": 78,
+      "정치": 62,
+      "매력": 62
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0395",
+    "name": "진궁",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 40,
+      "지력": 92,
+      "정치": 76,
+      "매력": 70
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0396",
+    "name": "초선",
+    "tier": "명장",
+    "stats": {
+      "통솔": 10,
+      "무력": 12,
+      "지력": 78,
+      "정치": 60,
+      "매력": 96
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0397",
+    "name": "축융",
+    "tier": "명장",
+    "stats": {
+      "통솔": 60,
+      "무력": 85,
+      "지력": 45,
+      "정치": 40,
+      "매력": 68
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0398",
+    "name": "한수",
+    "tier": "명장",
+    "stats": {
+      "통솔": 78,
+      "무력": 70,
+      "지력": 76,
+      "정치": 62,
+      "매력": 58
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0399",
+    "name": "황조",
+    "tier": "명장",
+    "stats": {
+      "통솔": 72,
+      "무력": 68,
+      "지력": 60,
+      "정치": 58,
+      "매력": 50
+    },
+    "disposition": null,
+    "traits": [],
+    "origin_faction": "군웅"
+  },
+  {
+    "id": "CHR-0400",
+    "name": "고국천왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 71,
+      "무력": 45,
+      "지력": 33,
+      "정치": 93,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「진대법」 민심 회복 +40%, 기근 이벤트 무효"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0401",
+    "name": "을파소",
+    "tier": "이역",
+    "stats": {
+      "통솔": 24,
+      "무력": 23,
+      "지력": 78,
+      "정치": 80,
+      "매력": 30
+    },
+    "disposition": null,
+    "traits": [
+      "「초야」 재야 등용 시 격 상승. 내정 +35%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0402",
+    "name": "안류",
+    "tier": "이역",
+    "stats": {
+      "통솔": 22,
+      "무력": 23,
+      "지력": 41,
+      "정치": 69,
+      "매력": 41
+    },
+    "disposition": null,
+    "traits": [
+      "「천거」 을파소 등용의 추천인"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0403",
+    "name": "좌가려·어비류",
+    "tier": "이역",
+    "stats": {
+      "통솔": 75,
+      "무력": 80,
+      "지력": 23,
+      "정치": 34,
+      "매력": 16
+    },
+    "disposition": null,
+    "traits": [
+      "「전횡」 반란 트리거"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0404",
+    "name": "우씨왕후",
+    "tier": "이역",
+    "stats": {
+      "통솔": 24,
+      "무력": 21,
+      "지력": 75,
+      "정치": 72,
+      "매력": 33
+    },
+    "disposition": null,
+    "traits": [
+      "「옹립」 후계 지명 강제 개입"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0405",
+    "name": "발기",
+    "tier": "이역",
+    "stats": {
+      "통솔": 73,
+      "무력": 39,
+      "지력": 24,
+      "정치": 31,
+      "매력": 24
+    },
+    "disposition": null,
+    "traits": [
+      "「차왕」 외세 차병 가능 — 공손도 연계"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0406",
+    "name": "산상왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 59,
+      "무력": 39,
+      "지력": 40,
+      "정치": 86,
+      "매력": 41
+    },
+    "disposition": null,
+    "traits": [
+      "「환도」 수도 이전 이벤트"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0407",
+    "name": "계수",
+    "tier": "이역",
+    "stats": {
+      "통솔": 71,
+      "무력": 67,
+      "지력": 25,
+      "정치": 40,
+      "매력": 23
+    },
+    "disposition": null,
+    "traits": [
+      "「골육」 동족 상대 전투 시 사기 하락"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0408",
+    "name": "명림어수",
+    "tier": "이역",
+    "stats": {
+      "통솔": 29,
+      "무력": 18,
+      "지력": 32,
+      "정치": 71,
+      "매력": 36
+    },
+    "disposition": null,
+    "traits": [
+      "「병권겸장」 내정·군권 동시 보정"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0409",
+    "name": "동천왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 92,
+      "무력": 88,
+      "지력": 32,
+      "정치": 50,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「동이」 위와 상시 교전. §12.2 이관 — 원 ①#120"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0410",
+    "name": "득래",
+    "tier": "이역",
+    "stats": {
+      "통솔": 17,
+      "무력": 31,
+      "지력": 36,
+      "정치": 71,
+      "매력": 43
+    },
+    "disposition": null,
+    "traits": [
+      "「사간」 군주 폭주 시 절식 자결, 천명 회복"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0411",
+    "name": "밀우",
+    "tier": "이역",
+    "stats": {
+      "통솔": 38,
+      "무력": 76,
+      "지력": 31,
+      "정치": 31,
+      "매력": 31
+    },
+    "disposition": null,
+    "traits": [
+      "「결사」 군주 피격 시 결사대 편성, 탈출 보장"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0412",
+    "name": "유유",
+    "tier": "이역",
+    "stats": {
+      "통솔": 38,
+      "무력": 75,
+      "지력": 75,
+      "정치": 28,
+      "매력": 27
+    },
+    "disposition": null,
+    "traits": [
+      "「사간」 거짓 항복 후 적 총대장 암살, 본인 사망"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0413",
+    "name": "명림홀도",
+    "tier": "이역",
+    "stats": {
+      "통솔": 88,
+      "무력": 41,
+      "지력": 24,
+      "정치": 33,
+      "매력": 24
+    },
+    "disposition": null,
+    "traits": [
+      "「외척」 궁정 영향력"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0414",
+    "name": "중천왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 96,
+      "무력": 36,
+      "지력": 36,
+      "정치": 50,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「수성」 침공 이후 재건"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0415",
+    "name": "초고왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 78,
+      "무력": 39,
+      "지력": 23,
+      "정치": 50,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「변경」 국경 습격 전과 +25%"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0416",
+    "name": "구수왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 57,
+      "무력": 41,
+      "지력": 36,
+      "정치": 97,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「제언」 성계 개발 속도 +30%"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0417",
+    "name": "사반왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 18,
+      "무력": 19,
+      "지력": 32,
+      "정치": 76,
+      "매력": 47
+    },
+    "disposition": null,
+    "traits": [
+      "「단명」 즉위 직후 폐위 이벤트"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0418",
+    "name": "고이왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 65,
+      "무력": 43,
+      "지력": 34,
+      "정치": 98,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「육좌평」 관제 정비 — 관료형 정원 +3, 행정 효율 +40%"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0419",
+    "name": "진충",
+    "tier": "이역",
+    "stats": {
+      "통솔": 75,
+      "무력": 76,
+      "지력": 22,
+      "정치": 31,
+      "매력": 21
+    },
+    "disposition": null,
+    "traits": [
+      "「기리영」 낙랑·대방 성역 기습 특화"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0420",
+    "name": "진물",
+    "tier": "이역",
+    "stats": {
+      "통솔": 85,
+      "무력": 32,
+      "지력": 25,
+      "정치": 48,
+      "매력": 24
+    },
+    "disposition": null,
+    "traits": [
+      "「병마」 부대 편성 비용 -20%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0421",
+    "name": "우수",
+    "tier": "이역",
+    "stats": {
+      "통솔": 21,
+      "무력": 33,
+      "지력": 33,
+      "정치": 87,
+      "매력": 31
+    },
+    "disposition": null,
+    "traits": [
+      "「종친」 군주 결단 보정"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0422",
+    "name": "진가",
+    "tier": "이역",
+    "stats": {
+      "통솔": 15,
+      "무력": 33,
+      "지력": 37,
+      "정치": 82,
+      "매력": 39
+    },
+    "disposition": null,
+    "traits": [
+      "「탁지」 자금 수입 +25%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0423",
+    "name": "고수",
+    "tier": "이역",
+    "stats": {
+      "통솔": 32,
+      "무력": 71,
+      "지력": 28,
+      "정치": 15,
+      "매력": 31
+    },
+    "disposition": null,
+    "traits": [
+      "「숙위」 군주 암살 시도 무효화"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0424",
+    "name": "곤노",
+    "tier": "이역",
+    "stats": {
+      "통솔": 26,
+      "무력": 23,
+      "지력": 37,
+      "정치": 74,
+      "매력": 31
+    },
+    "disposition": null,
+    "traits": [
+      "「형옥」 반란 발생률 -25%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0425",
+    "name": "유기(백제)",
+    "tier": "이역",
+    "stats": {
+      "통솔": 72,
+      "무력": 41,
+      "지력": 18,
+      "정치": 37,
+      "매력": 15
+    },
+    "disposition": null,
+    "traits": [
+      "「병관」 함대 유지비 -15%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0426",
+    "name": "우두",
+    "tier": "이역",
+    "stats": {
+      "통솔": 32,
+      "무력": 18,
+      "지력": 79,
+      "정치": 84,
+      "매력": 26
+    },
+    "disposition": null,
+    "traits": [
+      "「예제」 천명 감소 완화"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0427",
+    "name": "구력거",
+    "tier": "이역",
+    "stats": {
+      "통솔": 95,
+      "무력": 42,
+      "지력": 19,
+      "정치": 50,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「요서」 초기 오환 통합 세력"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0428",
+    "name": "누반",
+    "tier": "이역",
+    "stats": {
+      "통솔": 77,
+      "무력": 45,
+      "지력": 19,
+      "정치": 32,
+      "매력": 17
+    },
+    "disposition": null,
+    "traits": [
+      "「유주」 답돈 섭정 하. 답돈 사망 시 승계"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0429",
+    "name": "소복연",
+    "tier": "이역",
+    "stats": {
+      "통솔": 78,
+      "무력": 80,
+      "지력": 30,
+      "정치": 34,
+      "매력": 15
+    },
+    "disposition": null,
+    "traits": [
+      "「오천락」 병력 보유량 큼, 통제력 약함"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0430",
+    "name": "오연",
+    "tier": "이역",
+    "stats": {
+      "통솔": 76,
+      "무력": 75,
+      "지력": 32,
+      "정치": 29,
+      "매력": 17
+    },
+    "disposition": null,
+    "traits": [
+      "「팔백락」 소수정예 고속 부대"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0431",
+    "name": "난루",
+    "tier": "이역",
+    "stats": {
+      "통솔": 54,
+      "무력": 27,
+      "지력": 37,
+      "정치": 77,
+      "매력": 26
+    },
+    "disposition": null,
+    "traits": [
+      "「구천락」 최대 병력, 중립 성향"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0432",
+    "name": "능신저지",
+    "tier": "이역",
+    "stats": {
+      "통솔": 71,
+      "무력": 43,
+      "지력": 32,
+      "정치": 42,
+      "매력": 31
+    },
+    "disposition": null,
+    "traits": [
+      "「자칭선우」 타 오환 세력과 상성 악화"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0433",
+    "name": "보부로",
+    "tier": "이역",
+    "stats": {
+      "통솔": 73,
+      "무력": 32,
+      "지력": 32,
+      "정치": 43,
+      "매력": 26
+    },
+    "disposition": null,
+    "traits": [
+      "「귀부」 회유 성공률 높음"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0434",
+    "name": "장순",
+    "tier": "이역",
+    "stats": {
+      "통솔": 74,
+      "무력": 41,
+      "지력": 76,
+      "정치": 56,
+      "매력": 21
+    },
+    "disposition": null,
+    "traits": [
+      "「미천안정왕」 이민족 결탁 반란 트리거"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0435",
+    "name": "장거",
+    "tier": "이역",
+    "stats": {
+      "통솔": 19,
+      "무력": 25,
+      "지력": 42,
+      "정치": 75,
+      "매력": 28
+    },
+    "disposition": null,
+    "traits": [
+      "「참칭」 칭제 이벤트, 천명 붕괴"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0436",
+    "name": "염유",
+    "tier": "이역",
+    "stats": {
+      "통솔": 57,
+      "무력": 26,
+      "지력": 36,
+      "정치": 74,
+      "매력": 30
+    },
+    "disposition": null,
+    "traits": [
+      "「호중」 오환·선비의 신임 획득 — 북방권 외교 창구"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0437",
+    "name": "보도근",
+    "tier": "이역",
+    "stats": {
+      "통솔": 70,
+      "무력": 44,
+      "지력": 32,
+      "정치": 36,
+      "매력": 16
+    },
+    "disposition": null,
+    "traits": [
+      "「선비분열」 가비능과 상시 적대. §12.2 이관 — 원 ①#150"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0438",
+    "name": "부라한",
+    "tier": "이역",
+    "stats": {
+      "통솔": 76,
+      "무력": 36,
+      "지력": 21,
+      "정치": 47,
+      "매력": 30
+    },
+    "disposition": null,
+    "traits": [
+      "「내분」 가비능에게 살해되는 이벤트"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0439",
+    "name": "설귀니",
+    "tier": "이역",
+    "stats": {
+      "통솔": 74,
+      "무력": 70,
+      "지력": 18,
+      "정치": 28,
+      "매력": 17
+    },
+    "disposition": null,
+    "traits": [
+      "「전전」 세력 간 이적을 반복, 이탈률 최고"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0440",
+    "name": "소리·미가·궐기",
+    "tier": "이역",
+    "stats": {
+      "통솔": 69,
+      "무력": 32,
+      "지력": 23,
+      "정치": 31,
+      "매력": 23
+    },
+    "disposition": null,
+    "traits": [
+      "「삼대인」 3인 세트, 개별 회유 가능"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0441",
+    "name": "한룡",
+    "tier": "이역",
+    "stats": {
+      "통솔": 40,
+      "무력": 81,
+      "지력": 84,
+      "정치": 31,
+      "매력": 29
+    },
+    "disposition": null,
+    "traits": [
+      "「자객」 적 세력 최상위 1인 암살 시도. 성공 시 본인 소멸"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0442",
+    "name": "어부라",
+    "tier": "이역",
+    "stats": {
+      "통솔": 97,
+      "무력": 50,
+      "지력": 35,
+      "정치": 50,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「유랑선우」 본거지 상실 상태로 시작"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0443",
+    "name": "호주천",
+    "tier": "이역",
+    "stats": {
+      "통솔": 93,
+      "무력": 39,
+      "지력": 31,
+      "정치": 50,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「오부분할」 조조 귀순 시 흉노 5부 재편 이벤트"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0444",
+    "name": "거비",
+    "tier": "이역",
+    "stats": {
+      "통솔": 46,
+      "무력": 88,
+      "지력": 30,
+      "정치": 30,
+      "매력": 23
+    },
+    "disposition": null,
+    "traits": [
+      "「호가」 황제 호송 이벤트 참여 — 천명 획득 경로"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0445",
+    "name": "유표(흉노)",
+    "tier": "이역",
+    "stats": {
+      "통솔": 75,
+      "무력": 52,
+      "지력": 17,
+      "정치": 31,
+      "매력": 28
+    },
+    "disposition": null,
+    "traits": [
+      "「좌부」 후기 북방 최대 기동 전력"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0446",
+    "name": "북궁백옥·이문후",
+    "tier": "이역",
+    "stats": {
+      "통솔": 74,
+      "무력": 76,
+      "지력": 18,
+      "정치": 30,
+      "매력": 19
+    },
+    "disposition": null,
+    "traits": [
+      "「양주지란」 서량 상시 불안정화"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0447",
+    "name": "아하소과",
+    "tier": "이역",
+    "stats": {
+      "통솔": 44,
+      "무력": 73,
+      "지력": 31,
+      "정치": 28,
+      "매력": 19
+    },
+    "disposition": null,
+    "traits": [
+      "「농서반」 곽회 대응 이벤트"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0448",
+    "name": "치무대",
+    "tier": "이역",
+    "stats": {
+      "통솔": 64,
+      "무력": 40,
+      "지력": 22,
+      "정치": 37,
+      "매력": 22
+    },
+    "disposition": null,
+    "traits": [
+      "「강중」 강유의 북벌 시 호응 가능"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0449",
+    "name": "미당",
+    "tier": "이역",
+    "stats": {
+      "통솔": 73,
+      "무력": 80,
+      "지력": 29,
+      "정치": 26,
+      "매력": 32
+    },
+    "disposition": null,
+    "traits": [
+      "「강기」 파일럿형 유닛 추가 편성"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0450",
+    "name": "철리길·월길",
+    "tier": "이역",
+    "stats": {
+      "통솔": 73,
+      "무력": 73,
+      "지력": 22,
+      "정치": 25,
+      "매력": 28
+    },
+    "disposition": null,
+    "traits": [
+      "「철거병」 중장 돌격 부대"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0451",
+    "name": "아귀",
+    "tier": "이역",
+    "stats": {
+      "통솔": 65,
+      "무력": 45,
+      "지력": 26,
+      "정치": 29,
+      "매력": 29
+    },
+    "disposition": null,
+    "traits": [
+      "「흥국」 마초와 연동"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0452",
+    "name": "천만",
+    "tier": "이역",
+    "stats": {
+      "통솔": 80,
+      "무력": 34,
+      "지력": 20,
+      "정치": 40,
+      "매력": 25
+    },
+    "disposition": null,
+    "traits": [
+      "「백항」 하후연 정벌 대상"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0453",
+    "name": "강단",
+    "tier": "이역",
+    "stats": {
+      "통솔": 56,
+      "무력": 34,
+      "지력": 38,
+      "정치": 80,
+      "매력": 41
+    },
+    "disposition": null,
+    "traits": [
+      "「무도」 장로 휘하 편입 가능"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0454",
+    "name": "옹개",
+    "tier": "이역",
+    "stats": {
+      "통솔": 48,
+      "무력": 39,
+      "지력": 31,
+      "정치": 71,
+      "매력": 38
+    },
+    "disposition": null,
+    "traits": [
+      "「남중반」 남중 3군 동시 반란 주도"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0455",
+    "name": "고정",
+    "tier": "이역",
+    "stats": {
+      "통솔": 71,
+      "무력": 67,
+      "지력": 15,
+      "정치": 29,
+      "매력": 21
+    },
+    "disposition": null,
+    "traits": [
+      "「월수」 옹개와 상성 불안정"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0456",
+    "name": "주포",
+    "tier": "이역",
+    "stats": {
+      "통솔": 55,
+      "무력": 33,
+      "지력": 29,
+      "정치": 78,
+      "매력": 31
+    },
+    "disposition": null,
+    "traits": [
+      "「장가」 오와 내통 가능"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0457",
+    "name": "사마가",
+    "tier": "이역",
+    "stats": {
+      "통솔": 57,
+      "무력": 77,
+      "지력": 23,
+      "정치": 16,
+      "매력": 17
+    },
+    "disposition": null,
+    "traits": [
+      "「만왕」 이릉대전 참전, 유비 측 이민족 원군"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0458",
+    "name": "여개·왕항",
+    "tier": "이역",
+    "stats": {
+      "통솔": 31,
+      "무력": 20,
+      "지력": 34,
+      "정치": 73,
+      "매력": 31
+    },
+    "disposition": null,
+    "traits": [
+      "「고절」 반란 중 고립 상태로 절개 유지"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0459",
+    "name": "파조",
+    "tier": "이역",
+    "stats": {
+      "통솔": 53,
+      "무력": 45,
+      "지력": 47,
+      "정치": 86,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「친위대월지왕」 책봉 이벤트. 원거리 교역로 개통"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0460",
+    "name": "선선왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 64,
+      "무력": 43,
+      "지력": 40,
+      "정치": 92,
+      "매력": 44
+    },
+    "disposition": null,
+    "traits": [
+      "「누란」 항로 중계 거점. 통행세 수입"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0461",
+    "name": "구자왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 21,
+      "무력": 31,
+      "지력": 43,
+      "정치": 84,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「구자악」 문화 정책 시 민심 +25%"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0462",
+    "name": "우전왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 31,
+      "무력": 24,
+      "지력": 52,
+      "정치": 86,
+      "매력": 51
+    },
+    "disposition": null,
+    "traits": [
+      "「옥」 사치재 교역 수입 +30%"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0463",
+    "name": "언기·소륵·차사왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 62,
+      "무력": 36,
+      "지력": 42,
+      "정치": 83,
+      "매력": 28
+    },
+    "disposition": null,
+    "traits": [
+      "「서역제국」 3인 세트, 개별 회유"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0464",
+    "name": "호상(무명)",
+    "tier": "이역",
+    "stats": {
+      "통솔": 18,
+      "무력": 26,
+      "지력": 30,
+      "정치": 75,
+      "매력": 36
+    },
+    "disposition": null,
+    "traits": [
+      "「대상」 원거리 교역로 유지비 -40%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0465",
+    "name": "비잔",
+    "tier": "이역",
+    "stats": {
+      "통솔": 87,
+      "무력": 82,
+      "지력": 16,
+      "정치": 31,
+      "매력": 16
+    },
+    "disposition": null,
+    "traits": [
+      "「험거」 저효율 공간 방어 시 +60%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0466",
+    "name": "반림",
+    "tier": "이역",
+    "stats": {
+      "통솔": 85,
+      "무력": 89,
+      "지력": 21,
+      "정치": 24,
+      "매력": 28
+    },
+    "disposition": null,
+    "traits": [
+      "「출몰」 토벌 후에도 재봉기 반복"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0467",
+    "name": "우돌",
+    "tier": "이역",
+    "stats": {
+      "통솔": 67,
+      "무력": 29,
+      "지력": 17,
+      "정치": 31,
+      "매력": 17
+    },
+    "disposition": null,
+    "traits": [
+      "「단양병」 정예 보병 자원 — 포획 시 병력 대량 획득"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0468",
+    "name": "팽기",
+    "tier": "이역",
+    "stats": {
+      "통솔": 50,
+      "무력": 44,
+      "지력": 37,
+      "정치": 84,
+      "매력": 30
+    },
+    "disposition": null,
+    "traits": [
+      "「자칭장군」 위와 내통 가능"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0469",
+    "name": "팽식·진복·조자",
+    "tier": "이역",
+    "stats": {
+      "통솔": 53,
+      "무력": 84,
+      "지력": 30,
+      "정치": 22,
+      "매력": 21
+    },
+    "disposition": null,
+    "traits": [
+      "「산월제수」 세트 등장"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0470",
+    "name": "두호",
+    "tier": "이역",
+    "stats": {
+      "통솔": 83,
+      "무력": 85,
+      "지력": 33,
+      "정치": 41,
+      "매력": 15
+    },
+    "disposition": null,
+    "traits": [
+      "「파병」 회랑 지형 전투 +40%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0471",
+    "name": "박호",
+    "tier": "이역",
+    "stats": {
+      "통솔": 78,
+      "무력": 35,
+      "지력": 27,
+      "정치": 47,
+      "매력": 15
+    },
+    "disposition": null,
+    "traits": [
+      "「종읍」 귀부 시 한중 성역 안정화"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0472",
+    "name": "원약",
+    "tier": "이역",
+    "stats": {
+      "통솔": 77,
+      "무력": 80,
+      "지력": 27,
+      "정치": 30,
+      "매력": 15
+    },
+    "disposition": null,
+    "traits": [
+      "「판순」 고속 침투 특화"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0473",
+    "name": "이건기첩",
+    "tier": "이역",
+    "stats": {
+      "통솔": 67,
+      "무력": 37,
+      "지력": 33,
+      "정치": 32,
+      "매력": 16
+    },
+    "disposition": null,
+    "traits": [
+      "「하서란」 위 건국 직후 반란 트리거"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0474",
+    "name": "치원다",
+    "tier": "이역",
+    "stats": {
+      "통솔": 43,
+      "무력": 76,
+      "지력": 28,
+      "정치": 21,
+      "매력": 31
+    },
+    "disposition": null,
+    "traits": [
+      "「노수」 서량 보급선 차단"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0475",
+    "name": "위구태",
+    "tier": "이역",
+    "stats": {
+      "통솔": 62,
+      "무력": 37,
+      "지력": 38,
+      "정치": 82,
+      "매력": 46
+    },
+    "disposition": null,
+    "traits": [
+      "「공손혼」 공손도와 혼인 동맹"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0476",
+    "name": "간위거",
+    "tier": "이역",
+    "stats": {
+      "통솔": 25,
+      "무력": 22,
+      "지력": 32,
+      "정치": 82,
+      "매력": 49
+    },
+    "disposition": null,
+    "traits": [
+      "「친위」 위와 우호 고정"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0477",
+    "name": "마여·의려",
+    "tier": "이역",
+    "stats": {
+      "통솔": 84,
+      "무력": 48,
+      "지력": 27,
+      "정치": 50,
+      "매력": 40
+    },
+    "disposition": null,
+    "traits": [
+      "「부여」 후기 동이 변수"
+    ],
+    "origin_faction": "원수급"
+  },
+  {
+    "id": "CHR-0478",
+    "name": "불내예왕",
+    "tier": "이역",
+    "stats": {
+      "통솔": 59,
+      "무력": 42,
+      "지력": 44,
+      "정치": 85,
+      "매력": 28
+    },
+    "disposition": null,
+    "traits": [
+      "「불내」 245년 위에 항복 — 동이 전선 축소"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0479",
+    "name": "읍루수장",
+    "tier": "이역",
+    "stats": {
+      "통솔": 51,
+      "무력": 81,
+      "지력": 22,
+      "정치": 28,
+      "매력": 29
+    },
+    "disposition": null,
+    "traits": [
+      "「이탈」 부여 복속 거부, 독립 행동"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0480",
+    "name": "진론",
+    "tier": "이역",
+    "stats": {
+      "통솔": 26,
+      "무력": 16,
+      "지력": 84,
+      "정치": 82,
+      "매력": 43
+    },
+    "disposition": null,
+    "traits": [
+      "「대진상인」 서방 교역로 개통, 로마 외교 개시 조건 완화"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0481",
+    "name": "강승회",
+    "tier": "이역",
+    "stats": {
+      "통솔": 29,
+      "무력": 30,
+      "지력": 48,
+      "정치": 83,
+      "매력": 33
+    },
+    "disposition": null,
+    "traits": [
+      "「역경」 민심 회복 +30%, 사상 정책 개방"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0482",
+    "name": "지겸",
+    "tier": "이역",
+    "stats": {
+      "통솔": 16,
+      "무력": 29,
+      "지력": 88,
+      "정치": 36,
+      "매력": 31
+    },
+    "disposition": null,
+    "traits": [
+      "「문사」 외교·행정 효율 +25%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0483",
+    "name": "안세고",
+    "tier": "이역",
+    "stats": {
+      "통솔": 17,
+      "무력": 31,
+      "지력": 33,
+      "정치": 69,
+      "매력": 27
+    },
+    "disposition": null,
+    "traits": [
+      "「사왕자」 이역 인물 등용 시 천명 감소 완화"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0484",
+    "name": "지루가참",
+    "tier": "이역",
+    "stats": {
+      "통솔": 18,
+      "무력": 28,
+      "지력": 75,
+      "정치": 45,
+      "매력": 24
+    },
+    "disposition": null,
+    "traits": [
+      "프롤로그 시기 배경 인물"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0485",
+    "name": "갈레노스",
+    "tier": "이역",
+    "stats": {
+      "통솔": 32,
+      "무력": 21,
+      "지력": 29,
+      "정치": 73,
+      "매력": 37
+    },
+    "disposition": null,
+    "traits": [
+      "「의성」 무장 사망률 -40%, 부상 회복 가속"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0486",
+    "name": "파피니아누스",
+    "tier": "이역",
+    "stats": {
+      "통솔": 25,
+      "무력": 33,
+      "지력": 30,
+      "정치": 84,
+      "매력": 30
+    },
+    "disposition": null,
+    "traits": [
+      "「법전」 행정 효율 +30%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0487",
+    "name": "울피아누스",
+    "tier": "이역",
+    "stats": {
+      "통솔": 26,
+      "무력": 15,
+      "지력": 33,
+      "정치": 72,
+      "매력": 29
+    },
+    "disposition": null,
+    "traits": [
+      "「법제」 반란 발생률 -25%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0488",
+    "name": "카시우스 디오",
+    "tier": "이역",
+    "stats": {
+      "통솔": 28,
+      "무력": 24,
+      "지력": 72,
+      "정치": 29,
+      "매력": 27
+    },
+    "disposition": null,
+    "traits": [
+      "「사관」 세력의 행적이 기록됨 — 천명 변동 완화"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0489",
+    "name": "플로티노스",
+    "tier": "이역",
+    "stats": {
+      "통솔": 20,
+      "무력": 33,
+      "지력": 82,
+      "정치": 33,
+      "매력": 30
+    },
+    "disposition": null,
+    "traits": [
+      "「일자」 사상 정책 시 민심 +30%"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0490",
+    "name": "포르피리오스",
+    "tier": "이역",
+    "stats": {
+      "통솔": 24,
+      "무력": 33,
+      "지력": 82,
+      "정치": 33,
+      "매력": 25
+    },
+    "disposition": null,
+    "traits": [
+      "「주해」 플로티노스 제자"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0491",
+    "name": "오리게네스",
+    "tier": "이역",
+    "stats": {
+      "통솔": 20,
+      "무력": 19,
+      "지력": 70,
+      "정치": 69,
+      "매력": 32
+    },
+    "disposition": null,
+    "traits": [
+      "「호교」 종교 세력 회유"
+    ],
+    "origin_faction": "③"
+  },
+  {
+    "id": "CHR-0492",
+    "name": "나가르주나",
+    "tier": "이역",
+    "stats": {
+      "통솔": 28,
+      "무력": 16,
+      "지력": 71,
+      "정치": 44,
+      "매력": 16
+    },
+    "disposition": null,
+    "traits": [
+      "「중론」 사상 정책 특화"
+    ],
+    "origin_faction": "③"
+  }
+]

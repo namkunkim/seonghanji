@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/save.json",
+  "title": "세이브",
+  "description": "세이브 스키마 v0.1. 「상태」가 아니라 「시드 + 명령 로그」 (data-model.md §5.4 · V-25 ③)",
+  "type": "object",
+  "required": [
+    "ruleset",
+    "scenario",
+    "seed",
+    "game_tick",
+    "commands"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "ruleset": {
+      "type": "string",
+      "pattern": "^RS-[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "규칙 집합 버전. 시나리오 경계에서만 승격 (data-model.md §5.3)"
+    },
+    "scenario": {
+      "$ref": "_defs.json#/$defs/scnId"
+    },
+    "seed": {
+      "type": "integer",
+      "description": "난수 시드. 소비 순서 고정이 전제"
+    },
+    "player_faction": {
+      "type": "string"
+    },
+    "commands": {
+      "type": "array",
+      "description": "명령 로그. 발행 시각과 도달 시각이 다르다 (V-25 ④ · V-28)",
+      "items": {
+        "type": "object",
+        "required": [
+          "seq",
+          "issued_tick",
+          "kind"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          },
+          "issued_tick": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "arrival_tick": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "사자 지연 반영. 소요표가 분 단위라 그대로 틱이다"
+          },
+          "seq": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "발행 순번. 재생 시 순서를 되살리는 키"
+          }
+        }
+      }
+    },
+    "game_tick": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "게임 내 경과 틱. 1틱 = 실제 1분 (V-28). 60틱 = 게임 1개월 · 720틱 = 1년. 고정 스텝 누적이며 기기 시계를 읽지 않는다"
+    },
+    "capital": {
+      "type": "string",
+      "description": "본거지 성계. 명령 지연 산정의 기점이라 재생에 필요하다"
+    },
+    "save_version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

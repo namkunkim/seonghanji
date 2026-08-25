@@ -1,0 +1,940 @@
+[
+  {
+    "id": "RGN-01",
+    "name": "북부권",
+    "system": "SYS-13",
+    "is_seat": true,
+    "population": 18,
+    "production": 16,
+    "income": 14,
+    "dev_potential": "중",
+    "defense": "상",
+    "adjacent": [],
+    "strongholds": [
+      "양양",
+      "번성"
+    ],
+    "routes_hosted": [
+      "한수항로",
+      "양번관문"
+    ],
+    "notes": "양번관문 · 한수 축"
+  },
+  {
+    "id": "RGN-02",
+    "name": "중부권",
+    "system": "SYS-13",
+    "is_seat": false,
+    "population": 20,
+    "production": 18,
+    "income": 22,
+    "dev_potential": "중",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "강릉",
+      "강하",
+      "공안"
+    ],
+    "routes_hosted": [
+      "장강 대항로",
+      "이릉협도"
+    ],
+    "notes": "**장강 대항로 통제**"
+  },
+  {
+    "id": "RGN-03",
+    "name": "남부권",
+    "system": "SYS-13",
+    "is_seat": false,
+    "population": 15,
+    "production": 12,
+    "income": 11,
+    "dev_potential": "상",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "장사",
+      "무릉",
+      "계양",
+      "영릉"
+    ],
+    "routes_hosted": [
+      "오령회랑",
+      "영거운하",
+      "기저(회남)"
+    ],
+    "notes": "4군. 개발 여지 최대"
+  },
+  {
+    "id": "RGN-04",
+    "name": "태양계권",
+    "system": "SYS-13",
+    "is_seat": false,
+    "population": 2,
+    "production": 3,
+    "income": 2,
+    "dev_potential": null,
+    "defense": "하",
+    "adjacent": [],
+    "strongholds": [
+      "구지(지구)",
+      "형혹",
+      "태음"
+    ],
+    "routes_hosted": [
+      "장강항로 지선"
+    ],
+    "notes": "**국력 최소, 명분 최대.** 개발이 아니라 **복구** 대상"
+  },
+  {
+    "id": "RGN-05",
+    "name": "성도권",
+    "system": "SYS-11",
+    "is_seat": true,
+    "population": 32,
+    "production": 30,
+    "income": 26,
+    "dev_potential": "중",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "성도",
+      "건위"
+    ],
+    "routes_hosted": [
+      "남중산도",
+      "기저(한중)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-06",
+    "name": "재동권",
+    "system": "SYS-11",
+    "is_seat": false,
+    "population": 16,
+    "production": 13,
+    "income": 11,
+    "dev_potential": "중",
+    "defense": "상",
+    "adjacent": [],
+    "strongholds": [
+      "재동",
+      "강유"
+    ],
+    "routes_hosted": [
+      "검각회랑",
+      "기저(한중)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-07",
+    "name": "파군권",
+    "system": "SYS-11",
+    "is_seat": false,
+    "population": 17,
+    "production": 15,
+    "income": 16,
+    "dev_potential": "중",
+    "defense": "상",
+    "adjacent": [],
+    "strongholds": [
+      "파군",
+      "강주"
+    ],
+    "routes_hosted": [
+      "장강항로",
+      "이릉협도"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-08",
+    "name": "남정권",
+    "system": "SYS-12",
+    "is_seat": true,
+    "population": 8,
+    "production": 7,
+    "income": 6,
+    "dev_potential": "하",
+    "defense": "극상",
+    "adjacent": [],
+    "strongholds": [
+      "남정",
+      "면양",
+      "양평관"
+    ],
+    "routes_hosted": [
+      "검각회랑",
+      "진령삼도",
+      "기산도"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-09",
+    "name": "상용권",
+    "system": "SYS-12",
+    "is_seat": false,
+    "population": 4,
+    "production": 3,
+    "income": 3,
+    "dev_potential": "중",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "상용",
+      "방릉",
+      "무도"
+    ],
+    "routes_hosted": [
+      "기저(남양)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-10",
+    "name": "익주군권",
+    "system": "SYS-19",
+    "is_seat": true,
+    "population": 7,
+    "production": 4,
+    "income": 5,
+    "dev_potential": "극상",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "익주군",
+      "건녕"
+    ],
+    "routes_hosted": [
+      "기저(교주)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-11",
+    "name": "월수권",
+    "system": "SYS-19",
+    "is_seat": false,
+    "population": 6,
+    "production": 3,
+    "income": 4,
+    "dev_potential": "극상",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "월수",
+      "장가"
+    ],
+    "routes_hosted": [
+      "남중산도"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-12",
+    "name": "허권",
+    "system": "SYS-02",
+    "is_seat": true,
+    "population": 42,
+    "production": 40,
+    "income": 38,
+    "dev_potential": "중",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "허",
+      "영천"
+    ],
+    "routes_hosted": [
+      "호뢰관문",
+      "기저(연주)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-13",
+    "name": "여남권",
+    "system": "SYS-02",
+    "is_seat": false,
+    "population": 33,
+    "production": 30,
+    "income": 27,
+    "dev_potential": "중",
+    "defense": "하",
+    "adjacent": [],
+    "strongholds": [
+      "여남",
+      "진국",
+      "초"
+    ],
+    "routes_hosted": [
+      "회수항로",
+      "기저(서주 · 남양)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-14",
+    "name": "업권",
+    "system": "SYS-06",
+    "is_seat": true,
+    "population": 34,
+    "production": 33,
+    "income": 30,
+    "dev_potential": "중",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "업",
+      "위군"
+    ],
+    "routes_hosted": [
+      "관도관문"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-15",
+    "name": "한단권",
+    "system": "SYS-06",
+    "is_seat": false,
+    "population": 22,
+    "production": 20,
+    "income": 17,
+    "dev_potential": "하",
+    "defense": "상",
+    "adjacent": [],
+    "strongholds": [
+      "한단",
+      "중산"
+    ],
+    "routes_hosted": [
+      "정형회랑"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-16",
+    "name": "발해권",
+    "system": "SYS-06",
+    "is_seat": false,
+    "population": 16,
+    "production": 14,
+    "income": 15,
+    "dev_potential": "중",
+    "defense": "하",
+    "adjacent": [],
+    "strongholds": [
+      "발해",
+      "하간"
+    ],
+    "routes_hosted": [
+      "기저(유주 · 청주)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-17",
+    "name": "낙양권",
+    "system": "SYS-01",
+    "is_seat": true,
+    "population": 18,
+    "production": 16,
+    "income": 20,
+    "dev_potential": "중",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "낙양",
+      "하남"
+    ],
+    "routes_hosted": [
+      "황하항로",
+      "호뢰관문",
+      "관도관문"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-18",
+    "name": "장안권",
+    "system": "SYS-01",
+    "is_seat": false,
+    "population": 13,
+    "production": 11,
+    "income": 12,
+    "dev_potential": "중",
+    "defense": "상",
+    "adjacent": [],
+    "strongholds": [
+      "장안",
+      "경조"
+    ],
+    "routes_hosted": [
+      "황하항로",
+      "함곡회랑"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-19",
+    "name": "하동권",
+    "system": "SYS-01",
+    "is_seat": false,
+    "population": 7,
+    "production": 6,
+    "income": 5,
+    "dev_potential": "하",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "하동",
+      "홍농"
+    ],
+    "routes_hosted": [
+      "기저(병주 · 남양)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-20",
+    "name": "건업권",
+    "system": "SYS-15",
+    "is_seat": true,
+    "population": 20,
+    "production": 18,
+    "income": 20,
+    "dev_potential": "중",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "건업",
+      "단양"
+    ],
+    "routes_hosted": [
+      "장강 대항로",
+      "합비회랑"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-21",
+    "name": "오회권",
+    "system": "SYS-15",
+    "is_seat": false,
+    "population": 18,
+    "production": 16,
+    "income": 17,
+    "dev_potential": "중",
+    "defense": "하",
+    "adjacent": [],
+    "strongholds": [
+      "오",
+      "회계",
+      "오정"
+    ],
+    "routes_hosted": [
+      "기저(교주)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-22",
+    "name": "예장권",
+    "system": "SYS-15",
+    "is_seat": false,
+    "population": 14,
+    "production": 11,
+    "income": 10,
+    "dev_potential": "상",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "예장"
+    ],
+    "routes_hosted": [
+      "기저(형주 · 회남)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-23",
+    "name": "수춘권",
+    "system": "SYS-16",
+    "is_seat": true,
+    "population": 12,
+    "production": 10,
+    "income": 9,
+    "dev_potential": "중",
+    "defense": "하",
+    "adjacent": [],
+    "strongholds": [
+      "수춘",
+      "구강",
+      "종리"
+    ],
+    "routes_hosted": [
+      "회수항로",
+      "기저(형주 · 오회)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-24",
+    "name": "합비권",
+    "system": "SYS-16",
+    "is_seat": false,
+    "population": 8,
+    "production": 6,
+    "income": 6,
+    "dev_potential": "하",
+    "defense": "극상",
+    "adjacent": [],
+    "strongholds": [
+      "합비",
+      "여강"
+    ],
+    "routes_hosted": [
+      "합비회랑"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-25",
+    "name": "완권",
+    "system": "SYS-14",
+    "is_seat": true,
+    "population": 19,
+    "production": 18,
+    "income": 17,
+    "dev_potential": "중",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "완",
+      "섭"
+    ],
+    "routes_hosted": [
+      "무관회랑",
+      "기저(사예 · 예주 · 한중)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-26",
+    "name": "신야권",
+    "system": "SYS-14",
+    "is_seat": false,
+    "population": 11,
+    "production": 9,
+    "income": 8,
+    "dev_potential": "중",
+    "defense": "상",
+    "adjacent": [],
+    "strongholds": [
+      "신야",
+      "육양",
+      "박망"
+    ],
+    "routes_hosted": [
+      "한수항로",
+      "양번관문"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-27",
+    "name": "장안서부권",
+    "system": "SYS-09",
+    "is_seat": true,
+    "population": 8,
+    "production": 7,
+    "income": 6,
+    "dev_potential": "중",
+    "defense": "상",
+    "adjacent": [],
+    "strongholds": [
+      "부풍",
+      "안정"
+    ],
+    "routes_hosted": [
+      "황하항로",
+      "함곡회랑",
+      "진령삼도",
+      "무관회랑"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-28",
+    "name": "천수권",
+    "system": "SYS-09",
+    "is_seat": false,
+    "population": 6,
+    "production": 5,
+    "income": 4,
+    "dev_potential": "중",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "천수"
+    ],
+    "routes_hosted": [
+      "기저(양주)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-29",
+    "name": "무도권",
+    "system": "SYS-09",
+    "is_seat": false,
+    "population": 4,
+    "production": 3,
+    "income": 3,
+    "dev_potential": "하",
+    "defense": "상",
+    "adjacent": [],
+    "strongholds": [
+      "무도"
+    ],
+    "routes_hosted": [
+      "기저(병주 · 한중)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-30",
+    "name": "계권",
+    "system": "SYS-07",
+    "is_seat": true,
+    "population": 11,
+    "production": 9,
+    "income": 9,
+    "dev_potential": "중",
+    "defense": "하",
+    "adjacent": [],
+    "strongholds": [
+      "계",
+      "탁군"
+    ],
+    "routes_hosted": [
+      "기저(기주 · 병주)"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-31",
+    "name": "어양권",
+    "system": "SYS-07",
+    "is_seat": false,
+    "population": 7,
+    "production": 6,
+    "income": 6,
+    "dev_potential": "중",
+    "defense": "상",
+    "adjacent": [],
+    "strongholds": [
+      "어양",
+      "우북평"
+    ],
+    "routes_hosted": [
+      "노룡회랑"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-32",
+    "name": "양평권",
+    "system": "SYS-18",
+    "is_seat": true,
+    "population": 4,
+    "production": 4,
+    "income": 5,
+    "dev_potential": "상",
+    "defense": "극상",
+    "adjacent": [],
+    "strongholds": [
+      "양평",
+      "현도"
+    ],
+    "routes_hosted": [
+      "노룡회랑"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-33",
+    "name": "대방권",
+    "system": "SYS-18",
+    "is_seat": false,
+    "population": 3,
+    "production": 2,
+    "income": 4,
+    "dev_potential": "상",
+    "defense": "중",
+    "adjacent": [],
+    "strongholds": [
+      "낙랑",
+      "대방",
+      "요서"
+    ],
+    "routes_hosted": [
+      "동이권 접점"
+    ],
+    "notes": null
+  },
+  {
+    "id": "RGN-34",
+    "name": "진류권",
+    "system": "SYS-03",
+    "is_seat": true,
+    "population": 28,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "진류",
+      "동군",
+      "복양"
+    ],
+    "routes_hosted": [
+      "호뢰관문",
+      "관도관문",
+      "기저(예주)"
+    ],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  },
+  {
+    "id": "RGN-35",
+    "name": "태산권",
+    "system": "SYS-03",
+    "is_seat": false,
+    "population": 21,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "태산",
+      "제음"
+    ],
+    "routes_hosted": [
+      "황하항로",
+      "기저(서주)"
+    ],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  },
+  {
+    "id": "RGN-36",
+    "name": "임치권",
+    "system": "SYS-04",
+    "is_seat": true,
+    "population": 26,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "임치",
+      "제남",
+      "평원"
+    ],
+    "routes_hosted": [
+      "황하항로",
+      "기저(기주 · 서주)"
+    ],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  },
+  {
+    "id": "RGN-37",
+    "name": "동래권",
+    "system": "SYS-04",
+    "is_seat": false,
+    "population": 19,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "동래",
+      "북해"
+    ],
+    "routes_hosted": [],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  },
+  {
+    "id": "RGN-38",
+    "name": "하비권",
+    "system": "SYS-05",
+    "is_seat": true,
+    "population": 20,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "하비",
+      "팽성",
+      "동해"
+    ],
+    "routes_hosted": [
+      "기저(연주 · 청주 · 예주)"
+    ],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  },
+  {
+    "id": "RGN-39",
+    "name": "광릉권",
+    "system": "SYS-05",
+    "is_seat": false,
+    "population": 14,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "광릉",
+      "낭야"
+    ],
+    "routes_hosted": [
+      "회수항로"
+    ],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  },
+  {
+    "id": "RGN-40",
+    "name": "진양권",
+    "system": "SYS-08",
+    "is_seat": true,
+    "population": 5,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "진양",
+      "상당"
+    ],
+    "routes_hosted": [
+      "정형회랑",
+      "기저(사예 · 옹주)"
+    ],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  },
+  {
+    "id": "RGN-41",
+    "name": "안문권",
+    "system": "SYS-08",
+    "is_seat": false,
+    "population": 3,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "안문",
+      "서하",
+      "오원"
+    ],
+    "routes_hosted": [
+      "기저(유주)"
+    ],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  },
+  {
+    "id": "RGN-42",
+    "name": "무위권",
+    "system": "SYS-10",
+    "is_seat": true,
+    "population": 3,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "무위",
+      "금성"
+    ],
+    "routes_hosted": [
+      "황하항로"
+    ],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  },
+  {
+    "id": "RGN-43",
+    "name": "돈황권",
+    "system": "SYS-10",
+    "is_seat": false,
+    "population": 2,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "돈황",
+      "주천"
+    ],
+    "routes_hosted": [
+      "하서회랑"
+    ],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  },
+  {
+    "id": "RGN-44",
+    "name": "교지권",
+    "system": "SYS-17",
+    "is_seat": true,
+    "population": 8,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "교지",
+      "구진",
+      "일남"
+    ],
+    "routes_hosted": [
+      "기저(남중)"
+    ],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  },
+  {
+    "id": "RGN-45",
+    "name": "남해권",
+    "system": "SYS-17",
+    "is_seat": false,
+    "population": 5,
+    "production": null,
+    "income": null,
+    "dev_potential": null,
+    "defense": null,
+    "adjacent": [],
+    "strongholds": [
+      "남해",
+      "창오"
+    ],
+    "routes_hosted": [
+      "오령회랑",
+      "기저(오회)"
+    ],
+    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+  }
+]

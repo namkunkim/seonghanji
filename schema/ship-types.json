@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/ship-types.json",
+  "title": "함종",
+  "description": "함종 6. ship-specs.md §2. 주의 — 함급(5)과 함종(6)은 다르다. 「공성함」은 양쪽에 같은 이름으로 존재한다",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "name",
+      "ship_class",
+      "length_m",
+      "phase_coefficients"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "$ref": "_defs.json#/$defs/shpId"
+      },
+      "name": {
+        "type": "string",
+        "description": "강습모함·공성함·포격함·전열함·보급함·전자전함"
+      },
+      "ship_class": {
+        "enum": [
+          "모함",
+          "공성함",
+          "주력함",
+          "지원함",
+          "초계함"
+        ],
+        "description": "함급 5"
+      },
+      "length_m": {
+        "type": "integer",
+        "minimum": 100
+      },
+      "cost": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "phase_coefficients": {
+        "$ref": "_defs.json#/$defs/phaseCoeff"
+      },
+      "sorties": {
+        "type": "integer",
+        "description": "지속 가능 회전 수. 전 함종 대회전 4회분"
+      }
+    }
+  },
+  "minItems": 1
+}

@@ -19,3 +19,16 @@ node_modules/
 tmp/
 *.tmp
 *.bak
+
+# Agent Skills — 설치분 심링크만 제외 (npx skills experimental_install 로 복원)
+# 프로젝트 전용 스킬(asset-sourcing 등)은 추적한다
+.claude/skills/design-doc-mermaid
+.claude/skills/domain-modeling
+.claude/skills/governance-systems
+.claude/skills/korean-spell-check
+.claude/skills/oblique-worldbuilding
+
+# Godot
+.godot/
+*.translation
+export_presets.cfg

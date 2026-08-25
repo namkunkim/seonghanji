@@ -1,0 +1,28 @@
+; SEONGHANJI: MANDATE — Godot 4 프로젝트
+;
+; 코어는 `core/` 에 있고 Node 에 의존하지 않는다 (RefCounted 만 쓴다).
+; 헤드리스로 돌릴 수 있어야 하기 때문이다 — dev-requirements.md §2.3.
+;
+; 자체 시험:  godot --headless --script tests/run_tests.gd
+
+config_version=5
+
+[application]
+
+config/name="SEONGHANJI: MANDATE"
+config/description="후한 말 삼국시대를 우주 SF로 옮긴 그랜드 스트래티지"
+config/features=PackedStringArray("4.7")
+
+[display]
+
+; 안드로이드 태블릿 가로 기준 (roadmap-solo.md S3.1)
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/handheld/orientation=1
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
