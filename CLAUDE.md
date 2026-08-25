@@ -179,13 +179,13 @@
 ```
 docs/
 ├── INDEX.md        ← 전체 색인 · 핵심 수치 한눈에
-├── DECISIONS.md    ← 기각안 6 · 변경 이력 31 (재론 금지 사유의 정본)
+├── DECISIONS.md    ← 기각안 6 · 변경 이력 33 (재론 금지 사유의 정본)
 ├── 00-overview/    design-overview · glossary
 ├── 01-world/       star-map · region-power
 ├── 02-characters/  generals-150 · generals-stats · officers-256
 │                   foreign-90-stats · dispositions
 ├── 03-systems/     combat · ship-specs · partial-occupation
-│                   diplomacy · time-and-monetization
+│                   diplomacy · domestic · time-and-monetization
 ├── 04-campaign/    world-state · world-state-setup · character-assignments
 │                   function-events · endings · scenario-setup
 │                   scenario-190 · scenario-200-208 · scenario-219 · scenario-228-263

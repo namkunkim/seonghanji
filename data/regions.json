@@ -694,10 +694,10 @@
     "system": "SYS-03",
     "is_seat": true,
     "population": 28,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 25,
+    "income": 24,
+    "dev_potential": "하",
+    "defense": "상",
     "adjacent": [],
     "strongholds": [
       "진류",
@@ -709,7 +709,7 @@
       "관도관문",
       "기저(예주)"
     ],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   },
   {
     "id": "RGN-35",
@@ -717,10 +717,10 @@
     "system": "SYS-03",
     "is_seat": false,
     "population": 21,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 17,
+    "income": 16,
+    "dev_potential": "중",
+    "defense": "중",
     "adjacent": [],
     "strongholds": [
       "태산",
@@ -730,7 +730,7 @@
       "황하항로",
       "기저(서주)"
     ],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   },
   {
     "id": "RGN-36",
@@ -738,10 +738,10 @@
     "system": "SYS-04",
     "is_seat": true,
     "population": 26,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 22,
+    "income": 24,
+    "dev_potential": "하",
+    "defense": "하",
     "adjacent": [],
     "strongholds": [
       "임치",
@@ -752,7 +752,7 @@
       "황하항로",
       "기저(기주 · 서주)"
     ],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   },
   {
     "id": "RGN-37",
@@ -760,17 +760,17 @@
     "system": "SYS-04",
     "is_seat": false,
     "population": 19,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 15,
+    "income": 17,
+    "dev_potential": "중",
+    "defense": "중",
     "adjacent": [],
     "strongholds": [
       "동래",
       "북해"
     ],
     "routes_hosted": [],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   },
   {
     "id": "RGN-38",
@@ -778,10 +778,10 @@
     "system": "SYS-05",
     "is_seat": true,
     "population": 20,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 17,
+    "income": 17,
+    "dev_potential": "하",
+    "defense": "하",
     "adjacent": [],
     "strongholds": [
       "하비",
@@ -791,7 +791,7 @@
     "routes_hosted": [
       "기저(연주 · 청주 · 예주)"
     ],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   },
   {
     "id": "RGN-39",
@@ -799,10 +799,10 @@
     "system": "SYS-05",
     "is_seat": false,
     "population": 14,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 11,
+    "income": 13,
+    "dev_potential": "중",
+    "defense": "중",
     "adjacent": [],
     "strongholds": [
       "광릉",
@@ -811,7 +811,7 @@
     "routes_hosted": [
       "회수항로"
     ],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   },
   {
     "id": "RGN-40",
@@ -819,10 +819,10 @@
     "system": "SYS-08",
     "is_seat": true,
     "population": 5,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 5,
+    "income": 4,
+    "dev_potential": "중",
+    "defense": "상",
     "adjacent": [],
     "strongholds": [
       "진양",
@@ -832,7 +832,7 @@
       "정형회랑",
       "기저(사예 · 옹주)"
     ],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   },
   {
     "id": "RGN-41",
@@ -840,10 +840,10 @@
     "system": "SYS-08",
     "is_seat": false,
     "population": 3,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 3,
+    "income": 2,
+    "dev_potential": "하",
+    "defense": "중",
     "adjacent": [],
     "strongholds": [
       "안문",
@@ -853,7 +853,7 @@
     "routes_hosted": [
       "기저(유주)"
     ],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   },
   {
     "id": "RGN-42",
@@ -861,10 +861,10 @@
     "system": "SYS-10",
     "is_seat": true,
     "population": 3,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 2,
+    "income": 4,
+    "dev_potential": "중",
+    "defense": "중",
     "adjacent": [],
     "strongholds": [
       "무위",
@@ -873,7 +873,7 @@
     "routes_hosted": [
       "황하항로"
     ],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   },
   {
     "id": "RGN-43",
@@ -881,10 +881,10 @@
     "system": "SYS-10",
     "is_seat": false,
     "population": 2,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 1,
+    "income": 3,
+    "dev_potential": "하",
+    "defense": "상",
     "adjacent": [],
     "strongholds": [
       "돈황",
@@ -893,7 +893,7 @@
     "routes_hosted": [
       "하서회랑"
     ],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   },
   {
     "id": "RGN-44",
@@ -901,10 +901,10 @@
     "system": "SYS-17",
     "is_seat": true,
     "population": 8,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 6,
+    "income": 9,
+    "dev_potential": "상",
+    "defense": "하",
     "adjacent": [],
     "strongholds": [
       "교지",
@@ -914,7 +914,7 @@
     "routes_hosted": [
       "기저(남중)"
     ],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   },
   {
     "id": "RGN-45",
@@ -922,10 +922,10 @@
     "system": "SYS-17",
     "is_seat": false,
     "population": 5,
-    "production": null,
-    "income": null,
-    "dev_potential": null,
-    "defense": null,
+    "production": 4,
+    "income": 6,
+    "dev_potential": "상",
+    "defense": "상",
     "adjacent": [],
     "strongholds": [
       "남해",
@@ -935,6 +935,6 @@
       "오령회랑",
       "기저(오회)"
     ],
-    "notes": "§2.3 2권역 일괄 — 총 국력만 기재"
+    "notes": null
   }
 ]

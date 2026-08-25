@@ -108,27 +108,17 @@ def regions():
     meta = {i["name"]: i for i in IDS["regions"]["items"]}
     vals = {}
     txt = read('docs/01-world/region-power.md').split('\n')
-    in23 = False
+    # **§2.3 특례는 2026-08-25 에 없어졌다.**
+    # 그 절이 「2권역 일괄」 표로 인구만 적고 있어 12개 권역의 생산·수입·
+    # 개발여지·방어가 비어 있었고, 여기에 그것을 그대로 통과시키는 분기가 있었다.
+    # 추출기가 결손을 「정상」으로 기록하고 있었던 셈이다.
+    # 문서를 정규 표로 고쳤으므로 분기도 지운다 — **표 형식은 하나뿐이어야 한다.**
     for line in txt:
-        if line.startswith('### 2.3'):
-            in23 = True
         if line.startswith('## 3'):
             break
         if not line.startswith('| '):
             continue
         c = cells(line)
-        if in23:
-            # | 성계 (n) | | 주권역 26 | 부권역 19 |
-            if len(c) < 4 or c[0] in ('성계',):
-                continue
-            for raw in (c[2], c[3]):
-                nm = re.sub(r'\s*\d+\s*$', '', clean(raw)).strip()
-                n = num(raw)
-                if nm in meta and n is not None:
-                    vals[nm] = {"population": int(n), "production": None,
-                                "income": None, "dev_potential": None,
-                                "defense": None, "notes": "§2.3 2권역 일괄 — 총 국력만 기재"}
-            continue
         # | 권역 | 인구 | 생산 | 수입 | 개발여지 | 방어 | (비고) |
         if len(c) < 6 or c[0] in ('권역',):
             continue
