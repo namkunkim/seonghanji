@@ -127,7 +127,10 @@ static func region_value(data: GameData, rid: String,
 
 	var route := 0
 	for h in r.get("routes_hosted", []):
-		route += W_CORRIDOR_HOST if ("회랑" in h or "관문" in h) else W_ROUTE_PER_HOST
+		# **이름이 아니라 정본 목록으로 판정한다** (2026-08-25) —
+		# 진령삼도·이릉협도(대회랑)·기산도·남중산도가 이름 필터를 빠져나가
+		# AI 가 회랑 넷을 개방 항로로 보고 있었다.
+		route += W_CORRIDOR_HOST if data.is_corridor(String(h)) else W_ROUTE_PER_HOST
 
 	var connect := 0
 	var borders := 0
@@ -199,7 +202,7 @@ static func defense_need(data: GameData, own: Array) -> int:
 
 static func _is_choke(data: GameData, rid: String) -> bool:
 	for h in data.regions[rid].get("routes_hosted", []):
-		if "회랑" in h or "관문" in h:
+		if data.is_corridor(String(h)):
 			return true
 	return false
 

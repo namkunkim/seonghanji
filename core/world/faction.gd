@@ -117,7 +117,9 @@ static func _shares_choke(data: GameData, a: String, b: String) -> bool:
 	var ha: Array = data.regions[a].get("routes_hosted", [])
 	var hb: Array = data.regions[b].get("routes_hosted", [])
 	for x in ha:
-		if not ("회랑" in x or "관문" in x):
+		# **이름이 아니라 정본 목록으로 판정한다** — 진령삼도·이릉협도·기산도·
+		# 남중산도는 회랑인데 이름에 「회랑」도 「관문」도 없다 (2026-08-25).
+		if not data.is_corridor(String(x)):
 			continue
 		if hb.has(x):
 			return true

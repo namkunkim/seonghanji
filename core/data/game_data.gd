@@ -60,6 +60,8 @@ func _load() -> void:
 			neighbors[b].append(a)
 	for sid in system_ids:
 		neighbors[sid].sort()
+	for cid in corridor_ids:
+		corridor_names[String(corridors[cid]["name"])] = true
 	build_region_adjacency()
 
 
@@ -95,6 +97,25 @@ func region_power(rid: String) -> int:
 ## 권역의 수입 지수. **국력(인구) 지수와 다르다** —
 ## 총합이 인구 629 대 수입 547 로 0.87 배이며, 그 13% 가 곧
 ## 「사람은 많으나 걷히지 않는 땅」의 표현이다 (domestic.md §4.1).
+## ---------------------------------------------------------------- 회랑 판정
+##
+## **이름으로 회랑을 판정하지 않는다.**
+##
+## 2026-08-25 까지 코드 네 곳이 `"회랑" in name or "관문" in name` 으로 걸렀다.
+## 15개 중 **넷이 그 이름을 갖지 않는다** — 진령삼도 · 이릉협도(둘 다 **대회랑**) ·
+## 기산도 · 남중산도. 넷 다 개방 항로로 취급되고 있었다.
+##
+## 촉의 국경이 「검각·진령삼도·기산도 — 전부 회랑」이라던 설계(§3.4-b ①)가
+## **코드에서는 셋 중 하나만 회랑이었다.**
+##
+## 이름 규칙에 의미를 싣지 않는다. **정본 목록이 판정한다.**
+var corridor_names: Dictionary = {}
+
+
+func is_corridor(name: String) -> bool:
+	return corridor_names.has(name)
+
+
 func region_income(rid: String) -> int:
 	var v = regions[rid].get("income")
 	return 0 if v == null else int(v)

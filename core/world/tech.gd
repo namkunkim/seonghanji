@@ -111,6 +111,8 @@ static func has_chain(special_level: int) -> bool:
 ## **왕준은 오의 철쇄를 큰 횃불로 태워 끊고 강을 내려갔다.**
 static func can_lay_chain(data: GameData, rid: String) -> bool:
 	for h in data.regions[rid].get("routes_hosted", []):
-		if "회랑" in String(h) or "관문" in String(h):
+		# 이름이 아니라 정본 목록으로 판정한다 —
+		# **이름으로 걸렀을 때 이릉협도에 철쇄를 깔 수 있었다** (2026-08-25).
+		if data.is_corridor(String(h)):
 			return false
 	return true
