@@ -13,7 +13,7 @@ var _fail := 0
 ## GDScript 는 없는 함수를 부르면 오류만 찍고 시험은 「실패 0」으로 끝난다 —
 ## 2026-08-24 에 battle.gd 가 컴파일에 실패하며 시험 26개가 소리 없이 빠졌다.
 var _sections := 0
-const EXPECTED_SECTIONS := 27
+const EXPECTED_SECTIONS := 31
 
 
 func _section(name: String) -> void:
@@ -67,6 +67,10 @@ func _init() -> void:
 	_test_replay_fidelity()
 	_test_region_adjacency()
 	_test_cut_value()
+	_test_economy()
+	_test_plans()
+	_test_tech()
+	_test_domestic_commands()
 	print("")
 	if _sections != EXPECTED_SECTIONS:
 		_fail += 1
@@ -957,3 +961,234 @@ func _test_cut_value() -> void:
 	# 인접하지 않은 곳은 노리지 않는다 (통과 강제)
 	var far := Strategy.pick_target(d, [by_name["돈황권"]], wu, {})
 	_eq(far, {} as Dictionary, "닿지 않는 권역은 목표가 아니다")
+
+
+## ================================================================ S2.9 내정 코어
+
+
+func _test_economy() -> void:
+	_section("28. 경제 — 수입 · 행정비 · 위임")
+	var d := GameData.load_all()
+	var c := Campaign.scenario_03(d, 1)
+	var st := c.world.region_states
+
+	# domestic.md §4.4 예산표. **문서와 코드가 각자 계산하면 언젠가 갈라진다**
+	var cao: Faction = c.factions["조조"]
+	_eq(Economy.faction_income(d, st, cao.regions), 18130, "조조 월 수입 18,130")
+	_eq(Economy.faction_admin(d, st, cao.regions, cao.governance), 12210,
+		"조조 월 행정비 12,210 (중앙집권 30)")
+	var sun: Faction = c.factions["손권"]
+	_eq(Economy.faction_income(d, st, sun.regions), 3995, "손권 월 수입 3,995")
+	_eq(Economy.faction_admin(d, st, sun.regions, sun.governance), 936,
+		"손권 월 행정비 936 (호족연합 18)")
+
+	# 행정 계수는 통치 체제에 연동한다 — 새 눈금을 만들지 않았다
+	_eq(Economy.admin_coef("중앙집권"), 30, "중앙집권 30")
+	_eq(Economy.admin_coef("암약"), 8, "암약 8")
+	_eq(Economy.admin_coef("없는체제"), 24, "모르는 체제는 표준 24")
+
+	# **전화 계수가 행정비에 걸리지 않는다** — 사람은 여전히 거기 산다
+	var rid: String = cao.regions[0]
+	var before := Economy.region_admin_milli(d, rid, st[rid], 30)
+	st[rid].war_damage_milli = 250
+	_eq(Economy.region_admin_milli(d, rid, st[rid], 30), before,
+		"전화가 심해져도 행정비는 그대로다")
+
+	# 개발 한 단계 = 수입 +10%p (기저 대비 정액. 복리가 아니다)
+	var st2 := RegionState.new()
+	st2.war_damage_milli = 1000
+	var i0 := Economy.region_income_milli(d, rid, st2)
+	st2.development = 1
+	var i1 := Economy.region_income_milli(d, rid, st2)
+	_eq(i1 - i0, i0 / 10, "개발 1단계 = 기저의 10%")
+	st2.development = 2
+	_eq(Economy.region_income_milli(d, rid, st2) - i0, i0 / 5,
+		"2단계 = 20%. 복리가 아니다")
+
+	# 위임 — 수입 70% · 행정비 30% · 실동원 50%
+	var mob0 := cao.mobilized(d, st, c.world.graph, 0)
+	for r in cao.regions:
+		st[r].delegated = true
+	var mob1 := cao.mobilized(d, st, c.world.graph, 0)
+	_ok(mob1 * 2 <= mob0 + 2 and mob1 * 2 >= mob0 - 2,
+		"전 권역 위임 시 실동원 절반 (%d → %d)" % [mob0, mob1])
+	_ok(Economy.faction_income(d, st, cao.regions) < 18130,
+		"위임하면 수입이 준다")
+	_ok(Economy.faction_admin(d, st, cao.regions, cao.governance) < 12210,
+		"위임하면 행정비가 준다")
+
+
+func _test_plans() -> void:
+	_section("29. 편성안 — 유지점을 두 곳에 적지 않는다")
+
+	# **V-35 정정.** 문서 표의 균형(1.175)·개활 결전(1.200)이 함종 값과 맞지 않았다.
+	# 여기서는 비율에서 계산하므로 두 곳이 어긋날 일이 없다.
+	_eq(Economy.plan_point_milli("균형"), 1195, "균형 유지점 1.195 (문서 1.175 정정)")
+	_eq(Economy.plan_point_milli("개활 결전"), 1180, "개활 결전 1.180 (문서 1.200 정정)")
+	_eq(Economy.plan_point_milli("회랑 돌파"), 1220, "회랑 돌파 1.220")
+	_eq(Economy.plan_point_milli("강습 특화"), 1230, "강습 특화 1.230")
+	_eq(Economy.plan_point_milli("봉쇄 유지"), 1100, "봉쇄 유지 1.100 — 가장 싸다")
+	_eq(Economy.plan_upkeep_milli("균형"), 12200, "균형 전대당 유지비 12.2")
+
+	# 비율 합이 100 이어야 한다
+	for k in Economy.PLANS.keys():
+		var sum := 0
+		for v in Economy.PLANS[k]:
+			sum += int(v)
+		_eq(sum, 100, "편성안 「%s」 비율 합 100" % k)
+
+	# 실동원 74 → 61.9전대 = 2,477척 (combat.md §4.3.3 재산출)
+	var sq := Economy.squadrons_milli(74)
+	_ok(sq >= 61800 and sq <= 62000, "실동원 74 → 61.9전대 (%d)" % sq)
+
+	# **회랑 봉쇄는 공짜가 아니다** — ×1.5
+	var base := Economy.fleet_upkeep(1000, "균형", "자국")
+	_eq(Economy.fleet_upkeep(1000, "균형", "회랑"), base * 3 / 2,
+		"회랑 주둔 유지비 ×1.5")
+	_eq(Economy.fleet_upkeep(1000, "균형", "비지"), base * 2, "비지 고립 ×2.0")
+
+
+func _test_tech() -> void:
+	_section("30. 기술 — 화력과 방어는 서로를 뺀다")
+
+	_eq(Tech.cost(0), 4000, "1단계 4,000")
+	_eq(Tech.cost(4), 20000, "5단계 20,000")
+	_eq(Tech.cost(5), -1, "최대 단계 이상은 없다")
+	_eq(Tech.full_cost(), 180000, "세 축 전부 = 180,000. 다 가질 수는 없다")
+	_eq(Tech.ticks(0), 2 * GameClock.TICKS_PER_MONTH, "1단계 2개월")
+	_eq(Tech.ticks(0, true), 2 * GameClock.TICKS_PER_MONTH * 70 / 100,
+		"촉 특성 ×0.7")
+
+	# **격차가 값이다.** 5단계 대 5단계는 1.000
+	_eq(Tech.power_milli(0, 0), 1000, "0 대 0 = 1.000")
+	_eq(Tech.power_milli(5, 5), 1000, "5 대 5 = 1.000 — 절대 우위 없음")
+	_eq(Tech.power_milli(5, 0), 1300, "5 대 0 = 1.300")
+	_eq(Tech.power_milli(0, 5), 880, "0 대 5 = 0.880 (−2 로 절단)")
+	_eq(Tech.power_milli(0, 3), 880, "격차 −3 도 −2 로 절단된다")
+
+	# 특수 무기 해금
+	_ok(not Tech.has_fireship(1), "특수 1단계에는 화선이 없다")
+	_ok(Tech.has_fireship(2), "특수 2단계 — 화선(적벽의 황개)")
+	_ok(not Tech.has_chain(3), "특수 3단계에는 철쇄가 없다")
+	_ok(Tech.has_chain(4), "특수 4단계 — 철쇄")
+
+	# **철쇄는 회랑·관문에 놓을 수 없다** [불가침 4]
+	var d := GameData.load_all()
+	var by_name := {}
+	for rid in d.region_ids:
+		by_name[d.regions[rid]["name"]] = rid
+	_ok(not Tech.can_lay_chain(d, by_name["돈황권"]),
+		"하서회랑에는 철쇄를 놓을 수 없다 — 봉쇄만으로는 이길 수 없다")
+	_ok(not Tech.can_lay_chain(d, by_name["진류권"]),
+		"관도관문에도 놓을 수 없다")
+	_ok(Tech.can_lay_chain(d, by_name["동래권"]), "개방 접경에는 놓을 수 있다")
+
+
+func _test_domestic_commands() -> void:
+	_section("31. 내정 명령 7종 — 효과가 붙는다")
+	var d := GameData.load_all()
+	var c := Campaign.scenario_03(d, 1)
+	var f: Faction = c.factions["손권"]
+	var st := c.world.region_states
+	var rid: String = f.regions[0]
+
+	_eq(Domestic.COMMANDS.size(), 7, "명령 7종")
+
+	# 개발 — 개발여지가 상한이다
+	f.treasury = 10000000
+	var slots := d.region_dev_slots(rid)
+	for i in slots:
+		_eq(Domestic.apply(d, st, f, c.fleets,
+			{"kind": "개발", "payload": {"region": rid}}, 0), "",
+			"개발 %d단계" % (i + 1))
+	_eq(Domestic.apply(d, st, f, c.fleets,
+		{"kind": "개발", "payload": {"region": rid}}, 0), "개발여지 소진",
+		"개발여지를 넘겨 개발할 수 없다")
+	_eq(st[rid].development, slots, "개발 단계 = 개발여지 칸 수")
+
+	# 남의 권역에는 걸 수 없다
+	var enemy: Faction = c.factions["조조"]
+	_eq(Domestic.apply(d, st, f, c.fleets,
+		{"kind": "개발", "payload": {"region": enemy.regions[0]}}, 0),
+		"보유 권역이 아니다", "남의 권역에는 명령이 안 걸린다")
+
+	# 자금 부족
+	f.treasury = 0
+	var rid2: String = f.regions[1]
+	_eq(Domestic.apply(d, st, f, c.fleets,
+		{"kind": "개발", "payload": {"region": rid2}}, 0), "자금 부족",
+		"자금이 없으면 개발할 수 없다")
+
+	# 징병 — 상한은 인구의 절반
+	f.treasury = 10000000
+	var cap := Domestic.conscript_cap(d, rid)
+	_eq(Domestic.apply(d, st, f, c.fleets,
+		{"kind": "징병", "payload": {"region": rid, "amount": cap + 100}}, 0), "",
+		"징병")
+	_eq(st[rid].garrison, cap, "징병 상한 = 인구 × 0.5")
+	_eq(Domestic.apply(d, st, f, c.fleets,
+		{"kind": "징병", "payload": {"region": rid, "amount": 1}}, 0), "징병 상한",
+		"상한에서 더 뽑을 수 없다")
+
+	# 복구 — 월정액이고 단계는 0~4
+	_eq(Domestic.apply(d, st, f, c.fleets,
+		{"kind": "복구", "payload": {"region": rid, "stage": 9}}, 0), "", "복구")
+	_eq(st[rid].recovery_investment, 4, "복구 단계는 4가 상한")
+	_eq(Domestic.recover_cost(d, rid, st[rid]),
+		d.region_power(rid) * 20 * 4, "복구비 = 인구 × 20 × 단계")
+
+	# 위임
+	_eq(Domestic.apply(d, st, f, c.fleets,
+		{"kind": "위임", "payload": {"region": rid, "on": true}}, 0), "", "위임")
+	_ok(st[rid].delegated, "위임 상태가 켜진다")
+
+	# 기술 — 한 번에 한 축만
+	f.treasury = 10000000
+	_eq(Domestic.apply(d, st, f, c.fleets,
+		{"kind": "기술", "payload": {"axis": "화력"}}, 0), "", "기술 개발 착수")
+	_eq(Domestic.apply(d, st, f, c.fleets,
+		{"kind": "기술", "payload": {"axis": "방어"}}, 0), "이미 개발 중",
+		"두 축을 동시에 올릴 수 없다")
+	_eq(Domestic.tech_tick(f, 0), "", "아직 완성되지 않았다")
+	_eq(Domestic.tech_tick(f, Tech.ticks(0)), "화력", "소요가 지나면 완성된다")
+	_eq(int(f.tech["화력"]), 1, "화력 1단계")
+
+	# 훈련 — 전대 단위 · 상한은 전대장 통솔
+	var fl := Fleet.new()
+	fl.id = 9001
+	fl.owner = f.id
+	fl.ships = Battle.FLEET_SHIPS
+	c.fleets.append(fl)
+	_eq(fl.drill, Battle.DRILL_NOMINAL, "징병 직후 훈련도 20")
+	_eq(fl.drill_cap(), Battle.DRILL_CAP_UNLED, "전대장이 없으면 상한 40")
+	_eq(Domestic.apply(d, st, f, c.fleets,
+		{"kind": "훈련", "payload": {"fleet": 9001, "on": true}}, 0), "", "훈련 개시")
+	for _i in 20:
+		Domestic.drill_tick(fl)
+	_eq(fl.drill, 40, "무명 장교 밑에서는 40에서 멈춘다")
+	fl.squadron_command = 82
+	for _i in 20:
+		Domestic.drill_tick(fl)
+	_eq(fl.drill, 82, "전대장 통솔 82가 새 상한이다")
+	_eq(Domestic.drill_cost(fl), 5 * 20, "함대 200척 = 5전대 × 20 = 100/월")
+
+	# **훈련은 이기게 하지 않고 버티게 한다** — 붕괴 판정에만 걸린다
+	var neutral := Battle.collapse_chance_pct(30, 50)
+	_eq(Battle.collapse_chance_pct(30, 50, 50), neutral, "훈련 50은 보정 없음")
+	_ok(Battle.collapse_chance_pct(30, 50, 20) > neutral,
+		"신병 20은 더 잘 무너진다 (%d → %d)" % [neutral,
+			Battle.collapse_chance_pct(30, 50, 20)])
+	_ok(Battle.collapse_chance_pct(30, 50, 100) < neutral,
+		"정예 100은 절반만 무너진다 (%d)" % Battle.collapse_chance_pct(30, 50, 100))
+	_eq(Battle.drill_multiplier_milli(20), 1300, "훈련 20 → ×1.30")
+	_eq(Battle.drill_multiplier_milli(100), 500, "훈련 100 → ×0.50")
+
+	# 월 정산이 실제로 돈다
+	var c2 := Campaign.scenario_03(d, 2)
+	var cao2: Faction = c2.factions["조조"]
+	var t0 := cao2.treasury
+	_ok(t0 > 0, "개전 준비금이 있다 (%d)" % t0)
+	for _i in GameClock.TICKS_PER_MONTH:
+		c2.step()
+	_eq(c2.months_settled, 1, "한 달이 지나면 한 번 정산한다")
+	_ok(cao2.treasury != t0, "정산이 자금을 움직였다 (%d → %d)" % [t0, cao2.treasury])

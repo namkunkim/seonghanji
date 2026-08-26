@@ -45,6 +45,13 @@ var pending_commands: Array[Dictionary] = []
 ## 도달해 반영된 명령. 재생의 입력이 된다
 var applied_commands: Array[Dictionary] = []
 
+## **이번 틱에 도달한 명령.** 매 틱 새로 채워진다.
+##
+## `Sim` 은 세력을 모른다 — 시간 모델만 안다. 그래서 효과를 붙이지 못하고
+## **도달했다는 사실만 여기 남긴다.** 세력을 쥔 `Campaign` 이 이것을 읽어 적용한다.
+## 계층을 섞지 않으려는 분리이며, 덕분에 `Sim` 단독 시험이 그대로 산다.
+var last_arrived: Array[Dictionary] = []
+
 ## 진행한 틱 수. clock.tick 과 일치해야 한다 — 검증용 이중 계수
 var tick_count: int = 0
 

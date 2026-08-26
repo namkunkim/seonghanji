@@ -97,6 +97,7 @@ static func _think(world: World) -> void:
 ## 오늘 도달한 명령만 반영한다.
 static func _deliver_commands(world: World) -> void:
 	var now := world.clock.tick
+	world.last_arrived.clear()
 	var arrived: Array = []
 	for c in world.pending_commands:
 		if int(c.get("arrival_tick", now)) <= now:
@@ -109,3 +110,4 @@ static func _deliver_commands(world: World) -> void:
 	for c in arrived:
 		world.pending_commands.erase(c)
 		world.applied_commands.append(c)
+		world.last_arrived.append(c)

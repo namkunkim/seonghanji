@@ -45,6 +45,12 @@ var skip_no_target: int = 0
 var skip_threshold: int = 0
 var dispatched: int = 0
 
+## 내정 계수 (S2.9)
+var months_settled: int = 0
+var austerity_events: int = 0        # 재정 파탄 — 복구 중단 · 훈련 해제
+var cmds_applied: int = 0
+var cmds_rejected: int = 0
+
 var ended: bool = false
 var end_reason: String = ""
 var battles: int = 0
@@ -129,6 +135,14 @@ static func scenario_03(data_ref: GameData, master_seed: int) -> Campaign:
 	buk.acquired_by = "항복"                              # 208 — 유종의 항복
 	buk.acquired_tick = 0
 
+	# **개전 준비금 — 월 수입 1개월분.**
+	# 0 에서 시작하면 첫 달에는 아무것도 할 수 없다. 시나리오가 「적벽 전야」이므로
+	# 이미 움직이고 있던 나라들이라고 보는 편이 옳다.
+	for fid in c.faction_ids:
+		var ff: Faction = c.factions[fid]
+		ff.treasury = Economy.faction_income(data_ref, c.world.region_states,
+			ff.regions)
+
 	# 실동원에 비례해 함대를 준다 (유지점 = 함선, combat.md §4.3.1)
 	for fid in c.faction_ids:
 		var f: Faction = c.factions[fid]
@@ -156,6 +170,8 @@ func step() -> void:
 		return
 	world.clock.step_ticks(1)
 	Sim._advance_one_tick(world)
+	_apply_arrived()          # ①-b 도달한 명령에 효과를 붙인다 (S2.9)
+	_settle_month()           # ②-b 월 정산 — 자금·행정비·유지비 (S2.9)
 	_arrive_fleets()
 	if world.clock.tick % Strategy.GRAND_PERIOD_TICKS == 0:
 		_ai_grand()
@@ -170,6 +186,90 @@ func run_to_end(max_ticks: int = SCN03_END_TICK) -> void:
 	if not ended:
 		ended = true
 		end_reason = "정규 종료"
+
+
+## ---------------------------------------------------------------- 내정 (S2.9)
+##
+## `Sim._deliver_commands` 는 명령을 옮기기만 한다 — 세력을 모르기 때문이다.
+## 여기서 **효과가 붙는다.**
+func _apply_arrived() -> void:
+	for c in world.last_arrived:
+		var fid := String(c.get("payload", {}).get("faction", ""))
+		var f: Faction = factions.get(fid)
+		if f == null or not f.alive:
+			cmds_rejected += 1
+			continue
+		var why := Domestic.apply(data, world.region_states, f, fleets, c,
+			world.clock.tick)
+		if why == "":
+			cmds_applied += 1
+		else:
+			cmds_rejected += 1
+
+
+## 월 정산. **연 정산(전화 회복) 옆에 선다** (domestic.md §7 ①).
+##
+## 「기간」이 게임 내 1개월이라는 확정(§4.0)이 여기서 코드가 된다 —
+## 전열함 한 전대를 한 달에 짓고 그 비용이 국력 1 의 한 달 수입과 같다.
+func _settle_month() -> void:
+	if world.clock.tick == 0:
+		return
+	if world.clock.tick % Economy.SETTLE_PERIOD_TICKS != 0:
+		return
+	months_settled += 1
+	for fid in faction_ids:                      # **정렬된 배열로만 순회한다**
+		var f: Faction = factions[fid]
+		if not f.alive:
+			continue
+		var inc := Economy.faction_income(data, world.region_states, f.regions)
+		var adm := Economy.faction_admin(data, world.region_states, f.regions,
+			f.governance)
+		var flt := 0
+		var drl := 0
+		for fl in fleets:
+			if fl.owner != fid or not fl.is_alive():
+				continue
+			flt += Economy.fleet_upkeep(fl.squadrons_milli(), fl.plan, fl.station)
+			drl += Domestic.drill_cost(fl)
+			Domestic.drill_tick(fl)
+		var rec := Domestic.recover_cost_total(data, world.region_states, f.regions)
+		f.treasury += inc - adm - flt - drl - rec
+		if f.treasury < 0:
+			_austerity(f)
+		Domestic.tech_tick(f, world.clock.tick)
+
+
+## 재정 파탄. **적자는 그냥 넘어가지 않는다.**
+##
+## 복구 투자를 끊고 훈련을 해제한다 — 둘 다 월정액이므로 즉시 지출이 멎는다.
+## 함대 유지비와 행정비는 끊을 수 없다. **가진 것에 붙는 비용은 안 낼 수가 없다.**
+func _austerity(f: Faction) -> void:
+	austerity_events += 1
+	for rid in f.regions:
+		var st: RegionState = world.region_states.get(rid)
+		if st != null:
+			st.recovery_investment = 0
+	for fl in fleets:
+		if fl.owner == f.id:
+			fl.drilling = false
+	f.treasury = 0
+
+
+## 세력의 이번 달 수지. [수입, 행정비, 함대비, 훈련비, 복구비, 잔여]
+func budget(fid: String) -> Array:
+	var f: Faction = factions[fid]
+	var inc := Economy.faction_income(data, world.region_states, f.regions)
+	var adm := Economy.faction_admin(data, world.region_states, f.regions,
+		f.governance)
+	var flt := 0
+	var drl := 0
+	for fl in fleets:
+		if fl.owner != fid or not fl.is_alive():
+			continue
+		flt += Economy.fleet_upkeep(fl.squadrons_milli(), fl.plan, fl.station)
+		drl += Domestic.drill_cost(fl)
+	var rec := Domestic.recover_cost_total(data, world.region_states, f.regions)
+	return [inc, adm, flt, drl, rec, inc - adm - flt - drl - rec]
 
 
 func _arrive_fleets() -> void:

@@ -24,6 +24,25 @@ var wandering: bool = false
 ## 살아 있는가. 권역을 전부 잃으면 소멸
 var alive: bool = true
 
+## ---------------------------------------------------------------- 경제
+##
+## 보유 자금. **세력 단위 단일 풀이다** — 권역별 창고를 두지 않는다.
+## 45 권역 × 물류는 조작 부담을 배로 만든다 (domestic.md §5.2)
+var treasury: int = 0
+
+## 기술 단계. 화력 · 방어 · 특수 각 0~5 (domestic.md §5.6)
+## **부품이 아니라 단계다.** 오르면 전 함대에 적용된다
+var tech: Dictionary = {"화력": 0, "방어": 0, "특수": 0}
+
+## 진행 중인 기술 개발. {"axis": "화력", "done_tick": 12345}
+var tech_research: Dictionary = {}
+
+## 기술 개발 속도 특성. 촉의 「+30%」 (region-power.md §4)
+var tech_fast: bool = false
+
+## 편성안 (ship-specs.md §7.2)
+var plan: String = Economy.PLAN_DEFAULT
+
 
 func add_region(rid: String) -> void:
 	if not regions.has(rid):
@@ -44,6 +63,23 @@ func effective_milli(data: GameData, states: Dictionary) -> int:
 		var st: RegionState = states.get(rid)
 		var w := 950 if st == null else st.war_damage_milli
 		sum += data.region_power(rid) * w
+	return sum
+
+
+## **동원에 쓸 수 있는 실효 국력**(1/1000). 위임 권역은 절반만 센다.
+##
+## 이것이 위임 대가의 본체다 (domestic.md §3) —
+## 자금은 오히려 여유가 생기지만 **함대 상한이 줄어 전선에 나갈 수 없다.**
+## 조조가 하북을 전부 위임하면 재정은 편해지고 적벽에는 가지 못한다.
+func effective_for_mobilization_milli(data: GameData, states: Dictionary) -> int:
+	var sum := 0
+	for rid in regions:
+		var st: RegionState = states.get(rid)
+		var w := 950 if st == null else st.war_damage_milli
+		var v := data.region_power(rid) * w
+		if st != null and st.delegated:
+			v = v * Economy.DELEGATED_MOBILIZATION_PCT / 100
+		sum += v
 	return sum
 
 
@@ -134,4 +170,4 @@ func mobilized(data: GameData, states: Dictionary,
 	var hops := expedition_hops(data, graph) if not graph.is_empty() else 1
 	var rate := Power.mobilization_full_milli(b[0], b[1], nt, hops,
 		governance, wandering)
-	return effective_milli(data, states) * rate / 1000000
+	return effective_for_mobilization_milli(data, states) * rate / 1000000

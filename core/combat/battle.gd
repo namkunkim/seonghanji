@@ -56,14 +56,51 @@ static func morale_coefficient_milli(morale: int) -> int:
 ## **통솔이 붕괴를 늦춘다. 다만 막지는 못한다** —
 ## 사기 30 이하에서 특급 지휘관도 여섯 번에 한 번은 무너진다.
 ## 지휘관이 좋다는 것은 무적이라는 뜻이 아니라 **시간을 번다**는 뜻이다.
-static func collapse_chance_pct(morale: int, command: int) -> int:
+## ---------------------------------------------------------------- 훈련도
+##
+## §1.4-b · domestic.md §5.5. **훈련은 이기게 하지 않고 버티게 한다.**
+##
+## 고리를 **하나만** 만든다 — 전력 계수에도 초기 사기에도 넣지 않는다.
+## §1.1 의 사기 게이지 45~125 라는 전역 눈금을 건드리지 않기 위해서이며,
+## 붕괴가 곧 승부이므로 한 고리로 충분하다.
+
+## 징병 직후. **신병 구간이다** — 붕괴 확률 ×1.30
+const DRILL_NOMINAL: int = 20
+
+## 50 이 「보정 없음」이다 (generals-stats.md §0.1 규약)
+const DRILL_NEUTRAL: int = 50
+const DRILL_MAX: int = 100
+
+## 전대장이 없을 때의 상한. **붙이지 않으면 영원히 숙련 이하다**
+const DRILL_CAP_UNLED: int = 40
+
+## 훈련 명령 1개월분
+const DRILL_GAIN_PER_MONTH: int = 8
+
+
+## 훈련도 배수(1/1000). 20 → 1300 · 50 → 1000 · 100 → 500
+static func drill_multiplier_milli(drill: int) -> int:
+	return (150 - clampi(drill, 0, DRILL_MAX)) * 10
+
+
+## 붕괴 확률(%).
+##
+## **drill 기본값이 50 이다** — 「보정 없음」이므로 훈련도를 넘기지 않은
+## 기존 호출부의 결과가 그대로 유지된다.
+##
+## > **적벽에서 조조의 대군이 왜 그렇게 무너졌는가.**
+## > 형주 수군을 항복으로 막 받았고 훈련시킬 사람도 없었다 —
+## > 훈련도 20 은 붕괴 확률 ×1.30 이다.
+static func collapse_chance_pct(morale: int, command: int,
+		drill: int = DRILL_NEUTRAL) -> int:
 	if morale <= MORALE_COLLAPSE_FLOOR:
 		return 100
 	if morale > MORALE_COLLAPSE_CEIL:
 		return 0
 	var base := (40 - morale) * 300              # 1/100 단위로 계산
 	var bonus := (command - 50) * 1500 / 50
-	return clampi((base - bonus) / 100, 0, 90)
+	var raw := clampi((base - bonus) / 100, 0, 90)
+	return clampi(raw * drill_multiplier_milli(drill) / 1000, 0, 100)
 
 
 ## ---------------------------------------------------------------- 지형

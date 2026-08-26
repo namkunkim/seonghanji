@@ -92,6 +92,29 @@ func region_power(rid: String) -> int:
 	return 0 if p == null else int(p)
 
 
+## 권역의 수입 지수. **국력(인구) 지수와 다르다** —
+## 총합이 인구 629 대 수입 547 로 0.87 배이며, 그 13% 가 곧
+## 「사람은 많으나 걷히지 않는 땅」의 표현이다 (domestic.md §4.1).
+func region_income(rid: String) -> int:
+	var v = regions[rid].get("income")
+	return 0 if v == null else int(v)
+
+
+## 권역의 생산 지수.
+func region_production(rid: String) -> int:
+	var v = regions[rid].get("production")
+	return 0 if v == null else int(v)
+
+
+## 개발여지가 몇 칸인가. 한 칸이 생산·수입 +10%p 다 (domestic.md §5.3).
+const DEV_SLOTS := {"하": 1, "중": 2, "상": 3, "극상": 4}
+
+
+func region_dev_slots(rid: String) -> int:
+	var v = regions[rid].get("dev_potential")
+	return 0 if v == null else int(DEV_SLOTS.get(String(v), 0))
+
+
 func system_of(rid: String) -> String:
 	return regions[rid]["system"]
 
