@@ -12,11 +12,11 @@ extends SceneTree
 const HOLDINGS := {
 	"조조": {
 		"systems": ["사예", "예주", "연주", "청주", "서주", "기주", "유주", "병주", "남양", "회남"],
-		"regions": ["북부권"], "doc": 212, "mob": 0.35,
+		"regions": ["북부권"], "doc": 212, "mob": 0.48,
 	},
-	"유장": {"systems": [], "regions": ["성도권", "재동권", "파군권"], "doc": 62, "mob": 0.60},
-	"손권": {"systems": [], "regions": ["건업권", "오회권", "예장권"], "doc": 44, "mob": 0.75},
-	"유종": {"systems": [], "regions": ["중부권", "남부권", "태양계권"], "doc": 31, "mob": 0.60},
+	"유장": {"systems": [], "regions": ["성도권", "재동권", "파군권"], "doc": 62, "mob": 0.59},
+	"손권": {"systems": [], "regions": ["건업권", "오회권", "예장권"], "doc": 44, "mob": 0.71},
+	"유종": {"systems": [], "regions": ["중부권", "남부권", "태양계권"], "doc": 31, "mob": 0.64},
 	"장로": {"systems": [], "regions": ["남정권", "상용권"], "doc": 11, "mob": 0.0},
 	"사섭": {"systems": [], "regions": ["교지권", "남해권"], "doc": 12, "mob": 0.0},
 	"공손강": {"systems": [], "regions": ["양평권", "대방권"], "doc": 7, "mob": 0.0},
@@ -82,15 +82,20 @@ func _init() -> void:
 	print("권역 합계 %d (정본 45)" % total_regions)
 	print("")
 
-	# 적벽 성립 판정 — 문서는 조조 67 대 손유 37 = 1.81배
+	# 적벽 성립 판정
+	#
+	# **동원율은 이제 손 계산이 아니라 인접표에서 나온다** (V-37).
+	# 위 mob 값은 `Faction.mobilization_full_milli` 가 내는 값을 옮긴 것이며,
+	# 두 경로가 갈라지면 `tests/verify_budget.gd` 가 먼저 잡는다.
 	var cc := _milli(data, by_name, sys_by_name, "조조")
 	var sq := _milli(data, by_name, sys_by_name, "손권")
-	var cao := Power.mobilized(cc, 0.35)
-	var sun := Power.mobilized(sq, 0.75)
+	var cao := Power.mobilized(cc, 0.48)
+	var sun := Power.mobilized(sq, 0.71)
 	var liu := 15                                        # 유비 유랑 특례 (§3.4-c)
 	print("적벽 성립 판정")
 	print("  재계산: 조조 %d 대 손유 동맹 %d = %.2f배" % [cao, sun + liu, float(cao) / float(sun + liu)])
-	print("  문서값: 조조 74 대 손유 동맹 48 = 1.54배  (2026-08-24 재산출, V-29)")
+	print("  문서값: 조조 101 대 손유 동맹 46 = 2.20배  (2026-08-25 재산출, V-37)")
+	print("  이력  : 65 대 37 = 1.76배 → 74 대 48 = 1.54배 → **101 대 46 = 2.20배**")
 	print("")
 	if mismatch.is_empty():
 		print("문서와 어긋나는 세력 없음")
