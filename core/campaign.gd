@@ -36,6 +36,8 @@ var diplo: Diplomacy = Diplomacy.new()
 
 ## 진단 — 동맹이 실제로 맺어지는가
 var alliances_formed: int = 0
+var hegemony_peak: int = 0
+var hegemony_coalition_ticks: int = 0
 var joint_defenses: int = 0
 
 ## 진단용 계수. AI 가 왜 안 움직이는지 짚기 위한 것이다.
@@ -147,6 +149,8 @@ static func scenario_03(data_ref: GameData, master_seed: int) -> Campaign:
 	# **천명** (function-events.md §0.3-① · Mandate.SCN03)
 	for fid in c.faction_ids:
 		c.factions[fid].mandate = Mandate.scenario_03(fid)
+	# **황제는 조조가 쥐고 있다** — 건안 원년 허 천도 이래. 패권 압력 +10
+	c.factions["조조"].has_emperor = true
 
 	# **개전 준비금 — 월 수입 1개월분.**
 	# 0 에서 시작하면 첫 달에는 아무것도 할 수 없다. 시나리오가 「적벽 전야」이므로
@@ -513,6 +517,7 @@ func _corridor_scale(rid: String) -> String:
 ## 「동맹이 유일한 활로」가 수치로 성립하는 지점이다.
 func _ai_grand() -> void:
 	var mobs := mobilized_all()
+	_update_hegemony(mobs)
 	for i in faction_ids.size():
 		for j in range(i + 1, faction_ids.size()):
 			var a: String = faction_ids[i]
@@ -531,17 +536,50 @@ func _ai_grand() -> void:
 				continue
 			if not _factions_adjacent(a, pa[0]) or not _factions_adjacent(b, pa[0]):
 				continue
+			# **[F-07] 견제 연합** — 공통 위협의 패권 압력이 50 을 넘으면
+			# 위협 임계를 면제한다 (function-events.md §0.3-②).
+			#
+			# 「강해지면 곧바로 포위된다」가 여기서 성립한다 —
+			# 그전까지는 **조조가 아무리 커져도 아무 반작용이 없었다.**
+			var threat_f: Faction = factions.get(pa[0])
+			var coalition := threat_f != null 				and Hegemony.opens_coalition(threat_f.hegemony)
 			# **서로 인접해야 한다.** 군사동맹의 알맹이는 참전 의무(§5.1)이고,
 			# 참전하려면 함대가 닿아야 한다. 요동과 교주가 맺는 동맹은 종이다.
 			# **손유 동맹이 정확히 이 조건을 만족한다** — 오회와 형주는
 			# 장강 대항로로 이어져 있다.
 			if not _factions_adjacent(a, b):
 				continue
-			if diplo.accepts(a, b, int(pa[1]), int(pb[1])):
+			if coalition or diplo.accepts(a, b, int(pa[1]), int(pb[1])):
 				var before := diplo.tier_of(a, b)
 				var after := diplo.escalate(a, b)
 				if after > before and after == Diplomacy.Tier.군사동맹:
 					alliances_formed += 1
+
+
+## 패권 압력 갱신 (function-events.md §0.3-②).
+## **매 Grand 주기마다 전 세력에 대해 산출한다** (ai-design.md §8.1).
+##
+## ⚠ 우위 가산 넷 중 **둘만 구현했다** — 황제 보유와 영토 점유율.
+## 「인재 밀도 1위」는 인물 배치가 코어에 없고(character-assignments 미적재),
+## 「외교 영향력」은 이역 세력이 미구현이다.
+func _update_hegemony(mobs: Dictionary) -> void:
+	var land := {}
+	for fid in faction_ids:
+		land[fid] = factions[fid].regions.size()
+	for fid in faction_ids:                      # **정렬된 배열로만 순회한다**
+		var f: Faction = factions[fid]
+		if not f.alive:
+			f.hegemony = 0
+			continue
+		var bonuses := {
+			"황제": f.has_emperor,
+			"영토": Hegemony.land_lead(land, mobs, fid),
+		}
+		f.hegemony = Hegemony.pressure(mobs, fid, bonuses, f.violations)
+		if f.hegemony > hegemony_peak:
+			hegemony_peak = f.hegemony
+		if Hegemony.opens_coalition(f.hegemony):
+			hegemony_coalition_ticks += 1
 
 
 ## 그 세력이 느끼는 **최대 위협의 상대와 그 값**. 동맹 후보(ally)는 세지 않는다.

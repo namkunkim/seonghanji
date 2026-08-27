@@ -32,6 +32,19 @@ var alive: bool = true
 ## **명분 없는 군대는 같은 함선 수로도 먼저 무너진다.**
 var mandate: int = 28
 
+## 패권 압력(Hegemony Pressure) 0~100. **매 Grand 주기마다 갱신된다**
+## (function-events.md §0.3-② · ai-design.md §8.1)
+##
+## **강해지면 곧바로 포위된다** — 50 에서 견제 연합이 열리고 60 에서 다수가 등을 돌린다
+var hegemony: int = 0
+
+## 황제(또는 옥새)를 물리적으로 보유하는가. 패권 압력 +10 (§0.3-②)
+var has_emperor: bool = false
+
+## 명분 침해 이력. 황제 폐립 +20 · 참칭 +25 · 수도 소각 +15 · **황제 시해 +30**
+## **시해가 단일 최대다** — [F-02] 의 천명 −45 와 짝을 이룬다
+var violations: Array[String] = []
+
 ## 보유 자금. **세력 단위 단일 풀이다** — 권역별 창고를 두지 않는다.
 ## 45 권역 × 물류는 조작 부담을 배로 만든다 (domestic.md §5.2)
 var treasury: int = 0
