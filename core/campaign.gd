@@ -144,6 +144,10 @@ static func scenario_03(data_ref: GameData, master_seed: int) -> Campaign:
 	buk.acquired_by = "항복"                              # 208 — 유종의 항복
 	buk.acquired_tick = 0
 
+	# **천명** (function-events.md §0.3-① · Mandate.SCN03)
+	for fid in c.faction_ids:
+		c.factions[fid].mandate = Mandate.scenario_03(fid)
+
 	# **개전 준비금 — 월 수입 1개월분.**
 	# 0 에서 시작하면 첫 달에는 아무것도 할 수 없다. 시나리오가 「적벽 전야」이므로
 	# 이미 움직이고 있던 나라들이라고 보는 편이 옳다.
@@ -168,6 +172,12 @@ func _spawn_fleet(owner: String, at: String) -> Fleet:
 	_next_fleet_id += 1
 	fl.owner = owner
 	fl.at_system = at
+	# **천명이 초기 사기에 들어간다** (combat.md §1.2 · function-events.md §0.3-①).
+	# 2026-08-25 배선 — 그 전까지 모든 함대가 명목 100 으로 시작했고,
+	# **조조의 황제 보유가 전투에서 아무 값도 하지 않았다.**
+	var f: Faction = factions.get(owner)
+	if f != null:
+		fl.morale = Mandate.initial_morale(f.mandate)
 	fleets.append(fl)
 	return fl
 
