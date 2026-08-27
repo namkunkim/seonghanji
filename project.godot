@@ -13,6 +13,9 @@ config/name="SEONGHANJI: MANDATE"
 config/description="후한 말 삼국시대를 우주 SF로 옮긴 그랜드 스트래티지"
 config/features=PackedStringArray("4.7")
 
+; S3.2 게임 루프 — 첫 화면
+run/main_scene="res://app/main.tscn"
+
 [display]
 
 ; 안드로이드 태블릿 가로 기준 (roadmap-solo.md S3.1)

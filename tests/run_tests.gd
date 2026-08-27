@@ -13,7 +13,7 @@ var _fail := 0
 ## GDScript 는 없는 함수를 부르면 오류만 찍고 시험은 「실패 0」으로 끝난다 —
 ## 2026-08-24 에 battle.gd 가 컴파일에 실패하며 시험 26개가 소리 없이 빠졌다.
 var _sections := 0
-const EXPECTED_SECTIONS := 31
+const EXPECTED_SECTIONS := 32
 
 
 func _section(name: String) -> void:
@@ -71,6 +71,7 @@ func _init() -> void:
 	_test_plans()
 	_test_tech()
 	_test_domestic_commands()
+	_test_game_loop()
 	print("")
 	if _sections != EXPECTED_SECTIONS:
 		_fail += 1
@@ -1192,3 +1193,54 @@ func _test_domestic_commands() -> void:
 		c2.step()
 	_eq(c2.months_settled, 1, "한 달이 지나면 한 번 정산한다")
 	_ok(cao2.treasury != t0, "정산이 자금을 움직였다 (%d → %d)" % [t0, cao2.treasury])
+
+
+func _test_game_loop() -> void:
+	_section("32. 게임 루프 — 클라이언트가 부르는 입구 (S3.2)")
+	var d := GameData.load_all()
+	var c := Campaign.scenario_03(d, 7)
+
+	# **코어는 시계의 출처를 모른다** (core/README.md).
+	# 클라이언트는 실제 델타를, 서버는 벽시계를 넘긴다 — 같은 함수다.
+	_eq(c.advance(0), 0, "0ms 는 0틱")
+	_eq(c.world.clock.tick, 0, "시계도 안 움직인다")
+
+	# 1틱 = 실제 1분 (time-and-monetization.md §2.1)
+	_eq(c.advance(GameClock.REAL_MS_PER_TICK), 1, "1분이면 1틱")
+	_eq(c.world.clock.tick, 1, "시계가 1틱")
+
+	# **나머지가 누적된다.** 30초씩 두 번이면 1틱이지 0틱이 아니다 —
+	# 프레임 델타가 틱보다 잘게 들어오는 것이 정상이다
+	var half := GameClock.REAL_MS_PER_TICK / 2
+	_eq(c.advance(half), 0, "30초로는 아직 안 넘어간다")
+	_eq(c.advance(half), 1, "다시 30초면 1틱")
+	_eq(c.world.clock.tick, 2, "누적 2틱")
+
+	# 한 번에 여러 틱
+	var before := c.world.clock.tick
+	_eq(c.advance(GameClock.REAL_MS_PER_TICK * 10), 10, "10분이면 10틱")
+	_eq(c.world.clock.tick, before + 10, "시계가 10틱 나아갔다")
+
+	# **advance 와 step 이 같은 세계를 만든다** — 재생이 그 위에 선다 (V-25 ③)
+	var a := Campaign.scenario_03(d, 99)
+	var b := Campaign.scenario_03(d, 99)
+	a.advance(GameClock.REAL_MS_PER_TICK * 120)
+	for _i in 120:
+		b.step()
+	_eq(a.world.clock.tick, b.world.clock.tick, "두 경로의 틱이 같다")
+	_eq(a.captures, b.captures, "두 경로의 점령 수가 같다")
+	_eq(a.battles, b.battles, "두 경로의 전투 수가 같다")
+
+	# 달력 — 208년 정월에서 시작한다
+	var cal := c.world.clock.calendar(208)
+	_eq(int(cal[0]), 208, "시작 연도 208")
+	_eq(int(cal[1]), 1, "시작 월 1")
+	var y := Campaign.scenario_03(d, 1)
+	y.advance(GameClock.REAL_MS_PER_TICK * GameClock.TICKS_PER_YEAR)
+	var cal2 := y.world.clock.calendar(208)
+	_eq(int(cal2[0]), 209, "1년 뒤 209년")
+
+	# 종료 후에는 진행하지 않는다
+	var z := Campaign.scenario_03(d, 3)
+	z.ended = true
+	_eq(z.advance(GameClock.REAL_MS_PER_TICK * 100), 0, "끝난 판은 안 움직인다")

@@ -260,6 +260,24 @@ func step() -> void:
 	_check_end()
 
 
+## 실시간 진행 — **클라이언트가 부르는 입구다** (S3.2).
+##
+## 코어는 시계의 출처를 모른다 (`core/README.md`) —
+## 단기는 게임 루프 델타로, 장기는 서버 벽시계로 **같은 함수를 부른다.**
+## 그것이 C1~C3 에서 코어를 다시 짜지 않는 유일한 조건이다.
+##
+## 진행한 틱 수를 돌려준다.
+func advance(elapsed_ms: int) -> int:
+	if ended:
+		return 0
+	var n := world.clock.take_ticks(elapsed_ms)
+	for _i in n:
+		step()
+		if ended:
+			break
+	return n
+
+
 func run_to_end(max_ticks: int = SCN03_END_TICK) -> void:
 	while not ended and world.clock.tick < max_ticks:
 		step()
