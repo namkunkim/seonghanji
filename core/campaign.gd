@@ -22,6 +22,9 @@ const EFFECTIVE_FLOOR_PCT: int = 10
 
 
 var world: World
+
+## 세력별 인물 로스터. 세력 → Array[Dictionary] (통솔 내림차순)
+var roster: Dictionary = {}
 var data: GameData
 var factions: Dictionary = {}
 var faction_ids: Array[String] = []
@@ -166,6 +169,10 @@ static func scenario_03(data_ref: GameData, master_seed: int) -> Campaign:
 		rst.stability_initial = Stability.initial_for(rst.acquired_by)
 		rst.stability = rst.stability_initial
 
+	# **인물 로스터** (character-assignments.md · Roster).
+	# 2026-08-25 신설 — 그때까지 모든 함대가 통솔 50 으로 싸웠다.
+	c.roster = Roster.build(data_ref, "SCN-03")
+
 	# **황제는 조조가 쥐고 있다** — 건안 원년 허 천도 이래. 패권 압력 +10
 	c.factions["조조"].has_emperor = true
 
@@ -199,8 +206,39 @@ func _spawn_fleet(owner: String, at: String) -> Fleet:
 	var f: Faction = factions.get(owner)
 	if f != null:
 		fl.morale = Mandate.initial_morale(f.mandate)
+	_assign_commander(fl)
 	fleets.append(fl)
 	return fl
+
+
+## 함대에 제독을 앉힌다. **통솔 상위부터, 한 사람은 한 함대만** (§6.4).
+##
+## 자리가 모자라면 **무명 장교**가 맡고 보정은 0 이다 —
+## 임명은 의무가 아니라 자원 배분이다.
+func _assign_commander(fl: Fleet) -> void:
+	var list: Array = roster.get(fl.owner, [])
+	if list.is_empty():
+		return
+	var used := {}
+	for other in fleets:
+		if other.owner == fl.owner and other.commander_id != "":
+			used[other.commander_id] = true
+	for c in list:                               # **통솔 내림차순 · 순서 고정**
+		var cid := String(c.get("id", ""))
+		if used.has(cid):
+			continue
+		fl.commander_id = cid
+		fl.commander_name = String(c.get("name", ""))
+		fl.command = Roster.stat_of(c, "통솔")
+		fl.might = Roster.stat_of(c, "무력")
+		fl.wits = Roster.stat_of(c, "지력")
+		# **매력이 초기 사기에 들어간다** (combat.md §1.2) —
+		# 통솔 8 : 매력 7. 유비는 함대를 잘 몰지 못해도 먼저 무너지지 않는다
+		var charm := Roster.stat_of(c, "매력")
+		fl.morale = clampi(fl.morale
+			+ (fl.command - 50) * 8 / 50 + (charm - 50) * 7 / 50,
+			0, Battle.MORALE_MAX)
+		return
 
 
 ## ---------------------------------------------------------------- 진행

@@ -14,6 +14,13 @@ const DATA_DIR := "res://data/"
 var systems: Dictionary = {}       # SYS-xx -> Dictionary
 var regions: Dictionary = {}       # RGN-xx -> Dictionary
 var corridors: Dictionary = {}     # COR-xx -> Dictionary
+
+## 인물 492인 (characters.json). CHR-xxxx -> Dictionary
+## 5스탯(통솔·무력·지력·정치·매력) · 격 · 성향 · 특성
+var characters: Dictionary = {}
+
+## 시나리오별 배치 2,394건 (assignments.json)
+var assignments: Array = []
 var routes: Array[Dictionary] = []
 
 var system_ids: Array[String] = []
@@ -37,6 +44,9 @@ func _load() -> void:
 	systems = _index(_read("systems.json"))
 	regions = _index(_read("regions.json"))
 	corridors = _index(_read("corridors.json"))
+	# **인물.** 2026-08-25 신설 — 그때까지 코어가 한 명도 읽지 않았다
+	characters = _index(_read("characters.json"))
+	assignments = _read("assignments.json")
 	for r in _read("routes.json"):
 		routes.append(r)
 

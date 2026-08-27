@@ -29,6 +29,10 @@ var station: String = "자국"
 ## **임명 4계층** (ship-specs.md §6.4). 필수는 제독뿐이고
 ## 빈 자리는 무명 장교가 맡아 보정 0 이다 — 임명은 의무가 아니라 자원 배분이다.
 
+## 제독. 빈 문자열이면 **무명 장교**이고 보정은 0 이다 (ship-specs.md §6.4)
+var commander_id: String = ""
+var commander_name: String = ""
+
 ## 제독 스탯 (없으면 평균 50 = 보정 없음)
 var command: int = 50
 var might: int = 50
