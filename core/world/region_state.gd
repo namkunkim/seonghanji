@@ -47,6 +47,18 @@ var delegated: bool = false
 ## 주둔 병력 (실동원 단위)
 var garrison: int = 0
 
+## ---------------------------------------------------------------- 안정도
+##
+## 권역 안정도 0~100 (function-events.md §0.3-④). **신설 변수다** —
+## 지금까지 문서에 「민심」이라는 말만 있고 눈금이 없었다.
+var stability: int = Stability.INIT_STANDARD
+
+## 초기값. 평시 회복 상한(초기값 + 20)의 기준이 된다
+var stability_initial: int = Stability.INIT_STANDARD
+
+## 회유([F-39]) 완료. 안정도에 영구 하한 50 이 걸린다
+var pacified: bool = false
+
 
 func is_newly_taken(now_tick: int) -> bool:
 	if acquired_tick == NEVER:

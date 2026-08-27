@@ -37,6 +37,7 @@ var diplo: Diplomacy = Diplomacy.new()
 ## 진단 — 동맹이 실제로 맺어지는가
 var alliances_formed: int = 0
 var hegemony_peak: int = 0
+var stagnation_hits: int = 0
 var hegemony_coalition_ticks: int = 0
 var joint_defenses: int = 0
 
@@ -149,6 +150,13 @@ static func scenario_03(data_ref: GameData, master_seed: int) -> Campaign:
 	# **천명** (function-events.md §0.3-① · Mandate.SCN03)
 	for fid in c.faction_ids:
 		c.factions[fid].mandate = Mandate.scenario_03(fid)
+	# **권역 안정도** (function-events.md §0.3-④).
+	# 획득 방식이 그 땅의 출발점을 정한다 — 동원율의 신복속 부담과 같은 사고다.
+	for rid in data_ref.region_ids:
+		var rst: RegionState = c.world.region_states[rid]
+		rst.stability_initial = Stability.initial_for(rst.acquired_by)
+		rst.stability = rst.stability_initial
+
 	# **황제는 조조가 쥐고 있다** — 건안 원년 허 천도 이래. 패권 압력 +10
 	c.factions["조조"].has_emperor = true
 
@@ -268,6 +276,25 @@ func _settle_month() -> void:
 		if f.treasury < 0:
 			_austerity(f)
 		Domestic.tech_tick(f, world.clock.tick)
+
+		# **권역 안정도** — 평시 회복 또는 감쇠 (§0.3-④)
+		for rid in f.regions:
+			var rst: RegionState = world.region_states.get(rid)
+			if rst != null:
+				Stability.tick(rst)
+
+		# **할거 페널티** (§0.3-⑤) — 12개월 무획득이면 천명이 깎인다.
+		#
+		# 「가만히 있으면 진다」가 여기서 처음 코드가 된다.
+		# 그전까지 웅크린 소국은 **아무 대가 없이** 존속했다 —
+		# 유장·장로·사섭의 달성률 98~100% 가 그 결과였다.
+		f.months_idle += 1
+		var md := Stability.stagnation_mandate_delta(f.months_idle,
+			f.regions.size(), f.wandering)
+		if md != 0:
+			f.mandate = clampi(f.mandate + md, Mandate.MIN, Mandate.MAX)
+			stagnation_hits += 1
+
 		_ai_domestic(f, spare)
 
 
@@ -496,8 +523,15 @@ func _capture(owner: String, rid: String) -> void:
 	st.owner = owner
 	st.acquired_tick = world.clock.tick
 	st.acquired_by = "정복"
+	# **무력 정복은 안정도 40 에서 다시 시작한다** (§0.3-④)
+	st.stability_initial = Stability.INIT_CONQUEST
+	st.stability = Stability.INIT_CONQUEST
 	if factions.has(owner):
 		factions[owner].add_region(rid)
+		# **할거 시계를 되돌린다** (§0.3-⑤).
+		# §4.6 원문대로 **공세 개시에서 멈추지만**, 여기서는 획득으로 잡는다 —
+		# 출격 시점에 멈추면 「보내 놓고 가만히 있기」가 최적해가 된다.
+		factions[owner].months_idle = 0
 
 
 func _corridor_scale(rid: String) -> String:

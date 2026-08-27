@@ -23,6 +23,17 @@ enum Tier { NONE, 통교, 화친, 맹약, 군사동맹 }
 const TIER_NAMES := ["없음", "통교", "화친", "맹약", "군사동맹"]
 
 ## 동맹 신뢰도. 1/1000. 시작은 중립 500
+## ---------------------------------------------------------------- 신뢰도 구간
+##
+## function-events.md §0.3-③ 은 0~100 눈금으로 적었고 여기는 0~1000 이다.
+## **눈금을 새로 만들지 않고 환산한다** — 값을 두 곳에 두면 두 곳이 어긋난다.
+##
+##   70~100 고   배후 기습 미발동 · 동맹 유지 루트 개방
+##   40~69  중   반환 요구 → 협상 또는 결렬
+##   0~39   저   **[F-12] 배후 기습 판정 개시**
+const TRUST_BAND_HIGH: int = 700
+const TRUST_BAND_MID: int = 400
+
 const TRUST_INITIAL: int = 500
 const TRUST_MAX: int = 1000
 
@@ -39,6 +50,34 @@ const THREAT_ADJACENT_MILLI: int = 500
 
 var tiers: Dictionary = {}      # "A|B" → Tier
 var trust: Dictionary = {}      # "A|B" → 1/1000
+
+
+static func trust_band(trust: int) -> String:
+	if trust >= TRUST_BAND_HIGH:
+		return "고"
+	if trust >= TRUST_BAND_MID:
+		return "중"
+	return "저"
+
+
+## **[F-12] 배후 기습 판정이 열리는가.**
+## 신뢰도가 「저」로 떨어진 동맹은 등 뒤가 위험해진다.
+func backstab_open(a: String, b: String) -> bool:
+	return is_allied(a, b) and trust_of(a, b) < TRUST_BAND_MID
+
+
+## 배신 기록. **신뢰도와 별개로 횟수를 영구 계승한다** (§0.3-③) —
+## [F-14] 복원 상한을 깎는다
+var betrayals: Dictionary = {}
+
+
+func record_betrayal(a: String, b: String) -> void:
+	var k := key(a, b)
+	betrayals[k] = int(betrayals.get(k, 0)) + 1
+
+
+func betrayal_count(a: String, b: String) -> int:
+	return int(betrayals.get(key(a, b), 0))
 
 
 static func key(a: String, b: String) -> String:
