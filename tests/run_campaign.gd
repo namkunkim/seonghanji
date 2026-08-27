@@ -43,6 +43,10 @@ func _init() -> void:
 	var total_applied := 0
 	var total_built := 0
 	var total_austerity := 0
+	var fired := {}
+	var total_backstab := 0
+	var total_revolt := 0
+	var total_broken := 0
 	var total_ticks := 0
 	var t0 := Time.get_ticks_msec()
 
@@ -69,6 +73,11 @@ func _init() -> void:
 		total_applied += c.cmds_applied
 		total_built += c.fleets_built
 		total_austerity += c.austerity_events
+		for eid in c.events_fired:
+			fired[eid] = int(fired.get(eid, 0)) + int(c.events_fired[eid])
+		total_backstab += c.backstabs
+		total_revolt += c.revolts
+		total_broken += c.alliances_broken
 		total_ticks += c.world.clock.tick
 
 	var elapsed := Time.get_ticks_msec() - t0
@@ -82,6 +91,28 @@ func _init() -> void:
 	keys.sort()
 	for k in keys:
 		print("  %-8s %3d회  %5.1f%%" % [k, states[k], states[k] * 100.0 / RUNS])
+	print("")
+
+	print("기능 이벤트 — 발동 (function-events.md)")
+	var ek: Array = fired.keys()
+	ek.sort()
+	var line := "  "
+	for eid in ek:
+		line += "%s %d회  " % [eid, int(fired[eid])]
+	print(line if not ek.is_empty() else "  발동 없음")
+	var missing: Array[String] = []
+	for eid in Events.IMPLEMENTED:
+		if not fired.has(eid):
+			missing.append(eid)
+	print("  구현 %d종 중 발동 %d · **미발동 %d** %s" % [
+		Events.IMPLEMENTED.size(), ek.size(), missing.size(),
+		("— " + ", ".join(missing)) if not missing.is_empty() else ""])
+	print("  미구현 %d종 (인물 %d · 기타 %d)" % [
+		Events.NEEDS_CHARACTERS.size() + Events.NEEDS_OTHER.size(),
+		Events.NEEDS_CHARACTERS.size(), Events.NEEDS_OTHER.size()])
+	print("  회당 배후 기습 %.1f · 후방 반란 %.1f · 연합 해체 %.1f"
+		% [float(total_backstab) / RUNS, float(total_revolt) / RUNS,
+		   float(total_broken) / RUNS])
 	print("")
 
 	print("내정 (S2.9 · AI 판단)")

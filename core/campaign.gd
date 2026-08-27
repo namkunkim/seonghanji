@@ -38,6 +38,15 @@ var diplo: Diplomacy = Diplomacy.new()
 var alliances_formed: int = 0
 var hegemony_peak: int = 0
 var stagnation_hits: int = 0
+
+## ---------------------------------------------------------------- 기능 이벤트
+## 이벤트 ID → 발동 횟수. **「미발동 0종」 지표의 분모다**
+var events_fired: Dictionary = {}
+var alliances_broken: int = 0
+var backstabs: int = 0
+var revolts: int = 0
+var _event_cooldown: Dictionary = {}
+var _alliance_since: Dictionary = {}
 var hegemony_coalition_ticks: int = 0
 var joint_defenses: int = 0
 
@@ -208,6 +217,7 @@ func step() -> void:
 		_ai_grand()
 	if world.clock.tick % Strategy.OPERATIONAL_PERIOD_TICKS == 0:
 		_ai_operational()
+	_check_events()           # ⑥ 이벤트 판정 (function-events.md)
 	_check_end()
 
 
@@ -588,6 +598,7 @@ func _ai_grand() -> void:
 				var after := diplo.escalate(a, b)
 				if after > before and after == Diplomacy.Tier.군사동맹:
 					alliances_formed += 1
+					_alliance_since[Diplomacy.key(a, b)] = world.clock.tick
 
 
 ## 패권 압력 갱신 (function-events.md §0.3-②).
@@ -887,3 +898,231 @@ func achievements() -> Dictionary:
 	for fid in faction_ids:
 		out[fid] = achieved(fid)
 	return out
+
+
+## ================================================================ 기능 이벤트
+##
+## `Sim._advance_one_tick` 의 ⑥ 자리가 비어 있었다 —
+## **「미발동 이벤트 0종」이 M0 의 마지막 「판정 불가」 지표였다.**
+##
+## **Grand(계절)마다 본다.** 매 틱 40종을 굴릴 이유가 없다.
+func _check_events() -> void:
+	if world.clock.tick % Events.CHECK_PERIOD_TICKS != 0:
+		return
+	var mobs := mobilized_all()
+	var rng := world.rng(Rng.DOMAIN_EVENT)
+	for fid in faction_ids:                      # **정렬된 배열로만 순회한다**
+		var f: Faction = factions[fid]
+		if not f.alive:
+			continue
+		_check_faction_events(f, mobs, rng)
+
+
+func _fire(fid: String, eid: String) -> bool:
+	var k := eid + "|" + fid
+	var last := int(_event_cooldown.get(k, -Events.COOLDOWN_TICKS * 2))
+	if world.clock.tick - last < Events.COOLDOWN_TICKS:
+		return false
+	_event_cooldown[k] = world.clock.tick
+	events_fired[eid] = int(events_fired.get(eid, 0)) + 1
+	return true
+
+
+func _check_faction_events(f: Faction, mobs: Dictionary, rng: RngStream) -> void:
+	var fid := f.id
+	var own: int = int(mobs.get(fid, 0))
+
+	# 최강자와 그 실동원
+	var top := ""
+	var top_mob := 0
+	for k in faction_ids:
+		if int(mobs.get(k, 0)) > top_mob:
+			top_mob = int(mobs.get(k, 0))
+			top = k
+
+	# ---------------------------------------------------------- [F-02] 상징의 쟁탈
+	# 황제를 쥔 세력이 유효 세력이기를 그치기 직전에 황제가 손을 떠난다.
+	if f.has_emperor and Events.share_pct(mobs, fid) <= Events.F02_SYMBOL_SHARE_PCT:
+		if _fire(fid, "F-02"):
+			f.has_emperor = false                # 상징이 손을 떠난다
+			f.mandate = clampi(f.mandate - 15, Mandate.MIN, Mandate.MAX)
+
+	# ---------------------------------------------------------- [F-05] 격상 선언
+	# 회랑 둘을 낀 요충을 쥐고 실동원 40 을 넘으면 칭왕을 선언할 수 있다.
+	if own >= Events.F05_MOBILIZED:
+		for rid in f.regions:
+			if Events.is_hub(data, rid):
+				if _fire(fid, "F-05"):
+					f.mandate = clampi(f.mandate + 5, Mandate.MIN, Mandate.MAX)
+				break
+
+	# ---------------------------------------------------------- [F-07][F-09][F-14]
+	if top != "" and top != fid:
+		var tf: Faction = factions[top]
+		if Hegemony.opens_coalition(tf.hegemony):
+			_fire(fid, "F-07")                   # 결성 조건 개방 (실제 성립은 _ai_grand)
+		if Hegemony.turns_hostile(tf.hegemony) \
+				and Events.share_pct(mobs, fid) >= Events.F14_SHARE_PCT:
+			_fire(fid, "F-14")                   # 극대 앞에서는 깨진 동맹도 복원된다
+		# 최강자가 연합 전체의 0.9 를 넘으면 분열 외교를 건다
+		var coalition_mob := 0
+		for k in faction_ids:
+			if k != top and diplo.is_allied(fid, k):
+				coalition_mob += int(mobs.get(k, 0))
+		coalition_mob += own
+		if coalition_mob > 0 and top_mob * 100 >= coalition_mob * Events.F09_SPLIT_RATIO_PCT:
+			_fire(top, "F-09")
+
+	# ---------------------------------------------------------- [F-10] 연합의 해체
+	for k in faction_ids:
+		if k <= fid or not diplo.is_allied(fid, k):
+			continue
+		var since := int(_alliance_since.get(Diplomacy.key(fid, k), world.clock.tick))
+		var months := (world.clock.tick - since) / GameClock.TICKS_PER_MONTH
+		var pct := Events.coalition_decay_pct(months)
+		if pct > 0 and rng.chance(pct):
+			if _fire(fid, "F-10"):
+				diplo.set_tier(fid, k, Diplomacy.Tier.화친)
+				alliances_broken += 1
+
+	# ---------------------------------------------------------- [F-12] 배후 기습
+	# **동맹 신뢰도가 「저」로 떨어지고 동맹국 주력이 다른 전선에 있을 때.**
+	for k in faction_ids:
+		if k == fid or not diplo.is_allied(fid, k):
+			continue
+		if diplo.trust_of(fid, k) > Events.F12_TRUST_MAX:
+			continue
+		if _committed_pct(k) < Events.F12_COMMITTED_PCT:
+			continue
+		var prize := _adjacent_region_of(fid, k)
+		if prize == "":
+			continue
+		if _fire(fid, "F-12"):
+			diplo.set_tier(fid, k, Diplomacy.Tier.NONE)
+			diplo.record_betrayal(fid, k)
+			_capture(fid, prize)                 # **등 뒤에서 요충을 가져간다**
+			f.mandate = clampi(f.mandate - 10, Mandate.MIN, Mandate.MAX)
+			backstabs += 1
+
+	# ---------------------------------------------------------- [F-13] 고립과 비지화
+	for rid in f.regions:
+		var isolated := true
+		for nb in data.region_adjacency.get(rid, []):
+			if f.regions.has(nb):
+				isolated = false
+				break
+		if isolated:
+			var rst: RegionState = world.region_states.get(rid)
+			if rst != null and _fire(fid, "F-13"):
+				Stability.tick(rst, true)        # 비지 −8
+			break
+
+	# ---------------------------------------------------------- [F-15] 요충 쟁탈
+	for rid in f.regions:
+		for nb in data.region_adjacency.get(rid, []):
+			var nst: RegionState = world.region_states.get(nb)
+			if nst == null or nst.owner == "" or nst.owner == fid:
+				continue
+			if not Events.is_hub(data, nb):
+				continue
+			if own * 100 >= int(mobs.get(nst.owner, 1)) * Events.F15_ATTACK_RATIO_PCT:
+				_fire(fid, "F-15")
+				break
+
+	# ---------------------------------------------------------- [F-17] 약자의 반복 공세
+	# **할거 페널티가 도는 동안 약자는 계속 나간다** — 제갈량의 북벌이다.
+	if own >= Events.F17_MOBILIZED and f.months_idle >= Stability.STAGNATION_MONTHS:
+		_fire(fid, "F-17")
+
+	# ---------------------------------------------------------- [F-23] 관문 방어전
+	for rid in f.regions:
+		if not Events.is_hub(data, rid):
+			continue
+		for nb in data.region_adjacency.get(rid, []):
+			var nst2: RegionState = world.region_states.get(nb)
+			if nst2 != null and nst2.owner != "" and nst2.owner != fid \
+					and not diplo.is_allied(fid, nst2.owner):
+				_fire(fid, "F-23")
+				break
+
+	# ---------------------------------------------------------- [F-25] 최후의 항전
+	if top != "" and top != fid and own > 0 \
+			and own * Events.F25_LAST_STAND_DEN <= top_mob:
+		if _fire(fid, "F-25"):
+			for fl in fleets:                    # **막다른 곳에서 사기가 오른다**
+				if fl.owner == fid and fl.is_alive():
+					fl.morale = mini(fl.morale + 10, Battle.MORALE_MAX)
+
+	# ---------------------------------------------------------- [F-27] 의사결정 지연
+	if fid == top and f.lord_type == "명문형":
+		_fire(fid, "F-27")
+
+	# ---------------------------------------------------------- [F-36] 미래를 태우는 통치
+	if f.lord_type == "무단형":
+		var eff := f.effective_milli(data, world.region_states) / 1000
+		var upkeep := 0
+		for fl in fleets:
+			if fl.owner == fid and fl.is_alive():
+				upkeep += fl.squadrons_milli() / 1000
+		if upkeep > 0 and eff * 100 <= upkeep * Events.F36_DEFICIT_PCT:
+			if _fire(fid, "F-36"):
+				for rid in f.regions:            # **수탈** — 안정도 −10
+					var rst2: RegionState = world.region_states.get(rid)
+					if rst2 != null:
+						Stability.tick(rst2, false, true)
+
+	# ---------------------------------------------------------- [F-37] 수도 파괴와 천도
+	if top != "" and top != fid and f.regions.size() > 1 \
+			and top_mob * 100 >= own * Events.F37_CAPITAL_RATIO_PCT:
+		_fire(fid, "F-37")
+
+	# ---------------------------------------------------------- [F-39] 후방 반란
+	# **주력이 나가 있고 후방이 흔들리면 등 뒤에서 무너진다.**
+	if _committed_pct(fid) >= Events.F39_COMMITTED_PCT:
+		for rid in f.regions:
+			var rst3: RegionState = world.region_states.get(rid)
+			if rst3 == null or rst3.stability > Events.F39_REVOLT_STABILITY:
+				continue
+			if _fire(fid, "F-39"):
+				f.remove_region(rid)             # 권역이 손을 떠난다
+				rst3.owner = ""
+				rst3.stability = Stability.INIT_FRONTIER
+				revolts += 1
+			break
+
+	# ---------------------------------------------------------- [F-40] 땅 없는 자의 유랑
+	if f.regions.is_empty() and f.mandate >= Events.F40_MANDATE:
+		var ships := 0
+		for fl in fleets:
+			if fl.owner == fid and fl.is_alive():
+				ships += fl.ships
+		if ships >= Battle.SQUADRON_SHIPS:
+			if _fire(fid, "F-40"):
+				f.alive = true
+				f.wandering = true               # **땅을 잃어도 끝나지 않는다**
+
+
+## 그 세력 주력의 몇 %가 이동 중(타 전선)인가.
+func _committed_pct(fid: String) -> int:
+	var total := 0
+	var moving := 0
+	for fl in fleets:
+		if fl.owner != fid or not fl.is_alive():
+			continue
+		total += fl.ships
+		if fl.is_moving():
+			moving += fl.ships
+	if total <= 0:
+		return 0
+	return moving * 100 / total
+
+
+## `fid` 에 인접한 `owner` 의 권역 하나. 없으면 빈 문자열.
+func _adjacent_region_of(fid: String, owner: String) -> String:
+	var f: Faction = factions[fid]
+	for rid in f.regions:
+		for nb in data.region_adjacency.get(rid, []):
+			var st: RegionState = world.region_states.get(nb)
+			if st != null and st.owner == owner:
+				return nb
+	return ""
