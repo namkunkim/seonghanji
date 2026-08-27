@@ -9,9 +9,19 @@ extends RefCounted
 ## 모든 계수를 **1/1000 단위 정수**로 다룬다 — 부동소수 금지 (§2.3).
 
 ## ---------------------------------------------------------------- 절대 스케일
-## combat.md §4.3.1 — 지수 1 = 자금 100 = 유지점 1 · 전대 40척 · 함대 200척
-const SQUADRON_SHIPS: int = 40
-const FLEET_SHIPS: int = 200
+## combat.md §4.3.1 — 지수 1 = 자금 100 = 유지점 1 · 전대 28척 · 함대 140척
+##
+## **40 → 28 (V-38, 2026-08-25).** 40척은 실동원 65 를 전제로 고른 값이었고,
+## V-37 로 조조의 실동원이 101 이 되자 총원이 36.5만 — 사서 추정 20~30만을 벗어났다.
+##
+## 28 을 고른 근거 둘.
+##   ① **구간 중앙** — 조조 25.6만. 40척을 고를 때와 같은 원칙이다 (ship-specs §0.2)
+##   ② **함대(5전대) 단위 편성이 정수로 떨어진다** — 140척 →
+##      전열 56 · 포격 28 · 강습 21 · 전자 14 · 공성 7 · 보급 14
+##
+## **건조비·유지점은 전대 단위 값이라 변경 없다** (§0.2). 경제는 흔들리지 않았다.
+const SQUADRON_SHIPS: int = 28
+const FLEET_SHIPS: int = 140
 
 ## 페이즈
 enum Phase { CONTACT, BARRAGE, ENGAGEMENT, ASSAULT, RESOLUTION }
@@ -118,7 +128,7 @@ static func corridor_fleet_cap(scale: String) -> int:
 
 
 ## 회랑에서 실제로 싸우는 함선 수. **이것이 「일부당관」의 실체다.**
-## 검각에서는 2,000척과 200척의 차이가 사실상 사라진다 —
+## 검각에서는 2,000척과 140척의 차이가 사실상 사라진다 —
 ## 국가의 총력을 회랑 하나에 밀어 넣어도 전대 다섯 몫만 싸운다.
 static func deployable_ships(ships: int, corridor_scale: String) -> int:
 	var cap := corridor_fleet_cap(corridor_scale)

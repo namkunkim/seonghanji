@@ -530,18 +530,18 @@ func _test_combat_basics() -> void:
 func _test_corridor_choke() -> void:
 	_section("19. 회랑 — 일부당관")
 	# star-map.md §3.3 ② 전개 제한 · combat.md §4.3.1 함대 200척
-	_eq(Battle.FLEET_SHIPS, 200, "함대 200척")
-	_eq(Battle.SQUADRON_SHIPS, 40, "전대 40척")
+	_eq(Battle.FLEET_SHIPS, 140, "함대 140척 (V-38)")
+	_eq(Battle.SQUADRON_SHIPS, 28, "전대 28척 (V-38 — 40척은 실동원 65 전제였다)")
 	_eq(Battle.corridor_fleet_cap("대회랑"), 1, "대회랑 1함대")
 	_eq(Battle.corridor_fleet_cap("중회랑"), 2, "중회랑 2함대")
 	_eq(Battle.corridor_fleet_cap(""), 0, "평지는 제한 없음")
 
 	# **검각에서는 2,000척과 200척의 차이가 사실상 사라진다** (§3.3)
-	_eq(Battle.deployable_ships(2000, "대회랑"), 200, "2,000척도 200척만 싸운다")
-	_eq(Battle.deployable_ships(200, "대회랑"), 200, "200척은 그대로")
+	_eq(Battle.deployable_ships(2000, "대회랑"), 140, "2,000척도 140척만 싸운다")
+	_eq(Battle.deployable_ships(140, "대회랑"), 140, "140척은 그대로")
 	_eq(Battle.deployable_ships(2000, ""), 2000, "평지에서는 전부")
-	# 208년 조조 함대 전체(2,212척)를 밀어 넣어도 전대 다섯 몫
-	_eq(Battle.deployable_ships(2212, "대회랑") / Battle.SQUADRON_SHIPS, 5,
+	# 208년 조조 함대 전체(2,367척)를 밀어 넣어도 전대 다섯 몫
+	_eq(Battle.deployable_ships(2367, "대회랑") / Battle.SQUADRON_SHIPS, 5,
 		"국가 총력도 전대 다섯 몫")
 
 	# 함종 보정 (§4.2 · §3.3 ③)
@@ -1170,7 +1170,7 @@ func _test_domestic_commands() -> void:
 	for _i in 20:
 		Domestic.drill_tick(fl)
 	_eq(fl.drill, 82, "전대장 통솔 82가 새 상한이다")
-	_eq(Domestic.drill_cost(fl), 5 * 20, "함대 200척 = 5전대 × 20 = 100/월")
+	_eq(Domestic.drill_cost(fl), 5 * 20, "함대 140척 = 5전대 × 20 = 100/월")
 
 	# **훈련은 이기게 하지 않고 버티게 한다** — 붕괴 판정에만 걸린다
 	var neutral := Battle.collapse_chance_pct(30, 50)
