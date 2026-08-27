@@ -29,6 +29,10 @@ func _init() -> void:
 	var wins := {}                 # 세력 → 목표 달성 횟수
 	var total_battles := 0
 	var total_captures := 0
+	var total_issued := 0
+	var total_applied := 0
+	var total_built := 0
+	var total_austerity := 0
 	var total_ticks := 0
 	var t0 := Time.get_ticks_msec()
 
@@ -51,6 +55,10 @@ func _init() -> void:
 			early += 1
 		total_battles += c.battles
 		total_captures += c.captures
+		total_issued += c.cmds_issued
+		total_applied += c.cmds_applied
+		total_built += c.fleets_built
+		total_austerity += c.austerity_events
 		total_ticks += c.world.clock.tick
 
 	var elapsed := Time.get_ticks_msec() - t0
@@ -64,6 +72,12 @@ func _init() -> void:
 	keys.sort()
 	for k in keys:
 		print("  %-8s %3d회  %5.1f%%" % [k, states[k], states[k] * 100.0 / RUNS])
+	print("")
+
+	print("내정 (S2.9 · AI 판단)")
+	print("  회당 명령 발행 %.1f · 적용 %.1f · 함대 건조 %.1f · 재정 파탄 %.1f"
+		% [float(total_issued) / RUNS, float(total_applied) / RUNS,
+		   float(total_built) / RUNS, float(total_austerity) / RUNS])
 	print("")
 
 	# **세력별 목표 달성률** — §11.1 의 「승률」은 이쪽이다.

@@ -48,7 +48,16 @@ var dispatched: int = 0
 ## 내정 계수 (S2.9)
 var months_settled: int = 0
 var austerity_events: int = 0        # 재정 파탄 — 복구 중단 · 훈련 해제
+## AI 내정 판단 스위치.
+##
+## ⚠ **켜면 세력 편차가 3.4 → 6.3배로 나빠진다** (2026-08-25 실측).
+## 원인은 튜닝이 아니라 구조다 — 상세는 `m0-report.md` §2.4.
+## **A/B 를 할 수 있어야 그 구조를 고칠 수 있으므로 스위치로 남긴다.**
+var ai_domestic_enabled: bool = true
+
+var cmds_issued: int = 0
 var cmds_applied: int = 0
+var fleets_built: int = 0
 var cmds_rejected: int = 0
 
 var ended: bool = false
@@ -199,6 +208,13 @@ func _apply_arrived() -> void:
 		if f == null or not f.alive:
 			cmds_rejected += 1
 			continue
+		# **건조만 여기서 처리한다** — 함대 생성은 Campaign 의 몫이다
+		if String(c.get("kind", "")) == Domestic.CMD_BUILD:
+			if _build_fleet(f):
+				cmds_applied += 1
+			else:
+				cmds_rejected += 1
+			continue
 		var why := Domestic.apply(data, world.region_states, f, fleets, c,
 			world.clock.tick)
 		if why == "":
@@ -233,10 +249,71 @@ func _settle_month() -> void:
 			drl += Domestic.drill_cost(fl)
 			Domestic.drill_tick(fl)
 		var rec := Domestic.recover_cost_total(data, world.region_states, f.regions)
-		f.treasury += inc - adm - flt - drl - rec
+		var spare := inc - adm - flt - drl - rec
+		f.treasury += spare
 		if f.treasury < 0:
 			_austerity(f)
 		Domestic.tech_tick(f, world.clock.tick)
+		_ai_domestic(f, spare)
+
+
+## AI 내정 판단 (domestic.md §7 ⑦ · ai-design.md).
+##
+## **명령은 사자를 태워 보낸다.** AI 도 지연을 문다 —
+## 플레이어만 늦는 것이 아니어야 「직할이 느리다」가 대칭이 된다 (§3).
+func _ai_domestic(f: Faction, spare: int) -> void:
+	if not ai_domestic_enabled:
+		return
+	if f.id == world.player_faction:
+		return                                   # 플레이어 세력은 스스로 정한다
+
+	# 훈련은 지속형이라 한 번만 켜면 된다. **전대장이 없으면 40 에서 멈춘다**
+	for fl in fleets:
+		if fl.owner == f.id and fl.is_alive() and not fl.drilling:
+			if fl.drill < fl.drill_cap() and spare > Domestic.DRILL_COST_PER_SQUADRON * 5:
+				fl.drilling = true
+
+	var mob := f.mobilized(data, world.region_states, world.graph, world.clock.tick)
+	var cap := Economy.squadrons_milli(mob, f.plan)
+	var plan := Strategy.domestic_plan(data, world.region_states, f, fleets,
+		spare, cap, world.clock.tick)
+	if plan.is_empty():
+		return
+	var payload: Dictionary = plan["payload"]
+	payload["faction"] = f.id
+	var kind := String(plan["kind"])
+	# **세력 명령은 즉시, 권역 명령은 사자 지연.**
+	# 기술은 나라의 것이고 위임은 권한을 넘기는 선언이라 도달을 기다리지 않는다.
+	if kind == Domestic.CMD_TECH or kind == Domestic.CMD_BUILD:
+		world.issue(kind, payload, 0)
+	elif payload.has("region"):
+		world.capital = f.capital_system
+		if world.issue_to(kind, String(payload["region"]), payload).is_empty():
+			cmds_rejected += 1                   # 회랑이 끊겨 명령이 가지 못했다
+	else:
+		world.issue(kind, payload, 0)
+	cmds_issued += 1
+
+
+## 건조 — 실동원 상한 안에서 함대를 하나 세운다.
+func _build_fleet(f: Faction) -> bool:
+	var mob := f.mobilized(data, world.region_states, world.graph, world.clock.tick)
+	var cap := Economy.squadrons_milli(mob, f.plan)
+	var have := 0
+	for fl in fleets:
+		if fl.owner == f.id and fl.is_alive():
+			have += fl.squadrons_milli()
+	var one := Battle.FLEET_SHIPS * 1000 / Battle.SQUADRON_SHIPS
+	if have + one > cap:
+		return false                             # **실동원이 상한이다**
+	# 건조비 — 균형 편성 5전대분 (combat.md §4.3.2)
+	var cost := Economy.plan_upkeep_milli(f.plan) * 5 * 10 / 1000
+	if f.treasury < cost:
+		return false
+	f.treasury -= cost
+	_spawn_fleet(f.id, f.capital_system)
+	fleets_built += 1
+	return true
 
 
 ## 재정 파탄. **적자는 그냥 넘어가지 않는다.**

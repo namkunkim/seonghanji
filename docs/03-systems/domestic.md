@@ -458,7 +458,7 @@ Stellaris 가 그것으로 깊이를 얻는 대신 진입 장벽을 얻었고,
 | ④ | 개발여지 소비 | `GameData.region_dev_slots` · `RegionState.development` | ✅ |
 | ⑤ | 훈련도 → 붕괴 판정 | `Battle.collapse_chance_pct(m, c, drill)` | ✅ |
 | ⑥ | 기술 3축 · 화력−방어 뺄셈 | `core/world/tech.gd` | ✅ |
-| ⑦ | AI 내정 판단 | `Strategy` | ⬜ **지금 AI 는 내정을 하지 않는다** |
+| ⑦ | AI 내정 판단 | `Strategy.domestic_plan` · `Campaign._ai_domestic` | ⚠ **동작하나 밸런스가 나빠진다** — `m0-report.md` §2.4 |
 | ⑧ | UI 3메뉴 | S3.5 | ⬜ 이 문서가 그 입력이다 |
 
 **①~⑥ 완료 (2026-08-25, S2.9).** 시험 31섹션 359단언 · `tests/verify_budget.gd` 신설.
