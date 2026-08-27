@@ -48,6 +48,7 @@ var events_fired: Dictionary = {}
 var alliances_broken: int = 0
 var backstabs: int = 0
 var revolts: int = 0
+var refusals: int = 0
 var _event_cooldown: Dictionary = {}
 var _alliance_since: Dictionary = {}
 var hegemony_coalition_ticks: int = 0
@@ -326,10 +327,21 @@ func _settle_month() -> void:
 		Domestic.tech_tick(f, world.clock.tick)
 
 		# **권역 안정도** — 평시 회복 또는 감쇠 (§0.3-④)
+		#
+		# **[F-13] 비지는 사건이 아니라 상태다.** 2026-08-25 정정 —
+		# 처음에 이벤트 발동 시 한 번만 −8 을 주었더니 안정도가 30 아래로
+		# 내려가는 권역이 하나도 없었고, **[F-39] 후방 반란이 영영 안 터졌다.**
+		# 고립되어 있는 동안 매월 깎여야 한다.
 		for rid in f.regions:
 			var rst: RegionState = world.region_states.get(rid)
-			if rst != null:
-				Stability.tick(rst)
+			if rst == null:
+				continue
+			var enclave := true
+			for nb in data.region_adjacency.get(rid, []):
+				if f.regions.has(nb):
+					enclave = false
+					break
+			Stability.tick(rst, enclave)
 
 		# **할거 페널티** (§0.3-⑤) — 12개월 무획득이면 천명이 깎인다.
 		#
@@ -566,6 +578,18 @@ func _capture(owner: String, rid: String) -> void:
 	if st.owner == owner:
 		return
 	captures += 1
+	# **참전 거부** (diplomacy.md §5.1 · Diplomacy.TRUST_REFUSE_CALL).
+	#
+	# 동맹국이 권역을 잃었다는 것은 **도우러 가지 않았다**는 뜻이다.
+	# 2026-08-25 신설 — 그때까지 **신뢰도가 내려가는 경로가 하나도 없었고**,
+	# 그래서 [F-12] 배후 기습이 100회 캠페인에서 한 번도 안 터졌다.
+	# 「등 뒤가 위험해진다」가 성립하려면 등을 돌릴 이유가 먼저 있어야 한다.
+	if st.owner != "" and factions.has(st.owner):
+		for k in faction_ids:
+			if k == st.owner or not diplo.is_allied(st.owner, k):
+				continue
+			diplo.adjust_trust(st.owner, k, Diplomacy.TRUST_REFUSE_CALL)
+			refusals += 1
 	if st.owner != "" and factions.has(st.owner):
 		factions[st.owner].remove_region(rid)
 	st.owner = owner
