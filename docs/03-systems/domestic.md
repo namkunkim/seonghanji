@@ -456,8 +456,8 @@ Stellaris 가 그것으로 깊이를 얻는 대신 진입 장벽을 얻었고,
 | ② | 명령 7종의 `apply` | `Domestic.apply` · `World.last_arrived` | ✅ |
 | ③ | 위임 · 실동원 −50% | `Faction.effective_for_mobilization_milli` | ✅ |
 | ④ | 개발여지 소비 | `GameData.region_dev_slots` · `RegionState.development` | ✅ |
-| ⑤ | 훈련도 → 붕괴 판정 | `Battle.collapse_chance_pct(m, c, drill)` | ✅ |
-| ⑥ | 기술 3축 · 화력−방어 뺄셈 | `core/world/tech.gd` | ✅ |
+| ⑤ | 훈련도 → 붕괴 판정 | `Battle.collapse_chance_pct(m, c, drill)` | ✅ **배선 2026-08-25** — 산식만 있고 호출부가 없었다 |
+| ⑥ | 기술 3축 · 화력−방어 뺄셈 | `core/world/tech.gd` · `Campaign._resolve_battle` | ✅ **배선 2026-08-25** — `Tech.power_milli` 가 전투에서 불린 적이 없었다 |
 | ⑦ | AI 내정 판단 | `Strategy.domestic_plan` · `Campaign._ai_domestic` | ⚠ **동작하나 밸런스가 나빠진다** — `m0-report.md` §2.4 |
 | ⑧ | UI 3메뉴 | S3.5 | ⬜ 이 문서가 그 입력이다 |
 

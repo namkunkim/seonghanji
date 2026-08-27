@@ -403,12 +403,28 @@ func _resolve_battle(att: Fleet, rid: String) -> void:
 
 	var def_morale: int = defs[0].morale
 	var def_command: int = defs[0].command
+	var def_drill: int = defs[0].drill
+
+	# ---------------------------------------------------------------- 기술
+	#
+	# **화력과 방어는 서로를 뺀다** (combat.md §1.4-c · V-34).
+	# 2026-08-25 배선. 그 전까지 `Tech.power_milli` 는 산식만 있고
+	# **전투에서 한 번도 불리지 않았다** — AI 가 기술에 쓴 돈이 전부 낭비였다.
+	var af: Faction = factions.get(att.owner)
+	var df: Faction = factions.get(defs[0].owner)
+	var a_tech := 1000
+	var b_tech := 1000
+	if af != null and df != null:
+		a_tech = Tech.power_milli(int(af.tech.get("화력", 0)),
+			int(df.tech.get("방어", 0)))
+		b_tech = Tech.power_milli(int(df.tech.get("화력", 0)),
+			int(af.tech.get("방어", 0)))
 
 	for phase in 5:
 		var pa := Battle.combat_power_milli(att.ships, 1000, att.command, phase,
-			att.morale, 1000, 1000, corridor)
+			att.morale, 1000, a_tech, corridor)
 		var pb := Battle.combat_power_milli(def_ships, 1000, def_command, phase,
-			def_morale, 1000, 1000, corridor)
+			def_morale, 1000, b_tech, corridor)
 		var la := Battle.loss_rate_milli(phase, pa, pb)
 		var lb := Battle.loss_rate_milli(phase, pb, pa)
 		att.ships = maxi(0, att.ships - att.ships * la / 100000)
@@ -416,11 +432,14 @@ func _resolve_battle(att: Fleet, rid: String) -> void:
 		att.morale = maxi(0, att.morale + Battle.morale_delta(phase, pa, pb))
 		def_morale = maxi(0, def_morale + Battle.morale_delta(phase, pb, pa))
 		# 붕괴 — **패주가 정상적인 지는 방식이다** (§1)
-		if rng.chance(Battle.collapse_chance_pct(att.morale, att.command)):
+		#
+		# **훈련도가 여기 걸린다** (§1.4-b). 2026-08-25 배선 —
+		# 그 전까지 기본값 50 이 들어가 훈련이 아무 효과도 없었다.
+		if rng.chance(Battle.collapse_chance_pct(att.morale, att.command, att.drill)):
 			_retreat(att)
 			_apply_losses(defs, def_ships, def_morale)
 			return
-		if rng.chance(Battle.collapse_chance_pct(def_morale, def_command)):
+		if rng.chance(Battle.collapse_chance_pct(def_morale, def_command, def_drill)):
 			_apply_losses(defs, 0, def_morale)
 			_capture(att.owner, rid)
 			return
