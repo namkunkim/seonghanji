@@ -669,20 +669,35 @@ func _ai_operational() -> void:
 		if not Strategy.decides(int(ranked[0]["total"]), second, f.lord_type):
 			skip_threshold += 1
 			continue
-		# **확률적 선정 + 역사 편향** (§6.2 · §11.1)
-		# 최고점을 그냥 고르면 시드가 달라도 같은 판이 나온다.
-		var pick := Strategy.choose_weighted(ranked, world.rng(Rng.DOMAIN_AI),
-			data, world.scenario, fid, hb_milli)
-		if pick.is_empty():
-			continue
-		var fl: Fleet = idle[idle.size() - 1]
-		var t := Routing.travel_ticks(world.graph, fl.at_system,
-			data.system_of(pick["region"]))
-		if t == Routing.UNREACHABLE:
-			continue
-		fl.target_region = pick["region"]
-		fl.arrival_tick = world.clock.tick + maxi(t, 1)
-		dispatched += 1
+
+		# **공세 처리량은 여유 함대에 비례한다.**
+		#
+		# 2026-08-25 까지 여기서 `idle[idle.size() - 1]` 한 척만 보냈다.
+		# 조조는 실동원 101(16.9함대)에 접경 12개인데
+		# 손권(5.2함대·접경 4)과 **똑같이 월 1함대만 출격했다** —
+		# **공세 처리량이 세력 크기와 무관했다.**
+		#
+		# `ai-design.md` §5.4 는 「방어를 먼저 떼고 나머지로 공세」라 했지
+		# 「한 척씩」이라 한 적이 없다. 여유의 절반을 낸다 —
+		# 전부 내보내면 다음 주기에 대응할 손이 없다.
+		var spare_fleets := maxi(1, (idle.size() - need) / 2)
+		for _n in spare_fleets:
+			if idle.size() <= need:
+				break
+			# **확률적 선정 + 역사 편향** (§6.2 · §11.1)
+			# 최고점을 그냥 고르면 시드가 달라도 같은 판이 나온다.
+			var pick := Strategy.choose_weighted(ranked, world.rng(Rng.DOMAIN_AI),
+				data, world.scenario, fid, hb_milli)
+			if pick.is_empty():
+				break
+			var fl: Fleet = idle.pop_back()
+			var t := Routing.travel_ticks(world.graph, fl.at_system,
+				data.system_of(pick["region"]))
+			if t == Routing.UNREACHABLE:
+				continue
+			fl.target_region = pick["region"]
+			fl.arrival_tick = world.clock.tick + maxi(t, 1)
+			dispatched += 1
 
 
 ## ---------------------------------------------------------------- 종료 판정
