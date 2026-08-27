@@ -17,6 +17,16 @@ extends SceneTree
 const RUNS := 100
 
 
+## **주역 세력** — 승률 편차를 재는 집합 (ai-design.md §11.1-b · V-40).
+##
+## `scenario-setup.md` §4.2 실효 국력표에 오른 세력 중 통치 체제가 「암약」이 아닌 쪽.
+## 유장은 암약(「확장 의사 자체가 없다」)이라 빠지고, 유비는 유랑 세력이라 미구현이다.
+##
+## **변경 소국의 「존속 100%」는 역사적으로 옳다** — 공손씨는 요동에서 삼대를 이었다.
+## 그것을 밸런스 실패로 세면 고증을 깎게 된다.
+const PROTAGONISTS: Array[String] = ["조조", "손권", "유종"]
+
+
 func _init() -> void:
 	var data := GameData.load_all()
 	print("SEONGHANJI — 시나리오 3 「적벽 전야」 AI 대 AI %d회" % RUNS)
@@ -94,7 +104,8 @@ func _init() -> void:
 	for k in wk:
 		var g: String = goal.get(k, "본거지 존속")
 		print("  %-10s %5.1f%%   %s" % [k, wins[k] * 100.0 / RUNS, g])
-		rates.append(int(wins[k]))
+		if PROTAGONISTS.has(k):
+			rates.append(int(wins[k]))
 	print("")
 
 	print("최강 실동원 분포 (참고 — 승률 아님)")
@@ -126,7 +137,8 @@ func _init() -> void:
 		pass_count += 1
 	print("  조기 종료율 %5.1f%%  목표 20%% 이하  %s" % [early_pct, "통과" if ok_early else "미달"])
 
-	# 세력별 편차 — **목표 달성률**로 잰다. 최강 실동원이 아니다.
+	# 세력별 편차 — **주역 세력의 목표 달성률**로 잰다 (ai-design.md §11.1-b · V-40).
+	# 최강 실동원이 아니고, 변경 소국도 아니다.
 	var vals := rates.duplicate()
 	vals.sort()
 	checks += 1
@@ -137,8 +149,9 @@ func _init() -> void:
 		ok_spread = spread <= 3.0
 	if ok_spread:
 		pass_count += 1
-	print("  세력 승률 편차 %.1f배  목표 3배 이내  %s"
-		% [spread, "통과" if ok_spread else ("미달" if vals.size() >= 2 else "판정 불가 — 단일 세력만 최강")])
+	print("  세력 승률 편차 %.1f배  목표 3배 이내  %s   [주역 %s]"
+		% [spread, "통과" if ok_spread else ("미달" if vals.size() >= 2 else "판정 불가"),
+		   ", ".join(PROTAGONISTS)])
 
 	print("")
 	print("합격 %d/%d" % [pass_count, checks])

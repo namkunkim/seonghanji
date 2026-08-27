@@ -179,7 +179,7 @@
 ```
 docs/
 ├── INDEX.md        ← 전체 색인 · 핵심 수치 한눈에
-├── DECISIONS.md    ← 기각안 6 · 변경 이력 39 (재론 금지 사유의 정본)
+├── DECISIONS.md    ← 기각안 6 · 변경 이력 40 (재론 금지 사유의 정본)
 ├── 00-overview/    design-overview · glossary
 ├── 01-world/       star-map · region-power
 ├── 02-characters/  generals-150 · generals-stats · officers-256
