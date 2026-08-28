@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://app/main.gd" id="1"]
+[ext_resource type="PackedScene" path="res://app/views/starmap_view.tscn" id="2"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -9,34 +10,84 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1")
 
-[node name="Panel" type="PanelContainer" parent="."]
+[node name="BG" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 24.0
-offset_top = 24.0
-offset_right = -24.0
-offset_bottom = -24.0
+color = Color(0.055, 0.067, 0.086, 1)
 
-[node name="VBox" type="VBoxContainer" parent="Panel"]
+[node name="Root" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 14.0
+offset_right = -20.0
+offset_bottom = -14.0
+theme_override_constants/separation = 12
+
+[node name="TimeBar" type="PanelContainer" parent="Root"]
+layout_mode = 2
+
+[node name="Bar" type="HBoxContainer" parent="Root/TimeBar"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="Clock" type="Label" parent="Panel/VBox"]
+[node name="Clock" type="Label" parent="Root/TimeBar/Bar"]
+custom_minimum_size = Vector2(300, 52)
 layout_mode = 2
-text = "208년 정월   (0틱)"
+theme_override_font_sizes/font_size = 24
+text = "건안 십삼년 정월"
+vertical_alignment = 1
 
-[node name="Speed" type="Label" parent="Panel/VBox"]
+[node name="Speed" type="Label" parent="Root/TimeBar/Bar"]
+custom_minimum_size = Vector2(130, 52)
 layout_mode = 2
-text = "배속 ×4   ▶ 진행"
+theme_override_font_sizes/font_size = 21
+text = "▶▶ ×4"
+vertical_alignment = 1
 
-[node name="Factions" type="RichTextLabel" parent="Panel/VBox"]
+[node name="Pause" type="Button" parent="Root/TimeBar/Bar"]
+custom_minimum_size = Vector2(110, 52)
+layout_mode = 2
+focus_mode = 0
+text = "정지"
+
+[node name="S1" type="Button" parent="Root/TimeBar/Bar"]
+custom_minimum_size = Vector2(76, 52)
+layout_mode = 2
+focus_mode = 0
+text = "×1"
+
+[node name="S2" type="Button" parent="Root/TimeBar/Bar"]
+custom_minimum_size = Vector2(76, 52)
+layout_mode = 2
+focus_mode = 0
+text = "×2"
+
+[node name="S4" type="Button" parent="Root/TimeBar/Bar"]
+custom_minimum_size = Vector2(76, 52)
+layout_mode = 2
+focus_mode = 0
+text = "×4"
+
+[node name="SDebug" type="Button" parent="Root/TimeBar/Bar"]
+custom_minimum_size = Vector2(130, 52)
+layout_mode = 2
+toggle_mode = true
+focus_mode = 0
+text = "검증 배속"
+
+[node name="Queue" type="Label" parent="Root/TimeBar/Bar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 19
+text = "대기 결정 —"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="View" parent="Root" instance=ExtResource("2")]
 layout_mode = 2
 size_flags_vertical = 3
-bbcode_enabled = true
-
-[node name="Log" type="RichTextLabel" parent="Panel/VBox"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 40)
-bbcode_enabled = true
