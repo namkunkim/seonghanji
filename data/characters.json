@@ -10,8 +10,14 @@
       "정치": 85,
       "매력": 50
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「독사」 이간·반란 유도 성공률 +50%"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -25,8 +31,14 @@
       "정치": 70,
       "매력": 94
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「낙신」 궁정 안정 +30%. **조비·조식 후계 갈등 이벤트 중심 인물**"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -40,8 +52,13 @@
       "정치": 80,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「귀모」 적 의도 예측 공개. **207년 이후 확률적 사망**"
+    ],
+    "class": [
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -55,8 +72,14 @@
       "정치": 86,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「모주」 후계자 지명 이벤트에 개입 가능. 궁정 정치 +40%, **천명 소폭 하락**"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -70,8 +93,14 @@
       "정치": 70,
       "매력": 68
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「진서」 이민족 상대 전투·외교 +30%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -85,8 +114,14 @@
       "정치": 70,
       "매력": 65
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「원정」 원거리 정벌 시 보급 소모 -35%. **문앙(#137) 등장 조건**"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -100,8 +135,14 @@
       "정치": 88,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「파죽지세」 연속 승리 시 진격 속도 누적 상승"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -115,8 +156,14 @@
       "정치": 80,
       "매력": 60
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「음평도」 **회랑 무시 침투 가능** (전 게임 유일). 성공 시 적 수도 직격"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "위"
   },
   {
@@ -130,8 +177,14 @@
       "정치": 80,
       "매력": 50
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「혹리」 성계 수탈 효율 +30%, 민심 -10%"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -145,8 +198,14 @@
       "정치": 62,
       "매력": 65
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「수비」 항로 봉쇄 효과 +25%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -160,8 +219,14 @@
       "정치": 35,
       "매력": 58
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「단기당천」 후기 유일의 무력 특급. 단신 돌격 시 적 진형 붕괴"
+    ],
+    "class": [
+      "파",
+      "강"
+    ],
     "origin_faction": "위"
   },
   {
@@ -175,8 +240,14 @@
       "정치": 45,
       "매력": 60
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「대관출전」 항복 절대 거부. 패배 시 사망"
+    ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "위"
   },
   {
@@ -190,8 +261,14 @@
       "정치": 82,
       "매력": 85
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「내조」 후계 갈등 이벤트 발생률 -50%, 궁정 안정도 +20%"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -205,8 +282,14 @@
       "정치": 85,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「폐립」 황제 폐립 실행 시 천명 감소 -50%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -220,8 +303,14 @@
       "정치": 90,
       "매력": 60
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「사마소지심」 **찬탈 진행도** 게이지 보유"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -235,8 +324,14 @@
       "정치": 93,
       "매력": 72
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「낭고」 방어 시 소모 -30%. **세력 내 은밀히 자기 세력 축적**"
+    ],
+    "class": [
+      "참",
+      "제"
+    ],
     "origin_faction": "위"
   },
   {
@@ -250,8 +345,14 @@
       "정치": 58,
       "매력": 68
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「주아부의 풍」 적 포위망 돌파 시 손실 -40%"
+    ],
+    "class": [
+      "제",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -265,8 +366,14 @@
       "정치": 98,
       "매력": 92
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「왕좌지재」 세력 전체 내정 효율 +25%. **군주 칭제 시 즉시 이탈·사망**"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -280,8 +387,14 @@
       "정치": 88,
       "매력": 80
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「십이기책」 회랑 전투 계략 성공률 +30%"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -295,8 +408,14 @@
       "정치": 80,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「선견」 세력 내 반란·이탈 발생을 **1턴 전에 경고**"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -310,8 +429,14 @@
       "정치": 55,
       "매력": 60
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「선등」 강습 개시 시 초동 피해 +25%"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "위"
   },
   {
@@ -325,8 +450,14 @@
       "정치": 76,
       "매력": 68
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「지구」 장기 포위전 소모 -25%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -340,8 +471,14 @@
       "정치": 62,
       "매력": 58
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「엄정」 부대 규율 +30%. **포로가 되면 특성 영구 상실**"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -355,8 +492,14 @@
       "정치": 78,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「종실지신」 한실 종친이면서 실력주의 세력에 복무. **천명 하락 페널티 완충**"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -370,8 +513,14 @@
       "정치": 70,
       "매력": 72
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「사군자」 아군 제독과 상성 충돌 무효화"
+    ],
+    "class": [
+      "제",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -385,8 +534,14 @@
       "정치": 60,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「소요진」 병력 열세일수록 공격력 상승 (최대 +80%)"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "위"
   },
   {
@@ -400,8 +555,14 @@
       "정치": 78,
       "매력": 65
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「인단」 사마의(#19) 「낭고」 진행 속도 +25%, 은폐 판정 보정"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -415,8 +576,14 @@
       "정치": 55,
       "매력": 65
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「교변」 지형 효과 페널티 절반"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "위"
   },
   {
@@ -430,8 +597,14 @@
       "정치": 78,
       "매력": 72
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「호이」 이민족 외교·전투 +40%, 변경 성역 유지비 -30%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -445,8 +618,14 @@
       "정치": 24,
       "매력": 45
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「악래」 군주 소속 함대 피격 시 대신 피해 흡수"
+    ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "위"
   },
   {
@@ -460,8 +639,14 @@
       "정치": 85,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「강직」 반란 발생률 -20%, 민심 회복 속도 -10%"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -476,7 +661,13 @@
       "매력": 72
     },
     "disposition": null,
-    "traits": [],
+    "traits": [
+      "「선양」 칭제 시 천명 감소폭 -40%"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -490,8 +681,14 @@
       "정치": 72,
       "매력": 68
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「철벽」 성계 방어전 시 전열함 내구 +50%"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "위"
   },
   {
@@ -506,7 +703,13 @@
       "매력": 96
     },
     "disposition": null,
-    "traits": [],
+    "traits": [
+      "「유재시거」 등용 시 상성 판정 1회 무시. 대신 극 인물 영구 등용 불가"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -520,8 +723,14 @@
       "정치": 68,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「대장군」 방면군 편성 시 소속 함대 전체 +10%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -535,8 +744,14 @@
       "정치": 50,
       "매력": 55
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「가재」 보급 소모 -15%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -550,8 +765,14 @@
       "정치": 60,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「천리구」 추격전 전과 +30%, 유인책에 취약"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "위"
   },
   {
@@ -565,8 +786,14 @@
       "정치": 93,
       "매력": 80
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「관중경영」 신규 점령 성역 안정화 속도 2배"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -580,8 +807,14 @@
       "정치": 78,
       "매력": 55
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「야심」 전공 누적 시 독립 세력화 리스크"
+    ],
+    "class": [
+      "참",
+      "제"
+    ],
     "origin_faction": "위"
   },
   {
@@ -595,8 +828,14 @@
       "정치": 95,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「구품관인법」 관료형 인재 등용 비용 -40%"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -610,8 +849,14 @@
       "정치": 72,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「응변」 적 계략 간파율 +35%"
+    ],
+    "class": [
+      "제",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -625,8 +870,14 @@
       "정치": 72,
       "매력": 88
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「호가십팔박」 이민족 회유 +35%, 문화 정책 시 민심 회복 +20%"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "위"
   },
   {
@@ -640,8 +891,14 @@
       "정치": 70,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「독안」 피격 시 이탈 없음, 부대 사기 하락 무효"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "위"
   },
   {
@@ -655,8 +912,14 @@
       "정치": 55,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「신속」 고속항로 이동 소요 -40%. 단 매복 피해 +30%"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "위"
   },
   {
@@ -670,8 +933,14 @@
       "정치": 58,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「망명」 사마씨 집권 시 촉으로 이탈 (조건부)"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "위"
   },
   {
@@ -685,8 +954,14 @@
       "정치": 62,
       "매력": 58
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「진창」 **회랑 요새 방어 시 병력차 무시**. 소수로 대군 저지"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -700,8 +975,14 @@
       "정치": 28,
       "매력": 50
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「호치」 기함 방어 시 적 강습 성공률 -50%"
+    ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "위"
   },
   {
@@ -718,6 +999,10 @@
     "disposition": "실무",
     "traits": [
       "「전권」 사마씨 심복"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -736,6 +1021,10 @@
     "traits": [
       "「이간」 선비 세력 분열 유도"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -752,6 +1041,9 @@
     "disposition": "명사",
     "traits": [
       "「은일」 등용 극난, 천명 기여"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -770,6 +1062,9 @@
     "traits": [
       "「경제」"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -786,6 +1081,9 @@
     "disposition": "절의",
     "traits": [
       "대방태수. 기리영 전사"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "위"
   },
@@ -804,6 +1102,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "위"
   },
   {
@@ -820,6 +1121,9 @@
     "disposition": "야심",
     "traits": [
       "오에서 귀순"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "위"
   },
@@ -838,6 +1142,9 @@
     "traits": [
       "「하동 경영」"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -854,6 +1161,10 @@
     "disposition": "실무",
     "traits": [
       "「진무」"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -872,6 +1183,10 @@
     "traits": [
       "「부풍」 등애의 아들"
     ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "위"
   },
   {
@@ -888,6 +1203,10 @@
     "disposition": "실무",
     "traits": [
       "「봉천자」 협천자 제안자"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -906,6 +1225,10 @@
     "traits": [
       "「반란」 관구검과 거병"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "위"
   },
   {
@@ -922,6 +1245,9 @@
     "disposition": "실무",
     "traits": [
       "「지도」 항로 정밀도 향상"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -940,6 +1266,9 @@
     "traits": [
       "「명사」"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -956,6 +1285,9 @@
     "disposition": "실무",
     "traits": [
       "「장형」 사마씨 계보"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -974,6 +1306,9 @@
     "traits": [
       "「순신」 찬탈에 소극적"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -990,6 +1325,9 @@
     "disposition": "실무",
     "traits": [
       "등애 부장"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "위"
   },
@@ -1008,6 +1346,9 @@
     "traits": [
       "금위"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1024,6 +1365,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1042,6 +1386,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1058,6 +1405,10 @@
     "disposition": "야심",
     "traits": [
       "「하서」 변경 반란 진압"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1076,6 +1427,9 @@
     "traits": [
       "순욱의 아들"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1092,6 +1446,10 @@
     "disposition": "실무",
     "traits": [
       "「지절」 출전 제지 가능"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1110,6 +1468,9 @@
     "traits": [
       "「병주 안무」 이민족 통제"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1126,6 +1487,10 @@
     "disposition": "실무",
     "traits": [
       "「덕망」 대오 전선"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1144,6 +1509,10 @@
     "traits": [
       "「청주 진무」"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1160,6 +1529,10 @@
     "disposition": "실무",
     "traits": [
       "「경학」 군웅 출신"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1178,6 +1551,9 @@
     "traits": [
       "「밀명」 자객 파견 권한"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1194,6 +1570,10 @@
     "disposition": "실무",
     "traits": [
       "「경략」"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1212,6 +1592,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1228,6 +1611,10 @@
     "disposition": "실무",
     "traits": [
       "「감군」 등애·종회 처리"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1246,6 +1633,9 @@
     "traits": [
       "「염철」 재정"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1262,6 +1652,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "위"
   },
@@ -1280,6 +1673,10 @@
     "traits": [
       "낙랑태수. 동이 전선"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1296,6 +1693,9 @@
     "disposition": "실무",
     "traits": [
       "「둔전 운영」"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1314,6 +1714,9 @@
     "traits": [
       "「음평 봉쇄」 등애와 불화"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1330,6 +1733,10 @@
     "disposition": "실무",
     "traits": [
       "「호표기」 정예 기동 부대 지휘"
+    ],
+    "class": [
+      "제",
+      "파"
     ],
     "origin_faction": "위"
   },
@@ -1348,6 +1755,10 @@
     "traits": [
       "「칠보」 문재. 후계 갈등 트리거"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1364,6 +1775,9 @@
     "disposition": "절의",
     "traits": [
       "완성 전사 이벤트"
+    ],
+    "class": [
+      "강"
     ],
     "origin_faction": "위"
   },
@@ -1382,6 +1796,10 @@
     "traits": [
       "「장자」 완성 전사 이벤트"
     ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1398,6 +1816,10 @@
     "disposition": "실무",
     "traits": [
       "「조율」 장수 간 불화 완화"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1416,6 +1838,9 @@
     "traits": [
       "병약"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1432,6 +1857,9 @@
     "disposition": "실무",
     "traits": [
       "「둔전 창시」 식량 자급"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1450,6 +1878,10 @@
     "traits": [
       "「황수아」 무력 특화, 정치 부재"
     ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1466,6 +1898,9 @@
     "disposition": "절의",
     "traits": [
       "「강직」"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "위"
   },
@@ -1484,6 +1919,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1500,6 +1938,9 @@
     "disposition": "실무",
     "traits": [
       "「돈황」 서역 교역 개통 조건"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1518,6 +1959,9 @@
     "traits": [
       "「강직」 처형 이벤트"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1534,6 +1978,9 @@
     "disposition": "실무",
     "traits": [
       "요충 수비"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "위"
   },
@@ -1552,6 +1999,9 @@
     "traits": [
       "「무능」 지휘 페널티"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1568,6 +2018,9 @@
     "disposition": "실무",
     "traits": [
       "「종군」 원정 보조"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "위"
   },
@@ -1586,6 +2039,9 @@
     "traits": [
       "기물 호송"
     ],
+    "class": [
+      "강"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1602,6 +2058,10 @@
     "disposition": "실무",
     "traits": [
       "「둔전 호위」"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "위"
   },
@@ -1620,6 +2080,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1636,6 +2099,9 @@
     "disposition": "실무",
     "traits": [
       "요충 방어"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "위"
   },
@@ -1654,6 +2120,9 @@
     "traits": [
       "「청류」 명사 등용 보조"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "위"
   },
   {
@@ -1667,8 +2136,14 @@
       "정치": 70,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「오만」 외교 시 상대 세력 천명이 낮을수록 유리"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1682,8 +2157,13 @@
       "정치": 60,
       "매력": 80
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「인고」 군주 유랑 상태에서도 세력 결속도 유지"
+    ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1697,8 +2177,14 @@
       "정치": 78,
       "매력": 72
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「계승」 제갈량 생전 등용 시 능력 상한 상승"
+    ],
+    "class": [
+      "제",
+      "참"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1712,8 +2198,14 @@
       "정치": 62,
       "매력": 93
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「만인지적」 강습 시 적 기함 단독 제압 가능. **유비 생존 시 절대 이탈 불가**"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1727,8 +2219,14 @@
       "정치": 58,
       "매력": 72
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「부풍」 관우 사망 후 등장. 대오 전투 시 +30%"
+    ],
+    "class": [
+      "강",
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1742,8 +2240,14 @@
       "정치": 68,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「고수」 고립 시 방어력 +60%"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1757,8 +2261,13 @@
       "정치": 90,
       "매력": 82
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「직간」 군주 실정 시 천명 하락 절반"
+    ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1772,8 +2281,14 @@
       "정치": 60,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「집행」 **세력 내 반란 인물 즉시 처단 가능** (위연 대응 카드)"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1787,8 +2302,14 @@
       "정치": 90,
       "매력": 86
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「백미」 이민족 회유 성공률 +40%"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1802,8 +2323,14 @@
       "정치": 72,
       "매력": 68
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「담병」 계략 성능 우수, **실전 배치 시 판정 실패율 존재**"
+    ],
+    "class": [
+      "참",
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1817,8 +2344,14 @@
       "정치": 25,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「금마초」 이민족 병력 추가 징집 가능"
+    ],
+    "class": [
+      "파",
+      "강"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1832,8 +2365,14 @@
       "정치": 55,
       "매력": 40
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「불안」 사기 임계 이하 시 배신 확률 발생"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1847,8 +2386,13 @@
       "정치": 58,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「장판」 **조운「일신시담」 발동 조건 인물**. 구출 성공 시 조운 능력 영구 상승"
+    ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1862,8 +2406,13 @@
       "정치": 78,
       "매력": 82
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「거상」 자금 수입 +25%"
+    ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1877,8 +2426,14 @@
       "정치": 80,
       "매력": 72
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「봉추」 공격 계략 +40%. **낙봉파 사망 이벤트 보유**"
+    ],
+    "class": [
+      "참",
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1892,8 +2447,14 @@
       "정치": 76,
       "매력": 50
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「기모」 공세 계략 성공률 +45%. 민심 -15%"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1907,8 +2468,14 @@
       "정치": 55,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「사절」 관문 방어전에서 함락 판정 1회 무효"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1922,8 +2489,14 @@
       "정치": 90,
       "매력": 88
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「조정」 내부 인물 상성 충돌 완화"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1937,8 +2510,14 @@
       "정치": 80,
       "매력": 76
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「효심」 모친 인질 시 강제 이탈"
+    ],
+    "class": [
+      "참",
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1952,8 +2531,14 @@
       "정치": 76,
       "매력": 80
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「변설」 외교 성공률 +20%"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1967,8 +2552,14 @@
       "정치": 62,
       "매력": 68
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「무당비군」 열세 방어전 시 붕괴 판정 무효"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1982,8 +2573,14 @@
       "정치": 60,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「노익장」 전 시나리오 등장. 후기 능력 감소 없음"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -1997,8 +2594,14 @@
       "정치": 40,
       "매력": 45
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「반골」 제갈량 사후 반란 리스크. 자오곡 계책 제안 가능"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2012,8 +2615,14 @@
       "정치": 45,
       "매력": 50
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「양자」 후계 갈등 이벤트 트리거"
+    ],
+    "class": [
+      "강",
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2028,7 +2637,13 @@
       "매력": 99
     },
     "disposition": null,
-    "traits": [],
+    "traits": [
+      "「인덕」 매력 판정 시 천명 임계 1단계 완화"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2042,8 +2657,14 @@
       "정치": 72,
       "매력": 50
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「탁고」 보급 효율 +25%. 보급 실패 은폐 이벤트"
+    ],
+    "class": [
+      "관",
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2057,8 +2678,14 @@
       "정치": 22,
       "매력": 45
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「연인」 적 사기 강제 하락. 부하 병사 이탈률 +20%"
+    ],
+    "class": [
+      "강",
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2072,8 +2699,14 @@
       "정치": 62,
       "매력": 64
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「담대」 남중 성계 안정화 +30%"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2087,8 +2720,14 @@
       "정치": 92,
       "매력": 85
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「사직지기」 군주 부재 시 세력 안정도 유지"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2102,8 +2741,14 @@
       "정치": 70,
       "매력": 66
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「간언」 무리한 원정 시 손실 -20%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2117,8 +2762,14 @@
       "정치": 95,
       "매력": 92
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「신기묘산」 전투 전 배치 1회 재조정. 내정 효율 +30%"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2132,8 +2783,14 @@
       "정치": 72,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「명문」 천명 유지 기여. 실전 능력은 평범"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2147,8 +2804,14 @@
       "정치": 65,
       "매력": 88
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「일신시담」 아군 구출 시 손실 무효화"
+    ],
+    "class": [
+      "파",
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2162,8 +2825,14 @@
       "정치": 72,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「목우유마」 **보급 소모 -30%, 신기술 개발 속도 +25%**. 제갈량 동일 세력 시 추가 상승"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2177,8 +2846,14 @@
       "정치": 56,
       "매력": 72
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「강궁」 포격함 사거리 +30%"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2195,6 +2870,10 @@
     "disposition": "명사",
     "traits": [
       "「남중 진무」"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2213,6 +2892,9 @@
     "traits": [
       "「고수」 가맹 농성"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2229,6 +2911,10 @@
     "disposition": "실무",
     "traits": [
       "「부자」 관우 동반 시 보정"
+    ],
+    "class": [
+      "제",
+      "강"
     ],
     "origin_faction": "촉"
   },
@@ -2247,6 +2933,9 @@
     "traits": [
       "(연의 계통, 선택 수록)"
     ],
+    "class": [
+      "강"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2263,6 +2952,9 @@
     "disposition": "명사",
     "traits": [
       "「문한」"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2281,6 +2973,9 @@
     "traits": [
       "「보정」"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2297,6 +2992,10 @@
     "disposition": "명사",
     "traits": [
       "「사오」 오 동맹 복원"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2315,6 +3014,10 @@
     "traits": [
       "「남중 안정」"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2331,6 +3034,10 @@
     "disposition": "야심",
     "traits": [
       "「이반」 위·촉 양측 이적"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2349,6 +3056,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2365,6 +3075,9 @@
     "disposition": "절의",
     "traits": [
       "「순절」 이릉 전사"
+    ],
+    "class": [
+      "강"
     ],
     "origin_faction": "촉"
   },
@@ -2383,6 +3096,9 @@
     "traits": [
       "「직언」 관우 설득"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2399,6 +3115,9 @@
     "disposition": "명사",
     "traits": [
       "—"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2417,6 +3136,9 @@
     "traits": [
       "「숙련」 출사표 언급"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2433,6 +3155,10 @@
     "disposition": "명사",
     "traits": [
       "「보급」 위연과 상성 최악"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2451,6 +3177,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2467,6 +3196,9 @@
     "disposition": "절의",
     "traits": [
       "「노장」 파군 방어"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "촉"
   },
@@ -2485,6 +3217,9 @@
     "traits": [
       "「고절」 반란 중 절개"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2501,6 +3236,9 @@
     "disposition": "실무",
     "traits": [
       "황호와 결탁"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "촉"
   },
@@ -2519,6 +3257,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2535,6 +3276,10 @@
     "disposition": "명사",
     "traits": [
       "유장 출신, 외척"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2553,6 +3298,9 @@
     "traits": [
       "여개와 동행"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2569,6 +3317,9 @@
     "disposition": "명사",
     "traits": [
       "「원망」 유배 이벤트"
+    ],
+    "class": [
+      "참"
     ],
     "origin_faction": "촉"
   },
@@ -2587,6 +3338,9 @@
     "traits": [
       "상용권 소속"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2603,6 +3357,9 @@
     "disposition": "명사",
     "traits": [
       "「암약」 군주. 능력 최하, 이탈 없음"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2621,6 +3378,9 @@
     "traits": [
       "「방자」"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2637,6 +3397,10 @@
     "disposition": "명사",
     "traits": [
       "「직백전」 화폐 정책"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2655,6 +3419,9 @@
     "traits": [
       "「탁고」"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2671,6 +3438,10 @@
     "disposition": "명사",
     "traits": [
       "「변설」 외교"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2689,6 +3460,9 @@
     "traits": [
       "이엄의 아들"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2705,6 +3479,10 @@
     "disposition": "명사",
     "traits": [
       "「남중 회유」"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2723,6 +3501,9 @@
     "traits": [
       "이릉 전사"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2739,6 +3520,9 @@
     "disposition": "야심",
     "traits": [
       "「내응」 익주 진입 조건"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2757,6 +3541,10 @@
     "traits": [
       "「남정」 이민족 통제"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2773,6 +3561,10 @@
     "disposition": "실무",
     "traits": [
       "「부풍」 장비의 아들"
+    ],
+    "class": [
+      "강",
+      "파"
     ],
     "origin_faction": "촉"
   },
@@ -2791,6 +3583,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2807,6 +3602,9 @@
     "disposition": "명사",
     "traits": [
       "「사절」"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2825,6 +3623,9 @@
     "traits": [
       "「종자」 관우 호위"
     ],
+    "class": [
+      "강"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2841,6 +3642,10 @@
     "disposition": "실무",
     "traits": [
       "「백모병」 근위 정예"
+    ],
+    "class": [
+      "제",
+      "강"
     ],
     "origin_faction": "촉"
   },
@@ -2859,6 +3664,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2875,6 +3683,9 @@
     "disposition": "명사",
     "traits": [
       "황호와 결탁"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "촉"
   },
@@ -2893,6 +3704,10 @@
     "traits": [
       "「항론」 **항복 주장 이벤트**"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2909,6 +3724,9 @@
     "disposition": "명사",
     "traits": [
       "「오만」 모반 이벤트"
+    ],
+    "class": [
+      "참"
     ],
     "origin_faction": "촉"
   },
@@ -2927,6 +3745,9 @@
     "traits": [
       "이릉 전사"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2943,6 +3764,10 @@
     "disposition": "야심",
     "traits": [
       "「선견」 이릉 후 위 귀순"
+    ],
+    "class": [
+      "제",
+      "참"
     ],
     "origin_faction": "촉"
   },
@@ -2961,6 +3786,9 @@
     "traits": [
       "「전횡」 **보유 시 천명·행정 지속 하락. 해임 곤란**"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "촉"
   },
   {
@@ -2974,8 +3802,14 @@
       "정치": 40,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「금범적」 야습 시 적 사기 대폭 하락"
+    ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "오"
   },
   {
@@ -2989,8 +3823,14 @@
       "정치": 88,
       "매력": 86
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「천하이분」 동맹 유지 시 양측 이익 +25%"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3004,8 +3844,14 @@
       "정치": 58,
       "매력": 72
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「원한」 감녕과 상성 최악. 이벤트로 해소 가능"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3019,8 +3865,13 @@
       "정치": 55,
       "매력": 85
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「강동이교」 손책 능력 +10%, 손책 사망 이벤트 후 세력 사기 하락 완화"
+    ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3034,8 +3885,14 @@
       "정치": 50,
       "매력": 40
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「포박」 적장 포로 확률 +30%"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3049,8 +3906,14 @@
       "정치": 85,
       "매력": 74
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「교주」 원거리 성역 통치 페널티 무효"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3064,8 +3927,14 @@
       "정치": 68,
       "매력": 68
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「의성」 방어 시 적 정찰 교란"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3079,8 +3948,14 @@
       "정치": 56,
       "매력": 86
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「강동이교」 주유 계략 성공률 +10%"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3095,7 +3970,13 @@
       "매력": 85
     },
     "disposition": null,
-    "traits": [],
+    "traits": [
+      "「강동지호」 선봉 전투 +35%. **조기 사망 이벤트**"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3110,7 +3991,13 @@
       "매력": 90
     },
     "disposition": null,
-    "traits": [],
+    "traits": [
+      "「할거」 호족 통제 +30%, 원정 시 능력 하락"
+    ],
+    "class": [
+      "관",
+      "제"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3124,8 +4011,14 @@
       "정치": 70,
       "매력": 40
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「대호」 **후계 지명 개입 및 정적 무고 가능.** 세력 내분 트리거"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3139,8 +4032,14 @@
       "정치": 50,
       "매력": 80
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「궁요희」 **호위 시녀 강습부대 편성 가능**. 촉-오 동맹 시 이중 귀속 상태"
+    ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3154,8 +4053,14 @@
       "정치": 62,
       "매력": 30
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「권신」 전공 누적 시 **군주 권한 잠식**. 방치하면 세력 내부 붕괴"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3170,7 +4075,13 @@
       "매력": 92
     },
     "disposition": null,
-    "traits": [],
+    "traits": [
+      "「소패왕」 성계 점령 속도 2배. **암살 이벤트 보유**"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3184,8 +4095,14 @@
       "정치": 80,
       "매력": 72
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「백의도강」 **위장 항행으로 기습 침투 가능**"
+    ],
+    "class": [
+      "제",
+      "참"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3199,8 +4116,14 @@
       "정치": 82,
       "매력": 74
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「군기」 호족 사병의 사적 운용 억제. 군령 위반률 -40%"
+    ],
+    "class": [
+      "관",
+      "제"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3214,8 +4137,13 @@
       "정치": 80,
       "매력": 88
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「국태」 **호족 분열 억제 +30%**, 군주 결단 판정 보정"
+    ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3229,8 +4157,14 @@
       "정치": 90,
       "매력": 85
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「인내」 방어 지속 턴마다 반격력 누적 (상한 +100%)"
+    ],
+    "class": [
+      "제",
+      "참"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3244,8 +4178,14 @@
       "정치": 86,
       "매력": 82
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「최후의 명장」 단독 성역 방어 시 전 능력 +30%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3259,8 +4199,14 @@
       "정치": 95,
       "매력": 82
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「중신」 내정 +30%. **대전 시 항복 주장 이벤트**"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3274,8 +4220,14 @@
       "정치": 60,
       "매력": 66
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「청렴」 부대 유지비 -15%"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3289,8 +4241,14 @@
       "정치": 76,
       "매력": 60
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「외척」 궁정 정치 영향력 +25%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3304,8 +4262,14 @@
       "정치": 72,
       "매력": 76
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「노장」 신진 무장과 상성 마찰"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3319,8 +4283,14 @@
       "정치": 60,
       "매력": 66
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「설중분단」 불리한 지형에서 기습 성공률 +50%"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3334,8 +4304,14 @@
       "정치": 72,
       "매력": 50
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「재승덕박」 계략 +40%, 민심·충성 지속 하락"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3349,8 +4325,14 @@
       "정치": 70,
       "매력": 68
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「사수」 포위 상태 유지 턴수 2배"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3364,8 +4346,14 @@
       "정치": 85,
       "매력": 94
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「미주랑」 화공 계열 계략 +50%. 대회전 지휘 특화"
+    ],
+    "class": [
+      "제",
+      "참"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3379,8 +4367,14 @@
       "정치": 50,
       "매력": 66
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「만신창이」 내구 소진 시 1회 부활"
+    ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3394,8 +4388,14 @@
       "정치": 62,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「호기」 병력 열세 시 사기 하락 무효"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3409,8 +4409,14 @@
       "정치": 58,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「신사」 기동병기 단독 격추율 +40%"
+    ],
+    "class": [
+      "파",
+      "강"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3424,8 +4430,14 @@
       "정치": 72,
       "매력": 68
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「산월토벌」 **이민족 토벌 시 병력 자원 추가 획득 +50%**"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3439,8 +4451,14 @@
       "정치": 58,
       "매력": 66
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「역전」 경험치 획득 +20%"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3454,8 +4472,14 @@
       "정치": 65,
       "매력": 72
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「고육계」 **위장 항복 실행 가능** (전 게임 유일)"
+    ],
+    "class": [
+      "강",
+      "제"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3472,6 +4496,10 @@
     "disposition": "실무",
     "traits": [
       "「밀서」 고육계 보조"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -3490,6 +4518,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3506,6 +4537,9 @@
     "disposition": "실무",
     "traits": [
       "능통의 부친"
+    ],
+    "class": [
+      "파"
     ],
     "origin_faction": "오"
   },
@@ -3524,6 +4558,10 @@
     "traits": [
       "「순직」"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3540,6 +4578,10 @@
     "disposition": "절의",
     "traits": [
       "「보정」 손침에게 제거"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -3558,6 +4600,9 @@
     "traits": [
       "「포박」 관우 생포 이벤트"
     ],
+    "class": [
+      "강"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3574,6 +4619,9 @@
     "disposition": "실무",
     "traits": [
       "손호 옹립"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -3592,6 +4640,10 @@
     "traits": [
       "「무릉 평정」"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3608,6 +4660,9 @@
     "disposition": "실무",
     "traits": [
       "보즐 계열"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "오"
   },
@@ -3626,6 +4681,9 @@
     "traits": [
       "「남방 경략」"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3642,6 +4700,9 @@
     "disposition": "실무",
     "traits": [
       "「선봉」"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "오"
   },
@@ -3660,6 +4721,9 @@
     "traits": [
       "손노반의 자매"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3676,6 +4740,9 @@
     "disposition": "실무",
     "traits": [
       "「변경」"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "오"
   },
@@ -3694,6 +4761,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3710,6 +4780,10 @@
     "disposition": "실무",
     "traits": [
       "손견의 아우"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -3728,6 +4802,10 @@
     "traits": [
       "「전횡」 **군주 폐립. 세력 자멸 트리거**"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3744,6 +4822,9 @@
     "disposition": "실무",
     "traits": [
       "**이궁의 변** 당사자"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -3762,6 +4843,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3778,6 +4862,9 @@
     "disposition": "실무",
     "traits": [
       "「폭정」 말기 군주"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -3796,6 +4883,9 @@
     "traits": [
       "**이궁의 변** 당사자"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3812,6 +4902,9 @@
     "disposition": "실무",
     "traits": [
       "「이릉 분전」"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "오"
   },
@@ -3830,6 +4923,9 @@
     "traits": [
       "손침 제거"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3846,6 +4942,9 @@
     "disposition": "실무",
     "traits": [
       "「청렴」"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -3864,6 +4963,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3880,6 +4982,9 @@
     "disposition": "실무",
     "traits": [
       "손침과 대립"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "오"
   },
@@ -3898,6 +5003,10 @@
     "traits": [
       "「교주 경략」 남방 안정"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3914,6 +5023,9 @@
     "disposition": "실무",
     "traits": [
       "이궁의 변 희생"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -3932,6 +5044,10 @@
     "traits": [
       "「천문」 손호에게 처형"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3948,6 +5064,10 @@
     "disposition": "절의",
     "traits": [
       "「직언」 유배 이벤트"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -3966,6 +5086,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "오"
   },
   {
@@ -3982,6 +5105,10 @@
     "disposition": "실무",
     "traits": [
       "「기세」"
+    ],
+    "class": [
+      "제",
+      "강"
     ],
     "origin_faction": "오"
   },
@@ -4000,6 +5127,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -4016,6 +5146,9 @@
     "disposition": "실무",
     "traits": [
       "육씨 일족"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -4034,6 +5167,10 @@
     "traits": [
       "「이장」 장소와 쌍벽"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -4050,6 +5187,10 @@
     "disposition": "절의",
     "traits": [
       "「최후의 승상」"
+    ],
+    "class": [
+      "제",
+      "참"
     ],
     "origin_faction": "오"
   },
@@ -4068,6 +5209,9 @@
     "traits": [
       "전종 계열"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "오"
   },
   {
@@ -4084,6 +5228,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -4102,6 +5249,10 @@
     "traits": [
       "「화평」 촉과의 외교. 제갈량의 형"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -4118,6 +5269,9 @@
     "disposition": "실무",
     "traits": [
       "「사위」"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -4136,6 +5290,10 @@
     "traits": [
       "「산월 진무」"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -4152,6 +5310,10 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -4170,6 +5332,9 @@
     "traits": [
       "「수춘 구원」"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "오"
   },
   {
@@ -4186,6 +5351,10 @@
     "disposition": "실무",
     "traits": [
       "「원로」"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -4204,6 +5373,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "오"
   },
   {
@@ -4220,6 +5392,9 @@
     "disposition": "실무",
     "traits": [
       "「여강 정예」"
+    ],
+    "class": [
+      "강"
     ],
     "origin_faction": "오"
   },
@@ -4238,6 +5413,9 @@
     "traits": [
       "「간신」 손호 측근"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -4254,6 +5432,10 @@
     "disposition": "실무",
     "traits": [
       "「사령」 문서"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "오"
   },
@@ -4272,6 +5454,9 @@
     "traits": [
       "「간언」"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "오"
   },
   {
@@ -4285,8 +5470,14 @@
       "정치": 50,
       "매력": 48
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「선등사석」 대기동 부대 상대 특효"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -4300,8 +5491,14 @@
       "정치": 32,
       "매력": 52
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「추격」 퇴각하는 적 추격 +40%, 유인책 취약"
+    ],
+    "class": [
+      "파",
+      "제"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -4315,8 +5512,14 @@
       "정치": 35,
       "매력": 55
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「하북사정주」 관우 조우 시 즉사 판정"
+    ],
+    "class": [
+      "강",
+      "제"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -4331,7 +5534,13 @@
       "매력": 92
     },
     "disposition": null,
-    "traits": [],
+    "traits": [
+      "「사세삼공」 초기 자원·인재 최대. 결단 판정 실패율 존재"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -4345,8 +5554,14 @@
       "정치": 88,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「감군」 장기전 계략 +45%. 원소 휘하 시 채택률 하락"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -4360,8 +5575,13 @@
       "정치": 85,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「강직」 조언 무시 시 투옥 이벤트"
+    ],
+    "class": [
+      "참"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -4378,6 +5598,9 @@
     "disposition": "무뢰",
     "traits": [
       "장합과 동반 이탈"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·원소 진영"
   },
@@ -4396,6 +5619,9 @@
     "traits": [
       "「실책」 계략 실패율 높음"
     ],
+    "class": [
+      "참"
+    ],
     "origin_faction": "군웅·원소 진영"
   },
   {
@@ -4412,6 +5638,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·원소 진영"
   },
@@ -4430,6 +5659,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·원소 진영"
   },
   {
@@ -4446,6 +5678,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·원소 진영"
   },
@@ -4464,6 +5699,10 @@
     "traits": [
       "「참소」 내부 분열 유발"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "군웅·원소 진영"
   },
   {
@@ -4480,6 +5719,9 @@
     "disposition": "무뢰",
     "traits": [
       "「세객」 기주 양도 유도"
+    ],
+    "class": [
+      "참"
     ],
     "origin_faction": "군웅·원소 진영"
   },
@@ -4498,6 +5740,9 @@
     "traits": [
       "「오소」 보급 거점 수비. 음주 페널티"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·원소 진영"
   },
   {
@@ -4514,6 +5759,10 @@
     "disposition": "무뢰",
     "traits": [
       "—"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "군웅·원소 진영"
   },
@@ -4532,6 +5781,10 @@
     "traits": [
       "「사수」 업성 최후 방어"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "군웅·원소 진영"
   },
   {
@@ -4548,6 +5801,9 @@
     "disposition": "야심",
     "traits": [
       "형제. 동반 귀순"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·원소 진영"
   },
@@ -4566,6 +5822,9 @@
     "traits": [
       "형제. 동반 귀순"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·원소 진영"
   },
   {
@@ -4582,6 +5841,10 @@
     "disposition": "실무",
     "traits": [
       "「장자」 후계 분쟁"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "군웅·원소 진영"
   },
@@ -4600,6 +5863,10 @@
     "traits": [
       "「총애」 후계 분쟁"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "군웅·원소 진영"
   },
   {
@@ -4616,6 +5883,9 @@
     "disposition": "무뢰",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·원소 진영"
   },
@@ -4634,6 +5904,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·원소 진영"
   },
   {
@@ -4650,6 +5923,9 @@
     "disposition": "절의",
     "traits": [
       "저수의 아들"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·원소 진영"
   },
@@ -4668,6 +5944,10 @@
     "traits": [
       "「격문」 **적 세력 천명 하락 유발**"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "군웅·원소 진영"
   },
   {
@@ -4684,6 +5964,9 @@
     "disposition": "실무",
     "traits": [
       "보급 호송"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·원소 진영"
   },
@@ -4702,6 +5985,9 @@
     "traits": [
       "「양도」 기주 이양 이벤트"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "군웅·원소 진영"
   },
   {
@@ -4718,6 +6004,9 @@
     "disposition": "야심",
     "traits": [
       "「이반」 **관도 결정타 — 조조 귀순 이벤트**"
+    ],
+    "class": [
+      "참"
     ],
     "origin_faction": "군웅·원소 진영"
   },
@@ -4736,6 +6025,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·원술 진영"
   },
   {
@@ -4752,6 +6044,10 @@
     "disposition": "실무",
     "traits": [
       "「선봉」 원술군 최강"
+    ],
+    "class": [
+      "제",
+      "강"
     ],
     "origin_faction": "군웅·원술 진영"
   },
@@ -4770,6 +6066,9 @@
     "traits": [
       "이탈"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·원술 진영"
   },
   {
@@ -4786,6 +6085,9 @@
     "disposition": "실무",
     "traits": [
       "「진언」"
+    ],
+    "class": [
+      "참"
     ],
     "origin_faction": "군웅·원술 진영"
   },
@@ -4804,6 +6106,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "군웅·원술 진영"
   },
   {
@@ -4820,6 +6125,9 @@
     "disposition": "무뢰",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·원술 진영"
   },
@@ -4838,6 +6146,9 @@
     "traits": [
       "이탈"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·원술 진영"
   },
   {
@@ -4854,6 +6165,10 @@
     "disposition": "무뢰",
     "traits": [
       "「난정」 이각과 상시 대립"
+    ],
+    "class": [
+      "제",
+      "강"
     ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
@@ -4872,6 +6187,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
   {
@@ -4888,6 +6206,9 @@
     "disposition": "실무",
     "traits": [
       "「매복」 조조·손견 격파"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
@@ -4906,6 +6227,9 @@
     "traits": [
       "여포 부장"
     ],
+    "class": [
+      "파"
+    ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
   {
@@ -4922,6 +6246,9 @@
     "disposition": "야심",
     "traits": [
       "「배신」 동반"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
@@ -4940,6 +6267,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
   {
@@ -4956,6 +6286,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
@@ -4974,6 +6307,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "파"
+    ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
   {
@@ -4990,6 +6326,10 @@
     "disposition": "무뢰",
     "traits": [
       "「난정」 장안 장악"
+    ],
+    "class": [
+      "제",
+      "강"
     ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
@@ -5008,6 +6348,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
   {
@@ -5024,6 +6367,10 @@
     "disposition": "실무",
     "traits": [
       "「세객」 여포 회유"
+    ],
+    "class": [
+      "제",
+      "참"
     ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
@@ -5042,6 +6389,10 @@
     "traits": [
       "「독계」 폐립·독살 실행"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
   {
@@ -5058,6 +6409,9 @@
     "disposition": "무뢰",
     "traits": [
       "장수의 숙부"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
@@ -5076,6 +6430,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
   {
@@ -5092,6 +6449,9 @@
     "disposition": "무뢰",
     "traits": [
       "「사격」"
+    ],
+    "class": [
+      "파"
     ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
@@ -5110,6 +6470,9 @@
     "traits": [
       "완성 사건 인물"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
   {
@@ -5126,6 +6489,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
@@ -5144,6 +6510,10 @@
     "traits": [
       "「효장」 관문 수비"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
   {
@@ -5160,6 +6530,9 @@
     "disposition": "무뢰",
     "traits": [
       "「배신」 여포 포박"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·동탁·여포 진영"
   },
@@ -5178,6 +6551,10 @@
     "traits": [
       "「형양 안정」"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "군웅·유표 진영"
   },
   {
@@ -5194,6 +6571,10 @@
     "disposition": "실무",
     "traits": [
       "「모략」 형주 평정"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "군웅·유표 진영"
   },
@@ -5212,6 +6593,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "군웅·유표 진영"
   },
   {
@@ -5228,6 +6612,10 @@
     "disposition": "실무",
     "traits": [
       "「권항」 항복 권유"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "군웅·유표 진영"
   },
@@ -5246,6 +6634,9 @@
     "traits": [
       "「감녕 천거」"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·유표 진영"
   },
   {
@@ -5262,6 +6653,9 @@
     "disposition": "절의",
     "traits": [
       "「직간」"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·유표 진영"
   },
@@ -5280,6 +6674,10 @@
     "traits": [
       "「장자」 후계 분쟁. 유비 의탁처"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "군웅·유표 진영"
   },
   {
@@ -5296,6 +6694,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "군웅·유표 진영"
   },
@@ -5314,6 +6715,9 @@
     "traits": [
       "「유주」 항복 이벤트"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "군웅·유표 진영"
   },
   {
@@ -5330,6 +6734,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "군웅·유표 진영"
   },
@@ -5348,6 +6755,9 @@
     "traits": [
       "채모와 동반"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·유표 진영"
   },
   {
@@ -5364,6 +6774,10 @@
     "disposition": "실무",
     "traits": [
       "「수군」 항행 지휘. 외척"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "군웅·유표 진영"
   },
@@ -5382,6 +6796,9 @@
     "traits": [
       "「사절」"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "군웅·유표 진영"
   },
   {
@@ -5398,6 +6815,9 @@
     "disposition": "무뢰",
     "traits": [
       "황조의 아들"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·유표 진영"
   },
@@ -5416,6 +6836,9 @@
     "traits": [
       "「관문 수비」 백수관"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·유장·익주 진영"
   },
   {
@@ -5432,6 +6855,9 @@
     "disposition": "무뢰",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·유장·익주 진영"
   },
@@ -5450,6 +6876,9 @@
     "traits": [
       "한중 전투"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·유장·익주 진영"
   },
   {
@@ -5466,6 +6895,9 @@
     "disposition": "실무",
     "traits": [
       "「참위」"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "군웅·유장·익주 진영"
   },
@@ -5484,6 +6916,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·유장·익주 진영"
   },
   {
@@ -5500,6 +6935,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·유장·익주 진영"
   },
@@ -5518,6 +6956,9 @@
     "traits": [
       "「관문 수비」 백수관"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·유장·익주 진영"
   },
   {
@@ -5534,6 +6975,9 @@
     "disposition": "실무",
     "traits": [
       "한중 전투"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·유장·익주 진영"
   },
@@ -5552,6 +6996,9 @@
     "traits": [
       "「간사」 유비 초빙 반대"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "군웅·유장·익주 진영"
   },
   {
@@ -5568,6 +7015,9 @@
     "disposition": "무뢰",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·유장·익주 진영"
   },
@@ -5586,6 +7036,10 @@
     "traits": [
       "「변설」 후에 촉 소속"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "군웅·유장·익주 진영"
   },
   {
@@ -5602,6 +7056,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·서량 진영"
   },
@@ -5620,6 +7077,9 @@
     "traits": [
       "마등의 아들. 처형 이벤트"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·서량 진영"
   },
   {
@@ -5636,6 +7096,9 @@
     "disposition": "실무",
     "traits": [
       "마등의 아들. 처형 이벤트"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·서량 진영"
   },
@@ -5654,6 +7117,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·서량 진영"
   },
   {
@@ -5670,6 +7136,9 @@
     "disposition": "야심",
     "traits": [
       "「귀순」"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·서량 진영"
   },
@@ -5688,6 +7157,9 @@
     "traits": [
       "관중 십부"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·서량 진영"
   },
   {
@@ -5704,6 +7176,9 @@
     "disposition": "실무",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·서량 진영"
   },
@@ -5722,6 +7197,9 @@
     "traits": [
       "관중 십부"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·서량 진영"
   },
   {
@@ -5738,6 +7216,9 @@
     "disposition": "무뢰",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·서량 진영"
   },
@@ -5756,6 +7237,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·서량 진영"
   },
   {
@@ -5772,6 +7256,9 @@
     "disposition": "무뢰",
     "traits": [
       "종제"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·공손찬 진영"
   },
@@ -5790,6 +7277,9 @@
     "traits": [
       "종제"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·공손찬 진영"
   },
   {
@@ -5806,6 +7296,10 @@
     "disposition": "절의",
     "traits": [
       "「순사」"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "군웅·공손찬 진영"
   },
@@ -5824,6 +7318,9 @@
     "traits": [
       "—"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·공손찬 진영"
   },
   {
@@ -5840,6 +7337,10 @@
     "disposition": "야심",
     "traits": [
       "「귀순」 조조 편입"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "군웅·공손찬 진영"
   },
@@ -5858,6 +7359,9 @@
     "traits": [
       "「백마의종」 지휘"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·공손찬 진영"
   },
   {
@@ -5874,6 +7378,9 @@
     "disposition": "야심",
     "traits": [
       "「이반」"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·공손찬 진영"
   },
@@ -5892,6 +7399,10 @@
     "traits": [
       "청주 방면"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "군웅·공손찬 진영"
   },
   {
@@ -5908,6 +7419,9 @@
     "disposition": "무뢰",
     "traits": [
       "—"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·공손찬 진영"
   },
@@ -5926,6 +7440,10 @@
     "traits": [
       "「황건」 북해 포위"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "군웅·기타 군웅"
   },
   {
@@ -5942,6 +7460,9 @@
     "disposition": "무뢰",
     "traits": [
       "반동탁 연합"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·기타 군웅"
   },
@@ -5960,6 +7481,9 @@
     "traits": [
       "「산적」 강동 토호"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·기타 군웅"
   },
   {
@@ -5976,6 +7500,9 @@
     "disposition": "실무",
     "traits": [
       "반동탁 연합"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "군웅·기타 군웅"
   },
@@ -5994,6 +7521,10 @@
     "traits": [
       "「연합」 반동탁 발기. 후에 여포와 결탁"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "군웅·기타 군웅"
   },
   {
@@ -6010,6 +7541,10 @@
     "disposition": "무뢰",
     "traits": [
       "「연합」 반동탁 발기. 후에 여포와 결탁"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "군웅·기타 군웅"
   },
@@ -6028,6 +7563,9 @@
     "traits": [
       "「불사」 재물 수탈"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "군웅·기타 군웅"
   },
   {
@@ -6045,6 +7583,9 @@
     "traits": [
       "반동탁 연합"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "군웅·기타 군웅"
   },
   {
@@ -6058,8 +7599,14 @@
       "정치": 58,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「선비대인」 변경 성계 상시 침공. 회유 시 대규모 기동 부대 제공"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6073,8 +7620,14 @@
       "정치": 45,
       "매력": 60
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「함진영」 소수 정예 편성 시 돌파력 +60%"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6088,8 +7641,14 @@
       "정치": 74,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「요동」 동이 연합 외교 창구. 이중 외교 가능"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6103,8 +7662,14 @@
       "정치": 70,
       "매력": 45
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「연왕」 **동이 연합 맹주 자격**. 자유 모드 플레이 가능 군주"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6118,8 +7683,14 @@
       "정치": 55,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「백마의종」 고속 기동 부대 편성 가능"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6133,8 +7704,14 @@
       "정치": 70,
       "매력": 88
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「명사」 고·극 인물 등용 시 추천인 자격"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6148,8 +7725,14 @@
       "정치": 40,
       "매력": 58
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「오환돌기」 대규모 고속 기동 부대 상시 보유"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6163,8 +7746,13 @@
       "정치": 76,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「양도」 사망 시 세력 평화 이양 이벤트"
+    ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6178,8 +7766,14 @@
       "정치": 40,
       "매력": 20
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「폭정」 수탈 +60%, 민심·천명 지속 하락"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6193,8 +7787,14 @@
       "정치": 58,
       "매력": 75
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「서량」 이민족 병력 상시 징집"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6208,8 +7808,14 @@
       "정치": 45,
       "매력": 72
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「칠종칠금」 **패배 후 재등장 최대 7회**. 최종 등용 시 남중 전역 안정"
+    ],
+    "class": [
+      "강",
+      "제"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6223,8 +7829,13 @@
       "정치": 86,
       "매력": 78
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「교지」 원거리 교역 수입 +50%"
+    ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6238,8 +7849,14 @@
       "정치": 18,
       "매력": 40
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「무쌍」 강습·기동 전투 무조건 우위. **통솔 판정 불가**"
+    ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6253,8 +7870,14 @@
       "정치": 20,
       "매력": 50
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「등갑군」 물리 피해 대폭 감소, **화공 계열에 치명적 취약**"
+    ],
+    "class": [
+      "강",
+      "제"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6268,8 +7891,14 @@
       "정치": 88,
       "매력": 76
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「연환주모」 **초선「연환계」 실행의 전제 인물**. 성공 후 정국 장악 실패 이벤트"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6283,8 +7912,14 @@
       "정치": 72,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「기성수」 농성 시 민병 동원, 성계 방어력 +50%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6298,8 +7933,14 @@
       "정치": 60,
       "매력": 50
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "야심",
+    "traits": [
+      "「참칭」 옥새 보유 시 칭제 강제 이벤트 → 천명 붕괴"
+    ],
+    "class": [
+      "관",
+      "제"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6313,8 +7954,14 @@
       "정치": 68,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「한실종친」 천명 유지 기여, 군사 능력 부족"
+    ],
+    "class": [
+      "관",
+      "제"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6328,8 +7975,13 @@
       "정치": 70,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「암약」 세력 확장 불가. 방어 자원 풍부"
+    ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6343,8 +7995,14 @@
       "정치": 85,
       "매력": 85
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「수성」 방어 시 +30%, 원정 명령 거부 확률"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6358,8 +8016,14 @@
       "정치": 78,
       "매력": 80
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "명사",
+    "traits": [
+      "「오두미도」 민심 회복 속도 2배, 군사력 약체"
+    ],
+    "class": [
+      "관",
+      "참"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6373,8 +8037,14 @@
       "정치": 55,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「완성」 항복 후 재반란 이벤트 보유"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6388,8 +8058,14 @@
       "정치": 55,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「흑산」 저효율 공간에서 이동 페널티 무효. 게릴라 특화"
+    ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6403,8 +8079,14 @@
       "정치": 62,
       "매력": 62
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「매복」 회랑 매복 성공률 +50%"
+    ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6418,8 +8100,14 @@
       "정치": 76,
       "매력": 70
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「백문루」 군주가 조언 무시 시 능력 반감"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6433,8 +8121,14 @@
       "정치": 60,
       "매력": 96
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "절의",
+    "traits": [
+      "「연환계」 **적 세력 최상위 2인의 상성을 강제로 최악화**. 실행 후 인물 소멸(은퇴)"
+    ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6448,8 +8142,14 @@
       "정치": 40,
       "매력": 68
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「비도」 기동병기 원거리 공격 특화"
+    ],
+    "class": [
+      "파",
+      "강"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6463,8 +8163,14 @@
       "정치": 62,
       "매력": 58
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "무뢰",
+    "traits": [
+      "「변절」 이간 계략에 취약, 자신도 이간 능력 보유"
+    ],
+    "class": [
+      "제",
+      "참"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6478,8 +8184,14 @@
       "정치": 58,
       "매력": 50
     },
-    "disposition": null,
-    "traits": [],
+    "disposition": "실무",
+    "traits": [
+      "「관문」 항로 봉쇄 +35%"
+    ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "군웅"
   },
   {
@@ -6496,6 +8208,10 @@
     "disposition": null,
     "traits": [
       "「진대법」 민심 회복 +40%, 기근 이벤트 무효"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "원수급"
   },
@@ -6514,6 +8230,10 @@
     "traits": [
       "「초야」 재야 등용 시 격 상승. 내정 +35%"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "③"
   },
   {
@@ -6530,6 +8250,9 @@
     "disposition": null,
     "traits": [
       "「천거」 을파소 등용의 추천인"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -6548,6 +8271,10 @@
     "traits": [
       "「전횡」 반란 트리거"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "③"
   },
   {
@@ -6564,6 +8291,10 @@
     "disposition": null,
     "traits": [
       "「옹립」 후계 지명 강제 개입"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -6582,6 +8313,9 @@
     "traits": [
       "「차왕」 외세 차병 가능 — 공손도 연계"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "③"
   },
   {
@@ -6598,6 +8332,10 @@
     "disposition": null,
     "traits": [
       "「환도」 수도 이전 이벤트"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "원수급"
   },
@@ -6616,6 +8354,10 @@
     "traits": [
       "「골육」 동족 상대 전투 시 사기 하락"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "③"
   },
   {
@@ -6632,6 +8374,9 @@
     "disposition": null,
     "traits": [
       "「병권겸장」 내정·군권 동시 보정"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -6650,6 +8395,10 @@
     "traits": [
       "「동이」 위와 상시 교전. §12.2 이관 — 원 ①#120"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "원수급"
   },
   {
@@ -6666,6 +8415,9 @@
     "disposition": null,
     "traits": [
       "「사간」 군주 폭주 시 절식 자결, 천명 회복"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -6684,6 +8436,9 @@
     "traits": [
       "「결사」 군주 피격 시 결사대 편성, 탈출 보장"
     ],
+    "class": [
+      "강"
+    ],
     "origin_faction": "③"
   },
   {
@@ -6700,6 +8455,10 @@
     "disposition": null,
     "traits": [
       "「사간」 거짓 항복 후 적 총대장 암살, 본인 사망"
+    ],
+    "class": [
+      "강",
+      "참"
     ],
     "origin_faction": "③"
   },
@@ -6718,6 +8477,9 @@
     "traits": [
       "「외척」 궁정 영향력"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "③"
   },
   {
@@ -6734,6 +8496,9 @@
     "disposition": null,
     "traits": [
       "「수성」 침공 이후 재건"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "원수급"
   },
@@ -6752,6 +8517,9 @@
     "traits": [
       "「변경」 국경 습격 전과 +25%"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "원수급"
   },
   {
@@ -6768,6 +8536,10 @@
     "disposition": null,
     "traits": [
       "「제언」 성계 개발 속도 +30%"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "원수급"
   },
@@ -6786,6 +8558,9 @@
     "traits": [
       "「단명」 즉위 직후 폐위 이벤트"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "원수급"
   },
   {
@@ -6802,6 +8577,10 @@
     "disposition": null,
     "traits": [
       "「육좌평」 관제 정비 — 관료형 정원 +3, 행정 효율 +40%"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "원수급"
   },
@@ -6820,6 +8599,10 @@
     "traits": [
       "「기리영」 낙랑·대방 성역 기습 특화"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "③"
   },
   {
@@ -6836,6 +8619,9 @@
     "disposition": null,
     "traits": [
       "「병마」 부대 편성 비용 -20%"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "③"
   },
@@ -6854,6 +8640,9 @@
     "traits": [
       "「종친」 군주 결단 보정"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "③"
   },
   {
@@ -6870,6 +8659,9 @@
     "disposition": null,
     "traits": [
       "「탁지」 자금 수입 +25%"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -6888,6 +8680,9 @@
     "traits": [
       "「숙위」 군주 암살 시도 무효화"
     ],
+    "class": [
+      "강"
+    ],
     "origin_faction": "③"
   },
   {
@@ -6904,6 +8699,9 @@
     "disposition": null,
     "traits": [
       "「형옥」 반란 발생률 -25%"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -6922,6 +8720,9 @@
     "traits": [
       "「병관」 함대 유지비 -15%"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "③"
   },
   {
@@ -6938,6 +8739,10 @@
     "disposition": null,
     "traits": [
       "「예제」 천명 감소 완화"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -6956,6 +8761,9 @@
     "traits": [
       "「요서」 초기 오환 통합 세력"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "원수급"
   },
   {
@@ -6972,6 +8780,9 @@
     "disposition": null,
     "traits": [
       "「유주」 답돈 섭정 하. 답돈 사망 시 승계"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "③"
   },
@@ -6990,6 +8801,10 @@
     "traits": [
       "「오천락」 병력 보유량 큼, 통제력 약함"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7006,6 +8821,9 @@
     "disposition": null,
     "traits": [
       "「팔백락」 소수정예 고속 부대"
+    ],
+    "class": [
+      "파"
     ],
     "origin_faction": "③"
   },
@@ -7024,6 +8842,10 @@
     "traits": [
       "「구천락」 최대 병력, 중립 성향"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7040,6 +8862,9 @@
     "disposition": null,
     "traits": [
       "「자칭선우」 타 오환 세력과 상성 악화"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "③"
   },
@@ -7058,6 +8883,9 @@
     "traits": [
       "「귀부」 회유 성공률 높음"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7074,6 +8902,10 @@
     "disposition": null,
     "traits": [
       "「미천안정왕」 이민족 결탁 반란 트리거"
+    ],
+    "class": [
+      "제",
+      "참"
     ],
     "origin_faction": "③"
   },
@@ -7092,6 +8924,9 @@
     "traits": [
       "「참칭」 칭제 이벤트, 천명 붕괴"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7108,6 +8943,10 @@
     "disposition": null,
     "traits": [
       "「호중」 오환·선비의 신임 획득 — 북방권 외교 창구"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -7126,6 +8965,10 @@
     "traits": [
       "「선비분열」 가비능과 상시 적대. §12.2 이관 — 원 ①#150"
     ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7142,6 +8985,9 @@
     "disposition": null,
     "traits": [
       "「내분」 가비능에게 살해되는 이벤트"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "③"
   },
@@ -7160,6 +9006,9 @@
     "traits": [
       "「전전」 세력 간 이적을 반복, 이탈률 최고"
     ],
+    "class": [
+      "파"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7176,6 +9025,9 @@
     "disposition": null,
     "traits": [
       "「삼대인」 3인 세트, 개별 회유 가능"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "③"
   },
@@ -7194,6 +9046,10 @@
     "traits": [
       "「자객」 적 세력 최상위 1인 암살 시도. 성공 시 본인 소멸"
     ],
+    "class": [
+      "강",
+      "참"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7210,6 +9066,10 @@
     "disposition": null,
     "traits": [
       "「유랑선우」 본거지 상실 상태로 시작"
+    ],
+    "class": [
+      "제",
+      "파"
     ],
     "origin_faction": "원수급"
   },
@@ -7228,6 +9088,9 @@
     "traits": [
       "「오부분할」 조조 귀순 시 흉노 5부 재편 이벤트"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "원수급"
   },
   {
@@ -7244,6 +9107,10 @@
     "disposition": null,
     "traits": [
       "「호가」 황제 호송 이벤트 참여 — 천명 획득 경로"
+    ],
+    "class": [
+      "강",
+      "파"
     ],
     "origin_faction": "③"
   },
@@ -7262,6 +9129,10 @@
     "traits": [
       "「좌부」 후기 북방 최대 기동 전력"
     ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7278,6 +9149,10 @@
     "disposition": null,
     "traits": [
       "「양주지란」 서량 상시 불안정화"
+    ],
+    "class": [
+      "제",
+      "강"
     ],
     "origin_faction": "③"
   },
@@ -7296,6 +9171,10 @@
     "traits": [
       "「농서반」 곽회 대응 이벤트"
     ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7312,6 +9191,9 @@
     "disposition": null,
     "traits": [
       "「강중」 강유의 북벌 시 호응 가능"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "③"
   },
@@ -7330,6 +9212,9 @@
     "traits": [
       "「강기」 파일럿형 유닛 추가 편성"
     ],
+    "class": [
+      "파"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7346,6 +9231,10 @@
     "disposition": null,
     "traits": [
       "「철거병」 중장 돌격 부대"
+    ],
+    "class": [
+      "제",
+      "강"
     ],
     "origin_faction": "③"
   },
@@ -7364,6 +9253,9 @@
     "traits": [
       "「흥국」 마초와 연동"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7380,6 +9272,9 @@
     "disposition": null,
     "traits": [
       "「백항」 하후연 정벌 대상"
+    ],
+    "class": [
+      "제"
     ],
     "origin_faction": "③"
   },
@@ -7398,6 +9293,10 @@
     "traits": [
       "「무도」 장로 휘하 편입 가능"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7414,6 +9313,10 @@
     "disposition": null,
     "traits": [
       "「남중반」 남중 3군 동시 반란 주도"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -7432,6 +9335,10 @@
     "traits": [
       "「월수」 옹개와 상성 불안정"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7448,6 +9355,10 @@
     "disposition": null,
     "traits": [
       "「장가」 오와 내통 가능"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -7466,6 +9377,10 @@
     "traits": [
       "「만왕」 이릉대전 참전, 유비 측 이민족 원군"
     ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7482,6 +9397,9 @@
     "disposition": null,
     "traits": [
       "「고절」 반란 중 고립 상태로 절개 유지"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -7500,6 +9418,10 @@
     "traits": [
       "「친위대월지왕」 책봉 이벤트. 원거리 교역로 개통"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "원수급"
   },
   {
@@ -7516,6 +9438,10 @@
     "disposition": null,
     "traits": [
       "「누란」 항로 중계 거점. 통행세 수입"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "원수급"
   },
@@ -7534,6 +9460,9 @@
     "traits": [
       "「구자악」 문화 정책 시 민심 +25%"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "원수급"
   },
   {
@@ -7550,6 +9479,9 @@
     "disposition": null,
     "traits": [
       "「옥」 사치재 교역 수입 +30%"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "원수급"
   },
@@ -7568,6 +9500,10 @@
     "traits": [
       "「서역제국」 3인 세트, 개별 회유"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7584,6 +9520,9 @@
     "disposition": null,
     "traits": [
       "「대상」 원거리 교역로 유지비 -40%"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -7602,6 +9541,10 @@
     "traits": [
       "「험거」 저효율 공간 방어 시 +60%"
     ],
+    "class": [
+      "제",
+      "강"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7618,6 +9561,9 @@
     "disposition": null,
     "traits": [
       "「출몰」 토벌 후에도 재봉기 반복"
+    ],
+    "class": [
+      "파"
     ],
     "origin_faction": "③"
   },
@@ -7636,6 +9582,9 @@
     "traits": [
       "「단양병」 정예 보병 자원 — 포획 시 병력 대량 획득"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7652,6 +9601,10 @@
     "disposition": null,
     "traits": [
       "「자칭장군」 위와 내통 가능"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -7670,6 +9623,10 @@
     "traits": [
       "「산월제수」 세트 등장"
     ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7686,6 +9643,10 @@
     "disposition": null,
     "traits": [
       "「파병」 회랑 지형 전투 +40%"
+    ],
+    "class": [
+      "제",
+      "강"
     ],
     "origin_faction": "③"
   },
@@ -7704,6 +9665,9 @@
     "traits": [
       "「종읍」 귀부 시 한중 성역 안정화"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7720,6 +9684,9 @@
     "disposition": null,
     "traits": [
       "「판순」 고속 침투 특화"
+    ],
+    "class": [
+      "파"
     ],
     "origin_faction": "③"
   },
@@ -7738,6 +9705,10 @@
     "traits": [
       "「하서란」 위 건국 직후 반란 트리거"
     ],
+    "class": [
+      "제",
+      "파"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7754,6 +9725,9 @@
     "disposition": null,
     "traits": [
       "「노수」 서량 보급선 차단"
+    ],
+    "class": [
+      "강"
     ],
     "origin_faction": "③"
   },
@@ -7772,6 +9746,10 @@
     "traits": [
       "「공손혼」 공손도와 혼인 동맹"
     ],
+    "class": [
+      "제",
+      "관"
+    ],
     "origin_faction": "원수급"
   },
   {
@@ -7788,6 +9766,9 @@
     "disposition": null,
     "traits": [
       "「친위」 위와 우호 고정"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "원수급"
   },
@@ -7806,6 +9787,9 @@
     "traits": [
       "「부여」 후기 동이 변수"
     ],
+    "class": [
+      "제"
+    ],
     "origin_faction": "원수급"
   },
   {
@@ -7822,6 +9806,10 @@
     "disposition": null,
     "traits": [
       "「불내」 245년 위에 항복 — 동이 전선 축소"
+    ],
+    "class": [
+      "제",
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -7840,6 +9828,10 @@
     "traits": [
       "「이탈」 부여 복속 거부, 독립 행동"
     ],
+    "class": [
+      "강",
+      "파"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7856,6 +9848,10 @@
     "disposition": null,
     "traits": [
       "「대진상인」 서방 교역로 개통, 로마 외교 개시 조건 완화"
+    ],
+    "class": [
+      "참",
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -7874,6 +9870,9 @@
     "traits": [
       "「역경」 민심 회복 +30%, 사상 정책 개방"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7890,6 +9889,9 @@
     "disposition": null,
     "traits": [
       "「문사」 외교·행정 효율 +25%"
+    ],
+    "class": [
+      "참"
     ],
     "origin_faction": "③"
   },
@@ -7908,6 +9910,9 @@
     "traits": [
       "「사왕자」 이역 인물 등용 시 천명 감소 완화"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7924,6 +9929,9 @@
     "disposition": null,
     "traits": [
       "프롤로그 시기 배경 인물"
+    ],
+    "class": [
+      "참"
     ],
     "origin_faction": "③"
   },
@@ -7942,6 +9950,9 @@
     "traits": [
       "「의성」 무장 사망률 -40%, 부상 회복 가속"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7958,6 +9969,9 @@
     "disposition": null,
     "traits": [
       "「법전」 행정 효율 +30%"
+    ],
+    "class": [
+      "관"
     ],
     "origin_faction": "③"
   },
@@ -7976,6 +9990,9 @@
     "traits": [
       "「법제」 반란 발생률 -25%"
     ],
+    "class": [
+      "관"
+    ],
     "origin_faction": "③"
   },
   {
@@ -7992,6 +10009,9 @@
     "disposition": null,
     "traits": [
       "「사관」 세력의 행적이 기록됨 — 천명 변동 완화"
+    ],
+    "class": [
+      "참"
     ],
     "origin_faction": "③"
   },
@@ -8010,6 +10030,9 @@
     "traits": [
       "「일자」 사상 정책 시 민심 +30%"
     ],
+    "class": [
+      "참"
+    ],
     "origin_faction": "③"
   },
   {
@@ -8026,6 +10049,9 @@
     "disposition": null,
     "traits": [
       "「주해」 플로티노스 제자"
+    ],
+    "class": [
+      "참"
     ],
     "origin_faction": "③"
   },
@@ -8044,6 +10070,10 @@
     "traits": [
       "「호교」 종교 세력 회유"
     ],
+    "class": [
+      "참",
+      "관"
+    ],
     "origin_faction": "③"
   },
   {
@@ -8060,6 +10090,9 @@
     "disposition": null,
     "traits": [
       "「중론」 사상 정책 특화"
+    ],
+    "class": [
+      "참"
     ],
     "origin_faction": "③"
   }

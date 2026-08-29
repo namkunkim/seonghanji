@@ -37,6 +37,11 @@ const ZHOU_CMD: int = 96
 const CAO_STAT: Array[int] = [91, 91, 96, 72, 96]
 const ZHOU_STAT: Array[int] = [95, 95, 96, 72, 96]
 
+## §5.7 계략 판정의 전제. 정욱은 **참모형**이라 간파를 맡는다 (§5.2)
+const JEONGUK_WITS: int = 89
+## 표준 편성의 전자전함 비율(%p) — §5.3 의 「전자전함 5」가 여기서 나온다
+const EW_PCT: int = 10
+
 ## 문서값 (1.54배 시절 손 계산)
 const DOC_B: Array[int] = [108, 104, 94, 89, 88]      # 조조 · 분기 B
 const DOC_B_ALLY: Array[int] = [110, 84, 58, 39, 32]  # 손유 · 분기 B
@@ -63,6 +68,8 @@ func _init() -> void:
 		line += "%s %.3f  " % [Battle.PHASE_NAMES[p], plan_coeff(p) / 1000.0]
 	print(line)
 	print("")
+
+	_schemes()
 
 	# **E 는 양수로 넣는다** — §1.3 이 Δ사기 = −[L×k + D + E] 이므로
 	# 양수 E 가 사기를 깎는다. 2026-08-25: 처음에 음수로 넣어 사기가 올랐다.
@@ -128,3 +135,58 @@ func _branch(title: String, ally_event: int, cao_event: int,
 	print("  잔존   조조 %d척 · 손유 %d척 · 손유 최대 붕괴 확률 %d%%" % [
 		cao_n, ally_n, collapse_worst])
 	print("")
+
+
+## ---------------------------------------------------------------- 계략 (§5.3~§5.5)
+##
+## **§5.7 이 항별로 적어 둔 세 확률을 `core/combat/scheme.gd` 로 다시 굴린다.**
+##
+## 사기 곡선과 달리 **여기는 전력비에 둔감하다** — 계략 확률은 지력 대결과
+## 사기 구간에서 나오므로 V-37(2.20배) 이 이 값들을 건드리지 않는다.
+## 그래서 이 표는 대조가 아니라 **일치해야 하는 표**다.
+func _schemes() -> void:
+	# 조조 사기 108.2 = **고양 구간**. 그 사실 자체가 방어가 된다
+	var band := CAO_MORALE0 - 1              # ② 진입 시점 108
+	var jo: Array = ["「미주랑」 화공 계열 계략 +50%"]
+	var hg: Array = ["「고육계」 위장 항복 실행 가능"]
+
+	# 간파는 **참모형이 맡는다** (§5.2) — 조조(91)가 아니라 정욱(89)이다.
+	# 캠페인은 참모 편성이 없어 제독으로 대신한다. 그 어긋남을 여기 남긴다.
+	var detect := Scheme.detect_chance_milli(JEONGUK_WITS, ZHOU_STAT[1])
+	var detect_cao := Scheme.detect_chance_milli(CAO_STAT[1], ZHOU_STAT[1])
+	var fs := Scheme.success_chance_milli(Scheme.Kind.FALSE_SURRENDER, 1,
+		ZHOU_STAT[1], CAO_STAT[1], band, EW_PCT, 0, hg)
+	var fire := Scheme.success_chance_milli(Scheme.Kind.FIRE, 1,
+		ZHOU_STAT[1], CAO_STAT[1], band, EW_PCT,
+		Scheme.TERRAIN_DENSE_FIRE_MILLI, jo)
+
+	print("② 포화 — 계략 판정 (§5.3 · §5.4)")
+	print("  %-22s %10s %10s" % ["판정", "문서값", "코드"])
+	_line("간파 (정욱 89)", 17600, detect)
+	_line("위장 항복 (황개)", 37000, fs)
+	_line("화공 (주유 · 밀집)", 90000, fire)
+	print("")
+
+	var passed := Scheme.trigger_chance_milli(detect, fs)
+	print("네 갈래 (§5.7)")
+	print("  %-22s %10s %10s" % ["경로", "문서값", "코드"])
+	_line("A. 화공 성공", 27400, passed * fire / 100000)
+	_line("B. 정욱이 간파", 17600, detect)
+	_line("C. 위장 항복 실패", 51900, Scheme.trigger_chance_milli(detect, 100000 - fs))
+	_line("D. 화공만 실패", 3000, passed * (100000 - fire) / 100000)
+	print("")
+	print("  ⚠ 고양이 아니었다면 위장 항복은 %.1f%% 였다 — **잘 이끌린 함대는 속지 않는다**"
+		% [Scheme.success_chance_milli(Scheme.Kind.FALSE_SURRENDER, 1,
+			ZHOU_STAT[1], CAO_STAT[1], 90, EW_PCT, 0, hg) / 1000.0])
+	print("  ⚠ 간파를 제독(조조 91)으로 굴리면 %.1f%% 다 — 참모 편성이 붙기 전 캠페인의 값"
+		% [detect_cao / 1000.0])
+	print("")
+
+
+## **문서는 0.1%까지 적는다** (27.4%). 그 눈금에서 대조한다 —
+## 27.439% 를 「어긋남」으로 찍으면 표가 거짓말을 한다.
+func _line(label: String, doc_milli: int, code_milli: int) -> void:
+	var rounded := (code_milli + 50) / 100 * 100
+	var mark := "" if doc_milli == rounded else "   ← 어긋남"
+	print("  %-22s %9.1f%% %9.1f%%%s" % [
+		label, doc_milli / 1000.0, code_milli / 1000.0, mark])

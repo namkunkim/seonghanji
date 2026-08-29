@@ -48,12 +48,36 @@ func _init() -> void:
 	var total_revolt := 0
 	var total_broken := 0
 	var total_ticks := 0
+	# 계략 (combat.md §5) — 2026-08-28 배선
+	var sch_tried := 0
+	var sch_detected := 0
+	var sch_failed := 0
+	var sch_fired := 0
+	var sch_kind: Array[int] = [0, 0, 0, 0, 0, 0, 0]
+	var sch_corr_battles := 0
+	var sch_amb_corr := 0
+	var amb_att := 0
+	var amb_def := 0
+	var cast_by := {}
+	var landed_on := {}
+	var corr_att := {}
+	# 공세 국면 매복 피격률 (§10 검토 14) — **총량이 아니라 조조가 공격측으로
+	# 회랑에 들어갈 때만** 잰다. 총량 순피해로는 안 보이던 것이 여기서 보였다.
+	var focus_corr := 0
+	var focus_corr_amb := 0
+	var focus_noncorr := 0
+	var focus_noncorr_amb := 0
 	var t0 := Time.get_ticks_msec()
 
 	for run in RUNS:
 		var c := Campaign.scenario_03(data, 1000 + run)
 		c.hb_milli = Strategy.HB_STANDARD_MILLI
+		c.instrument_focus = "조조"
 		c.run_to_end()
+		focus_corr += c.focus_corridor_attacks
+		focus_corr_amb += c.focus_corridor_attacks_ambushed
+		focus_noncorr += c.focus_noncorridor_attacks
+		focus_noncorr_amb += c.focus_noncorridor_attacks_ambushed
 		var ws := c.world_state()
 		var ld := c.leader()
 		if c.historical_outcome():
@@ -79,6 +103,21 @@ func _init() -> void:
 		total_revolt += c.revolts
 		total_broken += c.alliances_broken
 		total_ticks += c.world.clock.tick
+		sch_tried += c.schemes_tried
+		sch_detected += c.schemes_detected
+		sch_failed += c.schemes_failed
+		sch_fired += c.schemes_fired
+		for k in 7:
+			sch_kind[k] += c.schemes_by_kind[k]
+		sch_corr_battles += c.corridor_battles
+		sch_amb_corr += c.ambush_in_corridor
+		amb_att += c.ambush_by_attacker
+		amb_def += c.ambush_by_defender
+		for fid in c.faction_ids:
+			cast_by[fid] = int(cast_by.get(fid, 0)) + int(c.schemes_cast_by.get(fid, 0))
+			landed_on[fid] = int(landed_on.get(fid, 0)) + int(c.schemes_landed_on.get(fid, 0))
+			corr_att[fid] = int(corr_att.get(fid, 0)) \
+				+ int(c.corridor_battles_as_attacker.get(fid, 0))
 
 	var elapsed := Time.get_ticks_msec() - t0
 	print("완주 %d회 · %.1f초 · 회당 %.0fms" % [RUNS, elapsed / 1000.0, float(elapsed) / RUNS])
@@ -113,6 +152,50 @@ func _init() -> void:
 	print("  회당 배후 기습 %.1f · 후방 반란 %.1f · 연합 해체 %.1f"
 		% [float(total_backstab) / RUNS, float(total_revolt) / RUNS,
 		   float(total_broken) / RUNS])
+	print("")
+
+	# **계략** (combat.md §5). 「성공률만 맞고 시전이 0회」를 막는 계수다.
+	print("계략 (combat.md §5 · 2026-08-28 배선)")
+	print("  회당 시전 %.1f · 간파 %.1f · 실패 %.1f · **성공 %.1f**  (성공률 %.1f%%)"
+		% [float(sch_tried) / RUNS, float(sch_detected) / RUNS,
+		   float(sch_failed) / RUNS, float(sch_fired) / RUNS,
+		   0.0 if sch_tried == 0 else sch_fired * 100.0 / sch_tried])
+	var sline := "  성공 내역  "
+	for k in 7:
+		if sch_kind[k] > 0:
+			sline += "%s %.1f  " % [Scheme.NAMES[k], float(sch_kind[k]) / RUNS]
+	sline += "  [교란·참수 보류 — Scheme.CAMPAIGN_ENABLED]"
+	print(sline)
+	# **회랑 출구 +30 이 매복을 최다로 만드는가** (§5.3). 근거 없이 말하지 않는다.
+	print("  회랑 전투 %.1f/%.1f 회 · 매복 성공 중 회랑분 %.1f (%.0f%%)"
+		% [float(sch_corr_battles) / RUNS, float(total_battles) / RUNS,
+		   float(sch_amb_corr) / RUNS,
+		   0.0 if sch_kind[Scheme.Kind.AMBUSH] == 0
+		   else sch_amb_corr * 100.0 / sch_kind[Scheme.Kind.AMBUSH]])
+	# **매복이 공수 중 어느 쪽으로 기우는가** (§10 검토 14). §5.3 의 지형 보정은
+	# 공격측·방어측에 대칭으로 걸린다 — 쏠림이 있다면 계수가 아니라
+	# 「누가 회랑에서 더 자주 싸우는가」에서 온다는 뜻이다.
+	print("  매복 성공 — 공격측 %.1f · 방어측 %.1f  (계수는 공수 대칭이다 · §5.3)"
+		% [float(amb_att) / RUNS, float(amb_def) / RUNS])
+	# ⚠ **부호를 거꾸로 읽기 쉽다.** 음수 = 성공시킴이 더 많음 = **그 세력이 이긴다.**
+	# 지력이 높은 세력이 음수로 나오는 것이 정상이다(2026-08-28 확인 · 검토 14).
+	print("  세력별 계략 순피해 (당함 − 성공시킴 · 회당 · 음수=우세) · 세력별 회랑 공격 횟수")
+	var fk: Array = cast_by.keys()
+	fk.sort()
+	for fid in fk:
+		var net := (int(landed_on.get(fid, 0)) - int(cast_by.get(fid, 0))) / float(RUNS)
+		print("    %-8s 순피해 %+6.1f   회랑 공격 %.1f회"
+			% [fid, net, float(corr_att.get(fid, 0)) / RUNS])
+	# **총량 순피해로는 안 보이던 것** — 조조가 계략전 전체는 이겨도(지력 우위),
+	# 자기 공세의 다수를 차지하는 회랑 돌파에서는 방어측 매복에 계속 걸린다.
+	# +30 → +15 로 낮춘 뒤(2026-08-28) 이 줄이 그 개선폭을 보여준다.
+	print("  조조 — 공격측일 때 방어측 매복 피격률 (§10 검토 14 · 총량이 아니라 국면)")
+	print("    회랑 공격  %.1f회/판 중 피격 %.1f회 (%.1f%%)" % [
+		float(focus_corr) / RUNS, float(focus_corr_amb) / RUNS,
+		0.0 if focus_corr == 0 else focus_corr_amb * 100.0 / focus_corr])
+	print("    비회랑 공격 %.1f회/판 중 피격 %.1f회 (%.1f%%)" % [
+		float(focus_noncorr) / RUNS, float(focus_noncorr_amb) / RUNS,
+		0.0 if focus_noncorr == 0 else focus_noncorr_amb * 100.0 / focus_noncorr])
 	print("")
 
 	print("내정 (S2.9 · AI 판단)")
@@ -211,5 +294,11 @@ func _init() -> void:
 			% [mode[0], mode[1] / 1000.0, h * 100.0 / RUNS, one * 100.0 / RUNS])
 	print("")
 	print("⚠ 미구현이라 판정하지 않은 것: 기능 이벤트 40종(미발동 0 지표) ·")
-	print("  천명 · 계략 · 외교/동맹 · 군주 인격 프로파일 · 참모 의견")
+	print("  군주 인격 프로파일 · 참모 의견")
+	print("✅ 함대 참모진(부제독·강습대장·공성대장·보급대장)이 2026-08-28 부로 배선됐다")
+	print("  (ship-specs.md §6.5). 「시전측 최고 지력」은 제독+참모 4인 중 최고,")
+	print("  「간파측 최고 지력」은 그중 참모형뿐이다 (combat.md §5.2·§5.4 · 검토 16 해소).")
+	print("  성향·특성은 명장 150 인분이 `characters.json` 에 채워졌다 (검토 17 해소).")
+	print("✅ 검토 14 — 회랑 출구 매복 보정 +30 → +15 (2026-08-28). 총량 순피해가 아니라")
+	print("  「조조가 회랑 공세를 걸 때 매복 피격률」로 정밀 재측정해 낮췄다 — 위 표 참조.")
 	quit(0)

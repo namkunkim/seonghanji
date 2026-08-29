@@ -81,6 +81,55 @@ var end_reason: String = ""
 var battles: int = 0
 var captures: int = 0
 
+## ---------------------------------------------------------------- 계략 진단 (§5)
+## **계략이 실제로 굴려지는가**를 재는 계수. 성공률만 맞고 시전이 0회면 배선이 아니다.
+var schemes_tried: int = 0
+var schemes_detected: int = 0
+var schemes_failed: int = 0
+var schemes_fired: int = 0
+var fires_landed: int = 0
+## 계략 종류별 성공 횟수. 인덱스는 `Scheme.Kind`
+var schemes_by_kind: Array[int] = [0, 0, 0, 0, 0, 0, 0]
+## 회랑에서 벌어진 전투 · 그중 매복이 성공한 횟수.
+## **「회랑 출구 보정이 매복을 최다로 만든다」가 참인지 재는 자리다** (§5.3).
+## +30 → +15 로 낮췄다 (2026-08-28, 검토 14) — `Scheme.TERRAIN_CORRIDOR_EXIT_AMBUSH_MILLI`
+var corridor_battles: int = 0
+var ambush_in_corridor: int = 0
+
+## **매복이 공격측 쪽으로 기우는가 방어측 쪽으로 기우는가** (combat.md §10 검토 14).
+## §5.3 은 지형 보정을 공수 대칭으로 준다 — 코드가 그런데도 결과가 한쪽으로
+## 쏠린다면, 원인은 계수가 아니라 「누가 회랑에서 더 자주 싸우는가」일 수 있다.
+var ambush_by_attacker: int = 0
+var ambush_by_defender: int = 0
+## 세력 → 그 세력이 계략을 **당한** 횟수 / **성공시킨** 횟수 (역할 무관)
+var schemes_landed_on: Dictionary = {}
+var schemes_cast_by: Dictionary = {}
+## 세력 → 그 세력이 **공격측으로** 회랑 전투를 치른 횟수
+var corridor_battles_as_attacker: Dictionary = {}
+
+## ⚠ **위 순피해는 부호를 거꾸로 읽기 쉽다.** 음수 = 성공시킴이 더 많음 = **그 세력이 이긴다.**
+## 지력·참모 품질이 높은 세력(조조·손권)이 음수로 나오는 것이 정상이다 — 처음에 이걸
+## 반대로 읽고 「거대 세력이 소세력에게 진다」는 틀린 결론을 냈었다(2026-08-28).
+##
+## **기각한 가설 둘** — 재현하지 않는다.
+##   ① 함대 선택 편향(그 전투에 나간 함대가 세력 평균보다 약한가) — 반박.
+##      조조 실측 +1.88(오히려 평균보다 강한 함대가 싸운다)
+##   ② 전투 진입 사기(자주 싸우는 세력이 사기가 낮아 계략에 더 잘 맞는가) — 반박.
+##      조조 78.7·손권 77.4로 오히려 소세력보다 높다(마등한수 59.1 등)
+## 진짜 원인은 **총량이 아니라 공세 국면**이었다 — 아래 `instrument_focus` 참조.
+
+## ---------------------------------------------------------------- 진단 — 공세 국면 매복 피격
+##
+## §10 검토 14의 원래 가설을 정밀 재측정하기 위한 임시 계측. **총량이 아니라
+## 「공격측으로 회랑에 들어갈 때 방어측 매복에 맞는 비율」만 본다.**
+## 특정 세력(`instrument_focus`)이 비었으면 아무 것도 세지 않는다 — 기본 100회
+## 캠페인 성능에 영향을 주지 않기 위해서다.
+var instrument_focus: String = ""
+var focus_corridor_attacks: int = 0
+var focus_corridor_attacks_ambushed: int = 0
+var focus_noncorridor_attacks: int = 0
+var focus_noncorridor_attacks_ambushed: int = 0
+
 
 ## ---------------------------------------------------------------- 셋업
 ## scenario-setup.md §4.1 의 배치를 그대로 싣는다.
@@ -208,6 +257,7 @@ func _spawn_fleet(owner: String, at: String) -> Fleet:
 	if f != null:
 		fl.morale = Mandate.initial_morale(f.mandate)
 	_assign_commander(fl)
+	_assign_staff(fl)
 	fleets.append(fl)
 	return fl
 
@@ -220,10 +270,10 @@ func _assign_commander(fl: Fleet) -> void:
 	var list: Array = roster.get(fl.owner, [])
 	if list.is_empty():
 		return
-	var used := {}
-	for other in fleets:
-		if other.owner == fl.owner and other.commander_id != "":
-			used[other.commander_id] = true
+	# **다른 함대의 참모진도 본다.** 부제독·임무대장 3 자리를 빼먹으면
+	# 이미 참모로 앉은 사람이 다음 함대의 제독으로 다시 뽑힌다 —
+	# `_assign_staff` 가 붙기 전까지는 제독만 있어 드러나지 않던 구멍이다.
+	var used := _used_roster_ids(fl.owner)
 	for c in list:                               # **통솔 내림차순 · 순서 고정**
 		var cid := String(c.get("id", ""))
 		if used.has(cid):
@@ -240,6 +290,124 @@ func _assign_commander(fl: Fleet) -> void:
 			+ (fl.command - 50) * 8 / 50 + (charm - 50) * 7 / 50,
 			0, Battle.MORALE_MAX)
 		return
+
+
+## 이미 어딘가에 앉은 사람 전부 — 제독 + 부제독 + 임무대장 3, 모든 함대를 통틀어.
+## **한 사람은 한 자리만 맡는다** (§6.4) — 제독과 참모진이 서로의 자리를 넘보지 않도록
+## `_assign_commander` · `_assign_staff` 가 이 하나를 함께 쓴다.
+func _used_roster_ids(owner: String) -> Dictionary:
+	var used := {}
+	for other in fleets:
+		if other.owner != owner:
+			continue
+		for cid in [other.commander_id, other.vice_id, other.assault_id,
+				other.siege_id, other.supply_id]:
+			if cid != "":
+				used[cid] = true
+	return used
+
+
+## 함대 참모진 — 부제독 · 강습대장 · 공성대장 · 보급대장 (ship-specs.md §6.5).
+##
+## 2026-08-28 신설. **제독 한 사람만 지력을 쥐고 있었다.** `combat.md` §5.3 의
+## 「시전측 최고 지력은 함대에 편성된 인물 중 최고값」과 §5.2 의 「참모형 인물이
+## 간파 판정을 갖는다」가 지금까지 코드에서 전부 제독으로 대신되고 있었다
+## (combat.md §10 검토 16).
+##
+## **순서가 결정이다.** §6.5 표의 등재 순서(부제독 → 강습 → 공성 → 보급)를
+## 그대로 우선순위로 쓴다 — 문서가 그 이상을 정하지 않았고, 표 순서가
+## 유일하게 문서에 있는 근거다. 한 사람은 한 자리만 맡는다(§6.4).
+func _assign_staff(fl: Fleet) -> void:
+	var list: Array = roster.get(fl.owner, [])
+	if list.is_empty():
+		return
+	var used := _used_roster_ids(fl.owner)
+	if fl.commander_id != "":                    # fl 자신은 아직 `fleets` 에 없다
+		used[fl.commander_id] = true
+
+	var vice := _best_staff(list, used, "통솔")
+	if not vice.is_empty():
+		used[String(vice["id"])] = true
+		fl.vice_id = String(vice["id"])
+		fl.vice_command = Roster.stat_of(vice, "통솔")
+
+	var assault := _best_staff(list, used, "무력")
+	if not assault.is_empty():
+		used[String(assault["id"])] = true
+		fl.assault_id = String(assault["id"])
+		fl.assault_might = Roster.stat_of(assault, "무력")
+
+	var siege := _best_staff(list, used, "지력")
+	if not siege.is_empty():
+		used[String(siege["id"])] = true
+		fl.siege_id = String(siege["id"])
+		fl.siege_wits = Roster.stat_of(siege, "지력")
+
+	var supply := _best_staff(list, used, "정치")
+	if not supply.is_empty():
+		used[String(supply["id"])] = true
+		fl.supply_id = String(supply["id"])
+		fl.supply_politics = Roster.stat_of(supply, "정치")
+
+	_refresh_scheme_staff(fl)
+
+
+## 아직 미배정인 인물 중 그 스탯이 가장 높은 사람. `roster` 는 통솔로만
+## 정렬되어 있으므로(§2.3 순회 순서 고정) 다른 스탯은 여기서 훑는다.
+## **동률이면 먼저 나온 쪽** — roster 자체가 통솔·ID 순으로 고정되어 있어
+## 순회 순서가 결정론을 해치지 않는다.
+func _best_staff(list: Array, used: Dictionary, stat: String) -> Dictionary:
+	var best := {}
+	var best_val := -1
+	for c in list:
+		var cid := String(c.get("id", ""))
+		if used.has(cid):
+			continue
+		var v := Roster.stat_of(c, stat)
+		if v > best_val:
+			best_val = v
+			best = c
+	return best
+
+
+## 계략이 실제로 참고하는 값을 갱신한다 (combat.md §5.3 · §5.4).
+## 임명이 하나 바뀔 때마다(제독·참모진 모두) 다시 부른다.
+func _refresh_scheme_staff(fl: Fleet) -> void:
+	var wits_max := fl.wits
+	var trait_union: Array = []
+	var det_wits := 0
+	var det_name := ""
+	var det_traits: Array = []
+	var wits80 := 0
+	for cid in [fl.commander_id, fl.vice_id, fl.assault_id, fl.siege_id, fl.supply_id]:
+		if cid == "":
+			continue
+		var c := _roster_char(fl.owner, cid)
+		if c.is_empty():
+			continue
+		var w := Roster.stat_of(c, "지력")
+		wits_max = maxi(wits_max, w)
+		var t = c.get("traits")
+		if t is Array:
+			for tr in t:
+				if not trait_union.has(tr):
+					trait_union.append(tr)
+		var classes = c.get("class")
+		var is_staff: bool = classes is Array and classes.has("참")
+		# **참모형만 간파 판정을 갖는다** (§5.2). 동률이면 먼저 훑은 자리
+		# (제독 → 부제독 → 강습 → 공성 → 보급) 가 이긴다 — 순서 고정
+		if is_staff and w > det_wits:
+			det_wits = w
+			det_name = String(c.get("name", ""))
+			det_traits = (t if t is Array else [])
+		if is_staff and w >= 80:                    # §5.3 「지력 80 이상 참모형 동승」
+			wits80 += 1
+	fl.staff_wits_max = wits_max
+	fl.staff_traits = trait_union
+	fl.detector_wits = det_wits
+	fl.detector_name = det_name
+	fl.detector_traits = det_traits
+	fl.staff_wits80_count = wits80
 
 
 ## ---------------------------------------------------------------- 진행
@@ -539,17 +707,88 @@ func _resolve_battle(att: Fleet, rid: String) -> void:
 		b_tech = Tech.power_milli(int(df.tech.get("화력", 0)),
 			int(af.tech.get("방어", 0)))
 
+	# ---------------------------------------------------------------- 계략
+	#
+	# **문서에 있는데 코드가 안 읽는다** — 일곱 번째다 (`core/combat/scheme.gd`).
+	# `combat.md` §5 는 2026-08-23 에 산식을 전부 확정했고,
+	# 2026-08-28 까지 코어에 계략이 한 줄도 없었다.
+	var sa := _scheme_side(att)
+	var sb := _scheme_side(defs[0])
+	var ew_pct: int = int(Economy.PLANS.get(att.plan,
+		Economy.PLANS[Economy.PLAN_DEFAULT])[3])
+	if corridor != "":
+		corridor_battles += 1
+		corridor_battles_as_attacker[att.owner] = \
+			int(corridor_battles_as_attacker.get(att.owner, 0)) + 1
+	if att.owner == instrument_focus and instrument_focus != "":
+		if corridor != "":
+			focus_corridor_attacks += 1
+		else:
+			focus_noncorridor_attacks += 1
+
 	for phase in 5:
-		var pa := Battle.combat_power_milli(att.ships, 1000, att.command, phase,
-			att.morale, 1000, a_tech, corridor)
-		var pb := Battle.combat_power_milli(def_ships, 1000, def_command, phase,
-			def_morale, 1000, b_tech, corridor)
-		var la := Battle.loss_rate_milli(phase, pa, pb)
-		var lb := Battle.loss_rate_milli(phase, pb, pa)
+		# 매복이 연 것은 **다음 페이즈**의 손실이다 (§5.5 「적 ② 손실률 ×1.5」).
+		# 걸어 둔 배수를 페이즈 머리에서 회수한다 — 같은 페이즈에 터지면 매복이 아니다.
+		var a_mult: int = int(sa["next_loss_mult"])
+		var b_mult: int = int(sb["next_loss_mult"])
+		sa["next_loss_mult"] = 1000
+		sb["next_loss_mult"] = 1000
+
+		# **공격측 → 방어측 순서를 고정한다** (V-31). 각 호출이 정확히 3회 소비한다.
+		var ra := _run_scheme(rng, phase, sa, sb, def_morale, ew_pct, corridor)
+		var rb := _run_scheme(rng, phase, sb, sa, att.morale, ew_pct, corridor)
+
+		# **역할별 · 세력별 진단** (§10 검토 14) — 매복 편중이 어느 쪽에서 오는지
+		if int(ra["kind"]) == Scheme.Kind.AMBUSH:
+			ambush_by_attacker += 1
+		if int(rb["kind"]) == Scheme.Kind.AMBUSH:
+			ambush_by_defender += 1
+		if int(ra["kind"]) >= 0:
+			schemes_cast_by[att.owner] = int(schemes_cast_by.get(att.owner, 0)) + 1
+			schemes_landed_on[defender] = int(schemes_landed_on.get(defender, 0)) + 1
+		if int(rb["kind"]) >= 0:
+			schemes_cast_by[defender] = int(schemes_cast_by.get(defender, 0)) + 1
+			schemes_landed_on[att.owner] = int(schemes_landed_on.get(att.owner, 0)) + 1
+			if att.owner == instrument_focus and instrument_focus != "" \
+					and int(rb["kind"]) == Scheme.Kind.AMBUSH:
+				if corridor != "":
+					focus_corridor_attacks_ambushed += 1
+				else:
+					focus_noncorridor_attacks_ambushed += 1
+
+		# 이간 — **보정의 60% 가 사라지는 것이지 스탯이 사라지는 것이 아니다** (§5.5)
+		var a_stat: int = (Scheme.discorded_stat(att.command)
+			if int(sa["discord"]) > 0 else att.command)
+		var b_stat: int = (Scheme.discorded_stat(def_command)
+			if int(sb["discord"]) > 0 else def_command)
+		# 유인 — 끌어낸 쪽이 회랑 전개 상한을 벗어난다 (§5.5)
+		var a_corr: String = "" if bool(sa["free_terrain"]) else corridor
+		var b_corr: String = "" if bool(sb["free_terrain"]) else corridor
+
+		var pa := Battle.combat_power_milli(att.ships, 1000, a_stat, phase,
+			att.morale, 1000, a_tech, a_corr)
+		var pb := Battle.combat_power_milli(def_ships, 1000, b_stat, phase,
+			def_morale, 1000, b_tech, b_corr)
+
+		# 계략의 손실은 **그 페이즈 손실률에 얹힌다** — 그리고 그 손실이 다시
+		# 사기를 깎는다 (§1.3 Δ = −[L×k + D + E]). `verify_chibi.gd` 와 같은 셈이다.
+		var la := (Battle.loss_rate_milli(phase, pa, pb) * a_mult / 1000
+			+ int(rb["loss_milli"]))
+		var lb := (Battle.loss_rate_milli(phase, pb, pa) * b_mult / 1000
+			+ int(ra["loss_milli"]))
+
+		# E 사건 가산 — 피격분과 시전 실패분. **연계는 중첩하지 않는다** (§1.3)
+		var ea := Scheme.linked_event_milli(int(rb["event"]), int(ra["self_event"]))
+		var eb := Scheme.linked_event_milli(int(ra["event"]), int(rb["self_event"]))
+
 		att.ships = maxi(0, att.ships - att.ships * la / 100000)
 		def_ships = maxi(0, def_ships - def_ships * lb / 100000)
-		att.morale = maxi(0, att.morale + Battle.morale_delta(phase, pa, pb))
-		def_morale = maxi(0, def_morale + Battle.morale_delta(phase, pb, pa))
+		att.morale = maxi(0, att.morale - (la * Battle.MORALE_K_MILLI[phase] / 1000
+			+ Battle.pressure_milli(pa, pb) + ea) / 1000)
+		def_morale = maxi(0, def_morale - (lb * Battle.MORALE_K_MILLI[phase] / 1000
+			+ Battle.pressure_milli(pb, pa) + eb) / 1000)
+		sa["discord"] = maxi(0, int(sa["discord"]) - 1)
+		sb["discord"] = maxi(0, int(sb["discord"]) - 1)
 		# 붕괴 — **패주가 정상적인 지는 방식이다** (§1)
 		#
 		# **훈련도가 여기 걸린다** (§1.4-b). 2026-08-25 배선 —
@@ -570,6 +809,148 @@ func _resolve_battle(att: Fleet, rid: String) -> void:
 		_capture(att.owner, rid)
 	elif att.ships <= 0:
 		fleets.erase(att)
+
+
+## ---------------------------------------------------------------- 계략 (combat.md §5)
+##
+## 한 측의 전투 1건 동안의 계략 상태.
+##
+## **함대 참모진 전원이 반영된다** (`ship-specs.md` §6.5 · 2026-08-28 배선).
+## §5.3 의 「시전측 최고 지력」은 제독·부제독·임무대장 3 중 최고값(`staff_wits_max`),
+## §5.4 의 「간파측 최고 지력」은 그중 **참모형뿐**이다(`detector_wits` · §5.2) —
+## 없으면 이 함대는 이번 전투에서 아무 계략도 간파하지 못한다.
+##
+## 적벽이 그 구분을 정확히 보여준다 — §5.7 은 간파를 조조(91)가 아니라
+## **정욱(89, 참모형)** 으로 굴렸다. `tests/verify_chibi.gd` 는 §5.7 대로
+## 정욱을 넣어 별도로 굴린다 — 그 시나리오는 참모 편성 이전의 손 계산이라
+## 이 함수와는 독립이다.
+func _scheme_side(fl: Fleet) -> Dictionary:
+	var c := _roster_char(fl.owner, fl.commander_id)
+	var d = c.get("disposition")
+	return {
+		"wits": fl.staff_wits_max,
+		"name": fl.commander_name,          # 성향은 여전히 제독(입안자) 것 — §5.6
+		"might": fl.might,
+		"traits": fl.staff_traits,          # 누가 타고 있든 특성은 산다 — 실행자 ≠ 입안자
+		"detect_wits": fl.detector_wits,
+		"detect_name": fl.detector_name,
+		"detect_traits": fl.detector_traits,
+		"staff80": fl.staff_wits80_count,
+		"disposition": (String(d) if d != null else ""),
+		"attempts": Scheme.attempts_allowed(fl.staff_wits80_count),
+		"detects": Scheme.DETECTS_PER_PERSON,
+		"linked": 0,                 # 위장 항복이 열어 둔 다음 계략 보정 (§5.5)
+		"discord": 0,                # 자기가 이간에 걸린 잔여 페이즈
+		"free_terrain": false,       # 유인에 성공해 지형을 벗어났는가
+		"next_loss_mult": 1000,      # 매복이 다음 페이즈에 얹는 배수
+	}
+
+
+func _roster_char(owner: String, cid: String) -> Dictionary:
+	if cid == "":
+		return {}
+	for c in roster.get(owner, []):
+		if String(c.get("id", "")) == cid:
+			return c
+	return {}
+
+
+## 지형 보정 (§5.3). 캠페인이 아는 지형은 회랑뿐이다 —
+## **기저 항로와 밀집 진형은 전장 모델이 아직 갖고 있지 않다.**
+static func _scheme_terrain_milli(kind: int, corridor: String) -> int:
+	if corridor == "":
+		return 0
+	if kind == Scheme.Kind.AMBUSH:
+		return Scheme.TERRAIN_CORRIDOR_EXIT_AMBUSH_MILLI
+	return 0
+
+
+## 한 측의 한 페이즈 계략. **난수를 정확히 3회 소비한다** (V-31 · §2.3 ③).
+##
+## 시전하지 않든, 간파당하든, 실패하든 소비량이 같다.
+## 그래야 계략을 한 줄 고쳤을 때 **그 뒤의 붕괴 판정이 어긋나지 않는다** —
+## 셋을 먼저 뽑고 나서 가지를 친다.
+func _run_scheme(rng: RngStream, phase: int, me: Dictionary, foe: Dictionary,
+		foe_morale: int, ew_pct: int, corridor: String) -> Dictionary:
+	var cands: Array[int] = []
+	var weights: Array[int] = []
+	var total := 0
+	for k in Scheme.CAMPAIGN_ENABLED:
+		if not Scheme.allows_phase(k, phase):
+			continue
+		# **위장 항복은 황개「고육계」 전용이다** (§5.1) — 전 게임 유일
+		if k == Scheme.Kind.FALSE_SURRENDER \
+				and not Scheme.has_trait(me["traits"], Scheme.TRAIT_GOYUK):
+			continue
+		var terr := _scheme_terrain_milli(k, corridor)
+		var met := terr > 0 or Scheme.trait_bonus_milli(k, phase, me["traits"]) > 0
+		# **가산 뒤 곱셈** (ai-design.md §7.4). 뒤집으면 조건 없는 계략에 성향이 걸린다
+		var w := Scheme.selection_weight_milli(met, String(me["disposition"]))
+		cands.append(k)
+		weights.append(w)
+		total += w
+
+	var pick := rng.below(maxi(total, 1))          # 소비 ① 선택
+	var detect_roll := rng.below(100000)           # 소비 ② 간파
+	var success_roll := rng.below(100000)          # 소비 ③ 성공
+
+	var out := {"kind": -1, "loss_milli": 0, "event": 0, "self_event": 0}
+	if cands.is_empty() or int(me["attempts"]) <= 0:
+		return out
+	me["attempts"] = int(me["attempts"]) - 1
+	schemes_tried += 1
+
+	var kind: int = cands[cands.size() - 1]
+	var acc := 0
+	for i in cands.size():
+		acc += weights[i]
+		if pick < acc:
+			kind = cands[i]
+			break
+
+	# **간파를 먼저 굴린다** (§5.4). 통과해야 성공률 판정으로 간다.
+	# **참모형이 없으면 이 함대는 애초에 간파할 수 없다** (§5.2) — `detect_wits` 가 0 이면
+	# 판정 자체를 걸지 않는다. 난수 소비는 이미 앞에서 고정 3회로 끝났다(V-31).
+	if int(foe["detects"]) > 0 and int(foe["detect_wits"]) > 0:
+		var dc := Scheme.detect_chance_milli(int(foe["detect_wits"]), int(me["wits"]),
+			foe["detect_traits"], String(foe["detect_name"]))
+		if detect_roll < dc:
+			foe["detects"] = int(foe["detects"]) - 1
+			out["self_event"] = Scheme.EVENT_DETECTED   # 계략 무효 + 시전 측 −15
+			schemes_detected += 1
+			return out
+
+	var sc := Scheme.success_chance_milli(kind, phase, int(me["wits"]),
+		int(foe["wits"]), foe_morale, ew_pct,
+		_scheme_terrain_milli(kind, corridor), me["traits"], int(me["staff80"]), false,
+		int(me["linked"]))
+	me["linked"] = 0
+	if success_roll >= sc:
+		out["self_event"] = Scheme.EVENT_FAILED         # 단순 실패 −5
+		schemes_failed += 1
+		return out
+
+	out["kind"] = kind
+	out["event"] = Scheme.EFFECT_EVENT[kind]
+	schemes_fired += 1
+	schemes_by_kind[kind] += 1
+	match kind:
+		Scheme.Kind.FIRE:
+			out["loss_milli"] = (Scheme.EFFECT_LOSS_MILLI[kind]
+				* Scheme.fire_damage_milli(false, corridor != "") / 1000)
+			fires_landed += 1
+		Scheme.Kind.AMBUSH:
+			if corridor != "":
+				ambush_in_corridor += 1
+			out["loss_milli"] = Scheme.EFFECT_LOSS_MILLI[kind]
+			foe["next_loss_mult"] = Scheme.AMBUSH_NEXT_LOSS_MILLI
+		Scheme.Kind.DISCORD:
+			foe["discord"] = Scheme.DISCORD_PHASES
+		Scheme.Kind.FALSE_SURRENDER:
+			me["linked"] = Scheme.LINKED_MILLI          # 이어지는 계략 +20
+		Scheme.Kind.LURE:
+			me["free_terrain"] = true
+	return out
 
 
 func _apply_losses(defs: Array[Fleet], remaining: int, morale: int) -> void:

@@ -41,12 +41,40 @@ var wits: int = 50
 ## 부제독 통솔. **절반이 제독의 지휘 한도에 가산된다** (§6.5).
 ## `ship-specs.md` 검토 4(「초과 사기 −30 이 과도한가」)를 페널티를 낮추지 않고 푼다
 var vice_command: int = 0
+var vice_id: String = ""
 
 ## 임무대장 — 강습(무력) · 공성(지력) · 보급(정치).
 ## **보급대장에서 정치가 처음으로 전장에 들어온다** (§6.5)
 var assault_might: int = 0
+var assault_id: String = ""
 var siege_wits: int = 0
+var siege_id: String = ""
 var supply_politics: int = 0
+var supply_id: String = ""
+
+## ---------------------------------------------------------------- 계략 배선 (combat.md §5.3 · §5.4)
+##
+## 2026-08-28 신설. **「시전측 최고 지력」은 제독 한 사람이 아니다** —
+## §5.3 은 「함대에 편성된 인물 중 최고값」이라고 적었고, 지금 함대는
+## 제독·부제독·임무대장 3 을 갖는다. 매 임명 뒤 `Campaign._refresh_scheme_staff`
+## 가 갱신한다.
+
+## 편성된 전원(제독 포함) 중 최고 지력 — 계략 시전측 값 (§5.3)
+var staff_wits_max: int = 50
+
+## 편성된 전원의 특성 합집합 — §5.3 특성 보정(주유「미주랑」 등)이 여기서 걸린다.
+## 실행자와 입안자가 다를 수 있으므로 **누가 타고 있든** 특성은 산다.
+var staff_traits: Array = []
+
+## **참모형(클래스 「참」)만 간파 판정을 갖는다** (§5.2). 그중 최고 지력 —
+## 없으면 0 이고, 그러면 이 함대는 이번 전투에서 아무 계략도 간파하지 못한다.
+var detector_wits: int = 0
+var detector_name: String = ""
+var detector_traits: Array = []
+
+## 지력 80 이상 참모형 동승 인원 — 시전 횟수·성공률 보정에 쓴다 (§5.3).
+## [상한은 `Scheme.staff_bonus_milli` · `Scheme.attempts_allowed` 쪽에서 건다]
+var staff_wits80_count: int = 0
 
 ## ---------------------------------------------------------------- 전대
 ##

@@ -346,10 +346,19 @@ def routes():
 
 
 # ================================================================ 인물
+CLASS_LETTERS = ('제', '강', '파', '참', '관')
+
+
+def parse_class(s):
+    """「제·참」 · 「제 참」 · 「제」 · 「—」 를 클래스 배열로. combat.md §5.2 의
+    참모형 판정(간파)과 §6.5 의 임무대장 배정이 여기서 나온다."""
+    return [ch for ch in CLASS_LETTERS if ch in s]
+
+
 def characters():
     meta = {i["name"]: i for i in IDS["characters"]["items"]}
     nmap = {nkey(k): k for k in meta}          # 정규 키 → 정본 이름
-    stats, disp, traits = {}, {}, {}
+    stats, disp, traits, cls = {}, {}, {}, {}
 
     def find(raw, tier=None):
         raw = raw.replace('**', '').replace('★', '').strip()
@@ -372,6 +381,45 @@ def characters():
         if nm in meta:
             stats[nm] = [int(num(c[i])) for i in range(2, 7)]
 
+    # 명장 150 특성·클래스 — generals-150.md 의 특성·클래스 A/B 칸 [2026-08-28]
+    #
+    # **읽지 않고 있었다.** combat.md §5.3 의 계략 특성 보정(주유「미주랑」 +50 ·
+    # 황개「고육계」 +25 · 곽가「귀모」 +30 · 제갈량「신기묘산」 +20)과 §5.4 의
+    # 간파 특성(진태「응변」 +35 · 순유「십이기책」 +30)이 전부 이 칸에 있는데
+    # traits 가 명장 150인 전원 빈 배열이었다 (combat.md §10 검토 17).
+    #
+    # **클래스도 함께 읽는다.** §5.2 의 「참모형 인물이 간파 판정을 갖는다」와
+    # ship-specs.md §6.5 임무대장(강습·공성·보급대장) 배정이 여기서 나온다 —
+    # 클래스 자체가 지금까지 어느 데이터에도 없었다.
+    #
+    # 표가 세 폭이다. **격 칸이 어디 있는지로 셋을 가른다.**
+    #   7칸: # | 인물 | 격 | 클래스 A | 클래스 B | 특성 | 천명                §1~6
+    #   8칸: # | 인물 | 시대 | 격 | 클래스 A | 클래스 B | 특성 | 천명         §7~8
+    #   8칸: 인물 | 소속·시대 | 격 | 클래스 A | 클래스 B | 특성 | 천명 | 근거   §12.3
+    #
+    # **격 칸이 곧 필터다** — 같은 폭의 다른 표(등용 조건·용병단)가 걸리지 않는다.
+    # 위에서 아래로 덮어쓰므로 §12~14 가 §1~6 을 이긴다 (CLAUDE.md 함정 1).
+    GRADES = ('특급', '1급', '2급')
+    for line in read('docs/02-characters/generals-150.md').split('\n'):
+        if not line.startswith('| '):
+            continue
+        c = cells(line)
+        if len(c) not in (7, 8):
+            continue
+        if clean(c[2]) in GRADES:
+            nm, ca, cb, tr = (c[1] if len(c) == 7 else c[0]), c[3], c[4], c[5]
+        elif len(c) == 8 and clean(c[3]) in GRADES:
+            nm, ca, cb, tr = c[1], c[4], c[5], c[6]   # 시대 열이 하나 더 있는 폭
+        else:
+            continue
+        key = find(nm, tier="명장")
+        if key and tr and clean(tr) not in ('', '—'):
+            traits[key] = tr
+        if key:
+            letters = parse_class(ca) + parse_class(cb)
+            if letters:
+                cls[key] = letters
+
     # 일반 249 — 표가 두 변종이다.
     #   11칸: 인물 | 시대 | 격 | 클래스 | 성향 | 통솔..매력 | 특성
     #   10칸: 인물 |      격 | 클래스 | 성향 | 통솔..매력 | 특성   ← 시대 열 없음
@@ -389,6 +437,9 @@ def characters():
             stats[key] = [int(num(c[i])) for i in range(off, off + 5)]
             disp[key] = clean(c[off - 1]) or None
             traits[key] = c[off + 5] if len(c) > off + 5 else None
+            letters = parse_class(c[off - 2])          # 클래스는 성향 바로 앞 칸
+            if letters:
+                cls[key] = letters
 
     # 이역 93 — | 인물 | 활동기 | 계층 | 클래스 | 통솔..매력 | 특성 |
     for line in read('docs/02-characters/foreign-90-stats.md').split('\n'):
@@ -410,6 +461,36 @@ def characters():
         if key:
             stats[key] = [int(num(c[i])) for i in range(4, 9)]
             traits[key] = c[9] or None
+            letters = parse_class(c[3])
+            if letters:
+                cls[key] = letters
+
+    # 명장 150 성향 — dispositions.md §4.1~4.4 [2026-08-28]
+    #
+    # **_gaps.txt 가 「표로 열거되어 있지 않다」고 적어 온 것이 사실이 아니었다.**
+    # §4.1~4.4 가 세력별로 성향 → 인물 목록을 표로 적고 있다. 다만 **2칸 표**라
+    # 아래 §6.1 의 3칸 파서에 걸리지 않았을 뿐이다 (combat.md §10 검토 17).
+    #
+    #     | **명사** | 주유 · 장소 · 노숙 · 육손 · 육항 · 오국태 · 대교 · 소교 |
+    #
+    # 「(군주)」 행은 c[0] 가 성향 5종이 아니라 저절로 빠진다.
+    # §5 분포 검증표는 3칸이라 폭에서 갈린다.
+    for line in read('docs/02-characters/dispositions.md').split('\n'):
+        if not line.startswith('| '):
+            continue
+        c = cells(line)
+        if len(c) != 2:
+            continue
+        d = clean(c[0])
+        if d not in ('절의', '명사', '실무', '야심', '무뢰'):
+            continue
+        # 괄호 **안**의 가운뎃점으로 쪼개면 안 된다 —
+        # 「**공융**(한실 · 극)」이 「공융(한실」과 「극)」으로 갈렸다.
+        row = re.sub(r'\(([^)]*)\)', lambda m: '(%s)' % m.group(1).replace('·', '\x00'), c[1])
+        for nm in re.split(r'\s*·\s*', row):
+            k = find(re.sub(r'\[[^\]]*\]', '', nm.replace('\x00', '·')), tier="명장")
+            if k:
+                disp[k] = d
 
     # 명장 성향 예외 22인 (dispositions.md §6.1)
     for line in read('docs/02-characters/dispositions.md').split('\n'):
@@ -426,24 +507,33 @@ def characters():
             if k:
                 disp[k] = d
 
-    out, nostat, nodisp = [], [], []
+    out, nostat, nodisp, nocls = [], [], [], []
     for nm, m in meta.items():
         st = stats.get(nm)
         if not st:
             nostat.append(nm)
         if not disp.get(nm):
             nodisp.append(nm)
+        if not cls.get(nm):
+            nocls.append(nm)
         out.append({"id": m["id"], "name": nm, "tier": m["tier"],
                     "stats": (dict(zip(["통솔", "무력", "지력", "정치", "매력"], st))
                               if st else None),
                     "disposition": disp.get(nm),
                     "traits": [traits[nm]] if traits.get(nm) else [],
+                    "class": cls.get(nm, []),
                     "origin_faction": m.get("origin_faction")})
     if nostat:
         GAPS.append("characters: 스탯 미확보 %d명 (예: %s)" % (len(nostat), nostat[:6]))
     if nodisp:
-        GAPS.append("characters: 성향 미확보 %d명 — 명장 성향은 dispositions.md 의 "
-                    "규칙 배정이며 표로 열거되어 있지 않다 (예외 22인만 표에 있다)" % len(nodisp))
+        GAPS.append("characters: 성향 미확보 %d명 — 이역 계층은 성향 배정 자체가 "
+                    "설계에 없다 (dispositions.md 는 명장 150 · 일반 249 만 다룬다). "
+                    "명장·일반이 섞여 있으면 그것은 결손이다 (예: %s)"
+                    % (len(nodisp), nodisp[:6]))
+    if nocls:
+        GAPS.append("characters: 클래스 미확보 %d명 (예: %s) — 명장·일반·이역 "
+                    "세 표 모두 클래스 칸을 두므로 남아 있으면 표기 결손이다"
+                    % (len(nocls), nocls[:6]))
     return out
 
 

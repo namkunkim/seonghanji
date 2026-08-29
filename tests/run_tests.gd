@@ -13,7 +13,7 @@ var _fail := 0
 ## GDScript 는 없는 함수를 부르면 오류만 찍고 시험은 「실패 0」으로 끝난다 —
 ## 2026-08-24 에 battle.gd 가 컴파일에 실패하며 시험 26개가 소리 없이 빠졌다.
 var _sections := 0
-const EXPECTED_SECTIONS := 32
+const EXPECTED_SECTIONS := 33
 
 
 func _section(name: String) -> void:
@@ -72,6 +72,7 @@ func _init() -> void:
 	_test_tech()
 	_test_domestic_commands()
 	_test_game_loop()
+	_test_schemes()
 	print("")
 	if _sections != EXPECTED_SECTIONS:
 		_fail += 1
@@ -1244,3 +1245,234 @@ func _test_game_loop() -> void:
 	var z := Campaign.scenario_03(d, 3)
 	z.ended = true
 	_eq(z.advance(GameClock.REAL_MS_PER_TICK * 100), 0, "끝난 판은 안 움직인다")
+
+
+## ---------------------------------------------------------------- 33
+##
+## 계략 — §5.3~§5.6 이 코드에서 같은 숫자를 낸다.
+##
+## **문서에 검산이 두 벌 있다** (§5.7 적벽 · §5.5-b 이릉). 둘 다 항별로 적혀 있어
+## 코드가 재현해야 할 값이 명시적이다 — 여기서 그 둘을 대조한다.
+func _test_schemes() -> void:
+	_section("33. 계략 — §5.3~§5.6 · 적벽과 이릉 검산")
+
+	# ---- §5.7 적벽. 조조 지력 91 · 주유 95 · 정욱 89. 조조 사기 108.2 = 고양
+	var jo_traits: Array = ["「미주랑」 화공 계열 계략 +50%"]
+	var hwang: Array = ["「고육계」 위장 항복 실행 가능"]
+	var CAO := 91
+	var ZHOU := 95
+	var CAO_MORALE := 108
+
+	# **정욱은 17.6%였다.** 의심한 쪽이 옳았고, 그래도 낮은 쪽이었다
+	_eq(Scheme.detect_chance_milli(89, ZHOU), 17600, "간파 — 정욱 17.6%")
+
+	# 위장 항복 = 15 + (95−91)×0.5 + 전자전함 5 + 「고육계」 25 − 고양 10
+	var fs := Scheme.success_chance_milli(Scheme.Kind.FALSE_SURRENDER, 1,
+		ZHOU, CAO, CAO_MORALE, 10, 0, hwang)
+	_eq(fs, 37000, "위장 항복 37.0%")
+
+	# 화공 = 25 + 2 + 5 + 밀집 20 + 「미주랑」 50 − 10 = 92 → 상한 90
+	var fire := Scheme.success_chance_milli(Scheme.Kind.FIRE, 1,
+		ZHOU, CAO, CAO_MORALE, 10, Scheme.TERRAIN_DENSE_FIRE_MILLI, jo_traits)
+	_eq(fire, 90000, "화공 90% (상한)")
+
+	# **분기 A 27.4%** — (1 − 간파) × 위장 항복 × 화공
+	var pass_detect := Scheme.trigger_chance_milli(17600, fs)
+	_eq(pass_detect * fire / 100000, 27439, "분기 A 27.4%")
+	_eq(Scheme.trigger_chance_milli(17600, 100000 - fs), 51912, "분기 C 51.9%")
+	_eq(pass_detect * (100000 - fire) / 100000, 3048, "분기 D 3.0%")
+
+	# **고양이 방어가 된다** — 조조가 고양이 아니었다면 47%였다
+	var fs_normal := Scheme.success_chance_milli(Scheme.Kind.FALSE_SURRENDER, 1,
+		ZHOU, CAO, 90, 10, 0, hwang)
+	_eq(fs_normal, 47000, "정상 구간이면 47% — 고양이 10 을 깎았다")
+
+	# ---- §5.3 사기 구간 — ±10 대칭, 붕괴 위험에서만 +20
+	_eq(Scheme.morale_band_milli(125), -10000, "고양 −10")
+	_eq(Scheme.morale_band_milli(101), -10000, "고양 하한 101")
+	_eq(Scheme.morale_band_milli(100), 0, "정상 상한 100")
+	_eq(Scheme.morale_band_milli(70), 0, "정상 하한 70")
+	_eq(Scheme.morale_band_milli(69), 10000, "동요 +10")
+	_eq(Scheme.morale_band_milli(39), 20000, "붕괴 위험 +20")
+
+	# ---- §5.3 전자전함 — 교란만 ×1.0 이고 상한이 두 배다
+	_eq(Scheme.ew_bonus_milli(Scheme.Kind.FIRE, 10), 5000, "전자 10% → 화공 +5")
+	_eq(Scheme.ew_bonus_milli(Scheme.Kind.FIRE, 60), 20000, "화공 상한 +20")
+	_eq(Scheme.ew_bonus_milli(Scheme.Kind.JAM, 10), 10000, "전자 10% → 교란 +10")
+	_eq(Scheme.ew_bonus_milli(Scheme.Kind.JAM, 60), 40000, "교란 상한 +40")
+
+	# ---- §5.3 · §5.4 범위. **계략은 약자의 무기다** — 봉쇄되어서도 안 된다
+	_ok(Scheme.success_chance_milli(Scheme.Kind.FALSE_SURRENDER, 1, 10, 100, 110)
+		== 5000, "성공률 하한 5%")
+	_eq(Scheme.detect_chance_milli(100, 10, ["「응변」"]), 60000, "간파 상한 60%")
+	_eq(Scheme.detect_chance_milli(10, 100), 5000, "간파 하한 5%")
+
+	# ---- §5.4 특성. **곽가「귀모」는 시전과 간파 양쪽에 있다**
+	_eq(Scheme.detect_trait_bonus_milli(["「응변」 적 계략 간파율 +35%"]), 35000,
+		"진태 응변 +35")
+	_eq(Scheme.detect_trait_bonus_milli([], "가후"), 25000, "가후는 이름으로 건다")
+	_eq(Scheme.trait_bonus_milli(Scheme.Kind.FIRE, 0, ["「귀모」"]), 30000,
+		"귀모 — ① 계략 +30")
+	_eq(Scheme.trait_bonus_milli(Scheme.Kind.FIRE, 1, ["「귀모」"]), 0,
+		"귀모는 ① 에서만")
+	_eq(Scheme.trait_bonus_milli(Scheme.Kind.LURE, 2, ["「신기묘산」"]), 20000,
+		"신기묘산 — 전 계략 +20")
+
+	# ---- §5.5-b 이릉. 육손 96 · 주연 74 · 유비 76 · 마량 88. 원정군은 고양
+	var LIU := 76
+	var MA := 88
+	for row in [[96, 0, 30000, 16800, 24960], [96, 6, 55000, 16800, 45760],
+				[74, 0, 19000, 25600, 14136], [74, 6, 44000, 25600, 32736]]:
+		var d_wits: int = int(row[0])
+		var sprawl: int = int(row[1])
+		var sc := Scheme.success_chance_milli(Scheme.Kind.FIRE, 1, d_wits, LIU,
+			110, 10, Scheme.SPRAWL_SUCCESS_MILLI[Scheme.sprawl_band(sprawl)])
+		var dc := Scheme.detect_chance_milli(MA, d_wits)
+		_eq(sc, int(row[2]), "이릉 화공 성공률 (방어 %d · 연영도 %d)" % [d_wits, sprawl])
+		_eq(dc, int(row[3]), "이릉 간파 (방어 %d)" % d_wits)
+		_eq(Scheme.trigger_chance_milli(dc, sc), int(row[4]),
+			"이릉 발동 확률 (방어 %d · 연영도 %d)" % [d_wits, sprawl])
+
+	# **육손이 방어하면 반년이 석 달 만에 온다** — 「인내」가 시계를 두 배로 돌린다
+	_eq(Scheme.sprawl_gain_milli(Scheme.SPRAWL_YUKSON_MILLI, 1000, 0), 2000,
+		"육손 방어 — 월 +2.0")
+	_eq(Scheme.sprawl_gain_milli(Scheme.SPRAWL_STANDARD_MILLI, 1000, 0), 1000,
+		"표준 방어 — 월 +1.0")
+	_eq(Scheme.sprawl_gain_milli(Scheme.SPRAWL_YUKSON_MILLI,
+		Scheme.SPRAWL_CAUTIOUS_MILLI, 0), 1000, "「신중」이 절반으로 늦춘다")
+	# **협도 너머를 확보하면 시계가 멈춘다** — 빨리 이기거나, 타거나
+	_eq(Scheme.sprawl_gain_milli(Scheme.SPRAWL_YUKSON_MILLI, 1000, 2), 0,
+		"확보 권역 2 → 증가 0")
+
+	# ×3.0 은 이릉협도만 — 다른 대회랑은 ×2.0 이 상한이다
+	_eq(Scheme.fire_damage_milli(false, true, 6, true), 3000, "연영도 6+ · 협도 ×3.0")
+	_eq(Scheme.fire_damage_milli(false, true, 6, false), 2000, "일반 대회랑 상한 ×2.0")
+	_eq(Scheme.fire_damage_milli(false, true, 2, true), 1200, "연영도 0~2 ×1.2")
+	_eq(Scheme.fire_damage_milli(false, true, 3, true), 2000, "연영도 3~5 ×2.0")
+	_eq(Scheme.fire_damage_milli(true, false), 1500, "밀집 진형 ×1.5")
+
+	# ---- §1.3 연계는 중첩하지 않는다. 40 + 12.5 = 52.5
+	_eq(Scheme.linked_event_milli(40, 25), 52500, "위장 항복 + 화공 = 52.5")
+	_eq(Scheme.linked_event_milli(25, 0), 25000, "한쪽뿐이면 그대로")
+
+	# ---- §5.5 이간. **보정이 사라지는 것이지 스탯이 사라지는 것이 아니다**
+	_eq(Scheme.discorded_stat(96), 68, "통솔 96 → 68 (보정의 40%만 남는다)")
+	_eq(Scheme.discorded_stat(50), 50, "50 은 「보정 없음」이라 움직이지 않는다")
+
+	# ---- §5.3 시전 횟수 3 + 참모 [상한 5]
+	_eq(Scheme.attempts_allowed(0), 3, "기본 3회")
+	_eq(Scheme.attempts_allowed(4), 5, "상한 5회")
+	_eq(Scheme.staff_bonus_milli(4), 15000, "참모 동승 상한 +15")
+
+	# ---- §5.6 성향 — 가산 뒤 곱셈 (ai-design.md §7.4)
+	_eq(Scheme.selection_weight_milli(true, "절의"), 540, "절의 조건 충족 0.54")
+	_eq(Scheme.selection_weight_milli(true, "명사"), 810, "명사 0.81 — 주유")
+	_eq(Scheme.selection_weight_milli(true, "실무"), 900, "실무 0.90")
+	_eq(Scheme.selection_weight_milli(true, "무뢰"), 1080, "무뢰 1.08")
+	_eq(Scheme.selection_weight_milli(true, "야심"), 1170, "야심 1.17")
+	# **순서를 뒤집으면 안 된다** — 곱셈이 먼저면 조건 없는 계략에 성향이 걸린다
+	_eq(Scheme.selection_weight_milli(false, "야심"), 650, "조건 미충족이면 0.65")
+	# 플레이어 직접 지시에는 성향이 걸리지 않는다 — 관우도 위장 항복을 시전한다
+	_eq(Scheme.selection_weight_milli(true, "절의", false), 900, "직접 지시 — 미적용")
+	_eq(Scheme.disposition_milli(""), 1000, "성향 미상은 보정 없음")
+
+	# ---- §5.1 페이즈 · 전용 조건
+	_ok(Scheme.allows_phase(Scheme.Kind.FIRE, 1), "화공은 ② 포화")
+	_ok(not Scheme.allows_phase(Scheme.Kind.FIRE, 2), "화공은 ③ 에 없다")
+	_ok(Scheme.allows_phase(Scheme.Kind.DECAPITATE, 3), "참수는 ④ 강습")
+	_ok(not Scheme.CAMPAIGN_ENABLED.has(Scheme.Kind.JAM),
+		"교란은 지시 체계가 없어 캠페인 보류")
+	_ok(not Scheme.CAMPAIGN_ENABLED.has(Scheme.Kind.DECAPITATE),
+		"참수는 §6.2-b 호위 판정 대기")
+
+	# ---- 배선. **성공률만 맞고 시전이 0회면 배선이 아니다**
+	var d := GameData.load_all()
+	var c := Campaign.scenario_03(d, 4242)
+	c.run_to_end()
+	_ok(c.battles > 0, "전투가 일어났다")
+	_ok(c.schemes_tried > 0, "계략이 실제로 굴려졌다")
+	_ok(c.schemes_detected > 0, "간파가 일어났다")
+	_ok(c.schemes_fired > 0, "계략이 성공한 적이 있다")
+	_ok(c.schemes_tried == c.schemes_detected + c.schemes_failed + c.schemes_fired,
+		"시전 = 간파 + 실패 + 성공")
+	_eq(c.schemes_by_kind[Scheme.Kind.JAM], 0, "교란은 시전되지 않는다")
+	_eq(c.schemes_by_kind[Scheme.Kind.DECAPITATE], 0, "참수는 시전되지 않는다")
+
+	# **소비 순서가 고정이다** (V-31) — 같은 시드는 같은 판을 낳는다
+	var c2 := Campaign.scenario_03(d, 4242)
+	c2.run_to_end()
+	_eq(c2.schemes_tried, c.schemes_tried, "같은 시드 — 시전 수가 같다")
+	_eq(c2.schemes_fired, c.schemes_fired, "같은 시드 — 성공 수가 같다")
+	_eq(c2.battles, c.battles, "같은 시드 — 전투 수가 같다")
+
+	# ---- 함대 참모진 배선 (ship-specs.md §6.4·§6.5 · combat.md §10 검토 16)
+	#
+	# **제독 한 사람이 아니라 함대 전체가 계략을 굴린다.**
+	# 부제독·강습대장·공성대장·보급대장이 실제로 임명되고,
+	# 「한 사람은 한 자리만」(§6.4)이 함대를 넘어서도 지켜지는지 확인한다.
+	var s := Campaign.scenario_03(d, 5)
+	var seen := {}
+	var any_vice := false
+	var any_detector := false
+	for fl in s.fleets:
+		for cid in [fl.commander_id, fl.vice_id, fl.assault_id, fl.siege_id, fl.supply_id]:
+			if cid == "":
+				continue
+			_ok(not seen.has(cid), "인물 %s 가 두 자리를 겸하지 않는다" % cid)
+			seen[cid] = true
+		if fl.vice_id != "":
+			any_vice = true
+			_ok(fl.vice_id != fl.commander_id, "부제독은 제독과 다른 사람이다")
+		_ok(fl.staff_wits_max >= fl.wits, "시전측 최고 지력은 제독 지력 이상이다")
+		if fl.detector_wits > 0:
+			any_detector = true
+			_ok(fl.staff_wits_max >= fl.detector_wits,
+				"간파측 지력은 시전측 최고를 넘지 않는다")
+	_ok(any_vice, "적어도 한 함대는 부제독을 갖는다")
+	_ok(any_detector, "적어도 한 함대는 참모형 간파자를 갖는다")
+
+	# ---- 데이터가 성향·특성을 싣고 있는가 (combat.md §10 검토 17)
+	#
+	# **산식이 맞아도 데이터가 비어 있으면 계략은 중립값으로 돈다.**
+	# 2026-08-28 이전까지 명장 150인이 `disposition: null` · `traits: []` 이었다 —
+	# 주유「미주랑」도 황개「고육계」도 캠페인에서는 없는 것과 같았다.
+	var no_trait := 0
+	var no_disp: Array[String] = []
+	var cids: Array = d.characters.keys()
+	cids.sort()                                  # 순회 순서 고정 (§2.3 ④)
+	for cid in cids:
+		var ch: Dictionary = d.characters[cid]
+		var tier := String(ch.get("tier", ""))
+		if tier == "명장":
+			if not (ch.get("traits") is Array and (ch["traits"] as Array).size() > 0):
+				no_trait += 1
+			if ch.get("disposition") == null:
+				no_disp.append(String(ch.get("name", "")))
+	_eq(no_trait, 0, "명장 150인이 모두 특성을 갖는다")
+	# **군주는 인물 성향이 아니라 군주 성향을 갖는다** (dispositions.md §2 · §4)
+	_eq(no_disp.size(), 7, "성향이 없는 명장은 군주 7인뿐")
+	_ok(no_disp.has("조조") and no_disp.has("유비"), "그 7인이 군주다")
+
+	var juyu := _find_char(d, "주유")
+	_eq(String(juyu.get("disposition", "")), "명사", "주유는 명사 — 계략은 그의 것이다")
+	_ok(Scheme.has_trait(juyu.get("traits", []), Scheme.TRAIT_MIJURANG),
+		"주유가 「미주랑」을 갖는다")
+	var hwanggae := _find_char(d, "황개")
+	_eq(String(hwanggae.get("disposition", "")), "절의", "황개는 절의 — 배를 몬 쪽이다")
+	_ok(Scheme.has_trait(hwanggae.get("traits", []), Scheme.TRAIT_GOYUK),
+		"황개가 「고육계」를 갖는다")
+	_ok(Scheme.detect_trait_bonus_milli(_find_char(d, "진태").get("traits", []))
+		== 35000, "진태 「응변」이 데이터에서 간파 +35 로 걸린다")
+	_ok(Scheme.trait_bonus_milli(Scheme.Kind.FIRE, 1,
+		_find_char(d, "제갈량").get("traits", [])) == 20000,
+		"제갈량 「신기묘산」이 데이터에서 전 계략 +20 으로 걸린다")
+
+
+func _find_char(d: GameData, name: String) -> Dictionary:
+	var cids: Array = d.characters.keys()
+	cids.sort()
+	for cid in cids:
+		var ch: Dictionary = d.characters[cid]
+		if String(ch.get("name", "")) == name and String(ch.get("tier", "")) == "명장":
+			return ch
+	return {}

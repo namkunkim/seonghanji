@@ -83,6 +83,19 @@
           "type": "string"
         }
       },
+      "class": {
+        "type": "array",
+        "description": "제독형·강습형·파일럿형·참모형·관료형 (officers-256.md §0.1 · ship-specs.md §6.5). 배열인 이유는 클래스 A/B 이중 배정이 있기 때문이다(generals-150.md). 2026-08-28 신설 — combat.md §5.2 참모형 간파 판정의 근거",
+        "items": {
+          "enum": [
+            "제",
+            "강",
+            "파",
+            "참",
+            "관"
+          ]
+        }
+      },
       "era": {
         "enum": [
           "전기",
