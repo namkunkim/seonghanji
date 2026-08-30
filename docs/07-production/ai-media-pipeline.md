@@ -382,6 +382,48 @@ man in his early thirties, slight build, topknot and thin beard, ink-stained fin
 ```
 (마지막 줄이 개별부. 시드 = `sha256("seonghanji:portrait:v1:" + 해당 CHR-id)[:8]`.)
 
+**아래 셋은 `data/portrait-map.json` 의 실제 행이다** — 개별부(§4.8)가 세 가지 다른
+방식으로 채워지는 것을 보인다. 부정 프롬프트는 모두 §4.2-3 그대로.
+
+**① `ART-C032` 하후돈 · 제독형 × 절의 · 위** — 개별부 = 세력 악센트 + **trait 외형 표지**
+```
+digital painting portrait, single character, upper body, 4:5 vertical, head-and-shoulders
+framing, eyes at 30% from top, flat single-color background #2E3A4C, soft circular vignette,
+no scenery, muted palette, controlled brushwork, semi-realistic, even key light from
+front-left, sharp focus on face, no text, no watermark, no border,
+wearing a structured high-collar fleet dress uniform with rank insignia and a long coat,
+squared to camera, one hand resting on a table edge, bearing of command,
+set jaw, firm closed mouth, unwavering frontal stare,
+cool slate-grey uniform piping, black eye patch over one eye
+```
+개별부(마지막 줄): 위 = `cool slate-grey piping` + 「독안」 → `black eye patch`(§4.8-4).
+연령 신호 없음 · 기조어 없음(절의 성향부로 충분). 시드 `3191860023`.
+
+**② `ART-C064` 감녕 · 강습형 × 무뢰 · 오** — 개별부 = 세력 악센트뿐 (**최소 — 흔한 경우**)
+```
+… 고정부 … , flat single-color background #43262A , … ,
+wearing matte armor plating over a padded underlayer, torso turned three-quarters,
+pauldron catching the light, a close-combat blade sheathed at the shoulder,
+gaze angled off past the viewer, faint smirk, careless ease in the shoulders,
+teal armor piping
+```
+「금범적」의 방울·비단 통념은 데이터가 아니므로 **넣지 않는다**(§4.8 통념 처리).
+대다수 명장의 개별부가 이 두께다 — 얼굴은 시드가 나른다. 시드 `2310640535`.
+
+**③ `ART-C079` 장소 · 관료형 × 명사 · 오** — 개별부 = 세력 악센트 + **기조어**
+```
+… 고정부 … , flat single-color background #3B352B , … ,
+wearing a plain administrator's robe with a single clasp, hands folded, upright and
+composed, no held objects,
+dignified level gaze meeting the viewer, chin neither raised nor lowered, formal reserve,
+teal robe piping, grave and principled
+```
+개별부: 오 = `teal piping` + 「중신」 → `grave and principled`(§4.8-3 원칙·강직 계열).
+관료형이라 소품 줄은 「no held objects」로 이미 비어 있다. 시드 `342462251`.
+
+> **셋 다 통념 플래그 12명(§4.8)에 없다.** 관우·조조류였다면 1차 프롬프트에
+> 통념을 넣지 않고 뽑은 뒤 §4.6-4 에서 판정한다.
+
 ### 4.4 공용 11종 매핑 (V-43)
 
 | ID | 계층 | 성향 | 담당 |
