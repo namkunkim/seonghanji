@@ -44,6 +44,11 @@ var _from_list: bool = false
 # ---- SC-F1 이동 명령 작업 상태 (§4.3)
 var _move_dest: String = ""
 
+# ---- SC-F1 분할 / 합류 작업 상태 (§4.3 · §13)
+var _split_squadrons: int = 1
+var _split_commander: String = ""      # 분견대에 곧바로 앉힐 제독 char id (선택)
+var _merge_target: int = -1            # 합류할 상대 함대 id
+
 # ---- SC-F2 작업 상태 (발행 전까지는 세계에 없다 · 조항 ③)
 var _plan: String = ""
 var _axis: String = ""                  # "" | "화력" | "돌파" | "지속"
@@ -180,6 +185,20 @@ func open_move(fleet_id: int, from_list: bool) -> void:
 	refresh()
 
 
+func open_reorg(fleet_id: int, from_list: bool) -> void:
+	_mode = "reorg"
+	_fleet_id = fleet_id
+	_from_list = from_list
+	_split_squadrons = 1
+	_split_commander = ""
+	_merge_target = -1
+	var fl := _fleet()
+	if fl != null:
+		_faction_id = fl.owner
+	visible = true
+	refresh()
+
+
 func close_screen() -> void:
 	visible = false
 	_mode = ""
@@ -217,6 +236,8 @@ func refresh() -> void:
 			_draw_appoint(fl)
 		"move":
 			_draw_move(fl)
+		"reorg":
+			_draw_reorg(fl)
 
 
 # ================================================================ SC-F1 함대 목록
@@ -301,11 +322,13 @@ func _fleet_row(fl: Fleet) -> PanelContainer:
 	# 버튼은 자기 클릭을 삼킨다 — 행 전체 탭(gui_input)보다 먼저 잡는다.
 	# §4.3 은 좌스와이프(이동)·행 탭(편성)·우스와이프(분할/합류)를 두나, 이 저장소의
 	# 다른 화면들이 스와이프 대신 버튼을 쓰므로 맞춘다. 분할/합류는 미구현 (검토 24).
-	var move := _btn(r1, "이동 ▸", 110)
+	var move := _btn(r1, "이동 ▸", 100)
 	move.pressed.connect(open_move.bind(fl.id, true))
-	var appoint := _btn(r1, "임명 ▸", 110)
+	var reorg := _btn(r1, "분할/합류 ▸", 140)
+	reorg.pressed.connect(open_reorg.bind(fl.id, true))
+	var appoint := _btn(r1, "임명 ▸", 100)
 	appoint.pressed.connect(open_appoint.bind(fl.id, true))
-	var edit := _btn(r1, "편성 ▸", 110)
+	var edit := _btn(r1, "편성 ▸", 100)
 	edit.pressed.connect(open_compose.bind(fl.id, true))
 
 	var r2 := HBoxContainer.new()
@@ -659,6 +682,184 @@ func _issue_move() -> void:
 		String(data.regions[_move_dest]["name"]),
 		UiPalette.tick_label(campaign.world.clock.tick + maxi(t, 1), start_year)]
 	_move_dest = ""
+
+
+# ================================================================ SC-F1 분할 / 합류 (§4.3 · §13)
+func _draw_reorg(fl: Fleet) -> void:
+	_title.text = "제%d함대  분할 / 합류" % fl.id
+	_clear(_body)
+	if fl.is_moving():
+		_note.text = "이동 중에는 재편할 수 없다 (§13). 도착 후 다시 연다."
+		return
+
+	var sq_total := fl.ships / Battle.SQUADRON_SHIPS       # 온전한 전대 수 (내림)
+	_kv(_body, "현재", "%d척 · 전대 %d · 편성안 %s · %s" % [
+		fl.ships, sq_total, fl.plan, fl.formation])
+
+	# -------------------------------------------------- 분할
+	_body.add_child(_section("분할 — 전대 단위로만 · 원함대가 지휘부·편성안·진형을 지킨다 (§13.2)"))
+	if sq_total < 2:
+		_lbl(_body, "전대가 하나뿐이라 분할할 수 없다 (하한 28척)", UiPalette.TEXT_DIM, 17, 480)
+	else:
+		var maxdet := sq_total - 1
+		_split_squadrons = clampi(_split_squadrons, 1, maxdet)
+		var sbar := HBoxContainer.new()
+		sbar.add_theme_constant_override("separation", 8)
+		_body.add_child(sbar)
+		_lbl(sbar, "분견 전대", UiPalette.TEXT_FAINT, 18, 100)
+		var minus := _btn(sbar, "−", 60)
+		minus.pressed.connect(func():
+			_split_squadrons = maxi(1, _split_squadrons - 1)
+			refresh())
+		_lbl(sbar, "%d" % _split_squadrons, UiPalette.TEXT, 20, 50)
+		var plus := _btn(sbar, "+", 60)
+		plus.pressed.connect(func():
+			_split_squadrons = mini(maxdet, _split_squadrons + 1)
+			refresh())
+		var det := _split_squadrons * Battle.SQUADRON_SHIPS
+		_kv(_body, "결과", "원함대 %d척 (전대 %d)  ·  분견대 %d척 (전대 %d)" % [
+			fl.ships - det, sq_total - _split_squadrons, det, _split_squadrons])
+		_lbl(_body, "분견대 — 무명 장교 · 보정 0 · 어린진 · 훈련 상한 40 (§13.2). 아래에서 제독을 곧바로 지정할 수 있다.",
+			UiPalette.TEXT_DIM, 16, 640)
+
+		var pool := _candidate_pool(fl)
+		var cbar := HBoxContainer.new()
+		cbar.add_theme_constant_override("separation", 8)
+		_body.add_child(cbar)
+		var cc := _char(fl.owner, _split_commander)
+		_lbl(cbar, "분견대 제독", UiPalette.TEXT_FAINT, 18, 110)
+		_lbl(cbar, "— 무명" if cc.is_empty() else "%s (통솔 %d)" % [
+			String(cc["name"]), Roster.stat_of(cc, "통솔")], UiPalette.TEXT, 18, 240)
+		var cyc := _btn(cbar, "▸ 지정", 100)
+		cyc.pressed.connect(func():
+			var seq: Array = [""]
+			for c in pool:
+				seq.append(String(c["id"]))
+			var i := seq.find(_split_commander)
+			_split_commander = seq[(i + 1) % seq.size()]
+			refresh())
+
+		var sib := HBoxContainer.new()
+		sib.add_theme_constant_override("separation", 16)
+		_body.add_child(sib)
+		var now := campaign.world.clock.tick
+		_lbl(sib, "발행 %s = 즉시 (§13 · 함대 위치에서의 재편)" %
+			UiPalette.tick_label(now, start_year), UiPalette.TEXT_DIM, 18, 420)
+		var sb := _btn(sib, "분할 발행", 150)
+		sb.disabled = _issue_locked(fl) != ""
+		sb.pressed.connect(_issue_split)
+
+	_body.add_child(HSeparator.new())
+
+	# -------------------------------------------------- 합류
+	_body.add_child(_section("합류 — 같은 성역의 아군 함대 · 통솔 상위 제독이 통합 함대를 맡는다 (§13.3)"))
+	var mates := _merge_candidates(fl)
+	if mates.is_empty():
+		_lbl(_body, "같은 성역에 합류할 아군 함대가 없다", UiPalette.TEXT_DIM, 17, 480)
+		_note.text = "분할은 새 함대를 만드는 것이다 — 쓰려면 임명 시트에서 제독을 앉힌다 (§13.2)."
+		return
+	var mrow := _wrap()
+	_body.add_child(mrow)
+	for m in mates:
+		var b := _btn(mrow, "제%d함대 %d척 · %s" % [m.id, m.ships,
+			m.commander_name if m.commander_name != "" else "무명"], 240)
+		b.toggle_mode = true
+		b.button_pressed = (m.id == _merge_target)
+		b.pressed.connect(func():
+			_merge_target = m.id
+			refresh())
+
+	if _merge_target >= 0:
+		var other := _fleet_by_id(_merge_target)
+		if other != null:
+			var keep := fl if fl.command >= other.command else other
+			var lose := other if keep == fl else fl
+			var plan := keep.plan if keep.ships >= lose.ships else lose.plan
+			var form := keep.formation if keep.ships >= lose.ships else lose.formation
+			var total := keep.ships + lose.ships
+			_kv(_body, "통합", "%d척 · 제독 %s · 편성안 %s · %s · 훈련도 %d" % [
+				total, keep.commander_name if keep.commander_name != "" else "무명",
+				plan, form, mini(keep.drill, lose.drill)])
+			_kv(_body, "해산", "제%d함대 — 제독 %s 는 미임명 풀로 (§13.3)" % [
+				lose.id, lose.commander_name if lose.commander_name != "" else "무명"])
+			var per := Economy.plan_point_milli(plan)
+			var pts_milli := total * 1000 / Battle.SQUADRON_SHIPS * per / 1000
+			var cl := Roster.command_limit(keep.command)
+			if pts_milli > cl * 1000:
+				var over := pts_milli - cl * 1000
+				var pen := (over + 999) / 1000 * 3
+				_lbl(_body, "⚠ 통합 유지점 %.2f > 지휘 한도 %d → 전 부대 사기 −%d (§6.2 · 확정 전 표시 · §13.3)" % [
+					pts_milli / 1000.0, cl, mini(pen, 30)], UiPalette.DANGER, 18, 640)
+			var mib := HBoxContainer.new()
+			mib.add_theme_constant_override("separation", 16)
+			_body.add_child(mib)
+			_lbl(mib, "발행 %s = 즉시" % UiPalette.tick_label(
+				campaign.world.clock.tick, start_year), UiPalette.TEXT_DIM, 18, 300)
+			var mb := _btn(mib, "합류 발행", 150)
+			mb.disabled = _issue_locked(fl) != "" or _issue_locked(other) != ""
+			mb.pressed.connect(_issue_merge)
+
+	_note.text = "분할·합류는 사자 지연 없이 즉시다 (이동과 대칭). 되돌리려면 다시 발행한다 (§1.5)."
+
+
+## 같은 성계 · 같은 세력 · 이동 중 아님 · 자기 자신 아님.
+func _merge_candidates(fl: Fleet) -> Array:
+	var out: Array = []
+	for m in campaign.fleets:
+		if m.id == fl.id or m.owner != fl.owner or not m.is_alive():
+			continue
+		if m.is_moving() or m.at_system != fl.at_system:
+			continue
+		out.append(m)
+	out.sort_custom(func(a, b): return a.id < b.id)
+	return out
+
+
+func _issue_split() -> void:
+	var fl := _fleet()
+	if fl == null or _issue_locked(fl) != "":
+		return
+	var payload := {
+		"faction": fl.owner,
+		"fleet": fl.id,
+		"squadrons": _split_squadrons,
+	}
+	var cc := _char(fl.owner, _split_commander)
+	if not cc.is_empty():
+		payload["commander"] = {
+			"id": _split_commander, "name": String(cc["name"]),
+			"통솔": Roster.stat_of(cc, "통솔"),
+			"무력": Roster.stat_of(cc, "무력"),
+			"지력": Roster.stat_of(cc, "지력"),
+		}
+	campaign.world.issue(Domestic.CMD_FLEET_SPLIT, payload, 0)
+	_note.text = "발행됨 — %d전대(%d척) 분견. 제독 미임명이면 임명 시트에서 앉힌다." % [
+		_split_squadrons, _split_squadrons * Battle.SQUADRON_SHIPS]
+	_split_squadrons = 1
+	_split_commander = ""
+
+
+func _issue_merge() -> void:
+	var fl := _fleet()
+	var other := _fleet_by_id(_merge_target)
+	if fl == null or other == null:
+		return
+	if _issue_locked(fl) != "" or _issue_locked(other) != "":
+		return
+	var keep := fl if fl.command >= other.command else other
+	var lose := other if keep == fl else fl
+	var plan := keep.plan if keep.ships >= lose.ships else lose.plan
+	var form := keep.formation if keep.ships >= lose.ships else lose.formation
+	campaign.world.issue(Domestic.CMD_FLEET_MERGE, {
+		"faction": fl.owner,
+		"fleet": lose.id,
+		"into": keep.id,
+		"plan": plan,
+		"formation": form,
+	}, 0)
+	_note.text = "발행됨 — 제%d함대가 제%d함대를 흡수한다." % [keep.id, lose.id]
+	_merge_target = -1
+	_fleet_id = keep.id                      # 해산될 쪽을 보고 있었으면 통합 함대로 옮겨 본다
 
 
 # ---------------------------------------------------------------- 발행 (조항 ④)

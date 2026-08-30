@@ -164,6 +164,15 @@ const CMD_FLEET_APPOINT: String = "함대임명"
 ## `travel_ticks` 로 실어 보낸다 — `apply` 서명에 그래프가 없기 때문이다.
 const CMD_FLEET_MOVE: String = "함대이동"
 
+## 함대 분할·합류 (`screens.md` §4.3 우스와이프 · §13 지휘부 승계). **전대 단위로만.**
+## 이동과 같이 사자 지연 0 — 함대 위치에서의 재편이다. `Fleet` 객체 생성/소멸이
+## `campaign.gd` 소관이라(`_spawn_fleet`·`_next_fleet_id`) 이 레인이 못 건드리므로,
+## `apply` 가 `fleets`(= `campaign.fleets`, 참조 전달)에 직접 append/erase 한다.
+## 분견대 ID 는 **높은 예약 대역**에서 딴다 — `_next_fleet_id`(0 부터 증가)와 안 겹친다.
+const CMD_FLEET_SPLIT: String = "함대분할"
+const CMD_FLEET_MERGE: String = "함대합류"
+const SPLIT_FLEET_ID_BASE: int = 900000
+
 ## ---------------------------------------------------------------- 비용
 
 ## 개발 — 인구 × 300 일시불 · 6개월 · 생산·수입 +10%p · 개발여지 1칸 소비
@@ -256,6 +265,10 @@ static func apply(data: GameData, states: Dictionary, f: Faction,
 			return _apply_fleet_appoint(fleets, f, p)
 		CMD_FLEET_MOVE:
 			return _apply_fleet_move(data, fleets, f, p, now_tick)
+		CMD_FLEET_SPLIT:
+			return _apply_fleet_split(fleets, f, p)
+		CMD_FLEET_MERGE:
+			return _apply_fleet_merge(fleets, f, p)
 		_:
 			return "알 수 없는 명령: " + kind
 
@@ -441,6 +454,77 @@ static func _apply_fleet_move(data: GameData, fleets: Array, f: Faction,
 	fl.target_region = rid
 	fl.arrival_tick = now_tick + maxi(t, 1)
 	return ""
+
+
+## 분할 — 원함대가 지휘부·편성안·진형을 지키고, 분견대는 무명 장교로 태어난다 (§13.2).
+static func _apply_fleet_split(fleets: Array, f: Faction, p: Dictionary) -> String:
+	var fl := _find_own_fleet(fleets, f, int(p.get("fleet", -1)))
+	if fl == null:
+		return "자기 함대가 아니다"
+	if fl.is_moving():
+		return "이동 중에는 분할할 수 없다"
+	var detach := int(p.get("squadrons", 0)) * Battle.SQUADRON_SHIPS
+	if detach < Battle.SQUADRON_SHIPS:
+		return "분할 하한은 전대 하나 (28척)"
+	if fl.ships - detach < Battle.SQUADRON_SHIPS:
+		return "원함대에 전대 하나는 남아야 한다"
+	fl.ships -= detach
+	var d := Fleet.new()
+	d.id = _next_split_id(fleets)
+	d.owner = fl.owner
+	d.at_system = fl.at_system
+	d.ships = detach
+	d.morale = fl.morale
+	d.plan = fl.plan                          # 편성안은 동일 (§13.2)
+	d.station = fl.station
+	d.formation = "어린진"                    # 지휘부가 없어 학익 요구 통솔 미달 (§13.2)
+	d.drill = fl.drill                        # §13.4 근사 — 코어가 전대별 값을 못 담는다
+	d.squadron_command = 0                    # 재지정 필요 · 상한 40
+	# 분할 대화상자에서 곧바로 제독을 지정했으면 그 사람이 분견대를 맡는다 (§13.2 예외)
+	var c: Dictionary = p.get("commander", {})
+	if String(c.get("id", "")) != "":
+		d.commander_id = String(c["id"])
+		d.commander_name = String(c.get("name", ""))
+		d.command = int(c.get("통솔", 50))
+		d.might = int(c.get("무력", 50))
+		d.wits = int(c.get("지력", 50))
+		d.staff_wits_max = d.wits
+	fleets.append(d)
+	return ""
+
+
+## 합류 — 통솔 상위 제독이 통합 함대를 맡고, 하위 제독은 미임명 풀로 (§13.3).
+## 페이로드가 이미 정한다: `fleet` = 해산할 함대, `into` = 살아남을 함대,
+## `plan`·`formation` = 전대 많은 쪽 것. 여기서는 척수·훈련도만 합치고 해산분을 지운다.
+static func _apply_fleet_merge(fleets: Array, f: Faction, p: Dictionary) -> String:
+	var lose := _find_own_fleet(fleets, f, int(p.get("fleet", -1)))
+	var keep := _find_own_fleet(fleets, f, int(p.get("into", -1)))
+	if lose == null or keep == null:
+		return "자기 함대가 아니다"
+	if lose == keep:
+		return "같은 함대다"
+	if lose.is_moving() or keep.is_moving():
+		return "이동 중에는 합류할 수 없다"
+	if lose.at_system != keep.at_system:
+		return "같은 성계에 있어야 한다"
+	keep.ships += lose.ships
+	keep.plan = String(p.get("plan", keep.plan))
+	keep.formation = String(p.get("formation", keep.formation))
+	keep.drill = mini(keep.drill, lose.drill)     # §13.4 근사 — 약한 쪽에 맞춘다
+	keep.morale = mini(keep.morale, lose.morale)  # 보수적 — 정예 희석 편법 방지
+	fleets.erase(lose)                            # 하위 제독은 참조가 끊겨 미임명 풀로 (§13.3)
+	return ""
+
+
+## 분견대 ID — 예약 대역(90만+)에서 안 쓰는 첫 값. `_next_fleet_id`(0 부터)와 안 겹친다.
+static func _next_split_id(fleets: Array) -> int:
+	var used := {}
+	for fl in fleets:
+		used[fl.id] = true
+	var cand := SPLIT_FLEET_ID_BASE
+	while used.has(cand):
+		cand += 1
+	return cand
 
 
 ## 진행 중인 기술이 완성되었는가. 완성했으면 축 이름을 돌려준다.
