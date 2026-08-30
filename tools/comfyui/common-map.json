@@ -1,0 +1,127 @@
+{
+ "_source": "docs/07-production/ai-media-pipeline.md §4.4 표 (V-43) — class[0] × disposition. 명장은 data/portrait-map.json.",
+ "rows": [
+  {
+   "art": "ART-C901",
+   "class0": "제",
+   "disposition_keys": [
+    "실무"
+   ],
+   "tint": "#2E3A4C",
+   "seed": 439688188,
+   "assigns": 31,
+   "note": "제독형 실무 A"
+  },
+  {
+   "art": "ART-C902",
+   "class0": "제",
+   "disposition_keys": [
+    "실무"
+   ],
+   "tint": "#2E3A4C",
+   "seed": 2655491910,
+   "assigns": 30,
+   "note": "제독형 실무 B"
+  },
+  {
+   "art": "ART-C903",
+   "class0": "제",
+   "disposition_keys": [
+    "무뢰"
+   ],
+   "tint": "#2E3A4C",
+   "seed": 3906850027,
+   "assigns": 28,
+   "note": "제독형 무뢰"
+  },
+  {
+   "art": "ART-C904",
+   "class0": "제",
+   "disposition_keys": [
+    "절의"
+   ],
+   "tint": "#2E3A4C",
+   "seed": 2500144666,
+   "assigns": 10,
+   "note": "제독형 절의"
+  },
+  {
+   "art": "ART-C905",
+   "class0": "제",
+   "disposition_keys": [
+    "명사",
+    "야심"
+   ],
+   "tint": "#2E3A4C",
+   "seed": 1127787411,
+   "assigns": 11,
+   "note": "제독형 명사+야심"
+  },
+  {
+   "art": "ART-C906",
+   "class0": "관",
+   "disposition_keys": [
+    "실무"
+   ],
+   "tint": "#3B352B",
+   "seed": 189333780,
+   "assigns": 23,
+   "note": "관료형 실무"
+  },
+  {
+   "art": "ART-C907",
+   "class0": "관",
+   "disposition_keys": [
+    "실무"
+   ],
+   "tint": "#3B352B",
+   "seed": 980326539,
+   "assigns": 14,
+   "note": "관료형 그 밖 → 실무 기본값(§4.3.2)"
+  },
+  {
+   "art": "ART-C908",
+   "class0": "참",
+   "disposition_keys": [
+    "실무"
+   ],
+   "tint": "#2F2A44",
+   "seed": 1237242029,
+   "assigns": 14,
+   "note": "참모형 실무"
+  },
+  {
+   "art": "ART-C909",
+   "class0": "참",
+   "disposition_keys": [
+    "실무"
+   ],
+   "tint": "#2F2A44",
+   "seed": 637194382,
+   "assigns": 15,
+   "note": "참모형 그 밖 → 실무 기본값"
+  },
+  {
+   "art": "ART-C910",
+   "class0": "강",
+   "disposition_keys": [
+    "실무"
+   ],
+   "tint": "#43262A",
+   "seed": 3417253218,
+   "assigns": 9,
+   "note": "강습형 (성향 축 없음 → 실무 기본값)"
+  },
+  {
+   "art": "ART-C911",
+   "class0": "파",
+   "disposition_keys": [
+    "실무"
+   ],
+   "tint": "#243B3D",
+   "seed": 1394322252,
+   "assigns": 4,
+   "note": "파일럿형 (성향 축 없음 → 실무 기본값)"
+  }
+ ]
+}

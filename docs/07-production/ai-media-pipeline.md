@@ -335,6 +335,11 @@ lens flare, modern clothing
 | **실무** | 무표정에 가까운 절제 | `near-neutral expression, steady measured gaze, no performance` |
 | **야심** | 시선이 위를 향하거나 관찰한다 | `eyes lifted slightly or scanning sidelong, weighing what is in front of them, contained hunger` |
 | **절의** | 굳은 입매 · 정면 응시 | `set jaw, firm closed mouth, unwavering frontal stare` |
+| **군주** (`disposition = null`) | 응시를 의식하는 자 · 서두르지 않는다 | `presence of a ruler, direct unhurried gaze, aware of being watched` |
+
+> **「군주」 행은 `characters.json` 의 `disposition` 이 `null` 인 7명 전용**(§4.7 — 조비·조조·
+> 유비·손견·손권·손책·원소). `dispositions.md` §2 의 군주 성향(패도형 등)을 표정으로
+> 옮기지 않는다 — 그건 등용 판정 축이다.
 
 > **무뢰의 「이완된 자세」는 어깨까지만 적용한다.** 자세 전체는 계층부 소관이라, 성향부가
 > `relaxed posture` 를 통째로 넣으면 강습형의 「반신 틀어짐」과 충돌한다.
@@ -419,12 +424,12 @@ teal armor piping
 wearing a plain administrator's robe with a single clasp, hands folded, upright and
 composed, no held objects,
 dignified level gaze meeting the viewer, chin neither raised nor lowered, formal reserve,
-teal robe piping, grave and principled
+teal robe piping, grave, principled
 ```
-개별부: 오 = `teal piping` + 「중신」 → `grave and principled`(§4.8-3 원칙·강직 계열).
+개별부: 오 = `teal robe piping` + 「중신」 → `grave, principled`(§4.8-3 원칙·강직 계열).
 관료형이라 소품 줄은 「no held objects」로 이미 비어 있다. 시드 `342462251`.
 
-> **셋 다 통념 플래그 12명(§4.8)에 없다.** 관우·조조류였다면 1차 프롬프트에
+> **셋 다 원전 도상 플래그(§4.8)에 없다.** 관우·조조류였다면 1차 프롬프트에
 > 통념을 넣지 않고 뽑은 뒤 §4.6-4 에서 판정한다.
 
 ### 4.4 공용 11종 매핑 (V-43)
@@ -509,7 +514,7 @@ for i, cid in enumerate(myeong, 1):          # CHR-id 오름차순 = ART 번호.
 > 세력 — 위 35 · 군웅 33 · 촉 28 · 오 24. 시드 120개 전부 고유(충돌 0).
 
 > ⚠ **`disposition` 이 `null` 인 7명은 군주다** — 조비 · 조조 · 유비 · 손견 · 손권 ·
-> 손책 · 원소. 성향부는 §4.8 의 **군주 조각**을 쓴다. `dispositions.md` §2 의
+> 손책 · 원소. 성향부는 §4.3.2 의 **「군주」 조각**을 쓴다. `dispositions.md` §2 의
 > 군주 성향(패도형 등)을 초상 성향부로 끌어오지 않는다 — 그건 등용 판정 축이지
 > 표정 축이 아니다.
 
@@ -523,13 +528,18 @@ for i, cid in enumerate(myeong, 1):          # CHR-id 오름차순 = ART 번호.
 ```
 
 **1. 세력 악센트** — 복식의 파이핑/트림 색. 배경 틴트(§4.1)와 겹치지 않게 정한다.
+조립 시 계층의 복식어를 끼운다 — `<색> <uniform|armor|suit|robe> piping`
+(제 uniform · 강 armor · 파 suit · 참·관 robe). 예: 위 제독형 = `cool slate-grey uniform piping`.
 
-| 세력 | 악센트 | 조합 예 |
+| 세력 | 색 | 조합 예 |
 |---|---|---|
-| 위 | `cool slate-grey piping` | 위 제독형 = 슬레이트블루 바탕 + 회청 파이핑 |
-| 촉 | `oxblood piping` | 촉 제독형 = 슬레이트블루 바탕 + 적갈 파이핑 → 「촉 + 제독」이 읽힌다 |
-| 오 | `teal piping` | — |
-| 군웅 | 파이핑 없음 · `plain dark garment` | 소속 없음이 그림에서도 소속 없음 |
+| 위 | `cool slate-grey` | 위 제독형 = 슬레이트블루 바탕 + 회청 파이핑 |
+| 촉 | `oxblood` | 촉 제독형 = 슬레이트블루 바탕 + 적갈 파이핑 → 「촉 + 제독」이 읽힌다 |
+| 오 | `teal` | — |
+| 군웅 | 파이핑 없음 → `plain dark garment, no faction piping` | 소속 없음이 그림에서도 소속 없음 |
+
+> **기계형 정본은 `tools/comfyui/fragments.json`.** 위 표·§4.3.1·§4.3.2 의 문자열을
+> 옮긴 것이며, `gen_portraits.py` 가 그것으로 프롬프트를 조립한다. 문서와 어긋나면 문서가 정본.
 
 **2. 연령 신호** — `traits` 가 나이를 **문자 그대로** 담을 때만 넣는다.
 
@@ -550,7 +560,7 @@ for i, cid in enumerate(myeong, 1):          # CHR-id 오름차순 = ART 번호.
 | trait 계열 | 기조어(영문) |
 |---|---|
 | 「독사」「낭고」「감군」 — 은밀·경계 | `coldly watchful` / `patient, concealed` |
-| 「왕좌지재」「강직」「사직지기」 — 원칙·강직 | `grave, principled` |
+| 「왕좌지재」「강직」「사직지기」「중신」 — 원칙·강직 | `grave, principled` |
 | 「소패왕」「강동지호」「선등」 — 맹렬·전방 | `fierce, forward-leaning` |
 | 「무쌍」「악래」「호치」 — 압도적 완력 | `predatory stillness` |
 | 「인덕」「양도」 — 개방·온후 | `open, unguarded warmth` |
@@ -576,12 +586,12 @@ for i, cid in enumerate(myeong, 1):          # CHR-id 오름차순 = ART 번호.
 | **자동 (개별부에 삽입)** | 위 §4.8-4 의 trait 회수분 | 프롬프트에 들어간다 |
 | **통념 플래그 (생성 후 검수 게이트)** | 아래 목록 | 생성한 뒤 §4.6-4 에서 **사람이 판정.** 프롬프트에 통념을 넣을지, 시드만 믿을지를 그때 정한다 |
 
-**통념 플래그 목록 (12) — 데이터로 회수되지 않는 강한 외형 통념:**
+**원전 도상 플래그 목록 (13명) — 데이터로 회수되지 않는 강한 외형 통념:**
 관우(수염·홍안) · 장비(범수염) · 손권(벽안 자염) · 조조(단구) · 동탁(비대) ·
 황충(노장) · 마초(은백 미장부) · 제갈량 우선(깃부채) · 방통(추모) ·
 초선·대교·소교(미모) · 여포(여포 통념).
 
-> **권고:** 플래그 12는 프롬프트에 **넣지 않고** 1차 생성한다. 시드 결과가 통념과
+> **권고:** 플래그 13명은 프롬프트에 **넣지 않고** 1차 생성한다. 시드 결과가 통념과
 > 이미 맞으면 그대로 두고, 어긋나 「이 사람이 아니다」가 되는 것만 개별부에 통념
 > 한 줄을 더해 재생성한다(시드 고정이라 재현된다). **12명을 위해 규칙을 복잡하게
 > 만들지 않는다** — 나머지 108명은 이 판정이 필요 없다.
@@ -769,7 +779,7 @@ steps 60 · guidance 7 · scheduler euler · duration = 목표 길이 × 1.5 (�
 | 2 | ~~**권역 배경 물량이 미확정이다**~~ | **해소 — V-45 (2026-08-30).** 폐기했다. 물음이 「몇 장인가」가 아니라 **「어디에 그려지는가」**였고, `screens.md` 에 배경이 0회 나온다. 되살아나면 축은 **등급 3 + 태양계권 1** |
 | 3 | 공용 초상 11종이 화면에서 실제로 구별되는가 | §4.6-2. **11종이 다 같아 보이면 안 B의 의미가 없다.** 시험 생성으로 조기 확인 |
 | 4 | ~~클라우드 GPU 임대처의 약관~~ | **해소 — 2026-08-30.** RunPod Community 채택(§3.3). ToS 확인: 출력물 소유권 이용자 보유 · 모델 라이선스 불변 · 호스트의 파드 데이터 열람 금지(위반 시 즉시 퇴출) · AI 생성물 별도 제약 없음 · **상업 이용 조항(§10)은 "the Site" 대상이고 컴퓨트 워크로드는 §4.1 판매 대상 — 상용 에셋 생성 허용**(§3.3-0). 서면 확약은 선택 |
-| 5 | 명장 120의 외형 근거 | `characters.json`의 `traits`뿐이다. **원전 통념과 충돌할 때 무엇을 따르는가**가 미정. §4.8 에서 **2단 처리로 부분 대응** — trait 회수분은 자동, 데이터로 안 잡히는 통념 12명은 생성 후 검수 게이트(§4.6-4). **어느 방향인가(원전 도상 대 재해석)는 발주자 확인 사항으로 남는다** |
+| 5 | 명장 120의 외형 근거 | `characters.json`의 `traits`뿐이다. **원전 통념과 충돌할 때 무엇을 따르는가**가 미정. §4.8 에서 **2단 처리로 부분 대응** — trait 회수분은 자동, 데이터로 안 잡히는 통념 13명은 생성 후 검수 게이트(§4.6-4). **어느 방향인가(원전 도상 대 재해석)는 발주자 확인 사항으로 남는다** |
 | 6 | AI 명시의 표기 수위 | V-44가 명시를 확정했으나 **어느 수준으로 적는지**는 미정. 스토어 정책 확인 필요 — `dev-requirements.md` §7.3 |
 
 ## 미작성 항목
@@ -789,7 +799,7 @@ steps 60 · guidance 7 · scheduler euler · duration = 목표 길이 × 1.5 (�
 
 - [ ] **1. 화풍 기준선 확정** (§4.2 칸 1·4) — 시험생성으로 모델 택1(SDXL / FLUX schnell) · 가중치 SHA-256 · 샘플러·스텝·CFG. **동시에 검토 3 판정** — 공용 11종이 ~320 px 축소에서 계층별로 구별되는가(§4.6-2). gate: §3.3-4 A
 - [ ] **2. 초상 131장 생성** — ③ 공용 11 → ④ 명장 120. 대장 §2.1 행을 `확보: AI` → `검증`(모델 라이선스·확인일). gate: §3.3-4 B·C
-- [ ] **3. 검토 5 — 통념 플래그 12명 판정** — 1차 생성 후 §4.6-4 검수 게이트. 발주자 아트 방향(원전 도상 대 재해석)
+- [ ] **3. 검토 5 — 원전 도상 플래그 13명 판정** — 1차 생성 후 §4.6-4 검수 게이트. 발주자 아트 방향(원전 도상 대 재해석)
 - [ ] **4. BGM 6트랙 생성** — ACE-Step 로컬(§5.2) → Audacity 루프(§5.3) → 대장 행 갱신. §4.5 ⑤ · §5.4
 - [ ] **5. 크레딧 문안 확정** (§8.4) — 이미지 모델 택1 반영 · 서체 2종 선정 + OFL 저작자 문자열(`asset-ledger.md` 미작성) · `ART-U001`·`SFX-*` CC0 확정 · AI 명시 수위의 스토어(Google Play) 형식(검토 6 · `dev-requirements.md` §7.3)
 - [ ] **6. 배경·컷씬 (조건부·S6)** — `SC-L2` 배경 슬롯 결정 시 `ART-R101~104` · L3 채택 시 `VID-001~004` + Wan 2.2 의 §2.1 행 확정. 이 세션 범위 밖

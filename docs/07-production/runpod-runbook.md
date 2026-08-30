@@ -26,8 +26,8 @@
 | 개별부 규칙 | ✅ | §4.8 |
 | **모델·샘플러·가중치 해시** | ❌ **Phase 4에서 확정** | §4.2 칸 1·4 |
 | ComfyUI 워크플로 JSON 2종 | ✅ | `tools/comfyui/sdxl_portrait.json` · `flux_schnell_portrait.json` |
-| 배치 생성 스크립트 | ❌ 미작성 | 이 문서 미작성 항목 |
-| 후처리 스크립트 | ❌ 미작성 | 〃 |
+| 배치 생성 스크립트 | ✅ (미실행) | `tools/gen_portraits.py` · `tools/comfyui/fragments.json` · `common-map.json` |
+| 후처리 스크립트 | ❌ 미작성 | 이 문서 미작성 항목 |
 
 ---
 
@@ -177,33 +177,50 @@ sha256sum \
 
 ---
 
-## Phase 5 — 배치 생성 스크립트 (§3.3-4 B)
+## Phase 5 — 배치 생성 스크립트 `tools/gen_portraits.py` (§3.3-4 B)
 
 **ComfyUI 를 API 로 두고, 스크립트가 대상마다 프롬프트·시드·파일명을 넣어 돌린다.**
+파이썬 **표준 라이브러리만** 쓴다(설치 불요).
 
-- ComfyUI 실행: `python main.py --listen 0.0.0.0 --port 8188`
-  (템플릿 기본값이 대개 이미 그렇다).
-- 스크립트 입력:
-  - 명장 120 → `data/portrait-map.json` (art · chr · class0 · disposition · tint · seed · traits)
-  - 공용 11 → §4.4 표를 JSON 으로 옮긴 것(미작성)
-- 대상마다:
+- ComfyUI 실행: `python main.py --listen 0.0.0.0 --port 8188` (템플릿 기본값이 대개 이렇다).
+- 입력 3개 — 모두 이미 있다:
+  - `data/portrait-map.json` (명장 120)
+  - `tools/comfyui/common-map.json` (공용 11 — §4.4 표를 기계형으로. 담당 합 189 검증됨)
+  - `tools/comfyui/fragments.json` (§4.2-3·§4.3·§4.8 문자열의 **기계형 정본**)
+- 스크립트가 하는 일 (대상마다):
   ```
-  seed   = row.seed                                   # §4.7 / §4.2-2
-  prompt = 고정부(§4.2-3)
-         + 계층부[row.class0]        (§4.3.1)
-         + 성향부[row.disposition]   (§4.3.2, null 이면 군주 조각)
-         + 개별부(row, 명장만)       (§4.8: 세력 악센트 + 연령 신호 + 기조어 + trait 표지)
-  <TINT> = row.tint  (고정부의 `flat single-color background <TINT>` 에 들어간다)
-  → tools/comfyui/{sdxl|flux_schnell}_portrait.json 로드
-  → 위 「워크플로 JSON 두 개」 표의 노드에 text/seed/filename_prefix 치환
-  → POST /prompt
-  → 완료 대기(websocket /ws 또는 /history 폴링)
-  → 결과 PNG 를 out/<art>.png 로 저장 (896×1120 · 8-bit · no alpha)
+  seed   = sha256("seonghanji:portrait:v1:" + key)[:8]   # key: 명장=CHR-id · 공용=ART-id (§4.2-2)
+           → 맵에 저장된 seed 와 대조, 어긋나면 그 건 실패 처리
+  prompt = 고정부(<TINT>=row.tint) + 계층부[class0] + 성향부[disposition | 군주] + 개별부(명장만)
+  → tools/comfyui/{sdxl|flux_schnell}_portrait.json 로드 → INJECT 노드에 text/seed/filename 치환
+  → POST /prompt → /history 폴링 → /view 로 PNG → out/<art>.png + out/manifest.jsonl 한 줄
   ```
-- 실패(손 붕괴 등)는 목록에 남기고 계속 — Phase 6 에서 재처리.
+- **원전 도상 플래그 13명**(`fragments.json` `flag_iconography`)은 콘솔에 표시만 하고
+  통념을 넣지 않는다(§4.8 권고). Phase 6-5 에서 판정.
+- 실패는 목록에 남기고 계속. 요약(완료/건너뜀/실패)을 끝에 찍는다.
 
-> 스크립트 자체는 **미작성**. `tools/` 아래 신규 파일로 만들며 다른 세션의 코드와 무관하다.
-> 파이썬 표준(`requests`, `websocket-client`, `hashlib`, `Pillow`)만 쓴다.
+**명령**
+
+```bash
+# 스모크 — 조립만 확인, POST 안 함
+python tools/gen_portraits.py --common --only ART-C903 --dry-run
+
+# Phase 4: 공용 11 × SDXL
+python tools/gen_portraits.py --model sdxl --common
+
+# Phase 6: 명장 120 × FLUX
+python tools/gen_portraits.py --model flux --named
+
+# 실패분만 (시드 고정이라 재현)
+python tools/gen_portraits.py --model flux --only ART-C007,ART-C042 --force
+```
+
+플래그: `--model sdxl|flux` · `--named` · `--common` · `--only <ID,ID>` · `--range 1-20` ·
+`--limit N` · `--out DIR` · `--timeout S` · `--force` · `--dry-run`.
+
+> ⚠ **미실행.** dry-run 으로 131건 조립이 §4.3.4 예시와 일치함은 확인했으나,
+> ComfyUI API 왕복(POST /prompt · /history · /view)은 파드에서 처음 돈다.
+> Phase 4 스모크에서 노드 이름·응답 형식을 함께 잡는다.
 
 ---
 
@@ -215,8 +232,9 @@ sha256sum \
 3. 배치 스크립트로 `ART-C001` ~ `ART-C120` 실행. 4090 대비 1.5~2배 느리지만 벌크는 이걸로.
 4. **실패분만 재생성** — 시드 고정이라 동일 결과가 재현된다. 손·글자 붕괴(§4.6-3)는
    시드를 바꾸지 말고 개별부를 미세 조정하거나 배치 스텝을 올린다.
-5. **검토 5 통념 플래그 12명**(§4.8) — 1차 결과를 통념과 대조. 어긋난 것만 개별부에
-   통념 한 줄을 더해 재생성. **발주자 아트 방향 확인**(원전 도상 대 재해석) 후 진행.
+5. **검토 5 — 원전 도상 플래그 13명**(§4.8 · `fragments.json` `flag_iconography`) — 1차
+   결과를 통념과 대조. 어긋난 것만 개별부에 통념 한 줄을 더해 재생성.
+   **발주자 아트 방향 확인**(원전 도상 대 재해석) 후 진행.
 
 ---
 
@@ -283,16 +301,18 @@ sha256sum \
 | # | 쟁점 | 비고 |
 |---|---|---|
 | 1 | ~~**ComfyUI 워크플로 JSON 2종이 없다**~~ | **작성 — 2026-08-30.** `tools/comfyui/sdxl_portrait.json` · `flux_schnell_portrait.json` (896×1120·§4.2-1 파라미터·기본값=ART-C903). **잔여 리스크:** 미실행 — 노드 `class_type` 이 파드의 ComfyUI 버전과 어긋날 수 있다(GGUF·SD3 latent 등). Phase 4 스모크 테스트에서 확인 |
-| 2 | **배치·후처리 스크립트가 없다** | Phase 5·7. `tools/` 신규. 시드·프롬프트 조립이 §4.2-2·§4.3·§4.8 과 한 글자도 어긋나면 안 된다 — 재현성이 안 B 의 전제 |
+| 2 | ~~**배치 스크립트가 없다**~~ | **작성 — 2026-08-30.** `tools/gen_portraits.py` + `fragments.json` + `common-map.json`. dry-run 으로 131건 조립이 §4.3.4 예시와 일치. **후처리 스크립트(Phase 7)는 아직 없다** |
 | 3 | **틴트를 프롬프트로 낼까 후처리로 합성할까** | §4.1 은 프롬프트에 `<TINT>` 를 넣지만 확산 모델은 정확한 `#RRGGBB` 를 못 낸다. Phase 7-1 이 교정하는지 재합성하는지가 미정 — 시험생성에서 판정 |
 | 4 | **반출 방법 미확정** | `runpodctl` / Jupyter / S3 중 무엇을 표준으로. 물량 131장 + 22장 시험분이라 어느 쪽이든 되나 하나로 고정한다 |
 | 5 | **Community 재고 리스크가 일정에 반영 안 됨** | 재고 0 이 며칠 가면 Secure Cloud 비용이 추산의 1.5~2배. §3.3-7 은 Community 기준이다 |
+| 6 | **`fragments.json` 이 문서 문자열의 사본이다** | `ai-media-pipeline.md` §4.2-3·§4.3·§4.8 을 옮긴 것. 「문서와 코드가 각자 계산하면 갈라진다」(HANDOVER 함정)의 형태다. 문서가 정본이며, 문서를 고치면 이 파일도 함께 고친다. §4.8-1 에 그 취지의 주석을 달아 두었다 |
 
 ## 미작성 항목
 
 - [x] ~~**ComfyUI 워크플로 JSON**~~ — **2026-08-30. `tools/comfyui/sdxl_portrait.json` · `flux_schnell_portrait.json`** (896×1120 고정 · API 포맷 · 미실행)
-- [ ] **배치 생성 스크립트** — `tools/gen_portraits.py` (가칭). 입력 `data/portrait-map.json` + 공용 11 표, 워크플로 JSON 의 지정 노드에 치환, 출력 `out/ART-C###.png`
-- [ ] **공용 11 매핑을 기계가 읽는 형태로** — §4.4 표 → JSON (명장은 이미 `portrait-map.json`)
+- [x] ~~**배치 생성 스크립트**~~ — **2026-08-30. `tools/gen_portraits.py`** (표준 라이브러리만 · dry-run 검증 · 미실행)
+- [x] ~~**공용 11 매핑을 기계가 읽는 형태로**~~ — **2026-08-30. `tools/comfyui/common-map.json`** (담당 합 189 검증)
+- [ ] **프롬프트 조각 정본 이원화 리스크** — `tools/comfyui/fragments.json` 이 `ai-media-pipeline.md` §4.3·§4.8 문자열을 옮긴 것이다. 문서를 고치면 이 파일도 고쳐야 한다 (검토 6)
 - [ ] **후처리 스크립트** — `tools/finish_portraits.py` (가칭). 틴트·비네트·크롭 검증·WebP
 - [ ] **반출 방법 1개 확정** — 검토 4
 - [ ] **BGM 로컬 런북** — 이 문서는 파드 전용. ACE-Step(자택 5060) + Audacity 절차는 별도 (§5)

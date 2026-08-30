@@ -1,0 +1,75 @@
+{
+  "_source": "docs/07-production/ai-media-pipeline.md §4.2-3 · §4.3.1 · §4.3.2 · §4.8 — 이 파일이 기계형 정본. 문서 문자열과 한 글자도 어긋나면 안 된다 (재현성 = V-43 안 B 의 전제).",
+
+  "fixed": "digital painting portrait, single character, upper body, 4:5 vertical, head-and-shoulders framing, eyes at 30% from top, flat single-color background <TINT>, soft circular vignette, no scenery, muted palette, controlled brushwork, semi-realistic, even key light from front-left, sharp focus on face, no text, no watermark, no border",
+
+  "negative": "photo, 3d render, anime, chibi, exaggerated proportions, multiple people, full body, hands near face, weapon pointed at viewer, busy background, scenery, landscape, text, watermark, signature, extra fingers, deformed hands, blur, oversaturated, lens flare, modern clothing",
+
+  "class": {
+    "제": "wearing a structured high-collar fleet dress uniform with rank insignia and a long coat, squared to camera, one hand resting on a table edge, bearing of command",
+    "강": "wearing matte armor plating over a padded underlayer, torso turned three-quarters, pauldron catching the light, a close-combat blade sheathed at the shoulder",
+    "파": "wearing a fitted flight suit with harness straps and forearm controls, helmet set beside them, younger face, lean and alert",
+    "참": "wearing a layered scholar's robe with a narrow sash, holding a thin data-slate or a writing brush, leaning slightly forward as if mid-thought",
+    "관": "wearing a plain administrator's robe with a single clasp, hands folded, upright and composed, no held objects"
+  },
+
+  "disposition": {
+    "명사": "dignified level gaze meeting the viewer, chin neither raised nor lowered, formal reserve",
+    "무뢰": "gaze angled off past the viewer, faint smirk, careless ease in the shoulders",
+    "실무": "near-neutral expression, steady measured gaze, no performance",
+    "야심": "eyes lifted slightly or scanning sidelong, weighing what is in front of them, contained hunger",
+    "절의": "set jaw, firm closed mouth, unwavering frontal stare",
+    "군주": "presence of a ruler, direct unhurried gaze, aware of being watched"
+  },
+
+  "tint": {
+    "제": "#2E3A4C",
+    "강": "#43262A",
+    "파": "#243B3D",
+    "참": "#2F2A44",
+    "관": "#3B352B"
+  },
+
+  "faction_accent_color": {
+    "위": "cool slate-grey",
+    "촉": "oxblood",
+    "오": "teal",
+    "군웅": null
+  },
+  "faction_accent_garment": { "제": "uniform", "강": "armor", "파": "suit", "참": "robe", "관": "robe" },
+  "faction_accent_none": "plain dark garment, no faction piping",
+
+  "age_signal": {
+    "노익장": "aged veteran, deeply lined face",
+    "노장": "older officer, greying"
+  },
+
+  "bearing": {
+    "독사": "coldly watchful",
+    "낭고": "patient, concealed",
+    "감군": "coldly watchful",
+    "왕좌지재": "grave, principled",
+    "강직": "grave, principled",
+    "사직지기": "grave, principled",
+    "중신": "grave, principled",
+    "소패왕": "fierce, forward-leaning",
+    "강동지호": "fierce, forward-leaning",
+    "선등": "fierce, forward-leaning",
+    "무쌍": "predatory stillness",
+    "악래": "predatory stillness",
+    "호치": "predatory stillness",
+    "인덕": "open, unguarded warmth",
+    "양도": "open, unguarded warmth",
+    "철벽": "immovable",
+    "진창": "immovable",
+    "수성": "immovable"
+  },
+
+  "trait_marker": {
+    "독안": "black eye patch over one eye",
+    "만신창이": "old scars visible on face and neck",
+    "미주랑": "young and strikingly handsome"
+  },
+
+  "flag_iconography": ["관우", "장비", "손권", "조조", "동탁", "황충", "마초", "제갈량", "방통", "초선", "대교", "소교", "여포"]
+}
