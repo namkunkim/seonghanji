@@ -25,8 +25,8 @@
 | 명장 120 매핑 (ID·시드·틴트) | ✅ | §4.7 · `data/portrait-map.json` |
 | 개별부 규칙 | ✅ | §4.8 |
 | **모델·샘플러·가중치 해시** | ❌ **Phase 4에서 확정** | §4.2 칸 1·4 |
-| ComfyUI 워크플로 JSON 2종 | ❌ 미작성 | 이 문서 미작성 항목 |
-| 배치 생성 스크립트 | ❌ 미작성 | 〃 |
+| ComfyUI 워크플로 JSON 2종 | ✅ | `tools/comfyui/sdxl_portrait.json` · `flux_schnell_portrait.json` |
+| 배치 생성 스크립트 | ❌ 미작성 | 이 문서 미작성 항목 |
 | 후처리 스크립트 | ❌ 미작성 | 〃 |
 
 ---
@@ -132,15 +132,33 @@ sha256sum \
 
 ---
 
+## 워크플로 JSON 두 개 — `tools/comfyui/`
+
+**ComfyUI API 포맷.** 896×1120·4:5 고정, §4.2-1 파라미터가 이미 박혀 있다.
+기본값은 공용 `ART-C903`(제독형×무뢰) 한 장이라 **그대로 `POST /prompt` 하면 스모크
+테스트가 된다.** 배치(Phase 5)는 대상마다 아래 세 자리만 덮어쓴다.
+
+| 파일 | 모델 | 배치가 덮어쓰는 노드 |
+|---|---|---|
+| `sdxl_portrait.json` | SDXL base+refiner (2-pass · base 0–24/30 · refiner 24–30) | `["6"].inputs.text` · `["15"].inputs.text` (동일 문자열) · `["10"].inputs.noise_seed` · `["11"].inputs.noise_seed` (동일 정수) · `["19"].inputs.filename_prefix` |
+| `flux_schnell_portrait.json` | FLUX.1 [schnell] (unet+DualCLIP+ae · 4스텝 euler · guidance 0) | `["6"].inputs.text` · `["25"].inputs.noise_seed` · `["9"].inputs.filename_prefix` |
+
+- **부정 프롬프트**는 SDXL 쪽 `["7"]`·`["17"]` 에 §4.2-3 그대로 고정 — 배치가 안 건드린다.
+  FLUX schnell 은 부정 프롬프트를 쓰지 않는다(CFG 1).
+- `noise_seed` 는 정수다. `int(hashlib.sha256(f"seonghanji:portrait:v1:{art}".encode()).hexdigest()[:8], 16)`.
+- ⚠ **노드 class_type 은 ComfyUI 버전에 따라 이름이 바뀔 수 있다**(`UNETLoader`↔`UnetLoaderGGUF`,
+  `EmptySD3LatentImage` 등). Phase 4 스모크 테스트에서 한 번 확인하고 넘어간다.
+
+---
+
 ## Phase 4 — 화풍 기준선 시험생성 (§3.3-4 A · §4.2 칸 1·4 확정)
 
 **목표: SDXL 세트와 FLUX schnell 세트를 나란히 뽑아 하나를 고른다.**
 
-1. ComfyUI UI 에서 워크플로 2개를 로드:
-   - **SDXL base+refiner** (refiner 0.8 · DPM++ 2M Karras · 30스텝 · CFG 5.5 시작점)
-   - **FLUX schnell** (Euler · 4스텝 · guidance 낮게)
-   파라미터 시작점은 `ai-media-pipeline.md` §4.2-1. 워크플로 JSON 은 미작성(부록 없음) —
-   ComfyUI 기본 예제에서 파생한다.
+1. `tools/comfyui/` 의 워크플로 2개를 ComfyUI 에 올린다(UI 「Load」 또는 API `POST /prompt`).
+   기본값 그대로 1장씩 뽑아 **스모크 테스트** — 노드 이름·모델 경로가 맞는지 여기서 잡는다.
+   파라미터는 이미 §4.2-1 대로다(SDXL: DPM++ 2M Karras·30스텝·CFG 5.5·refiner 0.8 /
+   FLUX schnell: Euler·4스텝·guidance 0).
 2. **공용 11종**(`ART-C901`~`C911`) 프롬프트를 §4.3 규칙으로 조립:
    `고정부(§4.2-3) + 계층부[class](§4.3.1) + 성향부[disposition](§4.3.2)`, `<TINT>` = §4.1.
    매핑은 §4.4 표.
@@ -175,8 +193,10 @@ sha256sum \
          + 계층부[row.class0]        (§4.3.1)
          + 성향부[row.disposition]   (§4.3.2, null 이면 군주 조각)
          + 개별부(row, 명장만)       (§4.8: 세력 악센트 + 연령 신호 + 기조어 + trait 표지)
-  <TINT> = row.tint
-  → POST /prompt  (워크플로 JSON 템플릿에 prompt/seed/파일명만 치환)
+  <TINT> = row.tint  (고정부의 `flat single-color background <TINT>` 에 들어간다)
+  → tools/comfyui/{sdxl|flux_schnell}_portrait.json 로드
+  → 위 「워크플로 JSON 두 개」 표의 노드에 text/seed/filename_prefix 치환
+  → POST /prompt
   → 완료 대기(websocket /ws 또는 /history 폴링)
   → 결과 PNG 를 out/<art>.png 로 저장 (896×1120 · 8-bit · no alpha)
   ```
@@ -262,7 +282,7 @@ sha256sum \
 
 | # | 쟁점 | 비고 |
 |---|---|---|
-| 1 | **ComfyUI 워크플로 JSON 2종이 없다** | Phase 4 선행. SDXL base+refiner / FLUX schnell. 기본 예제에서 파생하되 §4.1 규격(896×1120·4:5)을 박아야 한다 |
+| 1 | ~~**ComfyUI 워크플로 JSON 2종이 없다**~~ | **작성 — 2026-08-30.** `tools/comfyui/sdxl_portrait.json` · `flux_schnell_portrait.json` (896×1120·§4.2-1 파라미터·기본값=ART-C903). **잔여 리스크:** 미실행 — 노드 `class_type` 이 파드의 ComfyUI 버전과 어긋날 수 있다(GGUF·SD3 latent 등). Phase 4 스모크 테스트에서 확인 |
 | 2 | **배치·후처리 스크립트가 없다** | Phase 5·7. `tools/` 신규. 시드·프롬프트 조립이 §4.2-2·§4.3·§4.8 과 한 글자도 어긋나면 안 된다 — 재현성이 안 B 의 전제 |
 | 3 | **틴트를 프롬프트로 낼까 후처리로 합성할까** | §4.1 은 프롬프트에 `<TINT>` 를 넣지만 확산 모델은 정확한 `#RRGGBB` 를 못 낸다. Phase 7-1 이 교정하는지 재합성하는지가 미정 — 시험생성에서 판정 |
 | 4 | **반출 방법 미확정** | `runpodctl` / Jupyter / S3 중 무엇을 표준으로. 물량 131장 + 22장 시험분이라 어느 쪽이든 되나 하나로 고정한다 |
@@ -270,8 +290,8 @@ sha256sum \
 
 ## 미작성 항목
 
-- [ ] **ComfyUI 워크플로 JSON** — `sdxl_portrait.json` · `flux_schnell_portrait.json` (896×1120 고정)
-- [ ] **배치 생성 스크립트** — `tools/gen_portraits.py` (가칭). 입력 `data/portrait-map.json` + 공용 11 표, 출력 `out/ART-C###.png`
+- [x] ~~**ComfyUI 워크플로 JSON**~~ — **2026-08-30. `tools/comfyui/sdxl_portrait.json` · `flux_schnell_portrait.json`** (896×1120 고정 · API 포맷 · 미실행)
+- [ ] **배치 생성 스크립트** — `tools/gen_portraits.py` (가칭). 입력 `data/portrait-map.json` + 공용 11 표, 워크플로 JSON 의 지정 노드에 치환, 출력 `out/ART-C###.png`
 - [ ] **공용 11 매핑을 기계가 읽는 형태로** — §4.4 표 → JSON (명장은 이미 `portrait-map.json`)
 - [ ] **후처리 스크립트** — `tools/finish_portraits.py` (가칭). 틴트·비네트·크롭 검증·WebP
 - [ ] **반출 방법 1개 확정** — 검토 4
