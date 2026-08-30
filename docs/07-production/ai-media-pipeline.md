@@ -308,8 +308,9 @@ lens flare, modern clothing
 
 > **세계관은 우주 SF × 삼국지다.** 복장은 한대 실물이 아니라 그 실루엣을 성간 함대의
 > 어휘로 옮긴 것 — 「제복」은 함대 정복, 「갑주」는 장갑복, 「관복」은 미래 관인의 예복이다.
-> 은하영웅전설식 반사실 유화 초상을 기준으로 한다(고정부가 이미 `semi-realistic,
-> digital painting, muted palette` 로 못 박았다).
+> 특정 작품의 고유 미술을 참조하지 않고, **절제된 반사실적 군사 초상 · 저채도 디지털
+> 페인팅 · 제도권 권위와 피로가 공존하는 표정**을 기준으로 한다(고정부가 이미
+> `semi-realistic, digital painting, muted palette` 로 못 박았다).
 
 #### 4.3.1 계층부 — `class` 5종
 
