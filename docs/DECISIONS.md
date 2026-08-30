@@ -241,7 +241,14 @@
 
 ToS 확인 완료 (확인일 2026-08-30) — 출력물 소유권 이용자 보유 · 모델 라이선스 불변 ·
 호스트의 파드 데이터 열람 금지(위반 시 즉시 퇴출) · AI 생성물 별도 제약 없음.
-**잔여 1건:** 「승인되지 않은 commercial endeavor 금지」 문구를 Compute/Marketplace 약관에서 별도 확인.
+
+**상업 이용 조항 — 확인 완료 (2026-08-30).** 「The Site may not be used in connection
+with any commercial endeavors except those specifically endorsed or approved by us」는
+§10(Prohibited Activities)의 문구이고 대상이 **"the Site"**(runpod.io 웹사이트·서브도메인)다.
+컴퓨트 워크로드는 §4.1 이 "purchase certain compute services … Runpod Offerings" 로
+**명시적 판매 대상**으로 규정하고, RunPod 은 production·enterprise 상용 이용을 표방한다.
+→ **상용 게임 에셋 생성은 허용.** 별도 Services/Cloud Agreement 는 없다(§1 Supplemental
+Terms 만 언급). 서면 확약이 필요하면 sales/support 1문의로 종결.
 
 > **뒤집히는 경우:** RunPod Community 재고난으로 24GB 상시 확보가 불가하면
 > Secure Cloud 또는 타 임대처로. 모델·라이선스·화풍 골격은 그대로 — V-43·V-44 는 영향 없다.
