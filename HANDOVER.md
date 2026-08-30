@@ -83,7 +83,7 @@ godot --headless --path . --script tests/verify_chibi.gd   적벽 5페이즈 대
 1. HANDOVER.md          ← 이 파일
 2. CLAUDE.md            ← 불가침 원칙 · 표기 규칙 · 함정
 3. docs/INDEX.md        ← 전체 색인 · 핵심 수치 한눈에
-4. docs/DECISIONS.md    ← 기각된 안과 그 이유 (V-01~V-42)
+4. docs/DECISIONS.md    ← 기각된 안과 그 이유 (V-01~V-46)
 5. docs/07-production/m0-report.md        ← **지금 무엇이 어디까지 되었는가**
 6. docs/00-overview/design-overview.md    ← 통합 기획서
 7. docs/assets/star-map.html              ← 브라우저로 열 것
@@ -181,6 +181,8 @@ ACT        68개 · 필수 304.5시간 · 캠페인 총 348시간
 | `06-tech/ai-design.md` | 3계층 · 유틸리티 · 절단 가치 · **계략 성향 계수**(§7.4) | |
 | `06-tech/ui-design.md` | 3단계 내비 · 복귀 브리핑 | |
 | `07-production/dev-requirements.md` | **제작 요건** — 아키텍처 · 데이터 정본화 · 아트 물량 · 법무 · QA · 일정 | **신규(2026-08-23)** |
+| `07-production/asset-ledger.md` | **에셋 라이선스 대장** — 물량 실측(등장 309 → 초상 131) · 확보 판정 · 라이선스 등급 | |
+| `07-production/ai-media-pipeline.md` | **AI 미디어 제작 가이드** — 초상 131·BGM 6 규격·시드·프롬프트 · **실행 환경 RunPod Community**(V-46) | **신규(2026-08-30)** |
 | `assets/star-map.html` | 인터랙티브 지도 | 브라우저로 열 것 |
 
 ---
@@ -260,7 +262,10 @@ core/
 
 - 기동병기 상세 (에이스 판정) — **[F-16]·전투기 연출의 선행**
 - 튜토리얼·온보딩
-- 아트·사운드 방향 — 물량 판정은 `asset-ledger.md` §5 에 있다
+- ~~아트·사운드 방향~~ — **파이프라인 확정.** `asset-ledger.md`(물량) + `ai-media-pipeline.md`
+  (제작 방법)에 초상 131·BGM 6 의 규격·시드·프롬프트가 잡혔고, **실행 환경은 RunPod Community
+  Cloud 로 확정**(V-46) — 자택 5060 8GB 는 음원만 로컬. 남은 것은 화풍 기준선 시험생성
+  (모델·SHA-256) · BGM 6트랙 · L3 영상(S6)
 - 특수 엔딩 5종의 세력 변주 (최소 Extinction 4계열)
 
 ---
