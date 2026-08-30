@@ -21,6 +21,18 @@ var morale: int = Battle.MORALE_NOMINAL
 ## 편성안 (ship-specs.md §7.2). 전대당 유지점·유지비가 여기서 갈린다
 var plan: String = Economy.PLAN_DEFAULT
 
+## 진형 (ship-specs.md §5.2 · data/formations.json 7종 · screens.md 검토 14).
+##
+## 문서가 진형 7종을 정본화(§5.2)하고 §3.2·§3.3·§4.4·§4.5·§5.5 가 전부 전제하는데
+## 코어에 필드가 없어 화면이 「미정」으로 그려 왔다 (`half_sheet.gd`). S3.4(SC-L3)
+## 레인이 필드를 세운다 — **소유권은 그 레인에 있고, 편성 레인(SC-F2)은 읽기만 한다.**
+##
+## ⚠ **필드일 뿐 아직 배선은 아니다.** `battle.gd` 5페이즈는 이 값을 읽지 않는다
+## (formations.json 의 페이즈 계수·상성·팔진 전용 판정 미적용). 초기 진형·페이즈
+## 사이 1회 변경(§5.5)·지형 강제(§5.3)를 전장 모델에 넣는 것은 전투 레인 몫이다.
+## 지금 이 값을 쓰는 곳: `app/views/` 의 함대 아이콘·함대 시트·진형 미리보기.
+var formation: String = "어린진"
+
 ## 주둔 상태. 유지비 배율이 갈린다 — **회랑 봉쇄는 ×1.5** (combat.md §4.3.2)
 var station: String = "자국"
 
