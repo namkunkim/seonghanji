@@ -3,6 +3,11 @@
 > **새 세션·새 작업자를 위한 단일 진입점.**
 > 갱신일: **2026-08-30** — **M0 통과 · S3 클라이언트 진행 중 (S3.2~S3.4·S3.6 ✅).**
 >
+> **작업 상태의 정본은 `PROJECT-TRACKER.md` 다.** 우선순위·의존성·완료 증거는 거기서 관리한다.
+> 2026-08-23 에 닫힌 `JOBS.md` 큐를 대체한다. HANDOVER 는 맥락·확정 사항·함정을,
+> PROJECT-TRACKER 는 「무엇을 언제 어떤 순서로」를 담는다. **현재 단계: 프리프로덕션**
+> (P0-01·P0-03 ✅ · 다음은 P0-02·P0-04). Godot 코드는 참고 프로토타입이며 이 단계의 최우선이 아니다.
+>
 > **[핸드오버 요약]** 이 저장소는 더 이상 문서만 있는 곳이 아니다.
 > **코어 27파일 · 화면 15파일 · 시험 33섹션 617단언**이 돌고,
 > `dev-requirements.md` §9 가 M0 의 산출물로 잡았던
@@ -92,12 +97,13 @@ M0 게이트 통과 직후 커밋)이다 — 그 커밋이 이미 「70% → 매
 
 ```
 1. HANDOVER.md          ← 이 파일
-2. CLAUDE.md            ← 불가침 원칙 · 표기 규칙 · 함정
-3. docs/INDEX.md        ← 전체 색인 · 핵심 수치 한눈에
-4. docs/DECISIONS.md    ← 기각된 안과 그 이유 (V-01~V-46)
-5. docs/07-production/m0-report.md        ← **지금 무엇이 어디까지 되었는가**
-6. docs/00-overview/design-overview.md    ← 통합 기획서
-7. docs/assets/star-map.html              ← 브라우저로 열 것
+2. PROJECT-TRACKER.md   ← **작업 상태 정본** · 우선순위 · 의존성 · 완료 기록
+3. CLAUDE.md            ← 불가침 원칙 · 표기 규칙 · 함정
+4. docs/INDEX.md        ← 전체 색인 · 핵심 수치 한눈에
+5. docs/DECISIONS.md    ← 기각된 안과 그 이유 (V-01~V-46)
+6. docs/07-production/m0-report.md        ← 코드가 지금 무엇이 어디까지 되었는가
+7. docs/00-overview/design-overview.md    ← 통합 기획서
+8. docs/assets/star-map.html              ← 브라우저로 열 것
 ```
 
 > **무언가를 만들기 전에 `docs/INDEX.md` 를 먼저 본다.**
@@ -199,6 +205,10 @@ ACT        68개 · 필수 304.5시간 · 캠페인 총 348시간
 ---
 
 ## 4. 다음 작업
+
+> **이 절은 코드(S3~코어) 관점의 다음 작업이다. 전체 우선순위·의존성은 `PROJECT-TRACKER.md` 가 정본.**
+> 현재 단계는 프리프로덕션이라 P0(시나리오 범위·리스크·에셋 사전 준비)이 앞서고,
+> 아래 S3 클라이언트는 개발 착수 게이트(P0-09) 이후의 D2 묶음으로 관리된다.
 
 ### 4.1 지금 — S3 클라이언트 (24주차 【최소 플레이 가능】)
 
@@ -337,11 +347,12 @@ core/
 ## 7. 새 세션 시작 시
 
 ```
-1. HANDOVER.md · CLAUDE.md · docs/DECISIONS.md 읽기
-2. docs/07-production/m0-report.md — 지금 무엇이 어디까지 되었는가
-3. 작업할 영역의 개별 문서 읽기
-4. **core/ 를 grep** — 「없을 것 같은 것」이 대개 이미 있다 (§6-9)
-5. star-map.html 열어 지리 감각 잡기
+1. HANDOVER.md · PROJECT-TRACKER.md · CLAUDE.md · docs/DECISIONS.md 읽기
+2. PROJECT-TRACKER.md §1~3 — 지금 무엇이 다음이고 무엇이 선행인가
+3. docs/07-production/m0-report.md — 코드가 어디까지 되었는가
+4. 작업할 영역의 개별 문서 읽기
+5. **core/ 를 grep** — 「없을 것 같은 것」이 대개 이미 있다 (§6-9)
+6. star-map.html 열어 지리 감각 잡기
 ```
 
 ### 기본 검증 4종 + 글리프 검산 — 무엇을 고치든 끝나고 돌린다
