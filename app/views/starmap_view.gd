@@ -36,6 +36,9 @@ var _filter_bar: HBoxContainer
 var _graph: RegionGraph
 var _cards_box: VBoxContainer
 var _sheet: HalfSheet
+var _detail: DetailView                          # SC-L3 세부 뷰 (S3.4) — 전체 화면 오버레이
+var _fleet: FleetScreens                         # SC-F1~F3 함대 편성 UI (S3.6) — 전체 화면 오버레이
+var _btn_fleet: Button
 var _cards: Array[RegionCard] = []
 
 ## 필터 (§2.4 — 국력순 · 위험순 · 미개발순 · 직할만)
@@ -81,6 +84,10 @@ func _build() -> void:
 	_btn_batch = _button(head, "일괄", 120)
 	_btn_batch.disabled = true                     # 성역 단위 명령은 S3.5 다
 	_btn_batch.tooltip_text = "성역 단위 일괄 명령 — 명령 메뉴(S3.5) 미구현"
+	# L1 성도(§4.3 「◀ 손권」의 자리)가 없어 여기에 둔다 — SC-F1 함대 목록 진입점.
+	_btn_fleet = _button(head, "함대", 120)
+	_btn_fleet.tooltip_text = "함대 목록 SC-F1 — 규모 · 배치 · 유지점/지휘 한도"
+	_btn_fleet.pressed.connect(func(): _fleet.open_list(campaign.world.player_faction))
 	_btn_filter = _button(head, "필터", 120)
 	_btn_filter.pressed.connect(func(): _filter_bar.visible = not _filter_bar.visible)
 
@@ -127,8 +134,36 @@ func _build() -> void:
 	_sheet.offset_bottom = 0
 	_sheet.start_year = start_year
 	_sheet.setup(data, campaign)
-	_sheet.detail_requested.connect(func(_rid: String): pass)
+	_sheet.detail_requested.connect(_open_detail)
+	_sheet.compose_requested.connect(func(fid: int): _open_fleet_screen("compose", fid))
+	_sheet.appoint_requested.connect(func(fid: int): _open_fleet_screen("appoint", fid))
 	add_child(_sheet)
+
+	# ---- 세부 뷰 SC-L3 (S3.4). **전체 화면** — 지도를 겹치지 않고 덮는다 (§0.2).
+	# 시각 바는 이 뷰 밖(main.gd `$Root/TimeBar`)이라 계속 보인다.
+	_detail = DetailView.new()
+	_detail.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_detail.start_year = start_year
+	_detail.setup(data, campaign)
+	_detail.closed.connect(func(): refresh())
+	add_child(_detail)
+
+	# ---- 함대 편성 UI SC-F1~F3 (S3.6). **전체 화면 오버레이** — L2 위에 얹힌다 (§4.1).
+	_fleet = FleetScreens.new()
+	_fleet.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fleet.setup(data, campaign, start_year)
+	_fleet.closed.connect(func(): refresh())
+	add_child(_fleet)
+
+
+## 함대 시트 [편성 ▸] / [임명 ▸] 에서 온다 (§2.6 · §3.4 전이도). 시트를 닫고 전체 화면으로.
+func _open_fleet_screen(which: String, fleet_id: int) -> void:
+	if _sheet.visible:
+		_sheet.close()
+	if which == "compose":
+		_fleet.open_compose(fleet_id, false)
+	else:
+		_fleet.open_appoint(fleet_id, false)
 
 
 func _button(parent: Node, text: String, w: int) -> Button:
@@ -152,6 +187,10 @@ func set_system(sid: String) -> void:
 	system_id = sid
 	if _sheet.visible:
 		_sheet.close()
+	if _detail != null and _detail.visible:
+		_detail.close()
+	if _fleet != null and _fleet.visible:
+		_fleet.close_screen()
 	_graph.set_context(data, campaign, sid)
 	_rebuild_cards()
 	refresh()
@@ -221,9 +260,17 @@ func _on_region_tapped(rid: String) -> void:
 
 
 func _on_region_long_pressed(rid: String) -> void:
-	# 롱탭 → 세부 뷰 `SC-L3` 직행. **S3.4 가 붙기 전까지 사유를 적는다** (§1.3)
-	_sheet.open_region(rid)
-	_sheet._note.text = "롱탭 — 세부 뷰 SC-L3 직행은 S3.4 가 붙어야 열린다"
+	# 롱탭 → 세부 뷰 `SC-L3` 직행 (§2.5)
+	_open_detail(rid)
+
+
+## 하프 시트 [세부 ▸] · 카드 롱탭 두 경로가 여기로 온다 (§2.6 전이도).
+func _open_detail(rid: String) -> void:
+	if rid == "":
+		return
+	if _sheet.visible:
+		_sheet.close()
+	_detail.open(rid)
 
 
 func _on_fleet_tapped(fleet_id: int) -> void:
@@ -234,13 +281,20 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not (event as InputEventKey).echo):
 		return
 	# 태블릿에는 없는 입력이다. **검증용**으로만 둔다 (스와이프와 같은 일을 한다)
+	var busy := _detail.visible or _fleet.visible
 	match (event as InputEventKey).keycode:
 		KEY_LEFT:
-			_on_swiped(-1)
+			if not busy:
+				_on_swiped(-1)
 		KEY_RIGHT:
-			_on_swiped(1)
+			if not busy:
+				_on_swiped(1)
 		KEY_ESCAPE:
-			if _sheet.visible:
+			if _fleet.visible:
+				_fleet.close_screen()
+			elif _detail.visible:
+				_detail.close()
+			elif _sheet.visible:
 				_sheet.close()
 
 
@@ -262,6 +316,8 @@ func refresh() -> void:
 	for c in _cards:
 		c.refresh()
 	_sheet.refresh()
+	_detail.refresh()          # 열려 있으면 매 틱 구독 갱신 (조항 ②)
+	_fleet.refresh()           # 편성/임명 화면도 값이 흐른다 (§1.1 ①②)
 
 
 ## 이 성역이 두 세력 이상에 나뉘어 있는가 (§2.2 분쟁).

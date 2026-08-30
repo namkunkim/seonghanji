@@ -16,6 +16,10 @@ extends PanelContainer
 signal closed()
 signal detail_requested(rid: String)
 
+## 함대 시트에서 SC-F2 / SC-F3 (S3.6) 로 넘어간다 — `screens.md` §2.6 · §3.4 전이도.
+signal compose_requested(fleet_id: int)
+signal appoint_requested(fleet_id: int)
+
 var data: GameData
 var campaign: Campaign
 var start_year: int = 208
@@ -30,6 +34,7 @@ var _body: GridContainer
 var _note: Label
 var _btn_detail: Button
 var _btn_more: Button
+var _btn_appoint: Button          # 함대 시트에서만 — SC-F3 임명 (S3.6)
 var _gauge: Gauge
 var _gauge_row: HBoxContainer
 var _gauge_label: Label
@@ -63,6 +68,9 @@ func _ready() -> void:
 	_btn_detail = _button(head, "세부 ▸")
 	_btn_detail.pressed.connect(func(): detail_requested.emit(_rid))
 	_btn_more = _button(head, "편성 ▸")
+	_btn_more.pressed.connect(func(): compose_requested.emit(_fleet_id))
+	_btn_appoint = _button(head, "임명 ▸")
+	_btn_appoint.pressed.connect(func(): appoint_requested.emit(_fleet_id))
 	var btn_close := _button(head, "닫기")
 	btn_close.pressed.connect(close)
 
@@ -180,9 +188,10 @@ func _refresh_region() -> void:
 	var lost := st.owner != _owner_at_open
 	modulate = Color(1, 1, 1, 0.6) if lost else Color(1, 1, 1, 1)
 	_btn_detail.visible = true
-	_btn_detail.disabled = true       # SC-L3 은 S3.4 다
-	_btn_detail.tooltip_text = "세부 뷰 SC-L3 — S3.4 미구현"
+	_btn_detail.disabled = lost       # SC-L3 (S3.4) 가 섰다. 대상 소멸 시엔 잠근다 (§1.3)
+	_btn_detail.tooltip_text = "세부 뷰 SC-L3 — 권역 내부 4층 · 함대 진형"
 	_btn_more.visible = false
+	_btn_appoint.visible = false
 
 
 func _acquired_text(st: RegionState) -> String:
@@ -235,6 +244,7 @@ func _refresh_fleet() -> void:
 		modulate = Color(1, 1, 1, 0.6)
 		_btn_detail.visible = false
 		_btn_more.visible = false
+		_btn_appoint.visible = false
 		return
 
 	modulate = Color(1, 1, 1, 1)
@@ -250,6 +260,9 @@ func _refresh_fleet() -> void:
 	_pair("규모", "%d척  (전대 %d척 · 함대 %d척 정본)" % [
 		fl.ships, Battle.SQUADRON_SHIPS, Battle.FLEET_SHIPS])
 	_pair("편성안", fl.plan)
+	_pair("진형", "%s  (%s · 요구 통솔 %d)" % [fl.formation,
+		FormationSpec.directive(fl.formation),
+		FormationSpec.required_command(fl.formation)])
 	_pair("주둔 상태", fl.station)
 	_pair("제독", "%s  (통솔 %d · 무력 %d · 지력 %d)" % [
 		fl.commander_name if fl.commander_name != "" else "무명 장교 — 보정 0",
@@ -267,11 +280,14 @@ func _refresh_fleet() -> void:
 	else:
 		_pair("위치", data.system_name(fl.at_system) + "성역 주둔")
 
-	_note.text = "진형 · 편성 · 임명은 SC-F2 / SC-F3 (S3.6)에서 연다. 진형은 코어 필드가 아직 없다."
+	_note.text = "편성안·초기 진형은 [편성 ▸](SC-F2), 지휘부는 [임명 ▸](SC-F3)에서 발행한다. 세부 뷰(SC-L3)에서 진형 도형을 탭하면 지형 필터를 미리 볼 수 있다."
 	_btn_detail.visible = false
 	_btn_more.visible = true
-	_btn_more.disabled = true
-	_btn_more.tooltip_text = "편성 시트 SC-F2 — S3.6 미구현"
+	_btn_more.disabled = false
+	_btn_more.tooltip_text = "편성 시트 SC-F2 — 편성안 · 강화 축 · 초기 진형"
+	_btn_appoint.visible = true
+	_btn_appoint.disabled = false
+	_btn_appoint.tooltip_text = "임명 시트 SC-F3 — 지휘부 5직 · 전대장"
 
 
 static func _slot(v: int) -> String:

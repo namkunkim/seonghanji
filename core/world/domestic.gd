@@ -147,6 +147,17 @@ const COMMANDS: Array[String] = [
 	CMD_BUILD, CMD_TECH, CMD_DELEGATE,
 ]
 
+## ---------------------------------------------------------------- 함대 편성 (S3.6)
+##
+## `screens.md` §4 — 플레이어의 편성/임명 발행. **`COMMANDS` 에 넣지 않는다** —
+## AI 는 편성을 `Strategy.domestic_plan` 밖에서 정하고, 이 둘은 화면(`FleetScreens`)이
+## 발행하는 플레이어 전용 명령이다. 사자 지연을 타고 도달 시 `apply` 가 반영한다.
+##
+## **페이로드를 화면이 다 풀어서 보낸다.** `apply` 서명에 로스터가 없으므로
+## (campaign.gd 를 고치지 않는다) 인물 해석은 화면 몫이고 여기서는 대입만 한다.
+const CMD_FLEET_PLAN: String = "함대편성안"
+const CMD_FLEET_APPOINT: String = "함대임명"
+
 ## ---------------------------------------------------------------- 비용
 
 ## 개발 — 인구 × 300 일시불 · 6개월 · 생산·수입 +10%p · 개발여지 1칸 소비
@@ -233,6 +244,10 @@ static func apply(data: GameData, states: Dictionary, f: Faction,
 		CMD_DELEGATE:
 			return _apply_delegate(states, f, String(p.get("region", "")),
 				bool(p.get("on", true)))
+		CMD_FLEET_PLAN:
+			return _apply_fleet_plan(fleets, f, p)
+		CMD_FLEET_APPOINT:
+			return _apply_fleet_appoint(fleets, f, p)
 		_:
 			return "알 수 없는 명령: " + kind
 
@@ -332,6 +347,70 @@ static func _apply_delegate(states: Dictionary, f: Faction, rid: String,
 	if st == null:
 		return "권역 없음"
 	st.delegated = on
+	return ""
+
+
+## ---------------------------------------------------------------- 함대 편성 apply
+##
+## 화면(`FleetScreens`)이 사자 지연을 태워 발행한 것이 도달했다. **대입만 한다** —
+## 인물 해석·계략 배선 값은 화면이 이미 풀어 페이로드에 실어 보냈다.
+
+static func _find_own_fleet(fleets: Array, f: Faction, fid: int) -> Fleet:
+	for fl in fleets:
+		if fl.id == fid:
+			return fl if fl.owner == f.id else null
+	return null
+
+
+## 편성안 + 초기 진형 반영. **강화 축**은 `Fleet` 에 담을 필드가 없어 흘려보낸다
+## (강화 축 코어 필드 — `screens.md` 검토 신설). `formation` 은 SC-L3 레인이 세운
+## 필드다 (검토 14 해소) — 값만 여기서 쓴다. 전장 배선은 전투 레인 몫이다.
+static func _apply_fleet_plan(fleets: Array, f: Faction, p: Dictionary) -> String:
+	var fl := _find_own_fleet(fleets, f, int(p.get("fleet", -1)))
+	if fl == null:
+		return "자기 함대가 아니다"
+	var plan := String(p.get("plan", ""))
+	if not Economy.PLANS.has(plan):
+		return "알 수 없는 편성안: " + plan
+	fl.plan = plan
+	var fm := String(p.get("formation", ""))
+	if fm != "" and "formation" in fl:
+		fl.set("formation", fm)
+	return ""
+
+
+## 임명 4계층 반영. 페이로드 `appoint` 는 slot -> {id,name,통솔,무력,지력,정치} 다.
+static func _apply_fleet_appoint(fleets: Array, f: Faction, p: Dictionary) -> String:
+	var fl := _find_own_fleet(fleets, f, int(p.get("fleet", -1)))
+	if fl == null:
+		return "자기 함대가 아니다"
+	var ap: Dictionary = p.get("appoint", {})
+	var cmd: Dictionary = ap.get("제독", {})
+	fl.commander_id = String(cmd.get("id", ""))
+	fl.commander_name = String(cmd.get("name", ""))
+	fl.command = int(cmd.get("통솔", 50))
+	fl.might = int(cmd.get("무력", 50))
+	fl.wits = int(cmd.get("지력", 50))
+	var vice: Dictionary = ap.get("부제독", {})
+	fl.vice_id = String(vice.get("id", ""))
+	fl.vice_command = int(vice.get("통솔", 0)) if fl.vice_id != "" else 0
+	var asl: Dictionary = ap.get("강습", {})
+	fl.assault_id = String(asl.get("id", ""))
+	fl.assault_might = int(asl.get("무력", 0)) if fl.assault_id != "" else 0
+	var sge: Dictionary = ap.get("공성", {})
+	fl.siege_id = String(sge.get("id", ""))
+	fl.siege_wits = int(sge.get("지력", 0)) if fl.siege_id != "" else 0
+	var sup: Dictionary = ap.get("보급", {})
+	fl.supply_id = String(sup.get("id", ""))
+	fl.supply_politics = int(sup.get("정치", 0)) if fl.supply_id != "" else 0
+	fl.squadron_command = int(p.get("squad_command", 0))
+	# 계략 배선 (combat.md §5.3·§5.4) — 화면이 campaign._refresh_scheme_staff 규칙대로 풀었다
+	fl.staff_wits_max = int(p.get("staff_wits_max", fl.wits))
+	fl.staff_traits = p.get("staff_traits", [])
+	fl.detector_wits = int(p.get("detector_wits", 0))
+	fl.detector_name = String(p.get("detector_name", ""))
+	fl.detector_traits = p.get("detector_traits", [])
+	fl.staff_wits80_count = int(p.get("staff_wits80_count", 0))
 	return ""
 
 
