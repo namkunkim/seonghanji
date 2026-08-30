@@ -10,7 +10,11 @@
 모바일 그랜드 스트래티지 게임 **SEONGHANJI: MANDATE (성한지: 천명)**의 기획.
 후한 말 삼국시대를 우주 SF로 옮긴 은하영웅전설식 전략 시뮬레이션.
 
-현재 저장소에는 **기획 문서만** 있다. 코드는 아직 없다.
+저장소에는 기획 문서와 **참고 프로토타입 코드**가 있다 — 코어 27파일 · 화면 15파일 ·
+시험 33섹션 617단언 · 검산기 3종. 화면 없이 100회 자동 진행되는 M0 시뮬레이터가
+2026-08-28에 게이트를 통과했고(`docs/07-production/m0-report.md`), 그 위에 최소 플레이 가능
+클라이언트(S3)를 올리는 중이다 — S3.5·S3.7·S3.8 잔여. 단, 현 단계는 프리프로덕션이며
+이 코드가 최우선 납품물은 아니다 (`PROJECT-TRACKER.md`).
 
 ### 두 주제축
 
@@ -179,7 +183,7 @@
 ```
 docs/
 ├── INDEX.md        ← 전체 색인 · 핵심 수치 한눈에
-├── DECISIONS.md    ← 기각안 6 · 변경 이력 46 (재론 금지 사유의 정본)
+├── DECISIONS.md    ← 기각안 6 · 변경 이력 48 (재론 금지 사유의 정본)
 ├── 00-overview/    design-overview · glossary
 ├── 01-world/       star-map · region-power
 ├── 02-characters/  generals-150 · generals-stats · officers-256
