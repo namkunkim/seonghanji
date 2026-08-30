@@ -1,0 +1,1922 @@
+[
+ {
+  "art": "ART-C001",
+  "chr": "CHR-0001",
+  "name": "가후",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#2F2A44",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 4095606160,
+  "traits": [
+   "「독사」 이간·반란 유도 성공률 +50%"
+  ]
+ },
+ {
+  "art": "ART-C002",
+  "chr": "CHR-0002",
+  "name": "견희",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 2748350532,
+  "traits": [
+   "「낙신」 궁정 안정 +30%. **조비·조식 후계 갈등 이벤트 중심 인물**"
+  ]
+ },
+ {
+  "art": "ART-C003",
+  "chr": "CHR-0003",
+  "name": "곽가",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2F2A44",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 1760652898,
+  "traits": [
+   "「귀모」 적 의도 예측 공개. **207년 이후 확률적 사망**"
+  ]
+ },
+ {
+  "art": "ART-C004",
+  "chr": "CHR-0004",
+  "name": "곽여왕",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "야심",
+  "disp_label": "야심",
+  "tint": "#3B352B",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 2436717289,
+  "traits": [
+   "「모주」 후계자 지명 이벤트에 개입 가능. 궁정 정치 +40%, **천명 소폭 하락**"
+  ]
+ },
+ {
+  "art": "ART-C005",
+  "chr": "CHR-0009",
+  "name": "만총",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#3B352B",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3430758886,
+  "traits": [
+   "「혹리」 성계 수탈 효율 +30%, 민심 -10%"
+  ]
+ },
+ {
+  "art": "ART-C006",
+  "chr": "CHR-0010",
+  "name": "문빙",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3675505975,
+  "traits": [
+   "「수비」 항로 봉쇄 효과 +25%"
+  ]
+ },
+ {
+  "art": "ART-C007",
+  "chr": "CHR-0012",
+  "name": "방덕",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#43262A",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3534678962,
+  "traits": [
+   "「대관출전」 항복 절대 거부. 패배 시 사망"
+  ]
+ },
+ {
+  "art": "ART-C008",
+  "chr": "CHR-0013",
+  "name": "변씨",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3645228538,
+  "traits": [
+   "「내조」 후계 갈등 이벤트 발생률 -50%, 궁정 안정도 +20%"
+  ]
+ },
+ {
+  "art": "ART-C009",
+  "chr": "CHR-0016",
+  "name": "사마의",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "야심",
+  "disp_label": "야심",
+  "tint": "#2F2A44",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 2271968795,
+  "traits": [
+   "「낭고」 방어 시 소모 -30%. **세력 내 은밀히 자기 세력 축적**"
+  ]
+ },
+ {
+  "art": "ART-C010",
+  "chr": "CHR-0017",
+  "name": "서황",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 950163186,
+  "traits": [
+   "「주아부의 풍」 적 포위망 돌파 시 손실 -40%"
+  ]
+ },
+ {
+  "art": "ART-C011",
+  "chr": "CHR-0018",
+  "name": "순욱",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2F2A44",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 155300095,
+  "traits": [
+   "「왕좌지재」 세력 전체 내정 효율 +25%. **군주 칭제 시 즉시 이탈·사망**"
+  ]
+ },
+ {
+  "art": "ART-C012",
+  "chr": "CHR-0019",
+  "name": "순유",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#2F2A44",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3935914128,
+  "traits": [
+   "「십이기책」 회랑 전투 계략 성공률 +30%"
+  ]
+ },
+ {
+  "art": "ART-C013",
+  "chr": "CHR-0021",
+  "name": "악진",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3128912938,
+  "traits": [
+   "「선등」 강습 개시 시 초동 피해 +25%"
+  ]
+ },
+ {
+  "art": "ART-C014",
+  "chr": "CHR-0023",
+  "name": "우금",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3527506914,
+  "traits": [
+   "「엄정」 부대 규율 +30%. **포로가 되면 특성 영구 상실**"
+  ]
+ },
+ {
+  "art": "ART-C015",
+  "chr": "CHR-0024",
+  "name": "유엽",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2F2A44",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3798294060,
+  "traits": [
+   "「종실지신」 한실 종친이면서 실력주의 세력에 복무. **천명 하락 페널티 완충**"
+  ]
+ },
+ {
+  "art": "ART-C016",
+  "chr": "CHR-0025",
+  "name": "이전",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 1454884609,
+  "traits": [
+   "「사군자」 아군 제독과 상성 충돌 무효화"
+  ]
+ },
+ {
+  "art": "ART-C017",
+  "chr": "CHR-0026",
+  "name": "장료",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 2890862140,
+  "traits": [
+   "「소요진」 병력 열세일수록 공격력 상승 (최대 +80%)"
+  ]
+ },
+ {
+  "art": "ART-C018",
+  "chr": "CHR-0027",
+  "name": "장춘화",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "야심",
+  "disp_label": "야심",
+  "tint": "#3B352B",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3823862651,
+  "traits": [
+   "「인단」 사마의(#19) 「낭고」 진행 속도 +25%, 은폐 판정 보정"
+  ]
+ },
+ {
+  "art": "ART-C019",
+  "chr": "CHR-0028",
+  "name": "장합",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3604485860,
+  "traits": [
+   "「교변」 지형 효과 페널티 절반"
+  ]
+ },
+ {
+  "art": "ART-C020",
+  "chr": "CHR-0029",
+  "name": "전예",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3886560533,
+  "traits": [
+   "「호이」 이민족 외교·전투 +40%, 변경 성역 유지비 -30%"
+  ]
+ },
+ {
+  "art": "ART-C021",
+  "chr": "CHR-0030",
+  "name": "전위",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#43262A",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3404953895,
+  "traits": [
+   "「악래」 군주 소속 함대 피격 시 대신 피해 흡수"
+  ]
+ },
+ {
+  "art": "ART-C022",
+  "chr": "CHR-0031",
+  "name": "정욱",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2F2A44",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 2400867375,
+  "traits": [
+   "「강직」 반란 발생률 -20%, 민심 회복 속도 -10%"
+  ]
+ },
+ {
+  "art": "ART-C023",
+  "chr": "CHR-0032",
+  "name": "조비",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": null,
+  "disp_label": "군주",
+  "tint": "#3B352B",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 2883673647,
+  "traits": [
+   "「선양」 칭제 시 천명 감소폭 -40%"
+  ]
+ },
+ {
+  "art": "ART-C024",
+  "chr": "CHR-0033",
+  "name": "조인",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 4168171741,
+  "traits": [
+   "「철벽」 성계 방어전 시 전열함 내구 +50%"
+  ]
+ },
+ {
+  "art": "ART-C025",
+  "chr": "CHR-0034",
+  "name": "조조",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": null,
+  "disp_label": "군주",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3991451718,
+  "traits": [
+   "「유재시거」 등용 시 상성 판정 1회 무시. 대신 극 인물 영구 등용 불가"
+  ]
+ },
+ {
+  "art": "ART-C026",
+  "chr": "CHR-0035",
+  "name": "조진",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3775833503,
+  "traits": [
+   "「대장군」 방면군 편성 시 소속 함대 전체 +10%"
+  ]
+ },
+ {
+  "art": "ART-C027",
+  "chr": "CHR-0036",
+  "name": "조홍",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 1394851039,
+  "traits": [
+   "「가재」 보급 소모 -15%"
+  ]
+ },
+ {
+  "art": "ART-C028",
+  "chr": "CHR-0037",
+  "name": "조휴",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 1055802580,
+  "traits": [
+   "「천리구」 추격전 전과 +30%, 유인책에 취약"
+  ]
+ },
+ {
+  "art": "ART-C029",
+  "chr": "CHR-0038",
+  "name": "종요",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 1386037734,
+  "traits": [
+   "「관중경영」 신규 점령 성역 안정화 속도 2배"
+  ]
+ },
+ {
+  "art": "ART-C030",
+  "chr": "CHR-0040",
+  "name": "진군",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 1796924248,
+  "traits": [
+   "「구품관인법」 관료형 인재 등용 비용 -40%"
+  ]
+ },
+ {
+  "art": "ART-C031",
+  "chr": "CHR-0042",
+  "name": "채염",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 504398605,
+  "traits": [
+   "「호가십팔박」 이민족 회유 +35%, 문화 정책 시 민심 회복 +20%"
+  ]
+ },
+ {
+  "art": "ART-C032",
+  "chr": "CHR-0043",
+  "name": "하후돈",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3191860023,
+  "traits": [
+   "「독안」 피격 시 이탈 없음, 부대 사기 하락 무효"
+  ]
+ },
+ {
+  "art": "ART-C033",
+  "chr": "CHR-0044",
+  "name": "하후연",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 3491699584,
+  "traits": [
+   "「신속」 고속항로 이동 소요 -40%. 단 매복 피해 +30%"
+  ]
+ },
+ {
+  "art": "ART-C034",
+  "chr": "CHR-0046",
+  "name": "학소",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 2045636431,
+  "traits": [
+   "「진창」 **회랑 요새 방어 시 병력차 무시**. 소수로 대군 저지"
+  ]
+ },
+ {
+  "art": "ART-C035",
+  "chr": "CHR-0047",
+  "name": "허저",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#43262A",
+  "faction": "위",
+  "accent": "cool slate-grey",
+  "seed": 2015884980,
+  "traits": [
+   "「호치」 기함 방어 시 적 강습 성공률 -50%"
+  ]
+ },
+ {
+  "art": "ART-C036",
+  "chr": "CHR-0104",
+  "name": "간옹",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 1395930130,
+  "traits": [
+   "「오만」 외교 시 상대 세력 천명이 낮을수록 유리"
+  ]
+ },
+ {
+  "art": "ART-C037",
+  "chr": "CHR-0105",
+  "name": "감부인",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 1904350202,
+  "traits": [
+   "「인고」 군주 유랑 상태에서도 세력 결속도 유지"
+  ]
+ },
+ {
+  "art": "ART-C038",
+  "chr": "CHR-0107",
+  "name": "관우",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2E3A4C",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 227349697,
+  "traits": [
+   "「만인지적」 강습 시 적 기함 단독 제압 가능. **유비 생존 시 절대 이탈 불가**"
+  ]
+ },
+ {
+  "art": "ART-C039",
+  "chr": "CHR-0108",
+  "name": "관흥",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#43262A",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 1069566033,
+  "traits": [
+   "「부풍」 관우 사망 후 등장. 대오 전투 시 +30%"
+  ]
+ },
+ {
+  "art": "ART-C040",
+  "chr": "CHR-0111",
+  "name": "마대",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 1388665881,
+  "traits": [
+   "「집행」 **세력 내 반란 인물 즉시 처단 가능** (위연 대응 카드)"
+  ]
+ },
+ {
+  "art": "ART-C041",
+  "chr": "CHR-0112",
+  "name": "마량",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 271427049,
+  "traits": [
+   "「백미」 이민족 회유 성공률 +40%"
+  ]
+ },
+ {
+  "art": "ART-C042",
+  "chr": "CHR-0113",
+  "name": "마속",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#2F2A44",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 3850009827,
+  "traits": [
+   "「담병」 계략 성능 우수, **실전 배치 시 판정 실패율 존재**"
+  ]
+ },
+ {
+  "art": "ART-C043",
+  "chr": "CHR-0114",
+  "name": "마초",
+  "class0": "파",
+  "class0_full": "파일럿형",
+  "disposition": "야심",
+  "disp_label": "야심",
+  "tint": "#243B3D",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 2693419032,
+  "traits": [
+   "「금마초」 이민족 병력 추가 징집 가능"
+  ]
+ },
+ {
+  "art": "ART-C044",
+  "chr": "CHR-0115",
+  "name": "미방",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 2963591796,
+  "traits": [
+   "「불안」 사기 임계 이하 시 배신 확률 발생"
+  ]
+ },
+ {
+  "art": "ART-C045",
+  "chr": "CHR-0116",
+  "name": "미부인",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 1457048180,
+  "traits": [
+   "「장판」 **조운「일신시담」 발동 조건 인물**. 구출 성공 시 조운 능력 영구 상승"
+  ]
+ },
+ {
+  "art": "ART-C046",
+  "chr": "CHR-0117",
+  "name": "미축",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#3B352B",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 3583329479,
+  "traits": [
+   "「거상」 자금 수입 +25%"
+  ]
+ },
+ {
+  "art": "ART-C047",
+  "chr": "CHR-0118",
+  "name": "방통",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#2F2A44",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 445761402,
+  "traits": [
+   "「봉추」 공격 계략 +40%. **낙봉파 사망 이벤트 보유**"
+  ]
+ },
+ {
+  "art": "ART-C048",
+  "chr": "CHR-0119",
+  "name": "법정",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2F2A44",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 2233444509,
+  "traits": [
+   "「기모」 공세 계략 성공률 +45%. 민심 -15%"
+  ]
+ },
+ {
+  "art": "ART-C049",
+  "chr": "CHR-0121",
+  "name": "비의",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 2583615040,
+  "traits": [
+   "「조정」 내부 인물 상성 충돌 완화"
+  ]
+ },
+ {
+  "art": "ART-C050",
+  "chr": "CHR-0122",
+  "name": "서서",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#2F2A44",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 4280532274,
+  "traits": [
+   "「효심」 모친 인질 시 강제 이탈"
+  ]
+ },
+ {
+  "art": "ART-C051",
+  "chr": "CHR-0123",
+  "name": "손건",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#3B352B",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 1571334696,
+  "traits": [
+   "「변설」 외교 성공률 +20%"
+  ]
+ },
+ {
+  "art": "ART-C052",
+  "chr": "CHR-0124",
+  "name": "왕평",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 1558796968,
+  "traits": [
+   "「무당비군」 열세 방어전 시 붕괴 판정 무효"
+  ]
+ },
+ {
+  "art": "ART-C053",
+  "chr": "CHR-0125",
+  "name": "요화",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2E3A4C",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 4246379809,
+  "traits": [
+   "「노익장」 전 시나리오 등장. 후기 능력 감소 없음"
+  ]
+ },
+ {
+  "art": "ART-C054",
+  "chr": "CHR-0126",
+  "name": "위연",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "야심",
+  "disp_label": "야심",
+  "tint": "#2E3A4C",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 1677323602,
+  "traits": [
+   "「반골」 제갈량 사후 반란 리스크. 자오곡 계책 제안 가능"
+  ]
+ },
+ {
+  "art": "ART-C055",
+  "chr": "CHR-0127",
+  "name": "유봉",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "야심",
+  "disp_label": "야심",
+  "tint": "#43262A",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 2225116307,
+  "traits": [
+   "「양자」 후계 갈등 이벤트 트리거"
+  ]
+ },
+ {
+  "art": "ART-C056",
+  "chr": "CHR-0128",
+  "name": "유비",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": null,
+  "disp_label": "군주",
+  "tint": "#2E3A4C",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 1689636978,
+  "traits": [
+   "「인덕」 매력 판정 시 천명 임계 1단계 완화"
+  ]
+ },
+ {
+  "art": "ART-C057",
+  "chr": "CHR-0129",
+  "name": "이엄",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "야심",
+  "disp_label": "야심",
+  "tint": "#3B352B",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 447794682,
+  "traits": [
+   "「탁고」 보급 효율 +25%. 보급 실패 은폐 이벤트"
+  ]
+ },
+ {
+  "art": "ART-C058",
+  "chr": "CHR-0130",
+  "name": "장비",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#43262A",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 1542570204,
+  "traits": [
+   "「연인」 적 사기 강제 하락. 부하 병사 이탈률 +20%"
+  ]
+ },
+ {
+  "art": "ART-C059",
+  "chr": "CHR-0132",
+  "name": "장완",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#3B352B",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 1642394448,
+  "traits": [
+   "「사직지기」 군주 부재 시 세력 안정도 유지"
+  ]
+ },
+ {
+  "art": "ART-C060",
+  "chr": "CHR-0134",
+  "name": "제갈량",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2F2A44",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 2209784432,
+  "traits": [
+   "「신기묘산」 전투 전 배치 1회 재조정. 내정 효율 +30%"
+  ]
+ },
+ {
+  "art": "ART-C061",
+  "chr": "CHR-0136",
+  "name": "조운",
+  "class0": "파",
+  "class0_full": "파일럿형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#243B3D",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 3284018408,
+  "traits": [
+   "「일신시담」 아군 구출 시 손실 무효화"
+  ]
+ },
+ {
+  "art": "ART-C062",
+  "chr": "CHR-0137",
+  "name": "황월영",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 176152240,
+  "traits": [
+   "「목우유마」 **보급 소모 -30%, 신기술 개발 속도 +25%**. 제갈량 동일 세력 시 추가 상승"
+  ]
+ },
+ {
+  "art": "ART-C063",
+  "chr": "CHR-0138",
+  "name": "황충",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2E3A4C",
+  "faction": "촉",
+  "accent": "oxblood",
+  "seed": 3512904171,
+  "traits": [
+   "「강궁」 포격함 사거리 +30%"
+  ]
+ },
+ {
+  "art": "ART-C064",
+  "chr": "CHR-0185",
+  "name": "감녕",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#43262A",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 2310640535,
+  "traits": [
+   "「금범적」 야습 시 적 사기 대폭 하락"
+  ]
+ },
+ {
+  "art": "ART-C065",
+  "chr": "CHR-0186",
+  "name": "노숙",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#2F2A44",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 2623507207,
+  "traits": [
+   "「천하이분」 동맹 유지 시 양측 이익 +25%"
+  ]
+ },
+ {
+  "art": "ART-C066",
+  "chr": "CHR-0187",
+  "name": "능통",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2E3A4C",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 4154279815,
+  "traits": [
+   "「원한」 감녕과 상성 최악. 이벤트로 해소 가능"
+  ]
+ },
+ {
+  "art": "ART-C067",
+  "chr": "CHR-0188",
+  "name": "대교",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 3807742867,
+  "traits": [
+   "「강동이교」 손책 능력 +10%, 손책 사망 이벤트 후 세력 사기 하락 완화"
+  ]
+ },
+ {
+  "art": "ART-C068",
+  "chr": "CHR-0189",
+  "name": "반장",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#2E3A4C",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 2537375931,
+  "traits": [
+   "「포박」 적장 포로 확률 +30%"
+  ]
+ },
+ {
+  "art": "ART-C069",
+  "chr": "CHR-0190",
+  "name": "보즐",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#3B352B",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 843112510,
+  "traits": [
+   "「교주」 원거리 성역 통치 페널티 무효"
+  ]
+ },
+ {
+  "art": "ART-C070",
+  "chr": "CHR-0191",
+  "name": "서성",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 2223528708,
+  "traits": [
+   "「의성」 방어 시 적 정찰 교란"
+  ]
+ },
+ {
+  "art": "ART-C071",
+  "chr": "CHR-0192",
+  "name": "소교",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 694178277,
+  "traits": [
+   "「강동이교」 주유 계략 성공률 +10%"
+  ]
+ },
+ {
+  "art": "ART-C072",
+  "chr": "CHR-0193",
+  "name": "손견",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": null,
+  "disp_label": "군주",
+  "tint": "#2E3A4C",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 2788011187,
+  "traits": [
+   "「강동지호」 선봉 전투 +35%. **조기 사망 이벤트**"
+  ]
+ },
+ {
+  "art": "ART-C073",
+  "chr": "CHR-0194",
+  "name": "손권",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": null,
+  "disp_label": "군주",
+  "tint": "#3B352B",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 1980222741,
+  "traits": [
+   "「할거」 호족 통제 +30%, 원정 시 능력 하락"
+  ]
+ },
+ {
+  "art": "ART-C074",
+  "chr": "CHR-0196",
+  "name": "손상향",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#43262A",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 2650678147,
+  "traits": [
+   "「궁요희」 **호위 시녀 강습부대 편성 가능**. 촉-오 동맹 시 이중 귀속 상태"
+  ]
+ },
+ {
+  "art": "ART-C075",
+  "chr": "CHR-0198",
+  "name": "손책",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": null,
+  "disp_label": "군주",
+  "tint": "#2E3A4C",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 4054098280,
+  "traits": [
+   "「소패왕」 성계 점령 속도 2배. **암살 이벤트 보유**"
+  ]
+ },
+ {
+  "art": "ART-C076",
+  "chr": "CHR-0199",
+  "name": "여몽",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 1182685081,
+  "traits": [
+   "「백의도강」 **위장 항행으로 기습 침투 가능**"
+  ]
+ },
+ {
+  "art": "ART-C077",
+  "chr": "CHR-0200",
+  "name": "여범",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#3B352B",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 3910637071,
+  "traits": [
+   "「군기」 호족 사병의 사적 운용 억제. 군령 위반률 -40%"
+  ]
+ },
+ {
+  "art": "ART-C078",
+  "chr": "CHR-0201",
+  "name": "오국태",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 1804993076,
+  "traits": [
+   "「국태」 **호족 분열 억제 +30%**, 군주 결단 판정 보정"
+  ]
+ },
+ {
+  "art": "ART-C079",
+  "chr": "CHR-0204",
+  "name": "장소",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 342462251,
+  "traits": [
+   "「중신」 내정 +30%. **대전 시 항복 주장 이벤트**"
+  ]
+ },
+ {
+  "art": "ART-C080",
+  "chr": "CHR-0205",
+  "name": "장흠",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 525302111,
+  "traits": [
+   "「청렴」 부대 유지비 -15%"
+  ]
+ },
+ {
+  "art": "ART-C081",
+  "chr": "CHR-0207",
+  "name": "정보",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 3353677316,
+  "traits": [
+   "「노장」 신진 무장과 상성 마찰"
+  ]
+ },
+ {
+  "art": "ART-C082",
+  "chr": "CHR-0211",
+  "name": "주유",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#2E3A4C",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 2528524985,
+  "traits": [
+   "「미주랑」 화공 계열 계략 +50%. 대회전 지휘 특화"
+  ]
+ },
+ {
+  "art": "ART-C083",
+  "chr": "CHR-0212",
+  "name": "주태",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#43262A",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 923495033,
+  "traits": [
+   "「만신창이」 내구 소진 시 1회 부활"
+  ]
+ },
+ {
+  "art": "ART-C084",
+  "chr": "CHR-0214",
+  "name": "태사자",
+  "class0": "파",
+  "class0_full": "파일럿형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#243B3D",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 1733776854,
+  "traits": [
+   "「신사」 기동병기 단독 격추율 +40%"
+  ]
+ },
+ {
+  "art": "ART-C085",
+  "chr": "CHR-0215",
+  "name": "하제",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 988916506,
+  "traits": [
+   "「산월토벌」 **이민족 토벌 시 병력 자원 추가 획득 +50%**"
+  ]
+ },
+ {
+  "art": "ART-C086",
+  "chr": "CHR-0216",
+  "name": "한당",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 950285260,
+  "traits": [
+   "「역전」 경험치 획득 +20%"
+  ]
+ },
+ {
+  "art": "ART-C087",
+  "chr": "CHR-0217",
+  "name": "황개",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#43262A",
+  "faction": "오",
+  "accent": "teal",
+  "seed": 1614965667,
+  "traits": [
+   "「고육계」 **위장 항복 실행 가능** (전 게임 유일)"
+  ]
+ },
+ {
+  "art": "ART-C088",
+  "chr": "CHR-0266",
+  "name": "국의",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "야심",
+  "disp_label": "야심",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 3785088651,
+  "traits": [
+   "「선등사석」 대기동 부대 상대 특효"
+  ]
+ },
+ {
+  "art": "ART-C089",
+  "chr": "CHR-0267",
+  "name": "문추",
+  "class0": "파",
+  "class0_full": "파일럿형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#243B3D",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 3560285046,
+  "traits": [
+   "「추격」 퇴각하는 적 추격 +40%, 유인책 취약"
+  ]
+ },
+ {
+  "art": "ART-C090",
+  "chr": "CHR-0268",
+  "name": "안량",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#43262A",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 168812743,
+  "traits": [
+   "「하북사정주」 관우 조우 시 즉사 판정"
+  ]
+ },
+ {
+  "art": "ART-C091",
+  "chr": "CHR-0269",
+  "name": "원소",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": null,
+  "disp_label": "군주",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 3695108315,
+  "traits": [
+   "「사세삼공」 초기 자원·인재 최대. 결단 판정 실패율 존재"
+  ]
+ },
+ {
+  "art": "ART-C092",
+  "chr": "CHR-0270",
+  "name": "저수",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2F2A44",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 1680381834,
+  "traits": [
+   "「감군」 장기전 계략 +45%. 원소 휘하 시 채택률 하락"
+  ]
+ },
+ {
+  "art": "ART-C093",
+  "chr": "CHR-0271",
+  "name": "전풍",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2F2A44",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 881476788,
+  "traits": [
+   "「강직」 조언 무시 시 투옥 이벤트"
+  ]
+ },
+ {
+  "art": "ART-C094",
+  "chr": "CHR-0372",
+  "name": "고순",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 1042046828,
+  "traits": [
+   "「함진영」 소수 정예 편성 시 돌파력 +60%"
+  ]
+ },
+ {
+  "art": "ART-C095",
+  "chr": "CHR-0373",
+  "name": "공손강",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "야심",
+  "disp_label": "야심",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 2587972969,
+  "traits": [
+   "「요동」 동이 연합 외교 창구. 이중 외교 가능"
+  ]
+ },
+ {
+  "art": "ART-C096",
+  "chr": "CHR-0375",
+  "name": "공손찬",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "야심",
+  "disp_label": "야심",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 2416275474,
+  "traits": [
+   "「백마의종」 고속 기동 부대 편성 가능"
+  ]
+ },
+ {
+  "art": "ART-C097",
+  "chr": "CHR-0376",
+  "name": "공융",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 410335512,
+  "traits": [
+   "「명사」 고·극 인물 등용 시 추천인 자격"
+  ]
+ },
+ {
+  "art": "ART-C098",
+  "chr": "CHR-0377",
+  "name": "답돈",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 3148178287,
+  "traits": [
+   "「오환돌기」 대규모 고속 기동 부대 상시 보유"
+  ]
+ },
+ {
+  "art": "ART-C099",
+  "chr": "CHR-0378",
+  "name": "도겸",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 3434825129,
+  "traits": [
+   "「양도」 사망 시 세력 평화 이양 이벤트"
+  ]
+ },
+ {
+  "art": "ART-C100",
+  "chr": "CHR-0379",
+  "name": "동탁",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 198291460,
+  "traits": [
+   "「폭정」 수탈 +60%, 민심·천명 지속 하락"
+  ]
+ },
+ {
+  "art": "ART-C101",
+  "chr": "CHR-0380",
+  "name": "마등",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 2166497412,
+  "traits": [
+   "「서량」 이민족 병력 상시 징집"
+  ]
+ },
+ {
+  "art": "ART-C102",
+  "chr": "CHR-0381",
+  "name": "맹획",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#43262A",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 1391054551,
+  "traits": [
+   "「칠종칠금」 **패배 후 재등장 최대 7회**. 최종 등용 시 남중 전역 안정"
+  ]
+ },
+ {
+  "art": "ART-C103",
+  "chr": "CHR-0382",
+  "name": "사섭",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#3B352B",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 3322090641,
+  "traits": [
+   "「교지」 원거리 교역 수입 +50%"
+  ]
+ },
+ {
+  "art": "ART-C104",
+  "chr": "CHR-0383",
+  "name": "여포",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#43262A",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 825220654,
+  "traits": [
+   "「무쌍」 강습·기동 전투 무조건 우위. **통솔 판정 불가**"
+  ]
+ },
+ {
+  "art": "ART-C105",
+  "chr": "CHR-0384",
+  "name": "올돌골",
+  "class0": "강",
+  "class0_full": "강습형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#43262A",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 414684635,
+  "traits": [
+   "「등갑군」 물리 피해 대폭 감소, **화공 계열에 치명적 취약**"
+  ]
+ },
+ {
+  "art": "ART-C106",
+  "chr": "CHR-0385",
+  "name": "왕윤",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#3B352B",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 714365322,
+  "traits": [
+   "「연환주모」 **초선「연환계」 실행의 전제 인물**. 성공 후 정국 장악 실패 이벤트"
+  ]
+ },
+ {
+  "art": "ART-C107",
+  "chr": "CHR-0386",
+  "name": "왕이",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 2710459371,
+  "traits": [
+   "「기성수」 농성 시 민병 동원, 성계 방어력 +50%"
+  ]
+ },
+ {
+  "art": "ART-C108",
+  "chr": "CHR-0387",
+  "name": "원술",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "야심",
+  "disp_label": "야심",
+  "tint": "#3B352B",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 2920872905,
+  "traits": [
+   "「참칭」 옥새 보유 시 칭제 강제 이벤트 → 천명 붕괴"
+  ]
+ },
+ {
+  "art": "ART-C109",
+  "chr": "CHR-0388",
+  "name": "유요",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 1773893482,
+  "traits": [
+   "「한실종친」 천명 유지 기여, 군사 능력 부족"
+  ]
+ },
+ {
+  "art": "ART-C110",
+  "chr": "CHR-0389",
+  "name": "유장",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 4232150506,
+  "traits": [
+   "「암약」 세력 확장 불가. 방어 자원 풍부"
+  ]
+ },
+ {
+  "art": "ART-C111",
+  "chr": "CHR-0390",
+  "name": "유표",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 1727719311,
+  "traits": [
+   "「수성」 방어 시 +30%, 원정 명령 거부 확률"
+  ]
+ },
+ {
+  "art": "ART-C112",
+  "chr": "CHR-0391",
+  "name": "장로",
+  "class0": "관",
+  "class0_full": "관료형",
+  "disposition": "명사",
+  "disp_label": "명사",
+  "tint": "#3B352B",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 2995773134,
+  "traits": [
+   "「오두미도」 민심 회복 속도 2배, 군사력 약체"
+  ]
+ },
+ {
+  "art": "ART-C113",
+  "chr": "CHR-0392",
+  "name": "장수",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 2927755500,
+  "traits": [
+   "「완성」 항복 후 재반란 이벤트 보유"
+  ]
+ },
+ {
+  "art": "ART-C114",
+  "chr": "CHR-0393",
+  "name": "장연",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 3302455649,
+  "traits": [
+   "「흑산」 저효율 공간에서 이동 페널티 무효. 게릴라 특화"
+  ]
+ },
+ {
+  "art": "ART-C115",
+  "chr": "CHR-0394",
+  "name": "장임",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 1618875696,
+  "traits": [
+   "「매복」 회랑 매복 성공률 +50%"
+  ]
+ },
+ {
+  "art": "ART-C116",
+  "chr": "CHR-0395",
+  "name": "진궁",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2F2A44",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 3842734024,
+  "traits": [
+   "「백문루」 군주가 조언 무시 시 능력 반감"
+  ]
+ },
+ {
+  "art": "ART-C117",
+  "chr": "CHR-0396",
+  "name": "초선",
+  "class0": "참",
+  "class0_full": "참모형",
+  "disposition": "절의",
+  "disp_label": "절의",
+  "tint": "#2F2A44",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 391939279,
+  "traits": [
+   "「연환계」 **적 세력 최상위 2인의 상성을 강제로 최악화**. 실행 후 인물 소멸(은퇴)"
+  ]
+ },
+ {
+  "art": "ART-C118",
+  "chr": "CHR-0397",
+  "name": "축융",
+  "class0": "파",
+  "class0_full": "파일럿형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#243B3D",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 3468735743,
+  "traits": [
+   "「비도」 기동병기 원거리 공격 특화"
+  ]
+ },
+ {
+  "art": "ART-C119",
+  "chr": "CHR-0398",
+  "name": "한수",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "무뢰",
+  "disp_label": "무뢰",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 13935803,
+  "traits": [
+   "「변절」 이간 계략에 취약, 자신도 이간 능력 보유"
+  ]
+ },
+ {
+  "art": "ART-C120",
+  "chr": "CHR-0399",
+  "name": "황조",
+  "class0": "제",
+  "class0_full": "제독형",
+  "disposition": "실무",
+  "disp_label": "실무",
+  "tint": "#2E3A4C",
+  "faction": "군웅",
+  "accent": "unmarked",
+  "seed": 1532296262,
+  "traits": [
+   "「관문」 항로 봉쇄 +35%"
+  ]
+ }
+]

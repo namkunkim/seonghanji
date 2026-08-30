@@ -339,6 +339,120 @@ man in his early thirties, slight build, topknot and thin beard, ink-stained fin
 > **2번이 실무적으로 가장 자주 걸린다.** 100% 로 보면 훌륭한데
 > 카드 크기로 줄이면 다 같아 보이는 일이 흔하다. **검수는 실제 크기로 한다.**
 
+### 4.7 명장 120 매핑 — `ART-C001~120 ↔ CHR-####`
+
+**정본은 `data/portrait-map.json`** (생성물 · 120행). 이 표는 그 발췌다.
+아래 규칙으로 `data/characters.json` + `data/assignments.json` 에서 결정론적으로 만든다 —
+**손으로 고치지 않는다.**
+
+```python
+# 대상: assignments.json SCN-03 · status != "미등장" · characters.json tier == "명장"  → 120명
+myeong = sorted(chr_id for r in assignments
+                if r.scenario=="SCN-03" and r.status!="미등장"
+                and characters[r.character].tier=="명장")
+for i, cid in enumerate(myeong, 1):          # CHR-id 오름차순 = ART 번호. 번호에 의미 없음(대장 §0.1)
+    art  = f"ART-C{i:03d}"
+    seed = int(sha256(f"seonghanji:portrait:v1:{cid}".encode()).hexdigest()[:8], 16)
+    tint = TINT[characters[cid].class[0]]    # §4.1 계층 틴트
+```
+
+| ART | CHR | 이름 | 계층 | 성향 | 세력 | 시드 |
+|---|---|---|---|---|---|---|
+| `ART-C001` | CHR-0001 | 가후 | 참모형 | 무뢰 | 위 | `4095606160` |
+| `ART-C002` | CHR-0002 | 견희 | 관료형 | 명사 | 위 | `2748350532` |
+| `ART-C003` | CHR-0003 | 곽가 | 참모형 | 실무 | 위 | `1760652898` |
+| `ART-C004` | CHR-0004 | 곽여왕 | 관료형 | 야심 | 위 | `2436717289` |
+| `ART-C005` | CHR-0009 | 만총 | 관료형 | 실무 | 위 | `3430758886` |
+| … | … | … | … | … | … | … |
+| `ART-C038` | CHR-0107 | 관우 | 제독형 | 절의 | 촉 | `227349697` |
+| `ART-C060` | CHR-0134 | 제갈량 | 참모형 | 절의 | 촉 | `2209784432` |
+| `ART-C104` | CHR-0383 | 여포 | 강습형 | 무뢰 | 군웅 | `825220654` |
+| `ART-C120` | CHR-0399 | 황조 | 제독형 | 실무 | 군웅 | `1532296262` |
+
+> **분포:** 계층 — 제독형 49 · 관료형 35 · 참모형 17 · 강습형 14 · 파일럿형 5.
+> 세력 — 위 35 · 군웅 33 · 촉 28 · 오 24. 시드 120개 전부 고유(충돌 0).
+
+> ⚠ **`disposition` 이 `null` 인 7명은 군주다** — 조비 · 조조 · 유비 · 손견 · 손권 ·
+> 손책 · 원소. 성향부는 §4.8 의 **군주 조각**을 쓴다. `dispositions.md` §2 의
+> 군주 성향(패도형 등)을 초상 성향부로 끌어오지 않는다 — 그건 등용 판정 축이지
+> 표정 축이 아니다.
+
+### 4.8 개별부 변환 규칙 (명장 120) — 검토 5
+
+**개별부는 얼굴을 지정하지 않는다.** 이목구비·수염 모양·홍채색은 **시드가 나른다**
+(§4.2-2). 개별부는 세 슬롯만 채운다 — 이것이 안 B 가 화풍 흔들림을 막는 방식이다.
+
+```
+개별부 = [연령 신호]  +  [세력 악센트]  +  [기조어 1]
+```
+
+**1. 세력 악센트** — 복식의 파이핑/트림 색. 배경 틴트(§4.1)와 겹치지 않게 정한다.
+
+| 세력 | 악센트 | 조합 예 |
+|---|---|---|
+| 위 | `cool slate-grey piping` | 위 제독형 = 슬레이트블루 바탕 + 회청 파이핑 |
+| 촉 | `oxblood piping` | 촉 제독형 = 슬레이트블루 바탕 + 적갈 파이핑 → 「촉 + 제독」이 읽힌다 |
+| 오 | `teal piping` | — |
+| 군웅 | 파이핑 없음 · `plain dark garment` | 소속 없음이 그림에서도 소속 없음 |
+
+**2. 연령 신호** — `traits` 가 나이를 **문자 그대로** 담을 때만 넣는다.
+
+| 근거 trait | 개별부 |
+|---|---|
+| 「노익장」(요화) | `aged veteran, deeply lined face` |
+| 「노장」(정보) | `older officer, greying` |
+| 그 밖 | **비움** — 시드에 맡긴다 |
+
+> ⚠ **연령 축은 데이터에 없다** — `characters.json` 에 `era`·나이 필드가 없다
+> (V-43 · V-42 · [F-30], 함정 8). 전기/중기/후기 구분으로 나이를 추정하려면
+> `generals-150.md` 교차 참조가 필요하나 그 문서는 §12~14 가 최종본인 함정 문서다
+> (함정 1). **여기서는 명시 trait 2건만 쓴다.** 전면 연령 반영은 필드가 생긴 뒤다.
+
+**3. 기조어** — `traits` 의 성격 함의에서 **자세·분위기 형용사 1개**. 얼굴도, 줄거리도 아니다.
+통제 어휘 안에서 고른다.
+
+| trait 계열 | 기조어(영문) |
+|---|---|
+| 「독사」「낭고」「감군」 — 은밀·경계 | `coldly watchful` / `patient, concealed` |
+| 「왕좌지재」「강직」「사직지기」 — 원칙·강직 | `grave, principled` |
+| 「소패왕」「강동지호」「선등」 — 맹렬·전방 | `fierce, forward-leaning` |
+| 「무쌍」「악래」「호치」 — 압도적 완력 | `predatory stillness` |
+| 「인덕」「양도」 — 개방·온후 | `open, unguarded warmth` |
+| 「철벽」「진창」「수성」 — 부동 | `immovable` |
+| 그 밖 | 성향부로 충분 — 기조어 생략 |
+
+**4. `traits` 에서 직접 회수되는 외형 표지** — 통념이 아니라 데이터다. 개별부에 넣는다.
+
+| trait | 표지 |
+|---|---|
+| 「독안」(하후돈) | `black eye patch over one eye` |
+| 「만신창이」(주태) | `old scars visible on face and neck` |
+| 「미주랑」(주유) | `young and strikingly handsome` |
+
+#### 검토 5 — 원전 통념과 데이터의 충돌: 2단 처리
+
+**문제:** `traits` 는 게임 산식이지 외모 서술이 아니다. 반면 원전 도상 통념은
+몇몇 인물에게 강한 외형 기대를 건다(관우의 긴 수염, 손권의 붉은 수염 등).
+그 기대는 `characters.json` 어디에도 없다. **CLAUDE.md §6.2 — 창작으로 채우지 않는다.**
+
+| 처리 | 대상 | 방법 |
+|---|---|---|
+| **자동 (개별부에 삽입)** | 위 §4.8-4 의 trait 회수분 | 프롬프트에 들어간다 |
+| **통념 플래그 (생성 후 검수 게이트)** | 아래 목록 | 생성한 뒤 §4.6-4 에서 **사람이 판정.** 프롬프트에 통념을 넣을지, 시드만 믿을지를 그때 정한다 |
+
+**통념 플래그 목록 (12) — 데이터로 회수되지 않는 강한 외형 통념:**
+관우(수염·홍안) · 장비(범수염) · 손권(벽안 자염) · 조조(단구) · 동탁(비대) ·
+황충(노장) · 마초(은백 미장부) · 제갈량 우선(깃부채) · 방통(추모) ·
+초선·대교·소교(미모) · 여포(여포 통념).
+
+> **권고:** 플래그 12는 프롬프트에 **넣지 않고** 1차 생성한다. 시드 결과가 통념과
+> 이미 맞으면 그대로 두고, 어긋나 「이 사람이 아니다」가 되는 것만 개별부에 통념
+> 한 줄을 더해 재생성한다(시드 고정이라 재현된다). **12명을 위해 규칙을 복잡하게
+> 만들지 않는다** — 나머지 108명은 이 판정이 필요 없다.
+
+> ⚠ **이것은 발주자 확인 사항이기도 하다.** 「관우를 원전 도상대로 뽑을 것인가,
+> 이 세계의 재해석으로 둘 것인가」는 아트 방향 결정이지 파이프라인이 답할 것이 아니다.
+
 ---
 
 ## 5. 음원 파이프라인
@@ -368,6 +482,38 @@ man in his early thirties, slight build, topknot and thin beard, ink-stained fin
 | 생성 | **AI** |
 | 잡음 제거 · 정규화 | AI 도구가 낫다 |
 | **루프 지점 · 자르기 · 포맷 변환** | **파형 편집기 (Audacity)** |
+
+### 5.4 트랙별 생성 사양
+
+**전곡 무가사(instrumental).** 가사가 없으므로 §2.3(미공개 원고 금지)에 걸리지 않는다.
+화풍 기준은 은하영웅전설식 절제된 시네마틱 — 관현악 주축에 하이브리드 텍스처 소량,
+과장 없음. **프롬프트는 ACE-Step 태그 스타일**(장르·악기·무드·BPM·조성).
+
+| ID | 용도 | 길이(목표) | 형태 | 프롬프트 시작점 |
+|---|---|---|---|---|
+| `BGM-001` 전략 | 성역 뷰 · 평시 | 2:00–2:30 | **루프 베드** | `instrumental, cinematic orchestral ambient, slow sustained strings, soft choir pad, distant brass, sparse low taiko, contemplative, spacious, restrained, loopable, 64 BPM, A minor` |
+| `BGM-002` 긴장 | 결정 큐 · 인터럽트 | 1:20–1:40 | **루프 베드** | `instrumental, tense underscore, quiet string ostinato, low pulsing synth, muted percussion ticks, unresolved harmony, sits under UI, no melody, loopable, 96 BPM, D minor` |
+| `BGM-003` 전투 | 5페이즈 | 2:30–3:00 | **루프 베드** | `instrumental, hybrid orchestral battle, driving low percussion, staccato brass, string runs, dark energy, propulsive but not chaotic, loopable, 128 BPM, C minor` |
+| `BGM-004` 승리 | 결착 | 0:35–0:50 | **원샷** (루프 없음) | `instrumental, triumphant orchestral cadence, rising brass swell, timpani, resolved major, brief, decisive, C major` |
+| `BGM-005` 패배 | 붕괴 | 0:35–0:50 | **원샷** (루프 없음) | `instrumental, collapse, descending low strings, hollow drone, single struck bell, sparse, bleak, no resolution, A minor` |
+| `BGM-006` 정적 | 막간 · 엔딩 | 1:40–2:10 | **루프 베드** | `instrumental, solo piano, very slow, wide space between notes, faint string halo, elegiac, still, loopable, 52 BPM, E minor` |
+
+**형태 규칙**
+
+- **루프 베드 4곡**(001·002·003·006): 목표 길이의 **1.5배**를 생성한 뒤 Audacity 에서
+  마디 경계 · 제로 크로싱을 찾아 루프 구간을 자른다(§5.3). 인트로·테일을 별도로 두지
+  않는다 — 루프만 있으면 된다.
+- **원샷 2곡**(004·005): 트리거 시 1회 재생. 페이드 아웃만 다듬는다. 루프 가공 없음.
+
+**ACE-Step 실행 파라미터 시작점** (실행 시 조정)
+
+```
+steps 60 · guidance 7 · scheduler euler · duration = 목표 길이 × 1.5 (루프곡) / 목표 길이 (원샷)
+출력 = 48 kHz stereo WAV (마스터)  →  배포는 OGG Vorbis q6
+```
+
+> **생성만 AI다.** 잡음 제거·정규화는 AI 도구, **루프 지점은 파형 편집기**(§5.3).
+> ⚠ Stable Audio Open 을 쓰지 않는다 — 매출 상한(§2.1).
 
 ---
 
@@ -407,15 +553,16 @@ man in his early thirties, slight build, topknot and thin beard, ink-stained fin
 | 2 | ~~**권역 배경 물량이 미확정이다**~~ | **해소 — V-45 (2026-08-30).** 폐기했다. 물음이 「몇 장인가」가 아니라 **「어디에 그려지는가」**였고, `screens.md` 에 배경이 0회 나온다. 되살아나면 축은 **등급 3 + 태양계권 1** |
 | 3 | 공용 초상 11종이 화면에서 실제로 구별되는가 | §4.6-2. **11종이 다 같아 보이면 안 B의 의미가 없다.** 시험 생성으로 조기 확인 |
 | 4 | 클라우드 GPU 임대처의 약관 | §3.2. **모델 라이선스와 별개로 임대처 약관이 있다.** 확인 필요 |
-| 5 | 명장 120의 외형 근거 | `characters.json`의 `traits`뿐이다. **원전 통념과 충돌할 때 무엇을 따르는가**가 미정 |
+| 5 | 명장 120의 외형 근거 | `characters.json`의 `traits`뿐이다. **원전 통념과 충돌할 때 무엇을 따르는가**가 미정. §4.8 에서 **2단 처리로 부분 대응** — trait 회수분은 자동, 데이터로 안 잡히는 통념 12명은 생성 후 검수 게이트(§4.6-4). **어느 방향인가(원전 도상 대 재해석)는 발주자 확인 사항으로 남는다** |
 | 6 | AI 명시의 표기 수위 | V-44가 명시를 확정했으나 **어느 수준으로 적는지**는 미정. 스토어 정책 확인 필요 — `dev-requirements.md` §7.3 |
 
 ## 미작성 항목
 
 - [x] ~~**초상 규격** (해상도 · 종횡비 · 배경 처리 · 파일 형식)~~ — **2026-08-30 확정. §4.1**
 - [ ] **화풍 기준선 — 모델·해시·샘플러 확정** (§4.2 칸 1·4) — 실행 패스 시험생성 후. 시드 규칙·프롬프트 골격·구도(칸 2·3·5)는 2026-08-30 잠금
-- [ ] **`ART-C001..120 ↔ CHR-####` 매핑표** — §4.2 시드 유도의 선행물
-- [ ] **④ 개별부 — `traits` → 시각 요소 변환표 + 명장 120행 초안** (§4.3.3) · 인물명 프롬프트 삽입 여부는 검토 5와 함께
+- [x] ~~**`ART-C001..120 ↔ CHR-####` 매핑표**~~ — **2026-08-30. §4.7 · `data/portrait-map.json`**(생성물 120행 · 시드 포함)
+- [x] ~~**④ 개별부 — `traits` → 시각 요소 변환표**~~ — **2026-08-30. §4.8**(세력 악센트 · 연령 신호 · 기조어 · trait 외형 표지)
+- [ ] **검토 5 통념 플래그 12명** — 1차 생성 후 §4.6-4 검수 게이트에서 판정 (§4.8). 발주자 아트 방향 확인 포함
 - [x] ~~권역 배경 물량 재산정~~ — **V-45 로 폐기**
 - [ ] 클라우드 GPU 임대처 선정과 약관 확인 — 검토 4
 - [ ] 크레딧 화면 문안 — `ui-design.md` §8.1
