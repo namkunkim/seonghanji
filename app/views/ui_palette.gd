@@ -61,18 +61,60 @@ static func owner_glyph(owner: String, viewer: String) -> String:
 
 ## ---------------------------------------------------------------- 서체
 ##
-## Godot 기본 서체에는 한글 글리프가 없다. 화면 전체가 두부가 된다.
-## 에셋 대장(`asset-ledger.md` FNT-001)이 **미판정**이므로 서체를 저장소에 넣지 않고
-## 시스템 서체를 빌린다. 임베딩 라이선스 판정이 끝나면 여기만 바꾼다.
+## Godot 기본 서체에는 한글 글리프가 없다(용량 때문에 CJK 제외). 시스템 서체를
+## 빌리면 이 PC(맑은 고딕)에서는 보이지만 실기(안드로이드)에는 그 이름이 없어
+## 폴백이 Roboto 까지 흘러 두부(□)가 된다. `DECISIONS.md` V-44 가 OFL 서체
+## 임베딩으로 못박았고, `asset-ledger.md` FNT-001·002 가 그 실행이다.
+##
+## **Noto Sans KR 가변 폰트 1개**(`assets/fonts/NotoSansKR-VF.ttf`, OFL 1.1)를
+## `wght` 축으로 나눠 쓴다 — 본문 400(FNT-001) · 제목 700(FNT-002). 파일은 하나다.
+## 가변 폰트의 기본 인스턴스는 Thin(100)이라 굵기를 반드시 고정한다.
+## 테마를 안 받는 Control 의 전역 폴백은 project.godot 가 `NotoSansKR-Regular.tres`
+## (wght 400 고정)로 건다. 앱 화면은 아래 make_theme() 가 덮어쓴다.
+const FONT_VF: FontFile = preload("res://assets/fonts/NotoSansKR-VF.ttf")
+
+const FONT_SIZE_BODY  := 19
+const FONT_WGHT_TITLE := 700   # FNT-002
+
+
+## VF 파일을 특정 굵기로 고정한 자족. 화면은 이걸 직접 안 쓰고 테마로 받는다.
+static func weighted_font(wght: int) -> FontVariation:
+	var fv := FontVariation.new()
+	fv.base_font = FONT_VF
+	fv.variation_opentype = {"wght": wght}
+	return fv
+
+
+## 기호 폴백. Noto Sans KR 는 한글은 전수 담지만 UI 가 쓰는 장식 기호
+## 10종(▸ ⚔ ▬ ⚑ ⋰ ✳ ⌄ ✕ ⌃ ⇢)은 없다. **한글은 임베드 폰트가 결정하고**,
+## 그 기호들만 시스템 서체로 흘린다 — Godot 기본 폴백과 같은 처리다.
+## tests/verify_glyphs.gd 가 「한글 누락 0」은 경성 실패로, 기호 누락은 경고로 잡는다.
+static func _symbol_fallback() -> SystemFont:
+	var sf := SystemFont.new()
+	sf.font_names = PackedStringArray([
+		"Segoe UI Symbol", "Segoe UI Emoji",
+		"Malgun Gothic", "Noto Sans CJK KR", "Noto Sans KR",
+		"Apple SD Gothic Neo", "DejaVu Sans", "Sans-Serif"])
+	return sf
+
+
+## 앱 전역 테마. `app/main.gd` 가 루트 Control 에 한 번 걸면 15개 화면에
+## 전부 내려간다 — 개별 화면에서 add_theme_font_override 를 흩뿌리지 않는다.
+## 제목은 `theme_type_variation = "Title"` 로 옵트인한다(폰트 정의는 여기 한 곳).
 static func make_theme() -> Theme:
-	var f := SystemFont.new()
-	f.font_names = PackedStringArray([
-		"Malgun Gothic", "Noto Sans KR", "NanumGothic",
-		"Apple SD Gothic Neo", "Sans-Serif"])
-	f.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
+	var fb: Array[Font] = [_symbol_fallback()]
+	var body := weighted_font(400)                # FNT-001
+	body.fallbacks = fb
+	var title := weighted_font(FONT_WGHT_TITLE)   # FNT-002 — 같은 파일 wght 700
+	title.fallbacks = fb
+
 	var t := Theme.new()
-	t.default_font = f
-	t.default_font_size = 19
+	t.default_font = body
+	t.default_font_size = FONT_SIZE_BODY
+
+	t.add_type("Title")
+	t.set_type_variation("Title", "Label")
+	t.set_font("font", "Title", title)
 	return t
 
 

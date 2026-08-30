@@ -61,6 +61,7 @@ func _ready() -> void:
 	head.add_theme_constant_override("separation", 16)
 	col.add_child(head)
 	_title = Label.new()
+	_title.theme_type_variation = &"Title"   # FNT-002 (wght 700) · UiPalette.make_theme
 	_title.add_theme_font_size_override("font_size", 24)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)

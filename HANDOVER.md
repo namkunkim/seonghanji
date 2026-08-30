@@ -344,7 +344,7 @@ core/
 5. star-map.html 열어 지리 감각 잡기
 ```
 
-### 검증 4종 — 무엇을 고치든 끝나고 돌린다
+### 기본 검증 4종 + 글리프 검산 — 무엇을 고치든 끝나고 돌린다
 
 ```
 godot --headless --path . --import                      새 class_name 등록
@@ -352,6 +352,17 @@ godot --headless --path . --script tests/run_tests.gd   32섹션 375단언
 godot --headless --path . --quit-after 300              화면 구동 오류 0
 PYTHONIOENCODING=utf-8 python tools/validate_data.py    위반 0
 ```
+
+서체 또는 UI 문자열을 바꾸면 아래를 **추가로** 돌린다. 한글 음절 11,172자를
+임베드 서체가 직접 담는지 검사하므로 시스템 폴백에 기대는 두부를 헤드리스에서도 잡는다.
+장식 기호의 시스템 폴백 경고는 안드로이드 실기에서 함께 육안 확인한다.
+
+```
+godot --headless --path . --script tests/verify_glyphs.gd
+```
+
+그리고 GUI 또는 실기에서 대표 문자열 `건안 십삼년 시월` · `형주성역` · `중부권`을
+눈으로 확인한다. **두부는 엔진 오류가 아니므로 이 절차를 생략하지 않는다.**
 
 Godot 는 `%USERPROFILE%\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe` 다.
 **GUI exe 는 stdout 을 삼킨다.**

@@ -38,6 +38,7 @@ theme_override_constants/separation = 16
 [node name="Clock" type="Label" parent="Root/TimeBar/Bar"]
 custom_minimum_size = Vector2(300, 52)
 layout_mode = 2
+theme_type_variation = &"Title"
 theme_override_font_sizes/font_size = 24
 text = "건안 십삼년 정월"
 vertical_alignment = 1

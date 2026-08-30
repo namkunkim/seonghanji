@@ -1,0 +1,10 @@
+[gd_resource type="FontVariation" format=3]
+
+[ext_resource type="FontFile" path="res://assets/fonts/NotoSansKR-VF.ttf" id="1_awijh"]
+
+[resource]
+resource_name = "Noto Sans KR 400 (FNT-001)"
+base_font = ExtResource("1_awijh")
+variation_opentype = {
+"wght": 400
+}

@@ -71,6 +71,7 @@ func _build() -> void:
 	_btn_back = _button(head, "◀ 성역 뷰", 170)
 	_btn_back.pressed.connect(close)
 	_title = Label.new()
+	_title.theme_type_variation = &"Title"   # FNT-002 (wght 700) · UiPalette.make_theme
 	_title.add_theme_font_size_override("font_size", 26)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL

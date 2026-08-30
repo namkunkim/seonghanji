@@ -25,6 +25,14 @@ window/handheld/orientation=1
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[gui]
+
+; 전역 기본 서체 — FNT-001. 앱 화면은 app/views/ui_palette.gd make_theme() 가
+; 덮어쓰고(본문 400 · 제목 700), 이 항목은 테마를 안 받는 Control 의 폴백이다.
+; 가변 폰트(.ttf)를 직접 걸면 기본 인스턴스가 Thin(100)이라 wght 400 으로
+; 고정한 .tres 를 건다.
+theme/custom_font="res://assets/fonts/NotoSansKR-Regular.tres"
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"

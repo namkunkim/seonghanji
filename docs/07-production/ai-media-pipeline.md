@@ -736,8 +736,8 @@ steps 60 · guidance 7 · scheduler euler · duration = 목표 길이 × 1.5 (�
 
 ■ 서체
 
-  본문 — [미확정: 서체명] — SIL Open Font License 1.1 — [저작자]
-  제목 — [미확정: 서체명] — SIL Open Font License 1.1 — [저작자]
+  본문 · 제목 — Noto Sans KR Variable (wght 400 · 700)
+  Copyright 2014-2021 Adobe — SIL Open Font License 1.1
 
 ■ 엔진
 
@@ -761,7 +761,8 @@ steps 60 · guidance 7 · scheduler euler · duration = 목표 길이 × 1.5 (�
 ### 8.4 미해결
 
 - 이미지 모델 최종 택1 (시험생성 §3.3-4) → ② 확정
-- 서체 2종 선정 + OFL 저작자 문자열 (`asset-ledger.md` 미작성)
+- ~~서체 2종 선정 + OFL 저작자 문자열~~ — Noto Sans KR Variable 1파일의
+  wght 400·700, Adobe, SIL OFL 1.1 (`asset-ledger.md` FNT-001·002, 2026-08-30)
 - `ART-U001`·`SFX-*` 가 실제 CC0 로 확정되는지 → ⑤ 확정
 - **게임 내 표기와 스토어 고지란은 별개다.** 위 「■ AI 생성물 안내」는 게임 내 문구이고,
   Google Play 등록 폼의 AI 고지는 스토어가 요구하는 형식을 따른다 (검토 6 ·
@@ -801,5 +802,5 @@ steps 60 · guidance 7 · scheduler euler · duration = 목표 길이 × 1.5 (�
 - [ ] **2. 초상 131장 생성** — ③ 공용 11 → ④ 명장 120. 대장 §2.1 행을 `확보: AI` → `검증`(모델 라이선스·확인일). gate: §3.3-4 B·C
 - [ ] **3. 검토 5 — 원전 도상 플래그 13명 판정** — 1차 생성 후 §4.6-4 검수 게이트. 발주자 아트 방향(원전 도상 대 재해석)
 - [ ] **4. BGM 6트랙 생성** — ACE-Step 로컬(§5.2) → Audacity 루프(§5.3) → 대장 행 갱신. §4.5 ⑤ · §5.4
-- [ ] **5. 크레딧 문안 확정** (§8.4) — 이미지 모델 택1 반영 · 서체 2종 선정 + OFL 저작자 문자열(`asset-ledger.md` 미작성) · `ART-U001`·`SFX-*` CC0 확정 · AI 명시 수위의 스토어(Google Play) 형식(검토 6 · `dev-requirements.md` §7.3)
+- [ ] **5. 크레딧 문안 확정** (§8.4) — 이미지 모델 택1 반영 · `ART-U001`·`SFX-*` CC0 확정 · AI 명시 수위의 스토어(Google Play) 형식(검토 6 · `dev-requirements.md` §7.3). 서체 문안은 확정됐다.
 - [ ] **6. 배경·컷씬 (조건부·S6)** — `SC-L2` 배경 슬롯 결정 시 `ART-R101~104` · L3 채택 시 `VID-001~004` + Wan 2.2 의 §2.1 행 확정. 이 세션 범위 밖
