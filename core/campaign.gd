@@ -1123,6 +1123,12 @@ func _ai_operational() -> void:
 		var f: Faction = factions[fid]
 		if not f.alive:
 			continue
+		# **플레이어 함대는 AI 가 움직이지 않는다** (`screens.md` 검토 25).
+		# `_ai_domestic` 은 이미 거른다 — Operational 만 빠져 있었다. M0 은 AI 대 AI 라
+		# `player_faction` 이 "" 이므로 이 가드는 무연산이고, 클라이언트에서만 문다.
+		# 이게 없으면 `SC-F1` 의 [이동]·[분할] 발행이 다음 주기에 덮인다 (요구 B7·§1 비차단).
+		if fid == world.player_faction:
+			continue
 		var idle: Array[Fleet] = []
 		for fl in fleets:
 			if fl.owner == fid and fl.is_alive() and not fl.is_moving():
