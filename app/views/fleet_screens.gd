@@ -36,10 +36,13 @@ var data: GameData
 var campaign: Campaign
 var start_year: int = 208
 
-var _mode: String = ""                 # "" | "list" | "compose" | "appoint"
+var _mode: String = ""                 # "" | "list" | "compose" | "appoint" | "move"
 var _faction_id: String = ""
 var _fleet_id: int = -1
 var _from_list: bool = false
+
+# ---- SC-F1 이동 명령 작업 상태 (§4.3)
+var _move_dest: String = ""
 
 # ---- SC-F2 작업 상태 (발행 전까지는 세계에 없다 · 조항 ③)
 var _plan: String = ""
@@ -165,6 +168,18 @@ func open_appoint(fleet_id: int, from_list: bool) -> void:
 	refresh()
 
 
+func open_move(fleet_id: int, from_list: bool) -> void:
+	_mode = "move"
+	_fleet_id = fleet_id
+	_from_list = from_list
+	_move_dest = ""
+	var fl := _fleet()
+	if fl != null:
+		_faction_id = fl.owner
+	visible = true
+	refresh()
+
+
 func close_screen() -> void:
 	visible = false
 	_mode = ""
@@ -200,6 +215,8 @@ func refresh() -> void:
 			_draw_compose(fl)
 		"appoint":
 			_draw_appoint(fl)
+		"move":
+			_draw_move(fl)
 
 
 # ================================================================ SC-F1 함대 목록
@@ -282,6 +299,10 @@ func _fleet_row(fl: Fleet) -> PanelContainer:
 	var cmd_name := fl.commander_name if fl.commander_name != "" else "무명 장교"
 	_lbl(r1, cmd_name, UiPalette.TEXT, 18, 130)
 	# 버튼은 자기 클릭을 삼킨다 — 행 전체 탭(gui_input)보다 먼저 잡는다.
+	# §4.3 은 좌스와이프(이동)·행 탭(편성)·우스와이프(분할/합류)를 두나, 이 저장소의
+	# 다른 화면들이 스와이프 대신 버튼을 쓰므로 맞춘다. 분할/합류는 미구현 (검토 24).
+	var move := _btn(r1, "이동 ▸", 110)
+	move.pressed.connect(open_move.bind(fl.id, true))
 	var appoint := _btn(r1, "임명 ▸", 110)
 	appoint.pressed.connect(open_appoint.bind(fl.id, true))
 	var edit := _btn(r1, "편성 ▸", 110)
@@ -502,6 +523,142 @@ func _draw_appoint(fl: Fleet) -> void:
 
 	_body.add_child(_issue_bar(fl, _issue_appoint))
 	_note.text = "발행은 지휘부 5직 + 전대장 훈련 상한을 반영한다. 사자 지연을 탄다 (§1.1 ④)."
+
+
+# ================================================================ SC-F1 이동 명령 (§4.3)
+func _draw_move(fl: Fleet) -> void:
+	_title.text = "제%d함대  이동" % fl.id
+	_clear(_body)
+
+	if fl.is_moving():
+		# §1.3 — 이미 이동 중. 조회만 남는다 (진로 변경은 이 명령의 몫이 아니다 · §1.5).
+		var dn := String(data.regions[fl.target_region]["name"]) \
+			if data.regions.has(fl.target_region) else "—"
+		_kv(_body, "현재 목적지", "%s · 도착 %s" % [dn,
+			UiPalette.tick_label(fl.arrival_tick, start_year)])
+		_note.text = "이미 이동 중이다 — 진로는 도착 후 다시 발행한다 (§1.5)."
+		return
+
+	_kv(_body, "현재 위치", data.system_name(fl.at_system) + "성역 주둔")
+	_body.add_child(_section("목적 권역 — 경로·소요를 보고 고른다 (§4.3)"))
+
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 420)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_body.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 4)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+
+	for rid in _move_candidates(fl):
+		list.add_child(_move_row(fl, rid))
+
+	if _move_dest != "":
+		_body.add_child(HSeparator.new())
+		var t := _move_ticks(fl, _move_dest)
+		var cors := FleetRecommend.corridors_on_route(data, campaign, fl.at_system, _move_dest)
+		var cor_txt := "—"
+		if not cors.is_empty():
+			var ns: Array[String] = []
+			for cid in cors:
+				ns.append(String(data.corridors[cid]["name"]))
+			cor_txt = " · ".join(ns)
+		_kv(_body, "선택", "%s  (%s성역)" % [
+			String(data.regions[_move_dest]["name"]),
+			data.system_name(data.system_of(_move_dest))])
+		_kv(_body, "경로 회랑", cor_txt)
+		var now := campaign.world.clock.tick
+		var bar := HBoxContainer.new()
+		bar.add_theme_constant_override("separation", 16)
+		_lbl(bar, "발행 %s → 도착 %s  (항행 %s)" % [
+			UiPalette.tick_label(now, start_year),
+			UiPalette.tick_label(now + maxi(t, 1), start_year),
+			_hours(t)], UiPalette.TEXT_DIM, 18, 460)
+		var b := _btn(bar, "발행", 150)
+		var locked := _issue_locked(fl)
+		if locked == "" and t < 0:
+			locked = "닿지 않는다 — 회랑이 끊겼을 수 있다"
+		b.disabled = locked != ""
+		if locked != "":
+			b.tooltip_text = locked
+		b.pressed.connect(_issue_move)
+		_body.add_child(bar)
+
+	_note.text = "발행 = 즉시 출항 (AI 함대와 대칭 · 사자 지연 없음). 도착 전까지는 취소 없음 (§1.5)."
+
+
+## 후보 — 현재 성계의 권역 + 아군 권역에 인접한 권역 + 함대 위치에 인접한 권역.
+## **권역 ID 오름차순** (V-31 · 결정론). 닿지 않는 곳은 제외한다.
+func _move_candidates(fl: Fleet) -> Array:
+	var f: Faction = campaign.factions.get(fl.owner)
+	var seen := {}
+	for rid in data.regions_of.get(fl.at_system, []):
+		seen[rid] = true
+	if f != null:
+		for rid in f.regions:
+			seen[rid] = true
+			for nb in data.region_adjacency.get(rid, []):
+				seen[nb] = true
+	var out: Array = []
+	for rid in seen.keys():
+		if _move_ticks(fl, rid) >= 0:
+			out.append(rid)
+	out.sort()
+	return out
+
+
+func _move_row(fl: Fleet, rid: String) -> Button:
+	var st = campaign.world.region_states.get(rid)
+	var own := "중립"
+	if st != null and String(st.owner) != "":
+		own = String(st.owner)
+	var t := _move_ticks(fl, rid)
+	var b := Button.new()
+	b.focus_mode = Control.FOCUS_NONE
+	b.toggle_mode = true
+	b.button_pressed = (rid == _move_dest)
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.custom_minimum_size = Vector2(0, 42)
+	b.text = "%s  ·  %s성역  ·  %s  —  도착 %s (%s)" % [
+		String(data.regions[rid]["name"]),
+		data.system_name(data.system_of(rid)), own,
+		_hours(t), UiPalette.tick_label(campaign.world.clock.tick + maxi(t, 1), start_year)]
+	b.pressed.connect(func():
+		_move_dest = rid
+		refresh())
+	return b
+
+
+func _move_ticks(fl: Fleet, rid: String) -> int:
+	return Routing.travel_ticks(campaign.world.graph, fl.at_system, data.system_of(rid))
+
+
+static func _hours(ticks: int) -> String:
+	if ticks < 0:
+		return "닿지 않음"
+	if ticks == 0:
+		return "즉시"
+	return "%.1fh" % (ticks / 60.0)          # 1틱 = 실제 1분 (time-and-monetization §2.1)
+
+
+func _issue_move() -> void:
+	var fl := _fleet()
+	if fl == null or _issue_locked(fl) != "" or _move_dest == "":
+		return
+	var t := _move_ticks(fl, _move_dest)
+	if t < 0:
+		return
+	campaign.world.issue(Domestic.CMD_FLEET_MOVE, {
+		"faction": fl.owner,
+		"fleet": fl.id,
+		"region": _move_dest,
+		"travel_ticks": t,
+	}, 0)
+	_note.text = "발행됨 — %s 로 출항. 도착 %s." % [
+		String(data.regions[_move_dest]["name"]),
+		UiPalette.tick_label(campaign.world.clock.tick + maxi(t, 1), start_year)]
+	_move_dest = ""
 
 
 # ---------------------------------------------------------------- 발행 (조항 ④)

@@ -158,6 +158,12 @@ const COMMANDS: Array[String] = [
 const CMD_FLEET_PLAN: String = "함대편성안"
 const CMD_FLEET_APPOINT: String = "함대임명"
 
+## 함대 이동 (`screens.md` §4.3 좌스와이프). **사자 지연 없이 발행 = 즉시 출항**이다 —
+## `campaign._ai_operational` 이 AI 함대를 그렇게(큐 없이 즉시) 움직이므로 대칭을 맞춘다.
+## 명령 로그에는 남아 재생 입력이 된다 (V-25 ③). 항행 소요는 화면이 그래프로 풀어
+## `travel_ticks` 로 실어 보낸다 — `apply` 서명에 그래프가 없기 때문이다.
+const CMD_FLEET_MOVE: String = "함대이동"
+
 ## ---------------------------------------------------------------- 비용
 
 ## 개발 — 인구 × 300 일시불 · 6개월 · 생산·수입 +10%p · 개발여지 1칸 소비
@@ -248,6 +254,8 @@ static func apply(data: GameData, states: Dictionary, f: Faction,
 			return _apply_fleet_plan(fleets, f, p)
 		CMD_FLEET_APPOINT:
 			return _apply_fleet_appoint(fleets, f, p)
+		CMD_FLEET_MOVE:
+			return _apply_fleet_move(data, fleets, f, p, now_tick)
 		_:
 			return "알 수 없는 명령: " + kind
 
@@ -411,6 +419,27 @@ static func _apply_fleet_appoint(fleets: Array, f: Faction, p: Dictionary) -> St
 	fl.detector_name = String(p.get("detector_name", ""))
 	fl.detector_traits = p.get("detector_traits", [])
 	fl.staff_wits80_count = int(p.get("staff_wits80_count", 0))
+	return ""
+
+
+## 이동 반영. 항행 소요(`travel_ticks`)는 화면이 그래프로 풀어 실어 보냈다.
+## **이미 이동 중이면 거부한다** — 항로 중간에서 진로를 꺾는 것은 이 명령의 몫이 아니다
+## (되돌리려면 도착 후 다시 발행 · §1.5 「이미 도달한 명령은 취소할 수 없다」).
+static func _apply_fleet_move(data: GameData, fleets: Array, f: Faction,
+		p: Dictionary, now_tick: int) -> String:
+	var fl := _find_own_fleet(fleets, f, int(p.get("fleet", -1)))
+	if fl == null:
+		return "자기 함대가 아니다"
+	if fl.is_moving():
+		return "이미 이동 중이다"
+	var rid := String(p.get("region", ""))
+	if not data.regions.has(rid):
+		return "권역 없음: " + rid
+	var t := int(p.get("travel_ticks", -1))
+	if t < 0:
+		return "항행 소요 미상 — 닿지 않는 목적지"
+	fl.target_region = rid
+	fl.arrival_tick = now_tick + maxi(t, 1)
 	return ""
 
 
