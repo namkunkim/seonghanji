@@ -19,9 +19,11 @@ def main():
     ap.add_argument("root", type=Path, help="directory containing flux/ and sdxl/")
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--thumb-width", type=int, default=320)
+    ap.add_argument("--arts", default="", help="comma-separated ART IDs; default is ART-C901..911")
     args = ap.parse_args()
 
-    arts = [f"ART-C{i}" for i in range(901, 912)]
+    arts = ([s.strip() for s in args.arts.split(",") if s.strip()]
+            if args.arts else [f"ART-C{i}" for i in range(901, 912)])
     tw, th = args.thumb_width, args.thumb_width * 5 // 4
     label_h, header_h, gap = 34, 54, 12
     sheet_w = gap * 3 + tw * 2

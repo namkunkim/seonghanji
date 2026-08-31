@@ -1,0 +1,28 @@
+{
+  "_source": "P0-04 trial v3 — three-role corrective comparison. Trial-only override; v2 and canonical fragments remain unchanged.",
+  "fixed": "digital painting portrait, single East Asian character, late Han and Three Kingdoms era warrior-scholar facial physiognomy, historically grounded face with strong cheekbones and weathered character, upper body, 4:5 vertical, head-and-shoulders framing, eyes at 30% from top, shoulders fully readable, plain neutral charcoal-gray studio background, no faction color in generation, no scenery, muted palette, controlled brushwork, semi-realistic, even key light from front-left, sharp focus on face, restrained human political military science fiction, no text, no signatures, no watermark, no logograms, no badges, no insignia, featureless garment panels",
+  "negative": "text, signatures, signature, watermark, logograms, logogram, letters, glyphs, pseudo-writing, fake writing, badges, badge, insignia, rank insignia, emblems, logos, symbols on clothing, decorated garment panels, photo, 3d render, anime, chibi, exaggerated proportions, multiple people, full body, hands near face, weapon pointed at viewer, busy background, scenery, landscape, colored background, faction-colored background, extra fingers, deformed hands, blur, oversaturated, lens flare, modern clothing, modern admiral, modern general, naval officer, peaked cap, sailor cap, baseball cap, white naval dress uniform, necktie, medal bars, contemporary military uniform, western officer, European facial features, clean-shaven fashion model, historical costume only, Han dynasty costume replica, period drama costume, Roman soldier, European knight, repeated outfit, same costume silhouette, collapsed silhouette, fused shoulders, malformed armor, recognizable franchise character",
+  "class": {
+    "제": "fleet admiral silhouette, broad authoritative shoulder line formed by a structured command mantle, high asymmetric command collar, layered geometric chest construction suggesting fleet command systems, calm frontal posture, garment panels entirely featureless, no cap, no hat, no medals, no badges, no insignia, no modern naval uniform, not a historical costume replica",
+    "강": "assault trooper silhouette, unmistakable front-facing segmented torso armor, reinforced sternum plate, heavy protective shoulder shells, sealed combat underlayer and functional upper-body load-bearing structure, compact battle-ready posture, armor panels entirely featureless, no helmet or hat in frame, no badges, no insignia, no lettering, not medieval armor, not a historical costume replica",
+    "파": "far-future flight suit with subtle cross-collar construction, harness straps and forearm controls, helmet outside the face area, lean and alert, featureless garment panels",
+    "참": "layered far-future strategist robes derived from cross-collar silhouettes, narrow plain sash, data-slate low in frame, analytical forward posture, featureless garment panels",
+    "관": "civil administrator silhouette, refined narrow shoulder line, non-combat formal garment with clean cross-collar geometry, long uninterrupted vertical panels and restrained layered sleeves, upright composed posture, visibly softer and less armored than a commander or trooper, garment panels entirely featureless, no suit, no tie, no hat, no badges, no insignia, no historical costume replica"
+  },
+  "disposition": {
+    "명사": "dignified level gaze meeting the viewer, formal reserve",
+    "무뢰": "gaze angled just past the viewer, guarded confidence, disciplined shoulders",
+    "실무": "near-neutral expression, steady measured gaze, no performance",
+    "야심": "eyes scanning slightly sidelong, weighing what is in front of them, contained hunger",
+    "절의": "set jaw, firm closed mouth, unwavering frontal stare",
+    "군주": "presence of a ruler, direct unhurried gaze, aware of being watched"
+  },
+  "tint": {"제":"#2E3A4C","강":"#43262A","파":"#243B3D","참":"#2F2A44","관":"#3B352B"},
+  "faction_accent_color": {"위":"cool slate-grey","촉":"oxblood","오":"teal","군웅":null},
+  "faction_accent_garment": {"제":"mantle","강":"armor","파":"suit","참":"robe","관":"robe"},
+  "faction_accent_none": "plain dark garment, no faction piping",
+  "age_signal": {"노익장":"aged veteran, deeply lined face","노장":"older commander, greying"},
+  "bearing": {},
+  "trait_marker": {},
+  "flag_iconography": []
+}

@@ -57,6 +57,10 @@ def load_json(p: Path):
     return json.loads(Path(p).read_text(encoding="utf-8"))
 
 
+def file_sha256(p: Path):
+    return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+
+
 def trait_names(traits):
     out = []
     for t in traits or []:
@@ -220,6 +224,7 @@ def main(argv=None):
                     help="시험용 프롬프트 조각 JSON (기본: 정본 fragments.json)")
     ap.add_argument("--force", action="store_true", help="이미 있는 파일도 재생성")
     ap.add_argument("--dry-run", action="store_true", help="조립만 출력, POST 안 함")
+    ap.add_argument("--model-sha", default="", help="WEIGHTS.sha256에 기록된 실제 모델 SHA-256")
     args = ap.parse_args(argv)
 
     if not (args.named or args.common):
@@ -305,6 +310,10 @@ def main(argv=None):
                 "art": art, "model": args.model, "seed": seed, "prompt": prompt,
                 "negative_prompt": negative,
                 "out": dst.name, "sha256": sha, "comfy_filename": info["filename"],
+                "workflow": workflow_path.name, "workflow_sha256": file_sha256(workflow_path),
+                "fragments": str(Path(args.fragments).name),
+                "fragments_sha256": file_sha256(Path(args.fragments)),
+                "model_sha256": args.model_sha or None,
                 "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
             }, ensure_ascii=False) + "\n")
         print(f"  ✓ {art}  {sha[:12]}")

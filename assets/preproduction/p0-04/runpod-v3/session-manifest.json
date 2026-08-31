@@ -1,0 +1,37 @@
+{
+  "trial": "P0-04 common portrait trial v3",
+  "date": "2026-08-31",
+  "timezone": "Asia/Seoul",
+  "roles": [
+    {"art": "ART-C903", "role": "fleet admiral", "seed": 3906850027},
+    {"art": "ART-C906", "role": "civil administrator", "seed": 189333780},
+    {"art": "ART-C910", "role": "assault trooper", "seed": 3417253218}
+  ],
+  "models": [
+    {"name": "FLUX.1 schnell", "sha256": "9403429e0052277ac2a87ad800adece5481eecefd9ed334e1f348723621d2a0a", "workflow": "flux_schnell_portrait.json", "workflow_sha256": "b831730fbb59435e3e161643d8df2094970781a5c50a65f4aaf4df37b800b1f1"},
+    {"name": "SDXL 1.0 base", "sha256": "31e35c80fc4829d14f90153f4c74cd59c90b779f6afe05a74cd6120b893f7e5b", "workflow": "sdxl_portrait.json", "workflow_sha256": "f2285a7e2e7c3f77403fc79a736ec52d887727a45a0e7ab5d38514d75b272314"}
+  ],
+  "prompt_fragments_sha256": "cdcf1330029335b4b384fe078d48fc3157cde525afaa1f42d37af0dabb31e15b",
+  "generation": {
+    "size": "896x1120",
+    "generated_background": "neutral charcoal gray; no faction color",
+    "postprocess": "edge-connected background mask, role tint, radial -18% vignette",
+    "raw_output": "v3-raw/{flux,sdxl}",
+    "final_output": "out/v3-samples/{flux,sdxl}",
+    "count": 6
+  },
+  "runpod": {
+    "gpu": "RTX 4090 24GB",
+    "rate_usd_per_hour": 0.74,
+    "starting_balance_usd": 8.82,
+    "ending_balance_usd": 8.61,
+    "cost_usd": 0.21,
+    "pod_migrated": true,
+    "pod_stopped": true,
+    "ending_compute_rate_usd_per_hour": 0.0,
+    "pod_terminated": false,
+    "network_volume_gb": 60
+  },
+  "decision": "rework_all_keep_v2_style",
+  "promotion": {"final_model": false, "final_common_11": false, "named_120": false}
+}

@@ -1,0 +1,97 @@
+{
+  "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": { "ckpt_name": "sd_xl_base_1.0.safetensors" },
+    "_meta": { "title": "SDXL base" }
+  },
+  "16": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": { "ckpt_name": "sd_xl_refiner_1.0.safetensors" },
+    "_meta": { "title": "SDXL refiner" }
+  },
+  "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": { "width": 896, "height": 1120, "batch_size": 1 },
+    "_meta": { "title": "latent 896x1120 (4:5) — ai-media-pipeline.md 4.1" }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["4", 1],
+      "text": "digital painting portrait, single character, upper body, 4:5 vertical, head-and-shoulders framing, eyes at 30% from top, flat single-color background #2E3A4C, soft circular vignette, no scenery, muted palette, controlled brushwork, semi-realistic, even key light from front-left, sharp focus on face, no text, no watermark, no border, wearing a structured high-collar fleet dress uniform with rank insignia and a long coat, squared to camera, one hand resting on a table edge, bearing of command, gaze angled off past the viewer, faint smirk, careless ease in the shoulders"
+    },
+    "_meta": { "title": "positive (base) — INJECT: inputs.text" }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["4", 1],
+      "text": "photo, 3d render, anime, chibi, exaggerated proportions, multiple people, full body, hands near face, weapon pointed at viewer, busy background, scenery, landscape, text, watermark, signature, extra fingers, deformed hands, blur, oversaturated, lens flare, modern clothing"
+    },
+    "_meta": { "title": "negative (base) — FIXED, ai-media-pipeline.md 4.2-3" }
+  },
+  "15": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["16", 1],
+      "text": "digital painting portrait, single character, upper body, 4:5 vertical, head-and-shoulders framing, eyes at 30% from top, flat single-color background #2E3A4C, soft circular vignette, no scenery, muted palette, controlled brushwork, semi-realistic, even key light from front-left, sharp focus on face, no text, no watermark, no border, wearing a structured high-collar fleet dress uniform with rank insignia and a long coat, squared to camera, one hand resting on a table edge, bearing of command, gaze angled off past the viewer, faint smirk, careless ease in the shoulders"
+    },
+    "_meta": { "title": "positive (refiner) — INJECT: inputs.text (same string as node 6)" }
+  },
+  "17": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["16", 1],
+      "text": "photo, 3d render, anime, chibi, exaggerated proportions, multiple people, full body, hands near face, weapon pointed at viewer, busy background, scenery, landscape, text, watermark, signature, extra fingers, deformed hands, blur, oversaturated, lens flare, modern clothing"
+    },
+    "_meta": { "title": "negative (refiner) — FIXED" }
+  },
+  "10": {
+    "class_type": "KSamplerAdvanced",
+    "inputs": {
+      "add_noise": "enable",
+      "noise_seed": 3906850027,
+      "steps": 30,
+      "cfg": 5.5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "start_at_step": 0,
+      "end_at_step": 24,
+      "return_with_leftover_noise": "enable",
+      "model": ["4", 0],
+      "positive": ["6", 0],
+      "negative": ["7", 0],
+      "latent_image": ["5", 0]
+    },
+    "_meta": { "title": "base pass 0-24/30 (refiner 0.8) — INJECT: inputs.noise_seed" }
+  },
+  "11": {
+    "class_type": "KSamplerAdvanced",
+    "inputs": {
+      "add_noise": "disable",
+      "noise_seed": 3906850027,
+      "steps": 30,
+      "cfg": 5.5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "start_at_step": 24,
+      "end_at_step": 10000,
+      "return_with_leftover_noise": "disable",
+      "model": ["16", 0],
+      "positive": ["15", 0],
+      "negative": ["17", 0],
+      "latent_image": ["10", 0]
+    },
+    "_meta": { "title": "refiner pass 24-30/30 — INJECT: inputs.noise_seed (same as node 10)" }
+  },
+  "12": {
+    "class_type": "VAEDecode",
+    "inputs": { "samples": ["11", 0], "vae": ["4", 2] },
+    "_meta": { "title": "decode" }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["12", 0], "filename_prefix": "ART-C903" },
+    "_meta": { "title": "save PNG — INJECT: inputs.filename_prefix = ART-C###" }
+  }
+}
