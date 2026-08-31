@@ -30,6 +30,7 @@ import time
 import uuid
 from pathlib import Path
 from urllib import request as urlreq
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,9 +40,10 @@ NS = "seonghanji:portrait:v1:"
 # 워크플로 JSON 의 어느 노드를 배치가 덮어쓰는가 (runpod-runbook.md 「워크플로 JSON 두 개」)
 INJECT = {
     "sdxl": {"workflow": "sdxl_portrait.json",
-             "text": ["6", "15"], "seed": ["10", "11"], "fileprefix": ["19"]},
+             "text": ["6", "15"], "negative": ["7", "17"],
+             "seed": ["10", "11"], "fileprefix": ["19"]},
     "flux": {"workflow": "flux_schnell_portrait.json",
-             "text": ["6"], "seed": ["25"], "fileprefix": ["9"]},
+             "text": ["6"], "negative": [], "seed": ["25"], "fileprefix": ["9"]},
 }
 
 TRAIT_RE = re.compile(r"[「『]([^」』]+)[」』]")  # 「」 『』
@@ -142,8 +144,12 @@ def api_post(host, graph, client_id):
     body = json.dumps({"prompt": graph, "client_id": client_id}).encode()
     req = urlreq.Request(host + "/prompt", data=body,
                          headers={"Content-Type": "application/json"})
-    with urlreq.urlopen(req, timeout=30) as r:
-        return json.loads(r.read())["prompt_id"]
+    try:
+        with urlreq.urlopen(req, timeout=30) as r:
+            return json.loads(r.read())["prompt_id"]
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"ComfyUI HTTP {exc.code}: {detail}") from exc
 
 
 def api_wait(host, pid, timeout, poll=2.0):
@@ -180,9 +186,11 @@ def api_fetch(host, info, dst: Path):
     return hashlib.sha256(data).hexdigest()
 
 
-def inject(graph, spec, *, text, seed, fileprefix):
+def inject(graph, spec, *, text, negative, seed, fileprefix):
     for nid in spec["text"]:
         graph[nid]["inputs"]["text"] = text
+    for nid in spec["negative"]:
+        graph[nid]["inputs"]["text"] = negative
     for nid in spec["seed"]:
         graph[nid]["inputs"]["noise_seed"] = seed
     for nid in spec["fileprefix"]:
@@ -208,6 +216,8 @@ def main(argv=None):
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--out", default=str(ROOT / "out"))
     ap.add_argument("--timeout", type=int, default=600)
+    ap.add_argument("--fragments", default=str(CFG_DIR / "fragments.json"),
+                    help="시험용 프롬프트 조각 JSON (기본: 정본 fragments.json)")
     ap.add_argument("--force", action="store_true", help="이미 있는 파일도 재생성")
     ap.add_argument("--dry-run", action="store_true", help="조립만 출력, POST 안 함")
     args = ap.parse_args(argv)
@@ -215,7 +225,7 @@ def main(argv=None):
     if not (args.named or args.common):
         args.named = args.common = True  # 기본: 둘 다
 
-    frag = load_json(CFG_DIR / "fragments.json")
+    frag = load_json(Path(args.fragments))
     spec = INJECT[args.model]
     workflow_path = CFG_DIR / spec["workflow"]
     base_graph = load_json(workflow_path)
@@ -262,6 +272,9 @@ def main(argv=None):
 
         prompt = assemble(frag, tint=t["tint"], class0=t["class0"], disp_keys=t["disp_keys"],
                           faction=t["faction"], traits=t["traits"], named=t["named"])
+        negative = frag["negative"]
+        if args.model == "flux":
+            prompt += ", avoid: " + negative
 
         if args.dry_run:
             print(f"\n--- {art}  seed={seed}")
@@ -275,7 +288,7 @@ def main(argv=None):
             continue
 
         graph = json.loads(json.dumps(base_graph))  # deep copy
-        inject(graph, spec, text=prompt, seed=seed, fileprefix=art)
+        inject(graph, spec, text=prompt, negative=negative, seed=seed, fileprefix=art)
 
         try:
             pid = api_post(args.host, graph, client_id)
@@ -290,6 +303,7 @@ def main(argv=None):
         with manifest.open("a", encoding="utf-8") as f:
             f.write(json.dumps({
                 "art": art, "model": args.model, "seed": seed, "prompt": prompt,
+                "negative_prompt": negative,
                 "out": dst.name, "sha256": sha, "comfy_filename": info["filename"],
                 "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
             }, ensure_ascii=False) + "\n")
