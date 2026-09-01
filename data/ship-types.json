@@ -16,7 +16,7 @@
     "id": "SHP-02",
     "name": "공성함",
     "ship_class": "공성함",
-    "length_m": 1250,
+    "length_m": 1050,
     "phase_coefficients": {
       "contact": 0.5,
       "barrage": 1.2,
@@ -29,7 +29,7 @@
     "id": "SHP-03",
     "name": "포격함",
     "ship_class": "주력함",
-    "length_m": 1100,
+    "length_m": 900,
     "phase_coefficients": {
       "contact": 0.9,
       "barrage": 1.8,
@@ -42,7 +42,7 @@
     "id": "SHP-04",
     "name": "전열함",
     "ship_class": "주력함",
-    "length_m": 950,
+    "length_m": 750,
     "phase_coefficients": {
       "contact": 0.8,
       "barrage": 1.0,
@@ -55,7 +55,7 @@
     "id": "SHP-05",
     "name": "보급함",
     "ship_class": "지원함",
-    "length_m": 1000,
+    "length_m": 800,
     "phase_coefficients": {
       "contact": 0.4,
       "barrage": 0.4,
@@ -68,7 +68,7 @@
     "id": "SHP-06",
     "name": "전자전함",
     "ship_class": "초계함",
-    "length_m": 240,
+    "length_m": 400,
     "phase_coefficients": {
       "contact": 1.9,
       "barrage": 1.1,
