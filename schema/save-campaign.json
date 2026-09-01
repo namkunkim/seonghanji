@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seonghanji.local/schema/save-campaign.json",
+  "title": "캠페인 세이브",
+  "description": "캠페인 단위 세이브 스키마 v0.1 (preproduction-save-contract.md §2·§3·§4 · V-62). World 세이브(save.json)를 품고 캠페인 계층의 외생 입력과 지문을 더한다. 세력·경제·외교·이벤트는 담지 않는다 — 시드 + 플레이어 명령 로그에서 재생된다 (§2.2). 함대·전투 결과 스냅숏은 A-03 전까지의 잠정 조치다 (§2.4).",
+  "type": "object",
+  "required": [
+    "save_version",
+    "world",
+    "campaign"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "save_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "캠페인 세이브 형식 판. World 세이브의 save_version 과 별개다"
+    },
+    "world": {
+      "$ref": "save.json",
+      "description": "World 계층 세이브. commands 는 origin != \"ai\" 인 것만 담는다 — AI 명령은 재생 중 step() 이 결정론적으로 재발행하므로 저장하면 이중 발행된다 (§2.3 전제 2 · A-03 origin 규약)"
+    },
+    "campaign": {
+      "type": "object",
+      "required": [
+        "hb_milli",
+        "ai_domestic_enabled",
+        "digest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "hb_milli": {
+          "type": "integer",
+          "description": "역사 편향 계수(1/1000). 외생 입력이다 — 시드로 유도되지 않고 AI 목표 선정에 직접 걸린다 (ai-design.md §6.2). 재생에 반드시 필요하므로 포함 (§2.1)"
+        },
+        "ai_domestic_enabled": {
+          "type": "boolean",
+          "description": "AI 내정 판단 스위치. 켜짐·꺼짐이 결정론적 재생 결과를 가른다 (campaign.gd:72). 외생 입력이므로 포함"
+        },
+        "digest": {
+          "type": "integer",
+          "description": "저장 시점의 캠페인 지문. Campaign.digest() 가 정렬 순회로 접은 정수. 재생 후 지문과 이것이 같아야 한다 (§4.2 조건 2). 프로세스 경계를 넘는 복원(§4.2 조건 4)·변조 탐지(§3.5)의 근거. 진단 계수는 접지 않는다 (§4.3)"
+        },
+        "fleets_snapshot": {
+          "type": "array",
+          "description": "⚠ TODO(A-03) — 잠정 조치. 「플레이어 함대 명령이 전부 명령 로그에 남는가」가 A-03 에서 강제되기 전까지 함대·전투 결과를 「포함(스냅숏)」으로 둔다 (§2.4). A-03 이 서면 이 배열을 삭제하고 파생으로 내린다. 세이브 파일이 커지므로 영구화하지 않는다. 불러오기 시 정본이 아니다 — 재생이 정본이고 이 스냅숏은 A-02 의 교차 검증(§4.2 조건 5)용으로만 읽힌다. 「스냅숏과 로그가 어긋나면 로그가 이긴다」(§2.1)",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "owner",
+              "at_system",
+              "ships",
+              "morale"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "integer", "minimum": 0 },
+              "owner": { "type": "string" },
+              "at_system": { "$ref": "_defs.json#/$defs/sysId" },
+              "target_region": {
+                "oneOf": [
+                  { "type": "string", "enum": [""] },
+                  { "$ref": "_defs.json#/$defs/rgnId" }
+                ],
+                "description": "이동 중이 아니면 빈 문자열"
+              },
+              "arrival_tick": {
+                "type": "integer",
+                "description": "-1 이면 이동 중이 아니다"
+              },
+              "ships": { "type": "integer", "minimum": 0 },
+              "morale": { "type": "integer", "minimum": 0 },
+              "plan": { "type": "string" },
+              "formation": { "type": "string" },
+              "station": { "type": "string" },
+              "drill": { "type": "integer", "minimum": 0 },
+              "drilling": { "type": "boolean" },
+              "squadron_command": { "type": "integer", "minimum": 0 },
+              "commander_id": { "type": "string" },
+              "vice_id": { "type": "string" },
+              "assault_id": { "type": "string" },
+              "siege_id": { "type": "string" },
+              "supply_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

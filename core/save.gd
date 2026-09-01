@@ -27,13 +27,23 @@ const SAVE_VERSION := 1
 
 
 ## ---------------------------------------------------------------- 내보내기
+##
+## **AI 가 발행한 명령(`origin == "ai"`)은 담지 않는다.** 재생 중 `step()` 이
+## 결정론적으로 다시 발행하므로, 저장하면 재생 시 이중 발행되어 지문이 갈린다
+## (save-contract §2.3 전제 2 · A-03 origin 규약). `origin` 키가 없으면 플레이어
+## 명령으로 본다 — 기존 UI 호출부는 수정 없이 이 기본값에 잡힌다.
 static func to_dict(world: World) -> Dictionary:
 	var cmds: Array = []
 	for c in world.applied_commands:
+		if _is_ai(c):
+			continue
 		cmds.append(_cmd(c))
 	for c in world.pending_commands:
+		if _is_ai(c):
+			continue
 		cmds.append(_cmd(c))
 	# **발행 순번으로 정렬한다.** 적용분과 대기분을 이어 붙이면 순서가 섞인다.
+	# AI 명령을 걸러낸 뒤라 순번은 불연속일 수 있다 — 재생 시 `_seq` 처리는 `replay`.
 	cmds.sort_custom(func(a, b): return a["seq"] < b["seq"])
 	return {
 		"ruleset": world.ruleset,
@@ -56,6 +66,11 @@ static func _cmd(c: Dictionary) -> Dictionary:
 	}
 
 
+## AI 발행 명령인가. `to_dict` 가 이것으로 거른다 (위 주석).
+static func _is_ai(c: Dictionary) -> bool:
+	return String(c.get("origin", "player")) == "ai"
+
+
 ## ---------------------------------------------------------------- 불러오기 = 재생
 ##
 ## **처음부터 다시 돌린다.** 명령을 전부 대기열에 넣고 목표 틱까지 진행하면,
@@ -73,6 +88,7 @@ static func replay(d: Dictionary, data: GameData,
 	var cmds: Array = d.get("commands", [])
 	var sorted_cmds := cmds.duplicate()
 	sorted_cmds.sort_custom(func(a, b): return int(a["seq"]) < int(b["seq"]))
+	var max_seq := -1
 	for c in sorted_cmds:
 		w.pending_commands.append({
 			"seq": int(c["seq"]),
@@ -80,8 +96,14 @@ static func replay(d: Dictionary, data: GameData,
 			"arrival_tick": int(c["arrival_tick"]),
 			"kind": String(c["kind"]),
 			"payload": c.get("payload", {}),
+			"origin": String(c.get("origin", "player")),
 		})
-	w._seq = sorted_cmds.size()
+		max_seq = maxi(max_seq, int(c["seq"]))
+	# **저장된 명령은 AI 명령이 걸러진 뒤라 순번이 불연속이다** (`to_dict` 주석).
+	# `size()` 로 잡으면 재생 중 새로 발행되는 명령이 기존 순번과 충돌할 수 있다 —
+	# 마지막 순번 다음부터 잇는다. World 단독 재생(순번이 0 부터 연속)에서는
+	# `max_seq + 1 == size()` 이므로 기존 동작과 같다.
+	w._seq = max_seq + 1
 
 	Sim.step_ticks(w, int(d.get("game_tick", 0)))
 	return w
@@ -123,11 +145,18 @@ static func _fold(h: int, v: int) -> int:
 
 ## ---------------------------------------------------------------- 파일
 static func write_file(world: World, path: String) -> bool:
+	var d := to_dict(world)
+	d["save_version"] = SAVE_VERSION
+	return write_dict(d, path)
+
+
+## 임의 사전을 세이브 파일로 쓴다. 캠페인 세이브(`Campaign.write_save` ·
+## schema/save-campaign.json)가 이것을 쓴다 — World 세이브와 파일 형식(들여쓴 JSON)을
+## 공유한다.
+static func write_dict(d: Dictionary, path: String) -> bool:
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f == null:
 		return false
-	var d := to_dict(world)
-	d["save_version"] = SAVE_VERSION
 	f.store_string(JSON.stringify(d, "  "))
 	return true
 
