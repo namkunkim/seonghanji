@@ -14,6 +14,8 @@ extends SceneTree
 ## | 세력별 승률 편차 | 최대·최소 3배 이내 |
 ## | 조기 종료율 | 20% 이하 |
 
+const Harness := preload("res://tests/harness.gd")
+
 const RUNS := 100
 
 
@@ -67,6 +69,11 @@ func _init() -> void:
 	var focus_corr_amb := 0
 	var focus_noncorr := 0
 	var focus_noncorr_amb := 0
+	# 구조 검증용 (A-07 · V-61 ②) — 「시뮬레이터가 조용히 멈췄다」만 잡는다.
+	# 재현율·편차 같은 밸런스 지표는 여기 넣지 않는다 (V-61 ③).
+	var completed := 0
+	var bad_state := 0
+	var bad_leader := 0
 	var t0 := Time.get_ticks_msec()
 
 	for run in RUNS:
@@ -74,12 +81,17 @@ func _init() -> void:
 		c.hb_milli = Strategy.HB_STANDARD_MILLI
 		c.instrument_focus = "조조"
 		c.run_to_end()
+		completed += 1
 		focus_corr += c.focus_corridor_attacks
 		focus_corr_amb += c.focus_corridor_attacks_ambushed
 		focus_noncorr += c.focus_noncorridor_attacks
 		focus_noncorr_amb += c.focus_noncorridor_attacks_ambushed
 		var ws := c.world_state()
 		var ld := c.leader()
+		if ws == "":
+			bad_state += 1
+		if ld == "":
+			bad_leader += 1
 		if c.historical_outcome():
 			historical += 1
 		for fid in c.faction_ids:
@@ -277,6 +289,7 @@ func _init() -> void:
 	print("HB 모드 비교 — ai-design.md §6.2")
 	print("%-12s %6s %8s %8s" % ["모드", "HB", "재현율", "일극형"])
 	print("-".repeat(38))
+	var hb_completed := 0
 	for mode in [["자유 역사", Strategy.HB_FREE_MILLI],
 				 ["표준", Strategy.HB_STANDARD_MILLI],
 				 ["역사 중시", Strategy.HB_HISTORICAL_MILLI]]:
@@ -286,6 +299,7 @@ func _init() -> void:
 			var c := Campaign.scenario_03(data, 1000 + run)
 			c.hb_milli = int(mode[1])
 			c.run_to_end()
+			hb_completed += 1
 			if c.historical_outcome():
 				h += 1
 			if c.world_state() == "일극형":
@@ -301,4 +315,31 @@ func _init() -> void:
 	print("  성향·특성은 명장 150 인분이 `characters.json` 에 채워졌다 (검토 17 해소).")
 	print("✅ 검토 14 — 회랑 출구 매복 보정 +30 → +15 (2026-08-28). 총량 순피해가 아니라")
 	print("  「조조가 회랑 공세를 걸 때 매복 피격률」로 정밀 재측정해 낮췄다 — 위 표 참조.")
-	quit(0)
+	print("")
+
+	# ---- 구조 검증 (A-07 · V-61 ②). **밸런스 판정이 아니다.**
+	# 위 「합격 %d/%d」(재현율·조기 종료율·주역 편차)와 미발동 이벤트는
+	# exit 코드에 반영하지 않는다 — 밸런스 기준선은 Q-01 완료 시 잠근다 (V-61 ③).
+	# 여기서 잡는 것은 「시뮬레이터가 완주하지 못하고 조용히 멈췄다」뿐이다.
+	print("구조 검증 — A-07")
+	var struct_fail := 0
+	struct_fail += _sc(completed == RUNS, "완주 %d/%d" % [completed, RUNS])
+	struct_fail += _sc(hb_completed == 3 * RUNS, "HB 비교 완주 %d/%d" % [hb_completed, 3 * RUNS])
+	struct_fail += _sc(bad_state == 0, "세계 상태 산출 %d/%d" % [RUNS - bad_state, RUNS])
+	struct_fail += _sc(bad_leader == 0, "최강 실동원 산출 %d/%d" % [RUNS - bad_leader, RUNS])
+	struct_fail += _sc(total_battles > 0, "전투 발생 (평균 %.1f회/판)" % (float(total_battles) / RUNS))
+	struct_fail += _sc(total_ticks > 0, "진행 틱 누적 (평균 %.0f틱/판)" % (float(total_ticks) / RUNS))
+	struct_fail += _sc(total_applied > 0, "명령 적용 (평균 %.1f회/판)" % (float(total_applied) / RUNS))
+	print("")
+	if struct_fail == 0:
+		print("구조 검증 통과 — 밸런스 판정(합격 %d/%d)은 exit 코드와 무관 (V-61 ③)"
+			% [pass_count, checks])
+	else:
+		print("구조 검증 실패 %d건 — 시뮬레이터가 조용히 멈췄다" % struct_fail)
+	quit(Harness.EXIT_FAIL if struct_fail > 0 else Harness.EXIT_PASS)
+
+
+## 구조 검증 한 줄. 통과=0, 실패=1 을 돌려주어 호출부가 누적한다.
+func _sc(ok: bool, label: String) -> int:
+	print("  %s  %s" % ["OK  " if ok else "실패", label])
+	return 0 if ok else 1

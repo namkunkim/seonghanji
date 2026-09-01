@@ -6,6 +6,8 @@ extends SceneTree
 ## 최초 1회: godot --headless --path . --import   (class_name 전역 등록)
 ## 종료 코드: 실패가 있으면 1
 
+const Harness := preload("res://tests/harness.gd")
+
 var _pass := 0
 var _fail := 0
 
@@ -15,10 +17,21 @@ var _fail := 0
 var _sections := 0
 const EXPECTED_SECTIONS := 34
 
+## 실패가 어느 섹션에서 났는지 — 최종 요약에 목록으로 낸다 (A-07 · V-61 ④).
+## 한 섹션·한 단언이 실패해도 러너는 멈추지 않고 끝까지 돈다.
+var _cur_section := ""
+var _failed_sections: Array[String] = []
+
 
 func _section(name: String) -> void:
 	_sections += 1
+	_cur_section = name
 	print(name)
+
+
+func _mark_failed_section() -> void:
+	if _cur_section != "" and not _failed_sections.has(_cur_section):
+		_failed_sections.append(_cur_section)
 
 
 func _ok(cond: bool, label: String) -> void:
@@ -26,6 +39,7 @@ func _ok(cond: bool, label: String) -> void:
 		_pass += 1
 	else:
 		_fail += 1
+		_mark_failed_section()
 		print("  실패: ", label)
 
 
@@ -34,6 +48,7 @@ func _eq(got, want, label: String) -> void:
 		_pass += 1
 	else:
 		_fail += 1
+		_mark_failed_section()
 		print("  실패: %s — 기대 %s, 실제 %s" % [label, str(want), str(got)])
 
 
@@ -75,12 +90,27 @@ func _init() -> void:
 	_test_schemes()
 	_test_portrait_frame()
 	print("")
+	var asserts := _pass + _fail          # 실제 단언 수 — 아래 가드 실패분 이전
+
 	if _sections != EXPECTED_SECTIONS:
 		_fail += 1
 		print("  실패: 시험 섹션 %d개가 돌았다 — %d개여야 한다 (컴파일 오류로 빠진 것이 있다)"
 			% [_sections, EXPECTED_SECTIONS])
-	print("섹션 %d/%d · 통과 %d · 실패 %d" % [_sections, EXPECTED_SECTIONS, _pass, _fail])
-	quit(1 if _fail > 0 else 0)
+
+	# 단언 수가 하한 미만이면 시험이 조용히 사라진 것이다 (A-07 · V-61 ④).
+	# 섹션 수는 맞아도 한 섹션 안에서 단언이 빠질 수 있다 —
+	# EXPECTED_SECTIONS 가드로는 안 잡힌다.
+	if asserts < Harness.MIN_UNIT_ASSERTIONS:
+		_fail += 1
+		print("  실패: 단언 %d개가 돌았다 — 하한 %d개 미만 (시험이 조용히 사라졌다)"
+			% [asserts, Harness.MIN_UNIT_ASSERTIONS])
+
+	if not _failed_sections.is_empty():
+		print("  실패한 섹션 %d: %s" % [_failed_sections.size(), ", ".join(_failed_sections)])
+
+	print("섹션 %d/%d · 단언 %d (하한 %d) · 통과 %d · 실패 %d"
+		% [_sections, EXPECTED_SECTIONS, asserts, Harness.MIN_UNIT_ASSERTIONS, _pass, _fail])
+	quit(Harness.EXIT_FAIL if _fail > 0 else Harness.EXIT_PASS)
 
 
 ## 1틱 = 실제 1분
