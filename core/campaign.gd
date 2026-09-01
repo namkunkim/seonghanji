@@ -1737,7 +1737,9 @@ func digest() -> int:
 	for k in ak:
 		h = Save._fold(h, Rng._hash_string(String(k)))
 		h = Save._fold(h, int(_alliance_since[k]))
-	return h
+	# JSON 숫자는 IEEE-754 경로를 지날 수 있다. 64비트 해시를 그대로 저장하면
+	# 파일 왕복 때 하위 비트가 유실되므로 플랫폼 독립적인 양의 31비트로 고정한다.
+	return h & 0x7fffffff
 
 
 ## 캠페인 세이브 사전 (schema/save-campaign.json).
@@ -1754,33 +1756,8 @@ func to_save_dict() -> Dictionary:
 			# (`replay_to`)가 재현하지 않는다. 세이브가 「끝났는가」의 정본이다.
 			"ended": ended,
 			"end_reason": end_reason,
-			"fleets_snapshot": _fleets_snapshot(),
 		},
 	}
-
-
-## ⚠ TODO(A-03) — **잠정 조치.** 「플레이어 함대 명령이 전부 명령 로그에 남는가」가
-## A-03 에서 완전히 강제되면 이 스냅숏을 삭제하고 함대·전투 결과를 파생으로
-## 내린다 (save-contract §2.4). 세이브 파일을 키우므로 영구화하지 않는다.
-## **불러오기 시 정본이 아니다** — 재생이 정본이고, 이 값은 A-02 의 교차
-## 검증(§4.2 조건 5)용으로만 읽힌다. 「스냅숏과 로그가 어긋나면 로그가 이긴다」(§2.1).
-func _fleets_snapshot() -> Array:
-	var out: Array = []
-	var fl_sorted: Array = fleets.duplicate()
-	fl_sorted.sort_custom(func(a, b): return a.id < b.id)
-	for fl in fl_sorted:
-		out.append({
-			"id": fl.id, "owner": fl.owner, "at_system": fl.at_system,
-			"target_region": fl.target_region, "arrival_tick": fl.arrival_tick,
-			"ships": fl.ships, "morale": fl.morale, "plan": fl.plan,
-			"formation": fl.formation, "station": fl.station,
-			"drill": fl.drill, "drilling": fl.drilling,
-			"squadron_command": fl.squadron_command,
-			"commander_id": fl.commander_id, "vice_id": fl.vice_id,
-			"assault_id": fl.assault_id, "siege_id": fl.siege_id,
-			"supply_id": fl.supply_id,
-		})
-	return out
 
 
 ## 캠페인 세이브 사전에서 캠페인을 되살린다.
@@ -1792,7 +1769,7 @@ func _fleets_snapshot() -> Array:
 ##
 ## ⚠ 단기판은 `SCN-03` 하나뿐이다 (CLAUDE.md 함정 · save-contract §3). 다른 시나리오
 ## 경계 스냅숏은 이 세션 범위 밖 (§3.4 · A-01 실측 후 판정).
-static func from_save(d: Dictionary, data_ref: GameData) -> Campaign:
+static func _from_clean_save(d: Dictionary, data_ref: GameData) -> Campaign:
 	var w: Dictionary = d.get("world", {})
 	var scn := String(w.get("scenario", "SCN-03"))
 	assert(scn == "SCN-03", "단기판은 SCN-03 하나뿐이다 (save-contract §3)")
@@ -1834,6 +1811,32 @@ static func from_save(d: Dictionary, data_ref: GameData) -> Campaign:
 	return c
 
 
+## 검사와 재생을 합친 호출자용 결과. `Save.inspect` 가 로드 가부·복구 범위를,
+## 이 함수가 재생 지문 검증을 맡는다 (§3.2·§3.5).
+static func from_save_result(d: Dictionary, data_ref: GameData,
+		current_ruleset: String = Save.CURRENT_RULESET) -> Dictionary:
+	var result := Save.inspect(d, current_ruleset)
+	if not bool(result["loadable"]):
+		result["campaign"] = null
+		return result
+	var c := _from_clean_save(result["save"], data_ref)
+	var expected := int(result["save"]["campaign"]["digest"])
+	var actual := c.digest()
+	result["campaign"] = c
+	result["expected_digest"] = expected
+	result["actual_digest"] = actual
+	result["verified"] = actual == expected
+	if actual != expected and String(result["status"]) != Save.STATUS_PARTIAL_RECOVERY:
+		result["status"] = Save.STATUS_VERIFICATION_FAILED
+		result["detail"] = "재생 지문이 저장 지문과 다르다 — 검증 실패 표식"
+	return result
+
+
+## 기존 정상 호출부 호환. 거부된 저장은 null을 돌려준다.
+static func from_save(d: Dictionary, data_ref: GameData) -> Campaign:
+	return from_save_result(d, data_ref).get("campaign")
+
+
 ## 목표 틱까지 재생한다. `run_to_end` 와 달리 **`ended` 를 강제하지 않는다** —
 ## 캠페인 도중에 저장한 세이브(§4.2 조건 4)는 목표 틱이 종료 틱이 아닐 수 있다.
 func replay_to(target_tick: int) -> void:
@@ -1846,7 +1849,16 @@ func write_save(path: String) -> bool:
 	return Save.write_dict(to_save_dict(), path)
 
 
-## 캠페인 세이브 파일에서 되살린다. 파일이 없거나 깨졌으면 파싱이 빈 사전을
-## 돌려주고, `from_save` 가 기본값으로 SCN-03 셋업을 만든다 (손상 복구는 A-02 · §3.5).
+## 캠페인 세이브 파일에서 되살린다. 파일·스키마·규칙 판정은 `Save.inspect_file`,
+## 재생 지문 판정은 `from_save_result` 가 맡는다 (§3.2·§3.5).
+static func read_save_result(path: String, data_ref: GameData,
+		current_ruleset: String = Save.CURRENT_RULESET) -> Dictionary:
+	var inspected := Save.inspect_file(path, current_ruleset)
+	if not bool(inspected["loadable"]):
+		inspected["campaign"] = null
+		return inspected
+	return from_save_result(inspected["save"], data_ref, current_ruleset)
+
+
 static func read_save(path: String, data_ref: GameData) -> Campaign:
-	return from_save(Save.read_file(path), data_ref)
+	return read_save_result(path, data_ref).get("campaign")

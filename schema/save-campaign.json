@@ -48,50 +48,6 @@
         "end_reason": {
           "type": "string",
           "description": "종료 사유. \"단일 세력\" · \"조기 종료\" · \"정규 종료\" · \"\"(미종료)"
-        },
-        "fleets_snapshot": {
-          "type": "array",
-          "description": "⚠ TODO(A-03) — 잠정 조치. 「플레이어 함대 명령이 전부 명령 로그에 남는가」가 A-03 에서 강제되기 전까지 함대·전투 결과를 「포함(스냅숏)」으로 둔다 (§2.4). A-03 이 서면 이 배열을 삭제하고 파생으로 내린다. 세이브 파일이 커지므로 영구화하지 않는다. 불러오기 시 정본이 아니다 — 재생이 정본이고 이 스냅숏은 A-02 의 교차 검증(§4.2 조건 5)용으로만 읽힌다. 「스냅숏과 로그가 어긋나면 로그가 이긴다」(§2.1)",
-          "items": {
-            "type": "object",
-            "required": [
-              "id",
-              "owner",
-              "at_system",
-              "ships",
-              "morale"
-            ],
-            "additionalProperties": false,
-            "properties": {
-              "id": { "type": "integer", "minimum": 0 },
-              "owner": { "type": "string" },
-              "at_system": { "$ref": "_defs.json#/$defs/sysId" },
-              "target_region": {
-                "oneOf": [
-                  { "type": "string", "enum": [""] },
-                  { "$ref": "_defs.json#/$defs/rgnId" }
-                ],
-                "description": "이동 중이 아니면 빈 문자열"
-              },
-              "arrival_tick": {
-                "type": "integer",
-                "description": "-1 이면 이동 중이 아니다"
-              },
-              "ships": { "type": "integer", "minimum": 0 },
-              "morale": { "type": "integer", "minimum": 0 },
-              "plan": { "type": "string" },
-              "formation": { "type": "string" },
-              "station": { "type": "string" },
-              "drill": { "type": "integer", "minimum": 0 },
-              "drilling": { "type": "boolean" },
-              "squadron_command": { "type": "integer", "minimum": 0 },
-              "commander_id": { "type": "string" },
-              "vice_id": { "type": "string" },
-              "assault_id": { "type": "string" },
-              "siege_id": { "type": "string" },
-              "supply_id": { "type": "string" }
-            }
-          }
         }
       }
     }

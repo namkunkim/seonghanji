@@ -24,6 +24,15 @@ extends RefCounted
 ## 다르면 어딘가에서 결정론이 깨진 것이다 — 그것을 잡는 것이 이 함수의 목적이다.
 
 const SAVE_VERSION := 1
+const CURRENT_RULESET := "RS-0.1.0"
+
+const STATUS_OK := "ok"
+const STATUS_OLD_MINOR := "old_minor"
+const STATUS_PARTIAL_RECOVERY := "partial_recovery"
+const STATUS_CORRUPT := "corrupt"
+const STATUS_MAJOR_MISMATCH := "major_mismatch"
+const STATUS_NEWER_MINOR := "newer_minor"
+const STATUS_VERIFICATION_FAILED := "verification_failed"
 
 
 ## ---------------------------------------------------------------- 내보내기
@@ -69,6 +78,153 @@ static func _cmd(c: Dictionary) -> Dictionary:
 ## AI 발행 명령인가. `to_dict` 가 이것으로 거른다 (위 주석).
 static func _is_ai(c: Dictionary) -> bool:
 	return String(c.get("origin", "player")) == "ai"
+
+
+## 손상·규칙 세대 판정과 재생을 분리한다 (save-contract §3.2·§3.5).
+## 부분 손상이면 첫 손상 명령 직전으로 로그와 목표 틱을 함께 잘라 건너뛰기를 막는다.
+static func inspect(d: Dictionary, current_ruleset: String = CURRENT_RULESET) -> Dictionary:
+	var bad := _required_campaign_error(d)
+	if bad != "":
+		return _inspection(STATUS_CORRUPT, false, bad, d)
+	var w: Dictionary = d["world"]
+	var saved_version := _parse_ruleset(String(w["ruleset"]))
+	var current_version := _parse_ruleset(current_ruleset)
+	if saved_version.is_empty():
+		return _inspection(STATUS_CORRUPT, false, "world.ruleset: RS-X.Y.Z 형식이 아니다", d)
+	if current_version.is_empty():
+		return _inspection(STATUS_CORRUPT, false, "현재 ruleset: RS-X.Y.Z 형식이 아니다", d)
+	if saved_version[0] != current_version[0]:
+		return _inspection(STATUS_MAJOR_MISMATCH, false,
+			"major 불일치 — 세이브 마이그레이션이 필요하다", d)
+	if saved_version[1] > current_version[1]:
+		return _inspection(STATUS_NEWER_MINOR, false, "현재 빌드보다 새 minor 세이브다", d)
+	var cmds: Array = w["commands"]
+	for i in cmds.size():
+		var cmd_error := _command_error(cmds[i], i)
+		if cmd_error == "":
+			continue
+		var repaired: Dictionary = d.duplicate(true)
+		var safe_commands: Array = []
+		for j in i:
+			safe_commands.append(cmds[j])
+		var corrupt_tick := int(cmds[i].get("issued_tick", 0)) if cmds[i] is Dictionary else 0
+		var safe_tick := mini(int(w["game_tick"]), maxi(0, corrupt_tick))
+		repaired["world"]["commands"] = safe_commands
+		repaired["world"]["game_tick"] = safe_tick
+		var out := _inspection(STATUS_PARTIAL_RECOVERY, true,
+			"%s — 이후 로그 폐기, %d개월 시점으로 복원됨"
+			% [cmd_error, safe_tick / GameClock.TICKS_PER_MONTH], repaired)
+		out["restored_tick"] = safe_tick
+		out["restored_month"] = safe_tick / GameClock.TICKS_PER_MONTH
+		return out
+	if saved_version[1] < current_version[1]:
+		var old := _inspection(STATUS_OLD_MINOR, true,
+			"세이브 minor 규칙으로 재생 — 시나리오 경계 승격은 후속", d)
+		old["ruleset"] = String(w["ruleset"])
+		return old
+	return _inspection(STATUS_OK, true, "정상", d)
+
+
+static func _inspection(status: String, loadable: bool, detail: String,
+		d: Dictionary) -> Dictionary:
+	return {"status": status, "loadable": loadable, "detail": detail, "save": d}
+
+
+static func _parse_ruleset(value: String) -> Array[int]:
+	var re := RegEx.new()
+	if re.compile("^RS-([0-9]+)\\.([0-9]+)\\.([0-9]+)$") != OK:
+		return []
+	var m := re.search(value)
+	if m == null:
+		return []
+	return [int(m.get_string(1)), int(m.get_string(2)), int(m.get_string(3))]
+
+
+## Godot JSON 파서는 정수 토큰도 float 로 돌려줄 수 있다. 스키마의 integer 는
+## 런타임 타입이 아니라 소수부 없는 유한 수라는 뜻으로 검사한다.
+static func _is_json_integer(value) -> bool:
+	if value is int:
+		return true
+	return value is float and is_finite(value) and value == floor(value)
+
+
+static func _required_campaign_error(d: Dictionary) -> String:
+	var extra := _unexpected_key(d, ["save_version", "world", "campaign"])
+	if extra != "":
+		return "%s: 허용되지 않은 키" % extra
+	for key in ["save_version", "world", "campaign"]:
+		if not d.has(key):
+			return "%s: 필수 키가 없다" % key
+	if not _is_json_integer(d["save_version"]):
+		return "save_version: 정수가 아니다"
+	if not d["world"] is Dictionary:
+		return "world: 객체가 아니다"
+	if not d["campaign"] is Dictionary:
+		return "campaign: 객체가 아니다"
+	var w: Dictionary = d["world"]
+	extra = _unexpected_key(w, ["ruleset", "scenario", "seed", "game_tick",
+		"player_faction", "capital", "commands", "save_version"])
+	if extra != "":
+		return "world.%s: 허용되지 않은 키" % extra
+	for key in ["ruleset", "scenario", "seed", "game_tick", "commands"]:
+		if not w.has(key):
+			return "world.%s: 필수 키가 없다" % key
+	if not w["ruleset"] is String:
+		return "world.ruleset: 문자열이 아니다"
+	if not w["scenario"] is String or String(w["scenario"]) != "SCN-03":
+		return "world.scenario: 단기판은 SCN-03 이어야 한다"
+	if not _is_json_integer(w["seed"]):
+		return "world.seed: 정수가 아니다"
+	if not _is_json_integer(w["game_tick"]) or int(w["game_tick"]) < 0:
+		return "world.game_tick: 0 이상의 정수가 아니다"
+	if not w["commands"] is Array:
+		return "world.commands: 배열이 아니다"
+	var cd: Dictionary = d["campaign"]
+	extra = _unexpected_key(cd, ["hb_milli", "ai_domestic_enabled", "digest",
+		"ended", "end_reason"])
+	if extra != "":
+		return "campaign.%s: 허용되지 않은 키" % extra
+	for key in ["hb_milli", "ai_domestic_enabled", "digest"]:
+		if not cd.has(key):
+			return "campaign.%s: 필수 키가 없다" % key
+	if not _is_json_integer(cd["hb_milli"]):
+		return "campaign.hb_milli: 정수가 아니다"
+	if not cd["ai_domestic_enabled"] is bool:
+		return "campaign.ai_domestic_enabled: 불리언이 아니다"
+	if not _is_json_integer(cd["digest"]):
+		return "campaign.digest: 정수가 아니다"
+	return ""
+
+
+static func _unexpected_key(d: Dictionary, allowed: Array) -> String:
+	for key in d.keys():
+		if not allowed.has(String(key)):
+			return String(key)
+	return ""
+
+
+static func _command_error(value, index: int) -> String:
+	if not value is Dictionary:
+		return "world.commands[%d]: 객체가 아니다" % index
+	var c: Dictionary = value
+	var extra := _unexpected_key(c,
+		["seq", "issued_tick", "arrival_tick", "kind", "payload"])
+	if extra != "":
+		return "world.commands[%d].%s: 허용되지 않은 키" % [index, extra]
+	for key in ["seq", "issued_tick", "kind"]:
+		if not c.has(key):
+			return "world.commands[%d].%s: 필수 키가 없다" % [index, key]
+	if not _is_json_integer(c["seq"]) or int(c["seq"]) < 0:
+		return "world.commands[%d].seq: 0 이상의 정수가 아니다" % index
+	if not _is_json_integer(c["issued_tick"]) or int(c["issued_tick"]) < 0:
+		return "world.commands[%d].issued_tick: 0 이상의 정수가 아니다" % index
+	if not c["kind"] is String or String(c["kind"]) == "":
+		return "world.commands[%d].kind: 비어 있지 않은 문자열이어야 한다" % index
+	if c.has("arrival_tick") and c["arrival_tick"] != null and not _is_json_integer(c["arrival_tick"]):
+		return "world.commands[%d].arrival_tick: 정수 또는 null 이어야 한다" % index
+	if c.has("payload") and not c["payload"] is Dictionary:
+		return "world.commands[%d].payload: 객체가 아니다" % index
+	return ""
 
 
 ## ---------------------------------------------------------------- 불러오기 = 재생
@@ -167,3 +323,15 @@ static func read_file(path: String) -> Dictionary:
 		return {}
 	var parsed = JSON.parse_string(f.get_as_text())
 	return parsed if parsed is Dictionary else {}
+
+
+## 파일 파싱 실패를 빈 정상 사전과 구분한다 (§3.5).
+static func inspect_file(path: String, current_ruleset: String = CURRENT_RULESET) -> Dictionary:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return _inspection(STATUS_CORRUPT, false, "파일을 열 수 없다: %s" % path, {})
+	var json := JSON.new()
+	if json.parse(f.get_as_text()) != OK or not json.data is Dictionary:
+		return _inspection(STATUS_CORRUPT, false,
+			"JSON 파싱 실패: %s" % json.get_error_message(), {})
+	return inspect(json.data, current_ruleset)
