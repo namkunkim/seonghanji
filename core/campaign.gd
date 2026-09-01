@@ -473,7 +473,7 @@ func _apply_arrived() -> void:
 				cmds_rejected += 1
 			continue
 		var why := Domestic.apply(data, world.region_states, f, fleets, c,
-			world.clock.tick)
+			world.clock.tick, world.graph)   # graph — 함대이동 판정 (Orders.resolve_move)
 		if why == "":
 			cmds_applied += 1
 		else:
@@ -571,14 +571,16 @@ func _ai_domestic(f: Faction, spare: int) -> void:
 	var kind := String(plan["kind"])
 	# **세력 명령은 즉시, 권역 명령은 사자 지연.**
 	# 기술은 나라의 것이고 위임은 권한을 넘기는 선언이라 도달을 기다리지 않는다.
+	# origin="ai" — 재생 중 step() 이 결정론적으로 재발행하므로 저장 로그엔 안 남는다
+	# (save-contract 전제 2 · A-01 조율).
 	if kind == Domestic.CMD_TECH or kind == Domestic.CMD_BUILD:
-		world.issue(kind, payload, 0)
+		world.issue(kind, payload, 0, "ai")
 	elif payload.has("region"):
 		world.capital = f.capital_system
-		if world.issue_to(kind, String(payload["region"]), payload).is_empty():
+		if world.issue_to(kind, String(payload["region"]), payload, "ai").is_empty():
 			cmds_rejected += 1                   # 회랑이 끊겨 명령이 가지 못했다
 	else:
-		world.issue(kind, payload, 0)
+		world.issue(kind, payload, 0, "ai")
 	cmds_issued += 1
 
 
@@ -1203,12 +1205,16 @@ func _ai_operational() -> void:
 			if pick.is_empty():
 				break
 			var fl: Fleet = idle.pop_back()
-			var t := Routing.travel_ticks(world.graph, fl.at_system,
-				data.system_of(pick["region"]))
-			if t == Routing.UNREACHABLE:
+			# **AI 이동도 명령 로그를 지난다** (A-03 · save-contract 전제 2).
+			# 경로·소요 판정은 도달 시 `Orders.resolve_move` 가 낸다 — 여기서는
+			# 목적 권역만 싣는다. 닿지 않으면 지금 걸러 발행하지 않는다(기존 동작 유지).
+			# origin="ai" 라 저장 로그엔 안 남고 재생이 재발행한다.
+			if not bool(Orders.resolve_move(world.graph, data, fl.at_system,
+					String(pick["region"]))["ok"]):
 				continue
-			fl.target_region = pick["region"]
-			fl.arrival_tick = world.clock.tick + maxi(t, 1)
+			world.issue(Domestic.CMD_FLEET_MOVE, {
+				"faction": fid, "fleet": fl.id, "region": String(pick["region"]),
+			}, 0, "ai")
 			dispatched += 1
 
 

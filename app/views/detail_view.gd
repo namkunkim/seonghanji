@@ -252,8 +252,31 @@ func _on_formation_tapped(fleet_id: int) -> void:
 		c.queue_free()
 
 	var terrain := _terrain_of(rid)
-	var cur := _fleet_formation(fl)
+	var viewer := campaign.world.player_faction
+	var is_foe := fl.owner != viewer and not (campaign.diplo != null \
+		and campaign.diplo.is_allied(viewer, fl.owner))
+	# 적 함대는 관측 단계가 판독(2)에 이르러야 진형·통솔을 보인다 (§12 · 검토 20)
+	var obs: Dictionary = Orders.observe_fleet(campaign.world, data, viewer, fl,
+		campaign.fleets) if is_foe else {}
+	var reveal: bool = not is_foe or int(obs.get("stage", 2)) >= 2
+	var cur := _fleet_formation(fl) if reveal else ""
 	var cmd: int = fl.command
+
+	if is_foe and not reveal:
+		_pv_label("제%d함대 [적] — 관측 단계 %d (포착)" % [fl.id, int(obs.get("stage", 0))],
+			UiPalette.TEXT, 20)
+		_pv_label("진형·제독·편성은 접적 시 판독된다 (§12.2). "
+			+ "지금 아는 것: 존재 · 위치 · 척수 ≈%d–%d · 이동 방향." % [
+			int(obs.get("ships_low", 0)), int(obs.get("ships_high", 0))],
+			UiPalette.TEXT_FAINT, 16)
+		var cb := Button.new()
+		cb.text = "닫기"
+		cb.custom_minimum_size = Vector2(120, 48)
+		cb.focus_mode = Control.FOCUS_NONE
+		cb.pressed.connect(func(): _preview_center.visible = false)
+		_preview_body.add_child(cb)
+		_preview_center.visible = true
+		return
 
 	_pv_label("제%d함대 — 진형 (지형: %s · 지휘관 통솔 %d)" % [fl.id, terrain, cmd],
 		UiPalette.TEXT, 20)

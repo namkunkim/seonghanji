@@ -144,37 +144,89 @@ func refresh() -> void:
 		return
 	modulate = Color(1, 1, 1, 1)
 
+	var is_foe := fl.owner != viewer and not _is_ally(fl.owner)
 	var rel := FormationIcon.Rel.OWN if fl.owner == viewer else FormationIcon.Rel.FOE
 	if fl.owner != viewer and _is_ally(fl.owner):
 		rel = FormationIcon.Rel.ALLY
-	var form := _formation_of(fl)
+
+	# **적 함대는 관측 단계가 무엇을 보일지 정한다** (A-03 · `screens.md` §12 · 검토 20).
+	# 아군·동맹은 완전 정보. 관측 판정은 `Orders.observe_fleet` 가 코어에서 낸다.
+	var obs: Dictionary = Orders.observe_fleet(campaign.world, data, viewer, fl,
+		campaign.fleets) if is_foe else {}
+	var stage: int = int(obs.get("stage", 2))
+	var reveal: bool = not is_foe or stage >= 2      # 편성·진형·제독 판독 여부
+
+	if is_foe and stage == 0:
+		# 미접촉 — 같은 성계에 아군 자산이 없다. 광점만 남긴다.
+		modulate = Color(1, 1, 1, 0.5)
+		_icon.set_icon(rel, UiPalette.faction_color(fl.owner), "")
+		_put(_l_name, "미상 함대  [적]")
+		_l_name.add_theme_color_override("font_color", UiPalette.FLEET_FOE)
+		_put(_l_ships, "—")
+		_put(_l_form, "미접촉")
+		_put(_l_morale, "")
+		_gauge.visible = false
+		_drill.visible = false
+		_put(_l_cmd, "관측 자산 없음 (§12)")
+		_put(_l_drill, "")
+		_l_move.visible = false
+		return
+	_gauge.visible = true
+	_drill.visible = true
+
+	var form := _formation_of(fl) if reveal else ""
 	_icon.set_icon(rel, UiPalette.faction_color(fl.owner), form)
 
-	var foe_tag := "  [적]" if fl.owner != viewer and rel == FormationIcon.Rel.FOE else ""
+	var foe_tag := "  [적]" if rel == FormationIcon.Rel.FOE else ""
 	_put(_l_name, "제%d함대%s" % [fl.id, foe_tag])
 	_l_name.add_theme_color_override("font_color",
 		UiPalette.TEXT if fl.owner == viewer else UiPalette.FLEET_FOE)
-	_put(_l_ships, "%d척" % fl.ships)
-	_put(_l_form, form if form != "" else "진형 미정")
-	_l_form.add_theme_color_override("font_color",
-		UiPalette.TEXT_DIM if form != "" else UiPalette.TEXT_FAINT)
 
-	# 사기 — 0~125 · 눈금 100 · 39 이하 붕괴색 (§2.3)
-	_put(_l_morale, "사기 %d / 125" % fl.morale)
-	_gauge.bar_color = UiPalette.FLEET_OWN if fl.owner == viewer else UiPalette.FLEET_FOE
-	_gauge.set_value(fl.morale, Battle.MORALE_MAX, Battle.MORALE_NOMINAL,
-		Battle.MORALE_COLLAPSE_CEIL)
-	if fl.morale <= Battle.MORALE_COLLAPSE_CEIL:
-		_put(_l_morale, "사기 %d / 125  ⚠ 붕괴" % fl.morale)   # 색 + 눈금 + 글자, 세 겹
+	# 척수 — 아군·판독은 정확값, 포착 단계는 ±20% 밴드 (§12.2)
+	if is_foe and stage < 2:
+		_put(_l_ships, "≈%d–%d척" % [int(obs["ships_low"]), int(obs["ships_high"])])
+	else:
+		_put(_l_ships, "%d척" % fl.ships)
 
-	_put(_l_cmd, _command_line(fl))
+	if is_foe and not reveal:
+		_put(_l_form, "진형 —  (관측 %d · 포착)" % stage)
+		_l_form.add_theme_color_override("font_color", UiPalette.TEXT_FAINT)
+	else:
+		_put(_l_form, form if form != "" else "진형 미정")
+		_l_form.add_theme_color_override("font_color",
+			UiPalette.TEXT_DIM if form != "" else UiPalette.TEXT_FAINT)
 
-	# 훈련도 — 전대장 없으면 상한 40 에서 끊긴다 (§3.2)
-	var cap: int = fl.drill_cap()
-	_drill.set_value(fl.drill, Battle.DRILL_MAX, cap if cap < Battle.DRILL_MAX else 0)
-	_put(_l_drill, "훈련 %d/%d%s" % [fl.drill, cap,
-		"  ⚠" if fl.squadron_command == 0 else ""])
+	# 사기 — 아군은 게이지+정확값. 적은 판독해도 **구간만** 본다 (§12.2 「사기 구간」)
+	if is_foe:
+		_gauge.visible = false
+		_put(_l_morale, "사기 %s" % (String(obs.get("morale_band", "")) if reveal else "—"))
+	else:
+		_gauge.visible = true
+		_put(_l_morale, "사기 %d / 125" % fl.morale)
+		_gauge.bar_color = UiPalette.FLEET_OWN
+		_gauge.set_value(fl.morale, Battle.MORALE_MAX, Battle.MORALE_NOMINAL,
+			Battle.MORALE_COLLAPSE_CEIL)
+		if fl.morale <= Battle.MORALE_COLLAPSE_CEIL:
+			_put(_l_morale, "사기 %d / 125  ⚠ 붕괴" % fl.morale)   # 색 + 눈금 + 글자, 세 겹
 
+	# 지휘부 — 판독이면 제독 이름까지, 아니면 가린다 (§12.2)
+	if is_foe:
+		_put(_l_cmd, ("제독 %s" % _cmd_name_or_dash(fl)) if reveal else "제독 미상")
+	else:
+		_put(_l_cmd, _command_line(fl))
+
+	# 훈련도 — 아군만. 적은 관측 대상이 아니다.
+	if is_foe:
+		_drill.visible = false
+		_put(_l_drill, "")
+	else:
+		_drill.visible = true
+		var cap: int = fl.drill_cap()
+		_drill.set_value(fl.drill, Battle.DRILL_MAX, cap if cap < Battle.DRILL_MAX else 0)
+		_put(_l_drill, "훈련 %d/%d%s" % [fl.drill, cap,
+			"  ⚠" if fl.squadron_command == 0 else ""])
+
+	# 이동 방향 — 포착 단계부터 보인다 (§12.2)
 	if fl.is_moving():
 		var dest := "—"
 		if data.regions.has(fl.target_region):
@@ -205,6 +257,11 @@ func _name_of(cid: String) -> String:
 	if cid == "" or not data.characters.has(cid):
 		return "?"
 	return String(data.characters[cid].get("name", "?"))
+
+
+## 판독된 적 함대의 제독 이름 (§12.2 단계 2 「제독 이름」). 무명이면 대시.
+func _cmd_name_or_dash(fl: Fleet) -> String:
+	return fl.commander_name if fl.commander_name != "" else "무명"
 
 
 ## 진형. `Fleet.formation` 이 있으면 그 값, 없으면 "" (미정).

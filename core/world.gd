@@ -67,13 +67,20 @@ var _seq: int = 0
 ##
 ## 「사자 왕복 1.5시간」이 연출이 아니라 실제 지연이 되는 지점이다
 ## (roadmap-solo.md §1.4).
-func issue(kind: String, payload: Dictionary = {}, delay_ticks: int = 0) -> Dictionary:
+##
+## `origin` — 이 명령이 어디서 왔는가. **재생과 저장이 갈린다** (save-contract 전제 2 ·
+## A-01 조율). `"player"` = 외생 입력 → 저장 로그에 기록하고 재생 시 주입한다.
+## `"ai"` = `Strategy`/AI 판단이 낸 것 → 재생 중 `step()` 이 결정론적으로 재발행하므로
+## 저장하지 않는다 (저장하면 이중 발행). 기본값 `"player"` — 기존 UI 호출부는 그대로.
+func issue(kind: String, payload: Dictionary = {}, delay_ticks: int = 0,
+		origin: String = "player") -> Dictionary:
 	var c := {
 		"seq": _seq,
 		"issued_tick": clock.tick,
 		"arrival_tick": clock.tick + delay_ticks,
 		"kind": kind,
 		"payload": payload,
+		"origin": origin,
 	}
 	_seq += 1
 	pending_commands.append(c)
@@ -108,7 +115,8 @@ func load_war_damage(damage_by_system: Dictionary) -> void:
 ##
 ## 닿지 않는 곳이면 -1 을 돌려주고 명령을 만들지 않는다 —
 ## 회랑이 끊기면 명령 자체가 가지 못한다 (「봉쇄는 성립한다」).
-func issue_to(kind: String, region_id: String, payload: Dictionary = {}) -> Dictionary:
+func issue_to(kind: String, region_id: String, payload: Dictionary = {},
+		origin: String = "player") -> Dictionary:
 	assert(data != null, "attach() 로 데이터를 먼저 붙인다")
 	assert(capital != "", "본거지 성계가 필요하다")
 	var dest := data.system_of(region_id)
@@ -117,7 +125,7 @@ func issue_to(kind: String, region_id: String, payload: Dictionary = {}) -> Dict
 		return {}
 	var p := payload.duplicate()
 	p["region"] = region_id
-	return issue(kind, p, t)
+	return issue(kind, p, t, origin)
 
 
 ## ---------------------------------------------------------------- 난수

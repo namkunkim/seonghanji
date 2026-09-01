@@ -688,8 +688,11 @@ func _move_row(fl: Fleet, rid: String) -> Button:
 	return b
 
 
+## **코어 판정** — 경로·소요는 `Orders.resolve_move` 가 낸다 (A-03 · V-60 ⑤).
+## 화면은 이 값을 표시하고 발행 버튼을 잠글 뿐, payload 에는 목적 권역만 싣는다.
 func _move_ticks(fl: Fleet, rid: String) -> int:
-	return Routing.travel_ticks(campaign.world.graph, fl.at_system, data.system_of(rid))
+	return int(Orders.resolve_move(campaign.world.graph, data,
+		fl.at_system, rid)["travel_ticks"])
 
 
 static func _hours(ticks: int) -> String:
@@ -707,11 +710,12 @@ func _issue_move() -> void:
 	var t := _move_ticks(fl, _move_dest)
 	if t < 0:
 		return
+	# **목적 권역만 싣는다.** 경로·소요는 도달 시 `Orders.resolve_move` 가 낸다
+	# (A-03 · V-60 ⑤ — UI 페이로드가 판정하지 않는다). origin 은 기본값 "player".
 	campaign.world.issue(Domestic.CMD_FLEET_MOVE, {
 		"faction": fl.owner,
 		"fleet": fl.id,
 		"region": _move_dest,
-		"travel_ticks": t,
 	}, 0)
 	_note.text = "발행됨 — %s 로 출항. 도착 %s." % [
 		String(data.regions[_move_dest]["name"]),
@@ -1124,11 +1128,11 @@ func _consumed_points_milli(fid: String) -> int:
 ## 없으면 주둔 상태로 근사한다 (§3.3 지형 필터의 입력).
 func _terrain(fl: Fleet) -> String:
 	if fl.target_region != "":
-		var cids := FleetRecommend.corridors_on_route(data, campaign,
-			fl.at_system, fl.target_region)
-		var sc := FleetRecommend.worst_corridor_scale(data, cids)
-		if sc != "":
-			return sc
+		# 코어 판정 — 회랑 등급 + 기저 항로까지 본다 (A-03 · V-60 ⑤)
+		var terr := Orders.terrain_on_route(campaign.world.graph, data,
+			fl.at_system, data.system_of(fl.target_region))
+		if terr != "개활":
+			return terr
 	if fl.station == "회랑":
 		return "중회랑"
 	return "개활"

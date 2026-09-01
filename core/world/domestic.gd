@@ -238,8 +238,11 @@ static func drill_cost(fl: Fleet) -> int:
 ##
 ## 돌려주는 것은 **사유 문자열**이다. 빈 문자열이면 성공 —
 ## 실패를 조용히 삼키면 「명령을 걸었는데 아무 일도 없다」가 된다.
+## `graph` — 항로망. `함대이동` 판정에만 쓴다 (`Orders.resolve_move`). 나머지
+## 명령은 무시하므로 기존 호출부(시험 등)는 넘기지 않아도 된다.
 static func apply(data: GameData, states: Dictionary, f: Faction,
-		fleets: Array, cmd: Dictionary, now_tick: int) -> String:
+		fleets: Array, cmd: Dictionary, now_tick: int,
+		graph: Dictionary = {}) -> String:
 	var kind := String(cmd.get("kind", ""))
 	var p: Dictionary = cmd.get("payload", {})
 	match kind:
@@ -264,7 +267,7 @@ static func apply(data: GameData, states: Dictionary, f: Faction,
 		CMD_FLEET_APPOINT:
 			return _apply_fleet_appoint(fleets, f, p)
 		CMD_FLEET_MOVE:
-			return _apply_fleet_move(data, fleets, f, p, now_tick)
+			return _apply_fleet_move(data, graph, fleets, f, p, now_tick)
 		CMD_FLEET_SPLIT:
 			return _apply_fleet_split(fleets, f, p)
 		CMD_FLEET_MERGE:
@@ -435,24 +438,25 @@ static func _apply_fleet_appoint(fleets: Array, f: Faction, p: Dictionary) -> St
 	return ""
 
 
-## 이동 반영. 항행 소요(`travel_ticks`)는 화면이 그래프로 풀어 실어 보냈다.
+## 이동 반영. **항행 소요·경로는 `Orders.resolve_move` 가 낸다** (A-03 · V-60 ⑤) —
+## payload 의 `travel_ticks` 는 믿지 않는다. UI 든 AI 든 목적 권역만 실어 보내고,
+## 도달한 이 자리에서 코어가 그래프를 풀어 다시 판정한다. 「동일 입력 → 동일 결과」다.
+##
 ## **이미 이동 중이면 거부한다** — 항로 중간에서 진로를 꺾는 것은 이 명령의 몫이 아니다
 ## (되돌리려면 도착 후 다시 발행 · §1.5 「이미 도달한 명령은 취소할 수 없다」).
-static func _apply_fleet_move(data: GameData, fleets: Array, f: Faction,
-		p: Dictionary, now_tick: int) -> String:
+static func _apply_fleet_move(data: GameData, graph: Dictionary, fleets: Array,
+		f: Faction, p: Dictionary, now_tick: int) -> String:
 	var fl := _find_own_fleet(fleets, f, int(p.get("fleet", -1)))
 	if fl == null:
 		return "자기 함대가 아니다"
 	if fl.is_moving():
 		return "이미 이동 중이다"
 	var rid := String(p.get("region", ""))
-	if not data.regions.has(rid):
-		return "권역 없음: " + rid
-	var t := int(p.get("travel_ticks", -1))
-	if t < 0:
-		return "항행 소요 미상 — 닿지 않는 목적지"
+	var r := Orders.resolve_move(graph, data, fl.at_system, rid)
+	if not bool(r["ok"]):
+		return String(r["reason"])
 	fl.target_region = rid
-	fl.arrival_tick = now_tick + maxi(t, 1)
+	fl.arrival_tick = now_tick + maxi(int(r["travel_ticks"]), 1)
 	return ""
 
 

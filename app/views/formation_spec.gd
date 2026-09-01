@@ -88,9 +88,10 @@ static func get_by_name(name: String) -> Dictionary:
 	return _by_name.get(name, _by_name.get(DEFAULT_NAME, {}))
 
 
+## 규칙(요구 통솔·지형 허용)의 정본은 **`core/world/Formations`** 다 (V-60 ① —
+## 값은 한 소유 지점에서 파생). 이 클래스는 도형·전개 폭·색만 갖는다.
 static func required_command(name: String) -> int:
-	var r := get_by_name(name)
-	return int(r.get("required_command", 0)) if not r.is_empty() else 0
+	return Formations.required_command(name)
 
 
 static func width_class(name: String) -> String:
@@ -119,28 +120,11 @@ static func directive(name: String) -> String:
 
 ## 지형이 이 진형을 허용하는가 (§3.3 · `ship-specs.md` §5.3).
 ##   terrain: "개활" | "기저" | "중회랑" | "대회랑"
+## **정본은 `Formations.allowed_in`** — 코어·AI·재생이 같은 것을 쓴다 (V-60).
 static func allowed_in(name: String, terrain: String) -> bool:
-	match terrain:
-		"대회랑":
-			return name == "장사진"
-		"중회랑":
-			return name in ["방원진", "봉시진", "장사진"]
-		"기저":
-			return width_class(name) != "광"          # 학익·안행 불가
-		_:
-			return true
+	return Formations.allowed_in(name, terrain)
 
 
 ## 지형 강제 사유 한 줄 (§3.3). 허용되면 빈 문자열.
 static func terrain_note(name: String, terrain: String) -> String:
-	if allowed_in(name, terrain):
-		return ""
-	match terrain:
-		"대회랑":
-			return "대회랑 — 장사진 강제 · 변경 불가"
-		"중회랑":
-			return "중회랑 — 방원 · 봉시 · 장사만"
-		"기저":
-			return "기저 항로 — 광폭 전개 불가"
-		_:
-			return "사용 불가"
+	return Formations.terrain_note(name, terrain)
