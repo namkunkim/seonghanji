@@ -212,8 +212,6 @@ def main(argv=None):
 
     ap = argparse.ArgumentParser(description="SEONGHANJI 초상 배치 생성")
     ap.add_argument("--model", choices=INJECT, default="flux")
-    ap.add_argument("--allow-retired-sdxl", action="store_true",
-                    help="과거 시험 재현 전용. 신규 제작에서 SDXL 사용은 금지됨 (V-50)")
     ap.add_argument("--host", default="http://127.0.0.1:8188")
     ap.add_argument("--named", action="store_true", help="명장 120 (data/portrait-map.json)")
     ap.add_argument("--common", action="store_true", help="공용 11 (tools/comfyui/common-map.json)")
@@ -228,9 +226,6 @@ def main(argv=None):
     ap.add_argument("--dry-run", action="store_true", help="조립만 출력, POST 안 함")
     ap.add_argument("--model-sha", default="", help="WEIGHTS.sha256에 기록된 실제 모델 SHA-256")
     args = ap.parse_args(argv)
-
-    if args.model == "sdxl" and not args.allow_retired_sdxl:
-        ap.error("SDXL은 V-50에 따라 신규 인물 제작에서 퇴역했습니다. 과거 시험 재현만 --allow-retired-sdxl로 허용합니다.")
 
     if not (args.named or args.common):
         args.named = args.common = True  # 기본: 둘 다

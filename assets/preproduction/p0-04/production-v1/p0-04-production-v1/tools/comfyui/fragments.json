@@ -1,18 +1,14 @@
 {
-  "_source": "P0-04 production v1.1 — v2 style locked; FLUX only; headwear and fictional glyph markings/insignia allowed; signature and pilot corrections (V-50).",
-
+  "_source": "P0-04 production v1 — v2 style locked; FLUX only; headwear and fictional glyph markings/insignia allowed (V-50).",
   "fixed": "digital painting portrait, single East Asian character, late Han and Three Kingdoms era warrior-scholar facial physiognomy, historically grounded face with strong cheekbones and weathered character, period-appropriate moustache or beard variation, upper body, 4:5 vertical, head-and-shoulders framing, eyes at 30% from top, flat single-color background <TINT>, soft circular vignette, no scenery, muted palette, controlled brushwork, semi-realistic, even key light from front-left, sharp focus on face, role-appropriate headwear and fictional glyph markings or insignia allowed, no readable real-world text, no signatures, no watermark, no border, face must feel ancient Chinese while clothing must feel far-future science fiction",
-
-  "negative": "photo, 3d render, anime, chibi, exaggerated proportions, multiple people, full body, hands near face, weapon pointed at viewer, busy background, scenery, landscape, readable real-world text, watermark, signature, extra fingers, deformed hands, blur, oversaturated, lens flare, modern clothing, modern admiral, modern general, naval officer, white naval dress uniform, necktie, western officer, European facial features, clean-shaven fashion model, historical costume only, Roman soldier, European knight, recognizable franchise character, artist signature, calligraphic signature, red artist mark, chop seal, background stamp",
-
+  "negative": "photo, 3d render, anime, chibi, exaggerated proportions, multiple people, full body, hands near face, weapon pointed at viewer, busy background, scenery, landscape, readable real-world text, watermark, signature, extra fingers, deformed hands, blur, oversaturated, lens flare, modern clothing, modern admiral, modern general, naval officer, white naval dress uniform, necktie, western officer, European facial features, clean-shaven fashion model, historical costume only, Roman soldier, European knight, recognizable franchise character",
   "class": {
     "제": "wearing a non-Earth far-future command mantle over a lamellar-inspired exosuit, asymmetric standing collar and abstract geometric command markings, role-appropriate command headwear and insignia permitted, no necktie, no modern naval uniform, squared to camera, one hand resting low at the frame edge, bearing of command",
     "강": "wearing a far-future assault exosuit whose segmented plates reinterpret Han dynasty lamellar armor, torso turned three-quarters, one pauldron catching the light, no medieval or modern military costume",
-    "파": "wearing a far-future flight suit with subtle Han-cross-collar construction, harness straps and forearm controls, helmet set low outside the face area, lean and alert, no modern pilot uniform, unmistakable functional flight harness and chest hardware, no necktie, no business suit",
+    "파": "wearing a far-future flight suit with subtle Han-cross-collar construction, harness straps and forearm controls, helmet set low outside the face area, lean and alert, no modern pilot uniform",
     "참": "wearing layered far-future strategist robes derived from Han cross-collar silhouettes, narrow luminous sash, holding a thin data-slate low in frame, leaning slightly forward as if mid-thought, no historical costume replica",
     "관": "wearing a restrained far-future administrator robe derived from Han cross-collar construction, one abstract clasp, hands kept low and mostly out of frame, upright and composed, no modern suit and no historical costume replica"
   },
-
   "disposition": {
     "명사": "dignified level gaze meeting the viewer, chin neither raised nor lowered, formal reserve",
     "무뢰": "gaze angled off past the viewer, faint smirk, careless ease in the shoulders",
@@ -21,7 +17,6 @@
     "절의": "set jaw, firm closed mouth, unwavering frontal stare",
     "군주": "presence of a ruler, direct unhurried gaze, aware of being watched"
   },
-
   "tint": {
     "제": "#2E3A4C",
     "강": "#43262A",
@@ -29,21 +24,24 @@
     "참": "#2F2A44",
     "관": "#3B352B"
   },
-
   "faction_accent_color": {
     "위": "cool slate-grey",
     "촉": "oxblood",
     "오": "teal",
     "군웅": null
   },
-  "faction_accent_garment": { "제": "uniform", "강": "armor", "파": "suit", "참": "robe", "관": "robe" },
+  "faction_accent_garment": {
+    "제": "mantle",
+    "강": "armor",
+    "파": "suit",
+    "참": "robe",
+    "관": "robe"
+  },
   "faction_accent_none": "plain dark garment, no faction piping",
-
   "age_signal": {
     "노익장": "aged veteran, deeply lined face",
-    "노장": "older officer, greying"
+    "노장": "older commander, greying"
   },
-
   "bearing": {
     "독사": "coldly watchful",
     "낭고": "patient, concealed",
@@ -64,12 +62,24 @@
     "진창": "immovable",
     "수성": "immovable"
   },
-
   "trait_marker": {
     "독안": "black eye patch over one eye",
     "만신창이": "old scars visible on face and neck",
     "미주랑": "young and strikingly handsome"
   },
-
-  "flag_iconography": ["관우", "장비", "손권", "조조", "동탁", "황충", "마초", "제갈량", "방통", "초선", "대교", "소교", "여포"]
+  "flag_iconography": [
+    "관우",
+    "장비",
+    "손권",
+    "조조",
+    "동탁",
+    "황충",
+    "마초",
+    "제갈량",
+    "방통",
+    "초선",
+    "대교",
+    "소교",
+    "여포"
+  ]
 }

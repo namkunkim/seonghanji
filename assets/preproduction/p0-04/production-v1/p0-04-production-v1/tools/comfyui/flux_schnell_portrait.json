@@ -1,0 +1,80 @@
+{
+  "12": {
+    "class_type": "UNETLoader",
+    "inputs": { "unet_name": "flux1-schnell.safetensors", "weight_dtype": "default" },
+    "_meta": { "title": "FLUX.1 [schnell] unet (bf16)" }
+  },
+  "11": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+      "clip_name1": "t5xxl_fp16.safetensors",
+      "clip_name2": "clip_l.safetensors",
+      "type": "flux"
+    },
+    "_meta": { "title": "T5-XXL + CLIP-L" }
+  },
+  "10": {
+    "class_type": "VAELoader",
+    "inputs": { "vae_name": "ae.safetensors" },
+    "_meta": { "title": "FLUX ae VAE" }
+  },
+  "5": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": { "width": 896, "height": 1120, "batch_size": 1 },
+    "_meta": { "title": "latent 896x1120 (4:5) — ai-media-pipeline.md 4.1" }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["11", 0],
+      "text": "digital painting portrait, single character, upper body, 4:5 vertical, head-and-shoulders framing, eyes at 30% from top, flat single-color background #2E3A4C, soft circular vignette, no scenery, muted palette, controlled brushwork, semi-realistic, even key light from front-left, sharp focus on face, no text, no watermark, no border, wearing a structured high-collar fleet dress uniform with rank insignia and a long coat, squared to camera, one hand resting on a table edge, bearing of command, gaze angled off past the viewer, faint smirk, careless ease in the shoulders"
+    },
+    "_meta": { "title": "positive — INJECT: inputs.text (FLUX schnell uses no negative)" }
+  },
+  "26": {
+    "class_type": "FluxGuidance",
+    "inputs": { "conditioning": ["6", 0], "guidance": 0.0 },
+    "_meta": { "title": "guidance 0.0 — schnell is guidance-distilled, ai-media-pipeline.md 4.2-1" }
+  },
+  "25": {
+    "class_type": "RandomNoise",
+    "inputs": { "noise_seed": 3906850027 },
+    "_meta": { "title": "noise — INJECT: inputs.noise_seed" }
+  },
+  "22": {
+    "class_type": "BasicGuider",
+    "inputs": { "model": ["12", 0], "conditioning": ["26", 0] },
+    "_meta": { "title": "guider" }
+  },
+  "16": {
+    "class_type": "KSamplerSelect",
+    "inputs": { "sampler_name": "euler" },
+    "_meta": { "title": "euler — ai-media-pipeline.md 4.2-1" }
+  },
+  "17": {
+    "class_type": "BasicScheduler",
+    "inputs": { "model": ["12", 0], "scheduler": "simple", "steps": 4, "denoise": 1.0 },
+    "_meta": { "title": "4 steps simple — ai-media-pipeline.md 4.2-1" }
+  },
+  "13": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["25", 0],
+      "guider": ["22", 0],
+      "sampler": ["16", 0],
+      "sigmas": ["17", 0],
+      "latent_image": ["5", 0]
+    },
+    "_meta": { "title": "sample" }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": { "samples": ["13", 0], "vae": ["10", 0] },
+    "_meta": { "title": "decode" }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["8", 0], "filename_prefix": "ART-C903" },
+    "_meta": { "title": "save PNG — INJECT: inputs.filename_prefix = ART-C###" }
+  }
+}

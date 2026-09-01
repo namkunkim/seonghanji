@@ -1,0 +1,23 @@
+{
+  "decision": "V-50",
+  "approved_at": "2026-09-01",
+  "model": "FLUX.1 [schnell] bf16",
+  "model_sha256": "9403429e0052277ac2a87ad800adece5481eecefd9ed334e1f348723621d2a0a",
+  "workflow_sha256": "b831730fbb59435e3e161643d8df2094970781a5c50a65f4aaf4df37b800b1f1",
+  "style": "P0-04 v2 muted semi-realistic digital painting",
+  "resolution": [896, 1120],
+  "verdict": {"pass": 11, "hold": 0, "rework": 0},
+  "files": [
+    {"art":"ART-C901","source":"production-v1-1 correction","seed":439688188,"sha256":"7742b16ccf9036c2bbf581974963458dce3f5360e9725715ee4be6517b675f6d"},
+    {"art":"ART-C902","source":"production-v1 initial","seed":2655491910,"sha256":"7b1f6971741b5a27158244cddf4529c8e31101317e8caaa35d705c85610c96f4"},
+    {"art":"ART-C903","source":"production-v1 initial","seed":3906850027,"sha256":"17b323a7fdd64decc5d617bde2e63ed99f376ba9acf2bfa653991f3add61d950"},
+    {"art":"ART-C904","source":"production-v1 initial","seed":2500144666,"sha256":"75b3de9dfd7e911960b14a9b7b7f3013242e8db3156a7476c746b63b61aef76e"},
+    {"art":"ART-C905","source":"production-v1 initial","seed":1127787411,"sha256":"f65b3bd4bd7778a4b0c2ad763c9a36585247a4fdc3153f8e1879d66200148f37"},
+    {"art":"ART-C906","source":"production-v1 initial","seed":189333780,"sha256":"a961d96dee29c397450df59abc0291d55f0289a5ba6e60851d24945369c3e799"},
+    {"art":"ART-C907","source":"production-v1-1 correction","seed":980326539,"sha256":"cf1cb984152d3a215ad7a1f06fb8a78746c027e35970e9369140751342de02bf"},
+    {"art":"ART-C908","source":"production-v1 initial","seed":1237242029,"sha256":"9391c8433a4e3525f79e9e2e5c78d9a3a7eefad72408f9018befe8bd41f9a4a7"},
+    {"art":"ART-C909","source":"production-v1 initial","seed":637194382,"sha256":"927dba97aea535af75b2bd779dfc13b1adb402d99dc46c7ae91ec1c668631157"},
+    {"art":"ART-C910","source":"production-v1 initial","seed":3417253218,"sha256":"6b64682ad71f724f71585e338ad75a24eaf85071a12123fbf327f8928116bcdb"},
+    {"art":"ART-C911","source":"production-v1-1 correction","seed":1394322252,"sha256":"cf9f81282b699ae3bf65f7eb8f25566bb62df7a9d50a218c557561b99e6f04d2"}
+  ]
+}

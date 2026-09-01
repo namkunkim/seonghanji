@@ -237,15 +237,17 @@ ACE-Step 1.5는 bf16 ~7GB → 자택 5060 로컬(§5.2). 루프·자르기·포�
 아래 5칸 중 **1·4 는 실행 패스(클라우드 GPU) 첫 작업**에서 시험생성 10~20장으로 확정하고,
 **2·3·5 는 2026-08-30 잠근다.**
 
-#### 1. 모델과 변종 — 실행 패스에서 확정
+#### 1. 모델과 변종 — FLUX 확정 ★
 
 | 후보 | 파라미터 시작점 | 라이선스 |
 |---|---|---|
 | **SDXL 1.0 base (+refiner)** | DPM++ 2M Karras · 30스텝 · CFG 5.5 · refiner 0.8 | OpenRAIL++-M |
 | **FLUX.1 [schnell]** | Euler · 4스텝 · guidance 0 (distilled) | Apache 2.0 |
 
-> 시험생성으로 하나를 고르고 **그 시점에 가중치 파일 SHA-256 을 이 자리에 적는다.**
-> **RunPod Community 24GB 파드에서 FLUX schnell 을 bf16 풀 정밀로 SDXL 과 나란히 비교한다**(§3.3-4).
+> **V-50 확정:** v2 스타일 + FLUX schnell bf16. 모델 SHA-256
+> `9403429e0052277ac2a87ad800adece5481eecefd9ed334e1f348723621d2a0a`, 워크플로 SHA-256
+> `b831730fbb59435e3e161643d8df2094970781a5c50a65f4aaf4df37b800b1f1`.
+> 공용 11종은 발주자 승인 완료. SDXL 행은 과거 시험 재현·라이선스 이력으로만 보존한다.
 > ⚠ FLUX.1 [dev] · SD 3/3.5 는 쓰지 않는다(§2.1).
 
 #### 2. 시드 규칙 — 잠금 ★
@@ -269,17 +271,20 @@ ACE-Step 1.5는 bf16 ~7GB → 자택 5060 로컬(§5.2). 루프·자르기·포�
 ```
 digital painting portrait, single character, upper body, 4:5 vertical,
 head-and-shoulders framing, eyes at 30% from top,
+role-appropriate headwear and fictional glyph markings or insignia allowed,
 flat single-color background <TINT>, soft circular vignette, no scenery,
 muted palette, controlled brushwork, semi-realistic, even key light from front-left,
-sharp focus on face, no text, no watermark, no border
+sharp focus on face, no readable real-world text, no signatures, no watermark, no border
 ```
 부정 프롬프트(131장 전부 동일):
 ```
 photo, 3d render, anime, chibi, exaggerated proportions, multiple people, full body,
 hands near face, weapon pointed at viewer, busy background, scenery, landscape,
-text, watermark, signature, extra fingers, deformed hands, blur, oversaturated,
+readable real-world text, watermark, signature, extra fingers, deformed hands, blur, oversaturated,
 lens flare, modern clothing
 ```
+관모·군모·두건·후드·왕관·헬멧·머리 장식의 직접 착용과 가상 문자·문장·계급 표식은
+허용한다(V-50). 착용물과 표식이 역할 실루엣을 대신하거나 반복 복장으로 수렴하면 재작업한다.
 `<TINT>` 는 §4.1 계층 틴트값. **계층부·성향부·개별부는 §4.3 구조를 그대로 붙인다.**
 
 #### 4. 샘플러·스텝·CFG — 실행 패스에서 확정

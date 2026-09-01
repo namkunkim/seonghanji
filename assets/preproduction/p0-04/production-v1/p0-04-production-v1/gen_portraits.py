@@ -30,7 +30,6 @@ import time
 import uuid
 from pathlib import Path
 from urllib import request as urlreq
-from urllib.error import HTTPError
 from urllib.parse import urlencode
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,10 +54,6 @@ def seed_for(key: str) -> int:
 
 def load_json(p: Path):
     return json.loads(Path(p).read_text(encoding="utf-8"))
-
-
-def file_sha256(p: Path):
-    return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
 
 def trait_names(traits):
@@ -148,12 +143,8 @@ def api_post(host, graph, client_id):
     body = json.dumps({"prompt": graph, "client_id": client_id}).encode()
     req = urlreq.Request(host + "/prompt", data=body,
                          headers={"Content-Type": "application/json"})
-    try:
-        with urlreq.urlopen(req, timeout=30) as r:
-            return json.loads(r.read())["prompt_id"]
-    except HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"ComfyUI HTTP {exc.code}: {detail}") from exc
+    with urlreq.urlopen(req, timeout=30) as r:
+        return json.loads(r.read())["prompt_id"]
 
 
 def api_wait(host, pid, timeout, poll=2.0):
@@ -212,8 +203,6 @@ def main(argv=None):
 
     ap = argparse.ArgumentParser(description="SEONGHANJI 초상 배치 생성")
     ap.add_argument("--model", choices=INJECT, default="flux")
-    ap.add_argument("--allow-retired-sdxl", action="store_true",
-                    help="과거 시험 재현 전용. 신규 제작에서 SDXL 사용은 금지됨 (V-50)")
     ap.add_argument("--host", default="http://127.0.0.1:8188")
     ap.add_argument("--named", action="store_true", help="명장 120 (data/portrait-map.json)")
     ap.add_argument("--common", action="store_true", help="공용 11 (tools/comfyui/common-map.json)")
@@ -226,11 +215,7 @@ def main(argv=None):
                     help="시험용 프롬프트 조각 JSON (기본: 정본 fragments.json)")
     ap.add_argument("--force", action="store_true", help="이미 있는 파일도 재생성")
     ap.add_argument("--dry-run", action="store_true", help="조립만 출력, POST 안 함")
-    ap.add_argument("--model-sha", default="", help="WEIGHTS.sha256에 기록된 실제 모델 SHA-256")
     args = ap.parse_args(argv)
-
-    if args.model == "sdxl" and not args.allow_retired_sdxl:
-        ap.error("SDXL은 V-50에 따라 신규 인물 제작에서 퇴역했습니다. 과거 시험 재현만 --allow-retired-sdxl로 허용합니다.")
 
     if not (args.named or args.common):
         args.named = args.common = True  # 기본: 둘 다
@@ -315,10 +300,6 @@ def main(argv=None):
                 "art": art, "model": args.model, "seed": seed, "prompt": prompt,
                 "negative_prompt": negative,
                 "out": dst.name, "sha256": sha, "comfy_filename": info["filename"],
-                "workflow": workflow_path.name, "workflow_sha256": file_sha256(workflow_path),
-                "fragments": str(Path(args.fragments).name),
-                "fragments_sha256": file_sha256(Path(args.fragments)),
-                "model_sha256": args.model_sha or None,
                 "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
             }, ensure_ascii=False) + "\n")
         print(f"  ✓ {art}  {sha[:12]}")
