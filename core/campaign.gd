@@ -20,6 +20,9 @@ const HEGEMON_RATIO: int = 2
 ## 유효 세력 하한 — 실동원이 전체 합의 10% 이상
 const EFFECTIVE_FLOOR_PCT: int = 10
 
+## 캠페인 세이브 형식 판 (schema/save-campaign.json). World 세이브의 판과 별개다.
+const SAVE_CAMPAIGN_VERSION: int = 1
+
 
 var world: World
 
@@ -490,6 +493,11 @@ func _settle_month() -> void:
 	if world.clock.tick % Economy.SETTLE_PERIOD_TICKS != 0:
 		return
 	months_settled += 1
+	# ── 자동 저장 — 로그 플러시 지점 (save-contract §3.4) ──────────────────
+	# 월 정산마다 명령 로그를 디스크로 flush 하고, 시나리오 경계에서 스냅숏.
+	# A-01 은 이 **지점만** 표식한다 — 실제 플러시 호출·주기·슬롯·경계 스냅숏은
+	# C-03(S3.8). 클라이언트가 이 시점에 `write_save(slot_path)` 를 부른다.
+	# ─────────────────────────────────────────────────────────────────────
 	for fid in faction_ids:                      # **정렬된 배열로만 순회한다**
 		var f: Faction = factions[fid]
 		if not f.alive:
@@ -1599,3 +1607,246 @@ func _adjacent_region_of(fid: String, owner: String) -> String:
 			if st != null and st.owner == owner:
 				return nb
 	return ""
+
+
+## ================================================================ 캠페인 저장·복원
+##
+## **저장 = 「시드 + 플레이어 명령 로그」다** (save-contract.md §2 · V-62 · V-25 ③).
+## 세력·함대·경제·외교·이벤트·전투 결과는 담지 않는다 — 셋업(`scenario_03`)의
+## 확정 초기값에서 명령·AI·정산의 결정론적 함수로 **재생 때 다시 만들어진다** (§2.2).
+##
+## `Save.replay` 는 `World` 만 만든다 (시간 + 명령 로그 + 전화 계수). 경제·전투·외교·
+## 이벤트는 이 `Campaign` 계층에 있으므로, 여기서 **셋업부터 목표 틱까지 다시 도는
+## 경로**를 따로 세운다 (§1.3 결손 ①).
+
+
+## 캠페인 지문. **저장 전과 재생 후가 같아야 한다** (§4.2 조건 1·2).
+##
+## 순회는 **정렬된 ID·쌍·키로만** 한다 (§4.3 · data-model.md §2.3 — Dictionary
+## 순회 금지). 진단 계수(`schemes_tried` · `ambush_by_*` · `skip_*` 등)는 접지
+## 않는다 (§4.3 제외) — 세계 상태가 아니라 계측이고, 밸런스 조정 때마다 바뀌어
+## 인수 시험을 깨뜨린다. AI 명령의 순번·부기도 접지 않는다 — 파생이며, 그
+## 효과는 아래 세력·함대·권역·외교·이벤트 상태로 이미 접힌다.
+func digest() -> int:
+	var h := 0
+	# ── 시간 · 규칙 · 외생 입력 ──────────────────────────────────────────
+	h = Save._fold(h, world.clock.tick)
+	h = Save._fold(h, world.tick_count)
+	h = Save._fold(h, world.rng_seed)
+	h = Save._fold(h, Rng._hash_string(world.ruleset + "|" + world.scenario))
+	h = Save._fold(h, hb_milli)
+	h = Save._fold(h, 1 if ai_domestic_enabled else 0)
+	h = Save._fold(h, 1 if ended else 0)
+	h = Save._fold(h, Rng._hash_string(end_reason))
+	# ── 플레이어 명령 (origin != "ai" 만) ───────────────────────────────
+	var pcmds: Array = []
+	for c in world.applied_commands:
+		if String(c.get("origin", "player")) != "ai":
+			pcmds.append(c)
+	for c in world.pending_commands:
+		if String(c.get("origin", "player")) != "ai":
+			pcmds.append(c)
+	pcmds.sort_custom(func(a, b): return int(a["seq"]) < int(b["seq"]))
+	h = Save._fold(h, pcmds.size())
+	for c in pcmds:
+		h = Save._fold(h, int(c["seq"]))
+		h = Save._fold(h, int(c["arrival_tick"]))
+		h = Save._fold(h, Rng._hash_string(String(c["kind"])))
+	# ── 세력 (정렬된 faction_ids) ──────────────────────────────────────
+	for fid in faction_ids:
+		var f: Faction = factions[fid]
+		h = Save._fold(h, Rng._hash_string(fid))
+		h = Save._fold(h, 1 if f.alive else 0)
+		h = Save._fold(h, f.treasury)
+		h = Save._fold(h, f.mandate)
+		h = Save._fold(h, f.hegemony)
+		h = Save._fold(h, f.months_idle)
+		h = Save._fold(h, 1 if f.has_emperor else 0)
+		h = Save._fold(h, 1 if f.wandering else 0)
+		for axis in Tech.AXES:
+			h = Save._fold(h, int(f.tech.get(axis, 0)))
+		h = Save._fold(h, Rng._hash_string(String(f.tech_research.get("axis", ""))))
+		h = Save._fold(h, int(f.tech_research.get("done_tick", 0)))
+		var vs: Array = f.violations.duplicate()
+		vs.sort()
+		h = Save._fold(h, Rng._hash_string("|".join(vs)))
+		h = Save._fold(h, f.regions.size())            # Faction.regions 는 정렬 유지
+		h = Save._fold(h, Rng._hash_string("|".join(f.regions)))
+	# ── 권역 (정렬된 region_ids) ──────────────────────────────────────
+	for rid in data.region_ids:
+		var st: RegionState = world.region_states.get(rid)
+		if st == null:
+			continue
+		h = Save._fold(h, st.war_damage_milli)
+		h = Save._fold(h, st.development)
+		h = Save._fold(h, st.garrison)
+		h = Save._fold(h, st.recovery_investment)
+		h = Save._fold(h, Rng._hash_string(st.owner))
+		h = Save._fold(h, st.stability)
+		h = Save._fold(h, st.stability_initial)
+		h = Save._fold(h, st.acquired_tick)
+		h = Save._fold(h, Rng._hash_string(st.acquired_by))
+		h = Save._fold(h, 1 if st.delegated else 0)
+		h = Save._fold(h, 1 if st.contested else 0)
+		h = Save._fold(h, 1 if st.pacified else 0)
+	# ── 함대 (id 오름차순) ────────────────────────────────────────────
+	var fl_sorted: Array = fleets.duplicate()
+	fl_sorted.sort_custom(func(a, b): return a.id < b.id)
+	h = Save._fold(h, fl_sorted.size())
+	for fl in fl_sorted:
+		h = Save._fold(h, fl.id)
+		h = Save._fold(h, Rng._hash_string(fl.owner))
+		h = Save._fold(h, Rng._hash_string(fl.at_system))
+		h = Save._fold(h, Rng._hash_string(fl.target_region))
+		h = Save._fold(h, fl.arrival_tick)
+		h = Save._fold(h, fl.ships)
+		h = Save._fold(h, fl.morale)
+		h = Save._fold(h, fl.drill)
+		h = Save._fold(h, 1 if fl.drilling else 0)
+		h = Save._fold(h, fl.squadron_command)
+		h = Save._fold(h, Rng._hash_string(fl.formation))
+		h = Save._fold(h, Rng._hash_string(fl.plan))
+		h = Save._fold(h, Rng._hash_string(fl.station))
+		h = Save._fold(h, Rng._hash_string(fl.commander_id))
+		h = Save._fold(h, Rng._hash_string(fl.vice_id))
+		h = Save._fold(h, Rng._hash_string(fl.assault_id))
+		h = Save._fold(h, Rng._hash_string(fl.siege_id))
+		h = Save._fold(h, Rng._hash_string(fl.supply_id))
+	# ── 외교 (정렬된 세력 쌍) ─────────────────────────────────────────
+	for i in faction_ids.size():
+		for j in range(i + 1, faction_ids.size()):
+			var a: String = faction_ids[i]
+			var b: String = faction_ids[j]
+			h = Save._fold(h, Rng._hash_string(Diplomacy.key(a, b)))
+			h = Save._fold(h, diplo.tier_of(a, b))
+			h = Save._fold(h, diplo.trust_of(a, b))
+			h = Save._fold(h, diplo.betrayal_count(a, b))
+	# ── 이벤트 (정렬된 ID) ───────────────────────────────────────────
+	var eids: Array = events_fired.keys()
+	eids.sort()
+	for eid in eids:
+		h = Save._fold(h, Rng._hash_string(String(eid)))
+		h = Save._fold(h, int(events_fired[eid]))
+	var ck: Array = _event_cooldown.keys()      # 재발동 쿨다운 (§1.2)
+	ck.sort()
+	for k in ck:
+		h = Save._fold(h, Rng._hash_string(String(k)))
+		h = Save._fold(h, int(_event_cooldown[k]))
+	var ak: Array = _alliance_since.keys()       # 동맹 성립 시각 (§4.3)
+	ak.sort()
+	for k in ak:
+		h = Save._fold(h, Rng._hash_string(String(k)))
+		h = Save._fold(h, int(_alliance_since[k]))
+	return h
+
+
+## 캠페인 세이브 사전 (schema/save-campaign.json).
+func to_save_dict() -> Dictionary:
+	return {
+		"save_version": SAVE_CAMPAIGN_VERSION,
+		"world": Save.to_dict(world),        # origin != "ai" 명령만 · save_version 없음
+		"campaign": {
+			"hb_milli": hb_milli,             # 외생 입력 — 시드로 유도되지 않는다
+			"ai_domestic_enabled": ai_domestic_enabled,
+			"digest": digest(),              # 저장 시점 지문 — 재생 후와 대조 (§4.2)
+			# 종료 상태 — `_check_end` 의 자연 종료는 재생이 다시 만들지만,
+			# `run_to_end` 가 max_ticks 에서 강제한 「정규 종료」는 재생 루프
+			# (`replay_to`)가 재현하지 않는다. 세이브가 「끝났는가」의 정본이다.
+			"ended": ended,
+			"end_reason": end_reason,
+			"fleets_snapshot": _fleets_snapshot(),
+		},
+	}
+
+
+## ⚠ TODO(A-03) — **잠정 조치.** 「플레이어 함대 명령이 전부 명령 로그에 남는가」가
+## A-03 에서 완전히 강제되면 이 스냅숏을 삭제하고 함대·전투 결과를 파생으로
+## 내린다 (save-contract §2.4). 세이브 파일을 키우므로 영구화하지 않는다.
+## **불러오기 시 정본이 아니다** — 재생이 정본이고, 이 값은 A-02 의 교차
+## 검증(§4.2 조건 5)용으로만 읽힌다. 「스냅숏과 로그가 어긋나면 로그가 이긴다」(§2.1).
+func _fleets_snapshot() -> Array:
+	var out: Array = []
+	var fl_sorted: Array = fleets.duplicate()
+	fl_sorted.sort_custom(func(a, b): return a.id < b.id)
+	for fl in fl_sorted:
+		out.append({
+			"id": fl.id, "owner": fl.owner, "at_system": fl.at_system,
+			"target_region": fl.target_region, "arrival_tick": fl.arrival_tick,
+			"ships": fl.ships, "morale": fl.morale, "plan": fl.plan,
+			"formation": fl.formation, "station": fl.station,
+			"drill": fl.drill, "drilling": fl.drilling,
+			"squadron_command": fl.squadron_command,
+			"commander_id": fl.commander_id, "vice_id": fl.vice_id,
+			"assault_id": fl.assault_id, "siege_id": fl.siege_id,
+			"supply_id": fl.supply_id,
+		})
+	return out
+
+
+## 캠페인 세이브 사전에서 캠페인을 되살린다.
+##
+## **셋업부터 목표 틱까지 다시 돌린다** (§3.1 순수 로그 재생). `scenario_03(seed)` 로
+## 결정론적 초기 상태를 세우고, 저장된 플레이어 명령(origin != "ai")을 명령 대기열에
+## 주입한 뒤 목표 틱까지 `step()` 을 반복한다. AI 명령·전투·이벤트·경제는 재생 중
+## 시드에서 다시 만들어진다 (§2.2 파생).
+##
+## ⚠ 단기판은 `SCN-03` 하나뿐이다 (CLAUDE.md 함정 · save-contract §3). 다른 시나리오
+## 경계 스냅숏은 이 세션 범위 밖 (§3.4 · A-01 실측 후 판정).
+static func from_save(d: Dictionary, data_ref: GameData) -> Campaign:
+	var w: Dictionary = d.get("world", {})
+	var scn := String(w.get("scenario", "SCN-03"))
+	assert(scn == "SCN-03", "단기판은 SCN-03 하나뿐이다 (save-contract §3)")
+	var cd: Dictionary = d.get("campaign", {})
+
+	var c := Campaign.scenario_03(data_ref, int(w.get("seed", 0)))
+	c.hb_milli = int(cd.get("hb_milli", Strategy.HB_STANDARD_MILLI))
+	c.ai_domestic_enabled = bool(cd.get("ai_domestic_enabled", true))
+	c.world.ruleset = String(w.get("ruleset", c.world.ruleset))
+	c.world.player_faction = String(w.get("player_faction", ""))
+
+	# 플레이어 명령 주입 — 저장된 seq·도달 시각을 리터럴로 (Save.replay 와 같은 방식).
+	# AI 명령은 직렬화에서 제외됐으므로 여기 없다.
+	var cmds: Array = w.get("commands", [])
+	var sorted_cmds: Array = cmds.duplicate()
+	sorted_cmds.sort_custom(func(a, b): return int(a["seq"]) < int(b["seq"]))
+	var max_seq := -1
+	for cm in sorted_cmds:
+		c.world.pending_commands.append({
+			"seq": int(cm["seq"]),
+			"issued_tick": int(cm["issued_tick"]),
+			"arrival_tick": int(cm.get("arrival_tick", cm["issued_tick"])),
+			"kind": String(cm["kind"]),
+			"payload": cm.get("payload", {}),
+			"origin": String(cm.get("origin", "player")),
+		})
+		max_seq = maxi(max_seq, int(cm["seq"]))
+	# 재생 중 새로 발행되는 AI 명령이 주입분과 순번 충돌하지 않게 (save.gd `replay` 와 동일).
+	c.world._seq = maxi(c.world._seq, max_seq + 1)
+
+	c.replay_to(int(w.get("game_tick", 0)))
+
+	# 종료 상태 복원 — `replay_to` 는 `run_to_end` 처럼 max_ticks 에서 종료를
+	# 강제하지 않는다. 세이브가 「끝났다」고 하면 그대로 맞춘다. 자연 종료는
+	# 재생이 이미 같은 틱에 같은 사유로 세워 두므로 이 대입이 무연산이다.
+	if bool(cd.get("ended", false)) and not c.ended:
+		c.ended = true
+		c.end_reason = String(cd.get("end_reason", "정규 종료"))
+	return c
+
+
+## 목표 틱까지 재생한다. `run_to_end` 와 달리 **`ended` 를 강제하지 않는다** —
+## 캠페인 도중에 저장한 세이브(§4.2 조건 4)는 목표 틱이 종료 틱이 아닐 수 있다.
+func replay_to(target_tick: int) -> void:
+	while not ended and world.clock.tick < target_tick:
+		step()
+
+
+## 캠페인 세이브를 파일로 쓴다 (schema/save-campaign.json).
+func write_save(path: String) -> bool:
+	return Save.write_dict(to_save_dict(), path)
+
+
+## 캠페인 세이브 파일에서 되살린다. 파일이 없거나 깨졌으면 파싱이 빈 사전을
+## 돌려주고, `from_save` 가 기본값으로 SCN-03 셋업을 만든다 (손상 복구는 A-02 · §3.5).
+static func read_save(path: String, data_ref: GameData) -> Campaign:
+	return from_save(Save.read_file(path), data_ref)

@@ -143,14 +143,6 @@ func rng(domain: int) -> RngStream:
 func roll_pct(domain: int, key: String, salt: int = 0) -> int:
 	return Rng.roll_pct_for(rng_seed, domain, clock.tick, key, salt)
 
-
-## 세이브 형식으로 뽑는다 (schema/save.json)
-func to_save() -> Dictionary:
-	return {
-		"ruleset": ruleset,
-		"scenario": scenario,
-		"seed": rng_seed,
-		"game_tick": clock.tick,
-		"player_faction": player_faction,
-		"commands": applied_commands.duplicate(true) + pending_commands.duplicate(true),
-	}
+# 세이브 직렬화는 `Save.to_dict(world)` 하나가 정본이다 (save-contract 검토 8).
+# 이전의 `World.to_save()` 는 호출부가 없고 형식이 `Save.to_dict` 와 미묘하게
+# 달랐다(capital 누락 · 정렬·origin 필터 없음) — 이원화를 없애려 삭제했다.
