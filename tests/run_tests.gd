@@ -15,7 +15,7 @@ var _fail := 0
 ## GDScript 는 없는 함수를 부르면 오류만 찍고 시험은 「실패 0」으로 끝난다 —
 ## 2026-08-24 에 battle.gd 가 컴파일에 실패하며 시험 26개가 소리 없이 빠졌다.
 var _sections := 0
-const EXPECTED_SECTIONS := 34
+const EXPECTED_SECTIONS := 35
 
 ## 실패가 어느 섹션에서 났는지 — 최종 요약에 목록으로 낸다 (A-07 · V-61 ④).
 ## 한 섹션·한 단언이 실패해도 러너는 멈추지 않고 끝까지 돈다.
@@ -89,6 +89,7 @@ func _init() -> void:
 	_test_game_loop()
 	_test_schemes()
 	_test_portrait_frame()
+	_test_orders()
 	print("")
 	var asserts := _pass + _fail          # 실제 단언 수 — 아래 가드 실패분 이전
 
@@ -1538,3 +1539,133 @@ func _test_portrait_frame() -> void:
 	_eq(script.art_id_for({"class": ["강"]}), "ART-C910", "강습형")
 	_eq(script.art_id_for({"class": ["파"]}), "ART-C911", "파일럿형")
 	_eq(script.FRAME_SIZE, Vector2(256, 320), "실제 초상 프레임은 256×320")
+
+
+## ---------------------------------------------------------------- A-03 명령 판정
+##
+## V-60 §8.1 갈라짐 ④(관측 단계)·⑤(경로·소요·진형 조건) — 코어가 판정하는가,
+## 그리고 **UI·AI·재생이 같은 판정을 부르는가** (완료 정의).
+func _test_orders() -> void:
+	_section("35. 명령 판정 — 경로·소요·진형·관측 (A-03)")
+	var d := GameData.load_all()
+	var g := Routing.build_graph(d)
+	var sid := {}
+	for s in d.system_ids:
+		sid[d.systems[s]["name"]] = s
+	var by_name := {}
+	for rid in d.region_ids:
+		by_name[d.regions[rid]["name"]] = rid
+
+	# ---- resolve_move: 호출자 무관 동일 결과 (V-60 ④)
+	var a := Orders.resolve_move(g, d, sid["오회"], by_name["합비권"])
+	var b := Orders.resolve_move(g, d, sid["오회"], by_name["합비권"])
+	_eq(str(a), str(b), "resolve_move 는 같은 입력에 같은 결과")
+	_ok(bool(a["ok"]), "오회→합비권 도달 가능")
+	_eq(int(a["travel_ticks"]),
+		Routing.travel_ticks(g, sid["오회"], sid["회남"]),
+		"소요 = Routing.travel_ticks 와 일치")
+	_eq(int(a["travel_ticks"]), 225, "합비회랑 225틱")
+
+	# ---- 대회랑은 장사진 강제 (§3.3)
+	_eq(String(a["terrain"]), "대회랑", "합비회랑 경로 지형 = 대회랑")
+	_eq(String(a["forced_formation"]), "장사진", "대회랑 → 장사진 강제")
+	_eq(a["allowed_formations"], ["장사진"], "대회랑 허용 진형은 장사진뿐")
+
+	# ---- 개활 경로는 진형 7종 전부
+	var fast_rid := String(by_name.get("청주권", d.regions_of[sid["청주"]][0]))
+	var fast := Orders.resolve_move(g, d, sid["연주"], fast_rid)
+	_ok(bool(fast["ok"]), "연주→청주 도달")
+	_eq(String(fast["terrain"]), "개활", "고속항로 경로 = 개활")
+	_eq((fast["allowed_formations"] as Array).size(), 7, "개활은 진형 7종 전부")
+	_eq(String(fast["forced_formation"]), "", "개활은 강제 없음")
+
+	# ---- 닿지 않는 목적지
+	var bad := Orders.resolve_move(g, d, sid["사예"], "RGN-XX")
+	_ok(not bool(bad["ok"]), "없는 권역은 ok=false")
+	_eq(int(bad["travel_ticks"]), Routing.UNREACHABLE, "소요 = UNREACHABLE")
+
+	# ---- _apply_fleet_move 는 payload.travel_ticks 를 믿지 않는다 (⑤)
+	var c := Campaign.scenario_03(d, 7)
+	c.world.player_faction = "손권"
+	var pf: Faction = c.factions["손권"]
+	var pfleet: Fleet = null
+	for fl in c.fleets:
+		if fl.owner == "손권" and fl.is_alive() and not fl.is_moving():
+			pfleet = fl
+			break
+	_ok(pfleet != null, "손권 주둔 함대 확보")
+	var target := ""
+	for rid in pf.regions:
+		for nb in d.region_adjacency.get(rid, []):
+			var stt = c.world.region_states.get(nb)
+			if stt != null and String(stt.owner) != "" and String(stt.owner) != "손권":
+				target = nb
+				break
+		if target != "":
+			break
+	if target != "" and pfleet != null:
+		var expect := int(Orders.resolve_move(c.world.graph, d,
+			pfleet.at_system, target)["travel_ticks"])
+		var cmd := {"kind": Domestic.CMD_FLEET_MOVE, "payload": {
+			"faction": "손권", "fleet": pfleet.id, "region": target,
+			"travel_ticks": 99999,          # 거짓값 — 코어가 무시해야 한다
+		}}
+		var why := Domestic.apply(d, c.world.region_states, pf, c.fleets, cmd,
+			c.world.clock.tick, c.world.graph)
+		_eq(why, "", "함대이동 적용 성공")
+		_eq(pfleet.arrival_tick, c.world.clock.tick + maxi(expect, 1),
+			"도착틱은 코어 산정값 — payload 99999 를 무시한다")
+
+	# ---- AI 이동이 명령 로그를 지난다 (save-contract 전제 2 · origin="ai")
+	# 단언 수를 고정하려고 루프 안에서 세지 않는다 — 위반만 누적해 한 번 판정.
+	var c2 := Campaign.scenario_03(d, 11)
+	c2.run_to_end(GameClock.TICKS_PER_MONTH * 12)
+	var ai_moves := 0
+	var non_ai_moves := 0
+	for cc in (c2.world.applied_commands + c2.world.pending_commands):
+		if String(cc.get("kind", "")) == Domestic.CMD_FLEET_MOVE:
+			ai_moves += 1
+			if String(cc.get("origin", "")) != "ai":
+				non_ai_moves += 1
+	_ok(ai_moves > 0, "12개월간 AI 함대이동 명령이 로그에 남았다 (%d건)" % ai_moves)
+	_eq(non_ai_moves, 0, "모든 AI 함대이동 명령의 origin=ai")
+	_ok(c2.dispatched > 0, "AI 가 함대를 출격시켰다")
+
+	# ---- observe_fleet 3단계 (§12.2)
+	var c3 := Campaign.scenario_03(d, 3)
+	var own: Fleet = null
+	var foe: Fleet = null
+	for fl in c3.fleets:
+		if fl.owner == "조조" and own == null:
+			own = fl
+		elif fl.owner == "손권" and foe == null:
+			foe = fl
+	_ok(own != null and foe != null, "조조·손권 함대 확보")
+	if own.at_system != foe.at_system:
+		var o0 := Orders.observe_fleet(c3.world, d, "조조", foe, c3.fleets)
+		_eq(int(o0["stage"]), 0, "다른 성계의 적 함대 = 미접촉(0)")
+		_ok(not bool(o0["visible"]), "미접촉이면 안 보인다")
+	own.at_system = foe.at_system
+	own.arrival_tick = -1
+	var o1 := Orders.observe_fleet(c3.world, d, "조조", foe, c3.fleets)
+	_eq(int(o1["stage"]), 1, "같은 성계 아군 함대 → 포착(1)")
+	_eq(String(o1["formation"]), "", "포착 단계는 진형을 안 준다")
+	_ok(int(o1["ships_low"]) <= foe.ships and foe.ships <= int(o1["ships_high"]),
+		"포착 척수 밴드가 실제값을 감싼다")
+	var o2 := Orders.observe_fleet(c3.world, d, "조조", foe, c3.fleets, true)
+	_eq(int(o2["stage"]), 2, "접적 → 판독(2)")
+	_ok(String(o2["formation"]) != "", "판독은 진형을 준다")
+	_eq(int(o2["ships_exact"]), foe.ships, "판독 척수는 정확값")
+	var oo := Orders.observe_fleet(c3.world, d, "조조", own, c3.fleets)
+	_eq(int(oo["stage"]), 2, "아군 함대는 완전 정보")
+
+	# ---- Formations 규칙 (단일 소유 · V-60 ①)
+	_eq(Formations.forced_formation("대회랑"), "장사진", "대회랑 강제")
+	_eq(Formations.forced_formation("중회랑"), "", "중회랑은 강제 아님")
+	_ok(not Formations.allowed_in("학익진", "중회랑"), "중회랑에 학익 불가")
+	_ok(Formations.allowed_in("방원진", "중회랑"), "중회랑에 방원 가능")
+	_ok(not Formations.allowed_in("학익진", "기저"), "기저 항로에 광폭(학익) 불가")
+	_eq(Formations.downgrade(72, "학익진"), "봉시진", "통솔 72 → 학익(75) 미달, 봉시(70)")
+	_eq(Formations.downgrade(68, "학익진"), "안행진", "통솔 68 → 봉시(70)도 미달, 안행(65)")
+	_eq(FormationSpec.required_command("학익진"),
+		Formations.required_command("학익진"), "FormationSpec 이 Formations 에 위임")
