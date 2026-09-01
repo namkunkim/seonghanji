@@ -184,7 +184,7 @@
 |---|---|
 | 목적 | 「이 게임의 전쟁이 무엇을 두고 벌어지는가」 — 스토어·홍보용. 구지 궤도 적벽급 함대전(`visual-direction-guide.md` §5.4) |
 | 물량 | **정지 이미지 1~3장**(잠정 — 스토어 스크린샷 요구는 P0-08에서 확정) |
-| 제작 방식 | AI 생성(이미지 파이프라인 재사용 — RunPod Community + FLUX schnell / SDXL, `ai-media-pipeline.md` §3.3). 프롬프트 = `visual-direction-guide.md` §6 공통 스타일 블록 + 구지 한 줄 추가 |
+| 제작 방식 | AI 생성(이미지 파이프라인 재사용 — **RunPod Community + FLUX.1 [schnell]**, V-50). SDXL은 신규 제작에 쓰지 않는다. 프롬프트 = `visual-direction-guide.md` §6 공통 스타일 블록 + 구지 한 줄 추가 |
 | 대체안 | 인게임 전술 지도 스크린샷 |
 | 중단 조건 | 화풍 기준선(`ai-media-pipeline.md` §4.2)이 확정된 뒤 착수. `visual-direction-guide.md` §7 쟁점 4·5·7(함선 세력 차별화 · 기동병기 실루엣 · 적벽이 암시할 분기)을 **닫기 전에는 발주하지 않는다** |
 | 계층 | **L1**(마케팅 자산, 게임 밖) |
