@@ -13,7 +13,7 @@ var _fail := 0
 ## GDScript 는 없는 함수를 부르면 오류만 찍고 시험은 「실패 0」으로 끝난다 —
 ## 2026-08-24 에 battle.gd 가 컴파일에 실패하며 시험 26개가 소리 없이 빠졌다.
 var _sections := 0
-const EXPECTED_SECTIONS := 33
+const EXPECTED_SECTIONS := 34
 
 
 func _section(name: String) -> void:
@@ -73,6 +73,7 @@ func _init() -> void:
 	_test_domestic_commands()
 	_test_game_loop()
 	_test_schemes()
+	_test_portrait_frame()
 	print("")
 	if _sections != EXPECTED_SECTIONS:
 		_fail += 1
@@ -1476,3 +1477,34 @@ func _find_char(d: GameData, name: String) -> Dictionary:
 		if String(ch.get("name", "")) == name and String(ch.get("tier", "")) == "명장":
 			return ch
 	return {}
+
+
+## P0-04 V-50 승인 공용 11종 — UI가 최종 파일만 읽고, V-43 매핑을 빠짐없이 푼다.
+func _test_portrait_frame() -> void:
+	_section("34. P0-04 공용 초상 UI 프레임")
+	var script := load("res://app/views/portrait_frame.gd")
+	_ok(script != null, "초상 프레임 스크립트가 있다")
+	if script == null:
+		return
+	var ids: Array = script.all_art_ids()
+	_eq(ids.size(), 11, "공용 초상은 11종")
+	for art in ids:
+		_ok(ResourceLoader.exists(script.asset_path(art)), "%s 승인 PNG가 UI 경로에 있다" % art)
+		var texture := load(script.asset_path(art)) as Texture2D
+		_ok(texture != null, "%s PNG가 Texture2D로 로드된다" % art)
+		if texture != null:
+			_eq(texture.get_size(), Vector2(896, 1120), "%s 마스터 규격 896×1120" % art)
+	_eq(script.art_id_for({"id": "CHR-0002", "class": ["제"], "disposition": "실무"}),
+		"ART-C901", "제독형 실무 짝수는 C901")
+	_eq(script.art_id_for({"id": "CHR-0003", "class": ["제"], "disposition": "실무"}),
+		"ART-C902", "제독형 실무 홀수는 C902")
+	_eq(script.art_id_for({"class": ["제"], "disposition": "무뢰"}), "ART-C903", "제독형 무뢰")
+	_eq(script.art_id_for({"class": ["제"], "disposition": "절의"}), "ART-C904", "제독형 절의")
+	_eq(script.art_id_for({"class": ["제"], "disposition": "야심"}), "ART-C905", "제독형 그 밖")
+	_eq(script.art_id_for({"class": ["관"], "disposition": "실무"}), "ART-C906", "관료형 실무")
+	_eq(script.art_id_for({"class": ["관"], "disposition": "명사"}), "ART-C907", "관료형 그 밖")
+	_eq(script.art_id_for({"class": ["참"], "disposition": "실무"}), "ART-C908", "참모형 실무")
+	_eq(script.art_id_for({"class": ["참"], "disposition": "야심"}), "ART-C909", "참모형 그 밖")
+	_eq(script.art_id_for({"class": ["강"]}), "ART-C910", "강습형")
+	_eq(script.art_id_for({"class": ["파"]}), "ART-C911", "파일럿형")
+	_eq(script.FRAME_SIZE, Vector2(256, 320), "실제 초상 프레임은 256×320")

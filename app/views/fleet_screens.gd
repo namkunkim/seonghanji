@@ -66,6 +66,9 @@ var _frame: VBoxContainer
 var _title: Label
 var _body: VBoxContainer
 var _note: Label
+var _portrait_popup: PopupPanel
+var _portrait_popup_frame: PortraitFrame
+var _portrait_popup_label: Label
 
 const _SLOTS: Array[String] = ["제독", "부제독", "강습", "공성", "보급"]
 const _SLOT_STAT := {"제독": "통솔", "부제독": "통솔", "강습": "무력",
@@ -124,6 +127,30 @@ func _ready() -> void:
 	_note.add_theme_color_override("font_color", UiPalette.WARN)
 	_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_frame.add_child(_note)
+	_build_portrait_popup()
+
+
+func _build_portrait_popup() -> void:
+	_portrait_popup = PopupPanel.new()
+	_portrait_popup.size = Vector2i(300, 410)
+	add_child(_portrait_popup)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	_portrait_popup.add_child(box)
+	_portrait_popup_frame = PortraitFrame.new()
+	box.add_child(_portrait_popup_frame)
+	_portrait_popup_label = Label.new()
+	_portrait_popup_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_portrait_popup_label.add_theme_color_override("font_color", UiPalette.TEXT_FAINT)
+	box.add_child(_portrait_popup_label)
+
+
+func _show_portrait(character: Dictionary) -> void:
+	if character.is_empty():
+		return
+	_portrait_popup_frame.set_character(character)
+	_portrait_popup_label.text = "%s · %s" % [String(character.get("name", "—")), _portrait_popup_frame.art_id()]
+	_portrait_popup.popup_centered()
 
 
 func setup(d: GameData, c: Campaign, year: int) -> void:
@@ -491,6 +518,10 @@ func _draw_appoint(fl: Fleet) -> void:
 		var r := HBoxContainer.new()
 		r.add_theme_constant_override("separation", 12)
 		_body.add_child(r)
+		if not cur.is_empty():
+			var chip := PortraitFrame.new()
+			chip.set_character(cur, true)
+			r.add_child(chip)
 		_lbl(r, slot, UiPalette.TEXT_FAINT, 18, 90)
 		_lbl(r, name_txt, UiPalette.TEXT, 18, 320)
 		if slot == "제독":
@@ -502,6 +533,9 @@ func _draw_appoint(fl: Fleet) -> void:
 			_lbl(r, "한도 +%d (§6.5 예시 기준)" % add, UiPalette.TEXT_DIM, 17, 200)
 		var cyc := _btn(r, "▸ 교체", 110)
 		cyc.pressed.connect(_cycle_slot.bind(slot, pool))
+		if not cur.is_empty():
+			var preview := _btn(r, "초상", 80)
+			preview.pressed.connect(_show_portrait.bind(cur))
 		if cur_id != "":
 			var clr := _btn(r, "비움", 90)
 			clr.pressed.connect(func():
