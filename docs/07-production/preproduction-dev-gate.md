@@ -4,11 +4,11 @@
 > `preproduction-decision-queue.md` (P0-09 입력 집계) · `docs/DECISIONS.md` **V-48 (DEC-01~03)**
 > 입력(읽기 전용): `preproduction-scope.md` §7 · `preproduction-license-check.md` §5 · `preproduction-av-plan.md` §6.2 ·
 > `preproduction-audio-plan.md` §6·§7 · `visual-direction-guide.md` §7·§8 · `dev-requirements.md` §9 · `data-model.md` §3.4·§6 · `m0-report.md`
-> 작성일: 2026-08-30 (갱신 2026-09-01) / 상태: **P0-09 진행 중 — P0-01~08 완료. §8 게이트 승인본. GATE-PRE-01~08 계약 8개 전부 ✅ (07 = §8.4 승인 · V-64). 필수 콘텐츠 범위표 버전 고정 초안 = §8.5(`v1.0`). 잔여 = 최소 기록 3(기준선 실제 잠금 = `Q-01`, 개발 착수 후)**
+> 작성일: 2026-08-30 (갱신 2026-09-01) / 상태: **P0-09 ✅ 완료 — 발주자 개발 착수 승인 (2026-09-01 · `DECISIONS.md` V-65).** GATE-PRE-01~08 계약 8개 전부 확정 · 착수 승인 시 최소 기록 ✅5 / 🟨2(3·5 = 개발 착수 후). 이 문서는 그 게이트 승인본이다. 다음 = D1 (`A-01`·`A-03`·`A-07`).
 >
-> **이 문서는 게이트를 승인하지 않는다.** §8 은 **승인본 초안**(근거·충족도·남은 승인 행위·이월)이며,
-> 최종 닫힘 판정과 승인은 발주자·검수자가 내린다. 이 세션은 권고와 미결 처리만 한다(운영 규칙 ② · V-49).
-> 새 게이트·새 닫힘 조건을 만들지 않는다 — `preproduction-risk-register.md` §3.1·§5 가 정본이다.
+> **§8 이 P0-09 게이트 승인본이다.** GATE-PRE-01~08 계약 8개가 전부 확정됐고 발주자가
+> 2026-09-01 개발 착수를 승인했다(`DECISIONS.md` **V-65**). 새 게이트·새 닫힘 조건을
+> 만들지 않는다 — `preproduction-risk-register.md` §3.1·§5 가 정본이다.
 > 불가침 원칙(`CLAUDE.md` §2)은 건드리지 않는다. 시간 단축 과금·회랑(Corridor) 약화로 이어지는 선택지는 표에 올리지 않는다.
 
 ---
