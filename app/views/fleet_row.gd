@@ -151,10 +151,14 @@ func refresh() -> void:
 
 	# **적 함대는 관측 단계가 무엇을 보일지 정한다** (A-03 · `screens.md` §12 · 검토 20).
 	# 아군·동맹은 완전 정보. 관측 판정은 `Orders.observe_fleet` 가 코어에서 낸다.
-	var obs: Dictionary = Orders.observe_fleet(campaign.world, data, viewer, fl,
-		campaign.fleets) if is_foe else {}
+	var obs: Dictionary = campaign.observe_fleet(viewer, fl) if is_foe else {}
 	var stage: int = int(obs.get("stage", 2))
 	var reveal: bool = not is_foe or stage >= 2      # 편성·진형·제독 판독 여부
+	var freshness := String(obs.get("freshness", "current"))
+	if is_foe and freshness == "stale":
+		modulate = Color(1, 1, 1, 0.75)
+	elif is_foe and freshness == "expired":
+		modulate = Color(1, 1, 1, 0.45)
 
 	if is_foe and stage == 0:
 		# 미접촉 — 같은 성계에 아군 자산이 없다. 광점만 남긴다.
@@ -178,6 +182,10 @@ func refresh() -> void:
 	_icon.set_icon(rel, UiPalette.faction_color(fl.owner), form)
 
 	var foe_tag := "  [적]" if rel == FormationIcon.Rel.FOE else ""
+	if is_foe and freshness == "stale":
+		foe_tag += "  [점선 · %d개월 전 관측]" % int(obs.get("months_ago", 1))
+	elif is_foe and freshness == "expired":
+		foe_tag += "  [회색 · %d개월 전 관측]" % int(obs.get("months_ago", 3))
 	_put(_l_name, "제%d함대%s" % [fl.id, foe_tag])
 	_l_name.add_theme_color_override("font_color",
 		UiPalette.TEXT if fl.owner == viewer else UiPalette.FLEET_FOE)

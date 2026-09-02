@@ -34,6 +34,10 @@ var faction_ids: Array[String] = []
 var fleets: Array[Fleet] = []
 var _next_fleet_id: int = 0
 
+## 뷰어 → 적 함대 ID → 마지막 판독 값. `screens.md` §12.3의 세션 파생 관측 이력이다.
+## 저장·지문에는 넣지 않는다. 관측은 명령·전투의 결과를 바꾸지 않는 정보 상태다 (V-66).
+var _fleet_readings: Dictionary = {}
+
 ## 역사 편향 계수 (ai-design.md §6.2). 기본은 표준 0.25
 var hb_milli: int = Strategy.HB_STANDARD_MILLI
 
@@ -429,6 +433,63 @@ func step() -> void:
 		_ai_operational()
 	_check_events()           # ⑥ 이벤트 판정 (function-events.md)
 	_check_end()
+
+
+## 점시점 판정(Orders)에 마지막 단계 2 판독의 신선도를 결합한다 (§12.3).
+func observe_fleet(viewer_fid: String, target: Fleet, contact: bool = false) -> Dictionary:
+	var live := Orders.observe_fleet(world, data, viewer_fid, target, fleets, contact)
+	if int(live.get("stage", 0)) >= 2:
+		_record_fleet_reading(viewer_fid, target, live)
+		live["freshness"] = "current"
+		live["observed_tick"] = world.clock.tick
+		live["months_ago"] = 0
+		return live
+	var readings: Dictionary = _fleet_readings.get(viewer_fid, {})
+	var reading: Dictionary = readings.get(target.id, {})
+	if reading.is_empty():
+		live["freshness"] = "none"
+		live["observed_tick"] = -1
+		live["months_ago"] = -1
+		return live
+	var elapsed := maxi(0, world.clock.tick - int(reading["tick"]))
+	var months_ago := (elapsed + GameClock.TICKS_PER_MONTH - 1) / GameClock.TICKS_PER_MONTH
+	if elapsed <= GameClock.TICKS_PER_MONTH * 3:
+		var ghost: Dictionary = reading["observation"].duplicate(true)
+		ghost["freshness"] = "current" if elapsed <= GameClock.TICKS_PER_MONTH else "stale"
+		ghost["observed_tick"] = int(reading["tick"])
+		ghost["months_ago"] = months_ago
+		ghost["note"] = "%d개월 전 판독" % months_ago if months_ago > 0 else "현재 판독"
+		return ghost
+	# 3개월을 넘긴 판독은 단계 1로 강등해 정확 척수·진형·제독을 숨긴다 (§12.3·§12.4).
+	var expired: Dictionary = reading["observation"].duplicate(true)
+	var band := Orders.ships_band(int(expired["ships_exact"]))
+	expired["stage"] = 1
+	expired["visible"] = true
+	expired["ships_exact"] = 0
+	expired["ships_low"] = band[0]
+	expired["ships_high"] = band[1]
+	expired["formation"] = ""
+	expired["commander_name"] = ""
+	expired["plan"] = ""
+	expired["morale_exact"] = 0
+	expired["morale_band"] = ""
+	expired["freshness"] = "expired"
+	expired["observed_tick"] = int(reading["tick"])
+	expired["months_ago"] = months_ago
+	expired["note"] = "%d개월 전 판독 — 편성 정보 만료" % months_ago
+	return expired
+
+
+func _record_fleet_reading(viewer_fid: String, target: Fleet, observation: Dictionary) -> void:
+	if viewer_fid == "" or target == null or target.owner == viewer_fid:
+		return
+	if not _fleet_readings.has(viewer_fid):
+		_fleet_readings[viewer_fid] = {}
+	var snapshot := observation.duplicate(true)
+	snapshot.erase("freshness")
+	snapshot.erase("observed_tick")
+	snapshot.erase("months_ago")
+	_fleet_readings[viewer_fid][target.id] = {"tick": world.clock.tick, "observation": snapshot}
 
 
 ## 실시간 진행 — **클라이언트가 부르는 입구다** (S3.2).

@@ -251,13 +251,12 @@ func _on_formation_tapped(fleet_id: int) -> void:
 	for c in _preview_body.get_children():
 		c.queue_free()
 
-	var terrain := _terrain_of(rid)
+	var terrain := Orders.terrain_of_region(data, rid)
 	var viewer := campaign.world.player_faction
 	var is_foe := fl.owner != viewer and not (campaign.diplo != null \
 		and campaign.diplo.is_allied(viewer, fl.owner))
 	# 적 함대는 관측 단계가 판독(2)에 이르러야 진형·통솔을 보인다 (§12 · 검토 20)
-	var obs: Dictionary = Orders.observe_fleet(campaign.world, data, viewer, fl,
-		campaign.fleets) if is_foe else {}
+	var obs: Dictionary = campaign.observe_fleet(viewer, fl) if is_foe else {}
 	var reveal: bool = not is_foe or int(obs.get("stage", 2)) >= 2
 	var cur := _fleet_formation(fl) if reveal else ""
 	var cmd: int = fl.command
