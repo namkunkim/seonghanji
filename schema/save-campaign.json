@@ -18,7 +18,7 @@
     },
     "world": {
       "$ref": "save.json",
-      "description": "World 계층 세이브. commands 는 origin != \"ai\" 인 것만 담는다 — AI 명령은 재생 중 step() 이 결정론적으로 재발행하므로 저장하면 이중 발행된다 (§2.3 전제 2 · A-03 origin 규약). RS-0.2 SCN-03의 scenario_event_outcome 역시 외생 player 명령으로만 기록하며, scn03_progress/scenario_event_records 같은 파생 원장은 저장하지 않는다."
+      "description": "World 계층 세이브. commands 는 origin != \"ai\" 인 것만 담는다 — AI 명령은 재생 중 step() 이 결정론적으로 재발행하므로 저장하면 이중 발행된다 (§2.3 전제 2 · A-03 origin 규약). RS-0.3 SCN-03의 scenario_event_outcome, participant manifest, active result 역시 외생 player 명령으로만 기록하며, 진행·전투 원장은 저장하지 않는다."
     },
     "campaign": {
       "type": "object",

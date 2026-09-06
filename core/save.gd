@@ -24,9 +24,9 @@ extends RefCounted
 ## 다르면 어딘가에서 결정론이 깨진 것이다 — 그것을 잡는 것이 이 함수의 목적이다.
 
 const SAVE_VERSION := 1
-## RS-0.2 introduces replay-derived SCN-03 scenario outcomes. RS-0.1 remains loadable
-## as an old minor generation and keeps its pre-G-10 campaign digest path.
-const CURRENT_RULESET := "RS-0.2.0"
+## RS-0.3 adds the replay-derived active Red-Cliffs phase/result reducer. Older
+## minor generations remain loadable on their original digest path.
+const CURRENT_RULESET := "RS-0.3.0"
 
 const STATUS_OK := "ok"
 const STATUS_OLD_MINOR := "old_minor"
@@ -242,6 +242,10 @@ static func _command_error(value, index: int) -> String:
 		var manifest_payload: Dictionary = c.get("payload", {})
 		if not Campaign._is_valid_scn03_red_cliff_manifest_payload(manifest_payload):
 			return "world.commands[%d].payload: 허용되지 않은 적벽 participant manifest" % index
+	if String(c["kind"]) == Campaign.CMD_SCN03_RED_CLIFF_RESULT:
+		var result_payload: Dictionary = c.get("payload", {})
+		if not Campaign._is_valid_scn03_red_cliff_result_payload(result_payload):
+			return "world.commands[%d].payload: 허용되지 않은 적벽 active result" % index
 	return ""
 
 

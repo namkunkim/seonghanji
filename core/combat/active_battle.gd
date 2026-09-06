@@ -33,6 +33,16 @@ var created_tick: int = 0
 var started_tick: int = -1
 var campaign_stage: int = 0
 var combat_phase: int = -1
+## The first narrow active slice advances Contact (1) to Barrage (2) on the next
+## campaign tick.  A later battle engine owns phases 3–5; it must not rewrite this
+## recorded transition.
+var phase_advanced_tick: int = -1
+var resolved_tick: int = -1
+## Result is deliberately a small, canonical player-input fact.  It is not a
+## hidden combat calculation or a UI snapshot: the campaign reducer applies it
+## once after phase 2 and replay derives the same resolved record from the log.
+var result: Dictionary = {}
+var result_applied: bool = false
 var cancelled_tick: int = -1
 var cancellation_reason: String = ""
 ## Reserved deterministic anchor for a later phase engine. It consumes no Rng stream.
@@ -74,6 +84,10 @@ func _normalize_pending_identity() -> void:
 	started_tick = -1
 	campaign_stage = 0
 	combat_phase = -1
+	phase_advanced_tick = -1
+	resolved_tick = -1
+	result.clear()
+	result_applied = false
 	cancelled_tick = -1
 	cancellation_reason = ""
 	liu_contingent_id = ""
@@ -94,6 +108,10 @@ func activate_red_cliff(attacker_ids: Array[String], defender_ids: Array[String]
 	started_tick = at_tick
 	campaign_stage = 7
 	combat_phase = 1
+	phase_advanced_tick = -1
+	resolved_tick = -1
+	result.clear()
+	result_applied = false
 	cancelled_tick = -1
 	cancellation_reason = ""
 	entry_available = true
@@ -107,6 +125,29 @@ func cancel_pending(at_tick: int, reason: String) -> void:
 	cancellation_reason = reason
 	entry_available = false
 	status = STATUS_CANCELLED
+
+
+## Contact is visible for the activation tick only.  This is a deterministic
+## state transition, not a command and it consumes no RNG.
+func advance_red_cliff_phase(at_tick: int) -> bool:
+	if status != STATUS_ACTIVE or combat_phase != 1 or at_tick <= started_tick:
+		return false
+	combat_phase = 2
+	phase_advanced_tick = at_tick
+	return true
+
+
+func resolve_red_cliff(winner_faction_id: String, at_tick: int) -> bool:
+	if status != STATUS_ACTIVE or combat_phase != 2 or result_applied:
+		return false
+	if winner_faction_id != "cao_side" and winner_faction_id != "sun_liu_side":
+		return false
+	result = {"winner_faction_id": winner_faction_id}
+	result_applied = true
+	resolved_tick = at_tick
+	entry_available = false
+	status = STATUS_RESOLVED
+	return true
 
 
 ## Ordered scalar values only: Campaign.digest owns the hash and avoids Dictionary order.
@@ -123,6 +164,10 @@ func digest_values() -> Array:
 		started_tick,
 		campaign_stage,
 		combat_phase,
+		phase_advanced_tick,
+		resolved_tick,
+		1 if result_applied else 0,
+		Rng._hash_string(String(result.get("winner_faction_id", ""))),
 		cancelled_tick,
 		Rng._hash_string(cancellation_reason),
 		Rng._hash_string(rng_anchor),
