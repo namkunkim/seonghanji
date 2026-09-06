@@ -41,6 +41,11 @@ const CMD_SCN03_RED_CLIFF_MANIFEST: String = "scn03_red_cliff_manifest"
 ## after the deterministic Contact → Barrage transition, then replayed from the
 ## normal player command log.
 const CMD_SCN03_RED_CLIFF_RESULT: String = "scn03_red_cliff_result"
+## Transition-news IDs are derived from this canonical battle ID plus one fixed
+## transition token; they never use UI order, text, or an incrementing counter.
+const SCN03_RED_CLIFF_TRANSITION_ACTIVE_PHASE_1: String = "active_phase_1"
+const SCN03_RED_CLIFF_TRANSITION_PHASE_2: String = "phase_2"
+const SCN03_RED_CLIFF_TRANSITION_RESOLVED: String = "resolved"
 const SCN03_CAO_OWNER: String = "조조"
 const SCN03_SUN_OWNER: String = "손권"
 const SCN03_LIU_CONTINGENT_ID: String = "SCN-03-LIU-BEI-CONTINGENT"
@@ -100,6 +105,10 @@ var scn03_red_cliff_manifest: Dictionary = {}
 ## Event 09에서만 파생하는 적벽 지속형 전투 상태. 세이브 스냅숏 정본이 아니며,
 ## player scenario-outcome 명령 재생으로 같은 순서에 다시 만든다.
 var active_battles: Array[ActiveBattle] = []
+## Immutable, replay-derived transition facts for the canonical Red-Cliffs
+## battle.  This is deliberately not C-02 policy or a UI feed: consumers can
+## later project these facts without being allowed to create or alter them.
+var scn03_red_cliff_transition_news: Array[Dictionary] = []
 ## 재생 입력은 발행 틱에만 World 대기열로 옮긴다. 저장 상태가 아니며 digest에도
 ## 직접 넣지 않는다 — World의 applied/pending player 명령이 같은 사실을 이미 접는다.
 var _replay_player_commands: Array[Dictionary] = []
@@ -706,6 +715,34 @@ func _has_pending_scn03_red_cliff_result() -> bool:
 	return false
 
 
+static func _scn03_red_cliff_transition_news_id(battle_id: String, transition: String) -> String:
+	return "%s:%s" % [battle_id, transition]
+
+
+func _record_scn03_red_cliff_transition_news(battle: ActiveBattle, transition: String,
+		at_tick: int) -> bool:
+	if not _uses_scn03_red_cliff_news_rules() or battle == null \
+			or battle.battle_id != SCN03_RED_CLIFF_PENDING_BATTLE_ID:
+		return false
+	if not [SCN03_RED_CLIFF_TRANSITION_ACTIVE_PHASE_1,
+		SCN03_RED_CLIFF_TRANSITION_PHASE_2,
+		SCN03_RED_CLIFF_TRANSITION_RESOLVED].has(transition):
+		return false
+	var news_id := _scn03_red_cliff_transition_news_id(battle.battle_id, transition)
+	for record in scn03_red_cliff_transition_news:
+		if String(record.get("news_id", "")) == news_id:
+			return false
+	scn03_red_cliff_transition_news.append({
+		"news_id": news_id,
+		"battle_id": battle.battle_id,
+		"transition": transition,
+		"tick": at_tick,
+	})
+	scn03_red_cliff_transition_news.sort_custom(
+		func(a, b): return String(a["news_id"]) < String(b["news_id"]))
+	return true
+
+
 func _fleet_by_id(fleet_id: int) -> Fleet:
 	for fleet in fleets:
 		if fleet.id == fleet_id:
@@ -721,7 +758,9 @@ func _advance_scn03_red_cliff_pending_battle() -> void:
 			continue
 		if battle.status == ActiveBattle.STATUS_ACTIVE:
 			if _uses_scn03_red_cliff_phase_rules():
-				battle.advance_red_cliff_phase(world.clock.tick)
+				if battle.advance_red_cliff_phase(world.clock.tick):
+					_record_scn03_red_cliff_transition_news(battle,
+						SCN03_RED_CLIFF_TRANSITION_PHASE_2, world.clock.tick)
 			return
 		if battle.status != ActiveBattle.STATUS_PENDING:
 			return
@@ -745,6 +784,8 @@ func _advance_scn03_red_cliff_pending_battle() -> void:
 		battle.activate_red_cliff(attacker_ids, defender_ids,
 			scn03_red_cliff_manifest["fleet_roles"],
 			String(scn03_red_cliff_manifest["liu_contingent_id"]), world.clock.tick)
+		_record_scn03_red_cliff_transition_news(battle,
+			SCN03_RED_CLIFF_TRANSITION_ACTIVE_PHASE_1, world.clock.tick)
 		return
 
 
@@ -802,6 +843,11 @@ func _uses_scn03_progress_rules() -> bool:
 func _uses_scn03_red_cliff_phase_rules() -> bool:
 	var version := Save._parse_ruleset(world.ruleset)
 	return version.size() == 3 and version[0] == 0 and version[1] >= 3
+
+
+func _uses_scn03_red_cliff_news_rules() -> bool:
+	var version := Save._parse_ruleset(world.ruleset)
+	return version.size() == 3 and version[0] == 0 and version[1] >= 4
 
 
 func _evaluate_scn03_event09_if_ready() -> void:
@@ -956,6 +1002,8 @@ func _apply_arrived() -> void:
 					and battle != null \
 					and battle.resolve_red_cliff(String(result_payload["winner_faction_id"]), world.clock.tick):
 				cmds_applied += 1
+				_record_scn03_red_cliff_transition_news(battle,
+					SCN03_RED_CLIFF_TRANSITION_RESOLVED, world.clock.tick)
 			else:
 				cmds_rejected += 1
 			continue
@@ -2318,6 +2366,16 @@ func digest() -> int:
 		for battle in sorted_active_battles:
 			for value in battle.digest_values():
 				h = Save._fold(h, value)
+		if _uses_scn03_red_cliff_news_rules():
+			var transition_news := scn03_red_cliff_transition_news.duplicate()
+			transition_news.sort_custom(
+				func(a, b): return String(a.get("news_id", "")) < String(b.get("news_id", "")))
+			h = Save._fold(h, transition_news.size())
+			for record in transition_news:
+				h = Save._fold(h, Rng._hash_string(String(record.get("news_id", ""))))
+				h = Save._fold(h, Rng._hash_string(String(record.get("battle_id", ""))))
+				h = Save._fold(h, Rng._hash_string(String(record.get("transition", ""))))
+				h = Save._fold(h, int(record.get("tick", -1)))
 	var ck: Array = _event_cooldown.keys()      # 재발동 쿨다운 (§1.2)
 	ck.sort()
 	for k in ck:

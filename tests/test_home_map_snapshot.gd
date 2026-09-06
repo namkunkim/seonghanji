@@ -82,7 +82,10 @@ func _init() -> void:
 			and not faction.has("hegemony") and not faction.has("tech"),
 			"타 세력 전략 상태는 player_state에만 둠")
 	_eq(state.capabilities()["external_powers"], false, "외부 세력은 fallback capability")
-	_eq(state.capabilities()["active_battles"], false, "활성 전투는 코어 미지원")
+	_eq(state.capabilities()["active_battles"], true, "활성 전투는 SCN-03 코어가 지원")
+	_eq(state.capabilities()["red_cliff_conditions"], true, "적벽 조건은 SCN-03 코어가 지원")
+	_eq(state.provenance()["active_battles"], "campaign_core", "활성 전투는 코어 출처")
+	_eq(state.provenance()["red_cliff_conditions"], "campaign_core", "적벽 조건은 코어 출처")
 	_eq(state.provenance()["external_powers"], "home_map_snapshot_fallback",
 		"외부 세력 fallback 출처")
 	_ok(state.is_valid(), "208 POC 투영은 유효")
@@ -133,19 +136,22 @@ func _init() -> void:
 		"sun_liu_military_pact": true,
 		"yangtze_defense_line": false,
 	}
-	var not_ready = Snapshot.from_campaign(campaign, 208,
+	var runtime_ignored = Snapshot.from_campaign(campaign, 208,
 		{"red_cliff_conditions": four_conditions})
-	_eq(not_ready.active_battles(), [], "다섯 조건 중 하나라도 거짓이면 적벽 없음")
+	_eq(runtime_ignored.red_cliff_conditions(), {}, "SCN-03 runtime 조건은 코어 사실을 덮어쓰지 않음")
+	_eq(runtime_ignored.active_battles(), [], "runtime 조건만으로 미래 전투를 확정하지 않음")
 	four_conditions["yangtze_defense_line"] = true
-	var conditions_only = Snapshot.from_campaign(campaign, 208,
-		{"red_cliff_conditions": four_conditions})
-	_eq(conditions_only.active_battles(), [], "다섯 조건만으로 미래 전투를 확정하지 않음")
+	var partial_campaign := Campaign.scenario_03(GameData.load_all(), 20801)
+	partial_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT03,
+		{"cao_southward_complete": true})
+	partial_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT04,
+		{"sun_quan_independent": false})
 	var partial_conditions := {
 		"cao_southward_complete": true,
 		"sun_quan_independent": false,
 		"unknown_condition": true,
 	}
-	var partial = Snapshot.from_campaign(campaign, 208,
+	var partial = Snapshot.from_campaign(partial_campaign, 208,
 		{"red_cliff_conditions": partial_conditions})
 	_eq(partial.snapshot()["red_cliff_conditions"], {
 		"cao_southward_complete": true,
@@ -159,11 +165,39 @@ func _init() -> void:
 		"cao_southward_complete": true,
 		"sun_quan_independent": false,
 	}, "적벽 조건 입력과 snapshot 반환값은 깊은 복사")
-	var ready = Snapshot.from_campaign(campaign, 208, {
-		"active_battles": [{"id": "BATTLE-RED-CLIFF", "status": "active"}],
-		"red_cliff_conditions": four_conditions,
+	var ready_campaign := Campaign.scenario_03(GameData.load_all(), 20802)
+	ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT03,
+		{"cao_southward_complete": true})
+	ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT04,
+		{"sun_quan_independent": true})
+	ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT06,
+		{"liu_bei_hostile_to_cao": true})
+	ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT07, {
+		"sun_liu_military_pact": true, "yangtze_defense_line": true,
 	})
-	_eq(ready.active_battles().size(), 1, "다섯 조건이 모두 참이면 적벽 활성")
+	_eq(ready_campaign.active_battles.size(), 1, "다섯 코어 조건은 적벽 pending 하나를 파생")
+	ready_campaign.active_battles[0].activate_red_cliff([], [], {}, "", ready_campaign.world.clock.tick)
+	var ready = Snapshot.from_campaign(ready_campaign, 208, {
+		"active_battles": [{"id": "BATTLE-RED-CLIFF", "status": "removed"}],
+		"red_cliff_conditions": {"cao_southward_complete": false},
+	})
+	_eq(ready.active_battles().size(), 1, "코어 active 적벽만 투영")
+	_eq(ready.active_battles()[0]["id"], "BATTLE-RED-CLIFF", "홈 route ID는 적벽 UI 계약 유지")
+	_eq(ready.active_battles()[0]["battle_id"],
+		Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID, "적벽 battle_id는 코어 정본 ID")
+	_eq(ready.active_battles()[0]["canonical_battle_id"],
+		Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID, "정본 적벽 battle ID를 별도 보존")
+	_eq(ready.active_battles()[0]["provenance"], "campaign_core", "적벽 행별 코어 출처")
+	_eq(ready.active_battles()[0]["status"], "active", "코어 적벽 상태 투영")
+	var coexistence = Snapshot.from_campaign(ready_campaign, 208, {
+		"active_battles": [{"id": "BATTLE-UNRELATED", "status": "active"}],
+	})
+	_eq(coexistence.active_battles().size(), 2, "코어 적벽과 비정본 fallback 전투는 공존")
+	var fallback_row: Dictionary = coexistence.active_battles()[0]
+	if String(fallback_row.get("id", "")) == "BATTLE-RED-CLIFF":
+		fallback_row = coexistence.active_battles()[1]
+	_eq(fallback_row["battle_id"], "BATTLE-UNRELATED", "fallback battle_id는 fixture ID")
+	_eq(fallback_row["provenance"], "runtime_fixture", "fallback 행별 fixture 출처")
 	_eq(ready.active_battles()[0]["anchor_body_id"], "BODY-RGN-04-01",
 		"적벽은 구지 궤도에 고정")
 	_ok(not _by_name(ready.visible_bodies(0), "구지").is_empty(),
@@ -274,7 +308,7 @@ func _init() -> void:
 	body_copy["name"] = "변조"
 	_eq(state.old_earth_body()["name"], "구지", "접근자도 깊은 복사 반환")
 
-	var runtime_battles := [{"id": "BATTLE-RED-CLIFF", "status": "active"}]
+	var runtime_battles := [{"id": "BATTLE-UNRELATED", "status": "active"}]
 	var runtime_news := [{"title": "원본 소식", "tags": ["정본"]}]
 	var mutable_runtime := {
 		"active_battles": runtime_battles,
@@ -285,12 +319,13 @@ func _init() -> void:
 	runtime_battles[0]["status"] = "removed"
 	runtime_news[0]["tags"][0] = "변조"
 	four_conditions["yangtze_defense_line"] = false
-	_eq(isolated.active_battles().size(), 1, "runtime 전투 입력 변경과 분리")
+	_eq(isolated.active_battles().size(), 1, "비정본 runtime 전투 입력 변경과 분리")
+	_eq(isolated.active_battles()[0]["battle_id"], "BATTLE-UNRELATED", "runtime 전투의 battle_id 명시")
+	_eq(isolated.active_battles()[0]["provenance"], "runtime_fixture", "runtime 전투의 행별 출처")
 	_eq(isolated.news()[0]["tags"][0], "정본", "runtime 중첩 뉴스 입력 변경과 분리")
-	_ok(bool(isolated.active_battles()[0]["conditions"]["yangtze_defense_line"]),
-		"runtime 조건 입력 변경과 분리")
-	_eq(isolated.provenance()["active_battles"], "runtime_fixture",
-		"주입 활성 전투는 코어가 아닌 fixture로 표시")
+	_eq(isolated.red_cliff_conditions(), {}, "runtime 조건은 SCN-03 코어 조건을 주입하지 않음")
+	_eq(isolated.provenance()["active_battles"], "campaign_core_or_runtime_fixture",
+		"비정본 전투 fallback은 코어 적벽 출처와 구분")
 	_eq(isolated.provenance()["news"], "runtime_fixture",
 		"주입 뉴스는 코어가 아닌 fixture로 표시")
 

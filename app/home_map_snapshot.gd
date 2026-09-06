@@ -33,7 +33,7 @@ var _state: Dictionary = {}
 
 
 ## `runtime`은 코어가 아직 보관하지 않는 일시 UI 상태만 받는다.
-## 허용 키: viewer_faction, active_battles, red_cliff_conditions, news.
+## 허용 키: viewer_faction, active_battles(비정본 fallback), news.
 static func from_campaign(campaign, year: int = -1,
 		runtime: Dictionary = {}) -> HomeMapSnapshot:
 	var out := HomeMapSnapshot.new()
@@ -109,12 +109,12 @@ static func from_campaign(campaign, year: int = -1,
 		"observed_fleets": _observed_fleets(campaign, viewer_faction) if valid else [],
 		"pending_commands": _pending_commands(campaign, player_faction) if valid else [],
 		"event_counts": _event_counts(campaign) if valid else {},
-		"active_battles": _active_battles(map_data, sid, runtime) if valid else [],
-		"red_cliff_conditions": _red_cliff_conditions(runtime) if valid else {},
+		"active_battles": _active_battles(campaign, map_data, sid, runtime) if valid else [],
+		"red_cliff_conditions": _red_cliff_conditions(campaign, sid, runtime) if valid else {},
 		"news": _news(runtime.get("news", [])) if valid else [],
 		"external_powers": _external_powers(resolved_year) if valid else [],
-		"capabilities": _capabilities(),
-		"provenance": _provenance(runtime),
+		"capabilities": _capabilities(sid),
+		"provenance": _provenance(sid, runtime),
 		"presentation": {
 			"valid": valid,
 			"invalid_reason": validation_error,
@@ -433,7 +433,8 @@ static func _event_counts(campaign) -> Dictionary:
 	return out
 
 
-static func _capabilities() -> Dictionary:
+static func _capabilities(scenario_id: String) -> Dictionary:
+	var has_scn03_red_cliff_core := scenario_id == SCENARIO_03_ID
 	return {
 		"scenario_clock": true,
 		"player_faction": true,
@@ -452,15 +453,17 @@ static func _capabilities() -> Dictionary:
 		"supply_resource": false,
 		"influence_resource": false,
 		"intel_resource": false,
-		"active_battles": false,
-		"red_cliff_conditions": false,
+		"active_battles": has_scn03_red_cliff_core,
+		"red_cliff_conditions": has_scn03_red_cliff_core,
 		"news": false,
 		"external_powers": false,
 		"liu_bei_wandering": false,
 	}
 
 
-static func _provenance(runtime: Dictionary) -> Dictionary:
+static func _provenance(scenario_id: String, runtime: Dictionary) -> Dictionary:
+	var has_scn03_red_cliff_core := scenario_id == SCENARIO_03_ID
+	var has_runtime_noncanonical_battle := _has_runtime_noncanonical_battle(runtime)
 	return {
 		"scenario": "campaign_core",
 		"viewer": "campaign_core_or_runtime_override",
@@ -469,8 +472,8 @@ static func _provenance(runtime: Dictionary) -> Dictionary:
 		"region_states": "campaign_core",
 		"pending_commands": "campaign_core_filtered",
 		"event_counts": "campaign_core_aggregate",
-		"active_battles": "runtime_fixture" if runtime.has("active_battles") else "unsupported",
-		"red_cliff_conditions": "runtime_fixture" if runtime.has("red_cliff_conditions") else "unsupported",
+		"active_battles": "campaign_core_or_runtime_fixture" if has_scn03_red_cliff_core and has_runtime_noncanonical_battle else "campaign_core" if has_scn03_red_cliff_core else "runtime_fixture" if has_runtime_noncanonical_battle else "unsupported",
+		"red_cliff_conditions": "campaign_core" if has_scn03_red_cliff_core else "runtime_fixture" if runtime.has("red_cliff_conditions") else "unsupported",
 		"news": "runtime_fixture" if runtime.has("news") else "unsupported",
 		"external_powers": EXTERNAL_POWER_SOURCE,
 	}
@@ -546,44 +549,62 @@ static func _observed_fleets(campaign, viewer: String) -> Array:
 	return out
 
 
-static func _active_battles(map_data: Dictionary, scenario_id: String,
+## SCN-03 적벽은 runtime fixture가 아니라 Campaign의 replay 파생 상태를 읽는다.
+## runtime은 코어에 정본이 없는 비적벽 전투의 임시 표시만 보완할 수 있으며, 절대로
+## 적벽 ID를 주입하거나 기존 적벽 상태를 덮어쓸 수 없다.
+static func _active_battles(campaign, map_data: Dictionary, scenario_id: String,
 		runtime: Dictionary) -> Array:
-	var provided = runtime.get("active_battles", [])
-	if not provided is Array:
-		return []
 	var out: Array = []
-	for value in provided:
-		if not value is Dictionary:
-			continue
-		var row: Dictionary = (value as Dictionary).duplicate(true)
-		var is_red_cliff := String(row.get("id", "")) == "BATTLE-RED-CLIFF"
-		if not is_red_cliff:
-			# 다른 시나리오의 전투는 호출자가 제공한 사실만 복사한다.
-			out.append(row)
-			continue
-		var conditions = runtime.get("red_cliff_conditions", {})
-		if scenario_id != SCENARIO_03_ID or String(row.get("status", "")) != "active":
-			continue
-		if not conditions is Dictionary or not red_cliff_ready(conditions):
-			continue
-		var guji := _find_named(map_data.get("bodies", []), "구지")
-		if guji.is_empty():
-			continue
-		row["name"] = "적벽 대회전"
-		row["system_id"] = String(guji.get("system", ""))
-		row["region_id"] = String(guji.get("region", ""))
-		row["anchor_body_id"] = String(guji.get("id", ""))
-		row["anchor_position"] = (guji.get("position", []) as Array).duplicate(true)
-		row["anchor_kind"] = "구지 궤도"
-		row["conditions"] = (conditions as Dictionary).duplicate(true)
-		out.append(row)
+	var conditions := _red_cliff_conditions(campaign, scenario_id, runtime)
+	if scenario_id == SCENARIO_03_ID:
+		for battle in campaign.active_battles:
+			var projected := _project_scn03_red_cliff_battle(battle, map_data, conditions)
+			if not projected.is_empty():
+				out.append(projected)
+	# Generic battles have no current Campaign record. Preserve explicit fixture rows,
+	# but reserve the canonical Red-Cliffs identity for the core projection above.
+	var provided = runtime.get("active_battles", [])
+	if provided is Array:
+		for value in provided:
+			if value is Dictionary and String(value.get("id", "")) != Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID and String(value.get("id", "")) != "BATTLE-RED-CLIFF":
+				var fallback: Dictionary = (value as Dictionary).duplicate(true)
+				# Runtime has no Campaign battle record for generic battles. Keep its
+				# display ID separate from the authoritative core battle identifier.
+				fallback["battle_id"] = String(fallback.get("id", ""))
+				fallback["provenance"] = "runtime_fixture"
+				out.append(fallback)
+	out.sort_custom(func(a, b): return String(a.get("id", "")) < String(b.get("id", "")))
 	return out
 
 
-## 런타임이 실제로 제공한 적벽 조건만 보존한다. 알려지지 않은 조건은 false로
-## 채우지 않아 UI가 미충족과 미확인을 구분할 수 있게 한다.
-static func _red_cliff_conditions(runtime: Dictionary) -> Dictionary:
-	var provided = runtime.get("red_cliff_conditions", {})
+static func _project_scn03_red_cliff_battle(battle, map_data: Dictionary,
+		conditions: Dictionary) -> Dictionary:
+	if battle == null or String(battle.battle_id) != Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID or String(battle.scenario_id) != SCENARIO_03_ID:
+		return {}
+	var guji := _find_named(map_data.get("bodies", []), "구지")
+	if guji.is_empty() or String(battle.region_id) != String(guji.get("region", "")) or String(battle.system_id) != String(guji.get("system", "")) or String(battle.anchor_body_id) != String(guji.get("id", "")):
+		return {}
+	return {
+		# `id` is the stable home-map route identity; `battle_id` remains the
+		# authoritative replay identity for all state and selection decisions.
+		"id": "BATTLE-RED-CLIFF", "battle_id": String(battle.battle_id),
+		"canonical_battle_id": String(battle.battle_id), "provenance": "campaign_core",
+		"name": "적벽 대회전",
+		"scenario_id": String(battle.scenario_id), "cause_event_id": String(battle.cause_event_id),
+		"status": String(battle.status), "system_id": String(battle.system_id),
+		"region_id": String(battle.region_id), "anchor_body_id": String(battle.anchor_body_id),
+		"anchor_position": (guji.get("position", []) as Array).duplicate(true),
+		"anchor_kind": "구지 궤도", "created_tick": int(battle.created_tick),
+		"started_tick": int(battle.started_tick), "campaign_stage": int(battle.campaign_stage),
+		"combat_phase": int(battle.combat_phase), "entry_available": bool(battle.entry_available),
+		"conditions": conditions.duplicate(true),
+	}
+
+
+## SCN-03 진행 원장은 unknown을 false로 바꾸지 않는다. 현재 코어가 없는 이전
+## 시나리오에서만 기존 runtime fixture를 사용한다.
+static func _red_cliff_conditions(campaign, scenario_id: String, runtime: Dictionary) -> Dictionary:
+	var provided = campaign.scn03_progress if scenario_id == SCENARIO_03_ID else runtime.get("red_cliff_conditions", {})
 	if not provided is Dictionary:
 		return {}
 	var out := {}
@@ -591,6 +612,16 @@ static func _red_cliff_conditions(runtime: Dictionary) -> Dictionary:
 		if provided.has(key) and typeof(provided[key]) == TYPE_BOOL:
 			out[key] = provided[key]
 	return out
+
+
+static func _has_runtime_noncanonical_battle(runtime: Dictionary) -> bool:
+	var provided = runtime.get("active_battles", [])
+	if not provided is Array:
+		return false
+	for value in provided:
+		if value is Dictionary and String(value.get("id", "")) != Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID and String(value.get("id", "")) != "BATTLE-RED-CLIFF":
+			return true
+	return false
 
 
 static func _news(value) -> Array:

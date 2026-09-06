@@ -75,13 +75,29 @@ func _test_phase_result_replay_and_tamper() -> void:
 	var campaign := _active_campaign()
 	var battle: ActiveBattle = campaign.active_battles[0]
 	_eq(battle.combat_phase, 1, "activation tick은 phase 1")
+	_eq(campaign.scn03_red_cliff_transition_news.size(), 1, "active phase 1 news 한 번")
+	_eq(campaign.scn03_red_cliff_transition_news[0]["news_id"],
+		"%s:%s" % [Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID,
+		Campaign.SCN03_RED_CLIFF_TRANSITION_ACTIVE_PHASE_1], "active news 안정 ID")
+	_ok(not campaign._record_scn03_red_cliff_transition_news(battle,
+		Campaign.SCN03_RED_CLIFF_TRANSITION_ACTIVE_PHASE_1, campaign.world.clock.tick),
+		"동일 active transition 직접 재기록 거부")
+	_eq(campaign.scn03_red_cliff_transition_news.size(), 1, "직접 재기록도 ledger 불변")
+	_ok(not campaign.to_save_dict()["campaign"].has("scn03_red_cliff_transition_news"),
+		"transition news는 snapshot 저장하지 않음")
 	var phase_one_restored := Campaign.from_save_result(campaign.to_save_dict(), _data)
 	_eq(phase_one_restored["status"], Save.STATUS_OK, "phase 1 save replay")
 	_eq(phase_one_restored["campaign"].active_battles[0].combat_phase, 1,
 		"phase 1 replay 유지")
+	_eq(phase_one_restored["campaign"].scn03_red_cliff_transition_news,
+		campaign.scn03_red_cliff_transition_news, "phase 1 news replay")
 	campaign.step()
 	_eq(battle.combat_phase, 2, "다음 tick에 결정론적으로 phase 2")
 	_eq(battle.phase_advanced_tick, campaign.world.clock.tick, "phase transition tick 기록")
+	_eq(campaign.scn03_red_cliff_transition_news.size(), 2, "phase 2 news 한 번")
+	_eq(campaign.scn03_red_cliff_transition_news[1]["news_id"],
+		"%s:%s" % [Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID,
+		Campaign.SCN03_RED_CLIFF_TRANSITION_PHASE_2], "phase 2 news 안정 ID")
 	var phase_two_restored := Campaign.from_save_result(campaign.to_save_dict(), _data)
 	_eq(phase_two_restored["status"], Save.STATUS_OK, "phase 2 save replay")
 	_eq(phase_two_restored["campaign"].active_battles[0].combat_phase, 2,
@@ -92,7 +108,13 @@ func _test_phase_result_replay_and_tamper() -> void:
 	_eq(battle.status, ActiveBattle.STATUS_RESOLVED, "result가 resolved 전이")
 	_eq(battle.result.get("winner_faction_id", ""), "sun_liu_side", "result 정본 값")
 	_ok(battle.result_applied, "result 적용 기록")
+	_eq(campaign.scn03_red_cliff_transition_news.size(), 3, "resolved news 한 번")
+	_eq(campaign.scn03_red_cliff_transition_news[2]["news_id"],
+		"%s:%s" % [Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID,
+		Campaign.SCN03_RED_CLIFF_TRANSITION_RESOLVED], "resolved news 안정 ID")
 	_ok(campaign.issue_scn03_red_cliff_result("cao_side").is_empty(), "resolved 뒤 reapply 거부")
+	campaign.step()
+	_eq(campaign.scn03_red_cliff_transition_news.size(), 3, "후속 tick도 news 중복 없음")
 	var save := campaign.to_save_dict()
 	var restored := Campaign.from_save_result(save, _data)
 	_eq(restored["status"], Save.STATUS_OK, "resolved save replay")
@@ -100,6 +122,12 @@ func _test_phase_result_replay_and_tamper() -> void:
 	var replay_battle: ActiveBattle = restored["campaign"].active_battles[0]
 	_eq(replay_battle.status, ActiveBattle.STATUS_RESOLVED, "replay resolved 상태")
 	_eq(replay_battle.result, battle.result, "replay result 동일")
+	_eq(restored["campaign"].scn03_red_cliff_transition_news,
+		campaign.scn03_red_cliff_transition_news, "resolved news replay")
+	var ledger_snapshot_tamper: Dictionary = save.duplicate(true)
+	ledger_snapshot_tamper["campaign"]["scn03_red_cliff_transition_news"] = []
+	_eq(Campaign.from_save_result(ledger_snapshot_tamper, _data)["status"], Save.STATUS_CORRUPT,
+		"news snapshot 주입 거부 — 로그 재생만 정본")
 	var manifest_tamper: Dictionary = save.duplicate(true)
 	var roles: Dictionary = manifest_tamper["world"]["commands"][4]["payload"]["fleet_roles"]
 	var role_keys: Array = roles.keys()

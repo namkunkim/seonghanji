@@ -24,9 +24,9 @@ extends RefCounted
 ## 다르면 어딘가에서 결정론이 깨진 것이다 — 그것을 잡는 것이 이 함수의 목적이다.
 
 const SAVE_VERSION := 1
-## RS-0.3 adds the replay-derived active Red-Cliffs phase/result reducer. Older
-## minor generations remain loadable on their original digest path.
-const CURRENT_RULESET := "RS-0.3.0"
+## RS-0.4 adds replay-derived Red-Cliffs transition news. Older minor
+## generations remain loadable on their original digest path.
+const CURRENT_RULESET := "RS-0.4.0"
 
 const STATUS_OK := "ok"
 const STATUS_OLD_MINOR := "old_minor"
