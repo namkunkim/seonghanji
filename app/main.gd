@@ -37,6 +37,8 @@ var _clock: Label
 var _speed: Label
 var _queue: Label
 var _view: StarmapView
+var _galaxy: Control
+var _tactical: TacticalRouteView
 
 
 func _ready() -> void:
@@ -54,6 +56,16 @@ func _ready() -> void:
 	_view.start_year = SCENARIO_START_YEAR
 	# 플레이어 본거지 성역에서 연다. L1 성도(미구현)가 붙으면 그쪽이 넘겨준다.
 	_view.setup(data, campaign, campaign.factions[campaign.world.player_faction].capital_system)
+	_galaxy = $GalaxyMap
+	_galaxy.call("setup", data, campaign)
+	_galaxy.system_selected.connect(func(sid: String):
+		_view.set_system(sid)
+		_galaxy.hide())
+	_tactical = $TacticalRoute
+	_galaxy.tactical_requested.connect(func():
+		_galaxy.hide()
+		_tactical.open_route("형주", "오회"))
+	_tactical.closed.connect(func(): _galaxy.show())
 	_refresh_bar()
 
 

@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://app/main.gd" id="1"]
 [ext_resource type="PackedScene" path="res://app/views/starmap_view.tscn" id="2"]
+[ext_resource type="Script" path="res://app/views/galaxy_map_view.gd" id="3"]
+[ext_resource type="Script" path="res://app/views/tactical_route_view.gd" id="4"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -92,3 +94,17 @@ vertical_alignment = 1
 [node name="View" parent="Root" instance=ExtResource("2")]
 layout_mode = 2
 size_flags_vertical = 3
+
+[node name="GalaxyMap" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("3")
+
+[node name="TacticalRoute" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("4")
