@@ -1,0 +1,35 @@
+{
+  "title": "성한지",
+  "subtitle": "STARS AND HEROES",
+  "tagline": "천하를 품은 우주, 다시 쓰는 삼국의 전설",
+  "world_size": [
+    3200,
+    1800
+  ],
+  "factions": {
+    "wei": {
+      "name": "위",
+      "hanja": "魏",
+      "color": "2EA8FF",
+      "deep": "0B4A91"
+    },
+    "shu": {
+      "name": "촉",
+      "hanja": "蜀",
+      "color": "28D68B",
+      "deep": "0A664A"
+    },
+    "wu": {
+      "name": "오",
+      "hanja": "吳",
+      "color": "F24E3E",
+      "deep": "7B201F"
+    },
+    "neutral": {
+      "name": "서역",
+      "hanja": "",
+      "color": "D8A144",
+      "deep": "705122"
+    }
+  }
+}

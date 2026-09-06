@@ -1,0 +1,130 @@
+{
+  "regions": [
+    {
+      "id": "wei",
+      "name": "중원 성해",
+      "type": "open_stellar_plains",
+      "center": [
+        1700,
+        520
+      ],
+      "radius": [
+        1050,
+        450
+      ],
+      "color": "2EA8FF"
+    },
+    {
+      "id": "shu",
+      "name": "익주 성분지",
+      "type": "protected_stellar_basin",
+      "center": [
+        700,
+        1220
+      ],
+      "radius": [
+        620,
+        430
+      ],
+      "color": "28D68B"
+    },
+    {
+      "id": "wu",
+      "name": "강동 성해",
+      "type": "river_delta_space",
+      "center": [
+        2520,
+        1180
+      ],
+      "radius": [
+        760,
+        500
+      ],
+      "color": "F24E3E"
+    },
+    {
+      "id": "neutral",
+      "name": "서량 성운대",
+      "type": "rugged_frontier",
+      "center": [
+        360,
+        470
+      ],
+      "radius": [
+        440,
+        330
+      ],
+      "color": "D8A144"
+    }
+  ],
+  "qinling": {
+    "name": "진령 성운장벽",
+    "role": "major_barrier",
+    "points": [
+      [
+        500,
+        820
+      ],
+      [
+        800,
+        760
+      ],
+      [
+        1100,
+        820
+      ],
+      [
+        1400,
+        770
+      ],
+      [
+        1700,
+        830
+      ],
+      [
+        2000,
+        800
+      ],
+      [
+        2250,
+        860
+      ]
+    ],
+    "width": 220
+  },
+  "yangtze": {
+    "name": "장강 우주대",
+    "role": "continental_logistics",
+    "points": [
+      [
+        980,
+        1190
+      ],
+      [
+        1350,
+        1210
+      ],
+      [
+        1700,
+        1130
+      ],
+      [
+        2050,
+        1040
+      ],
+      [
+        2380,
+        1050
+      ],
+      [
+        2720,
+        1140
+      ],
+      [
+        3080,
+        1110
+      ]
+    ],
+    "width": 260
+  }
+}
