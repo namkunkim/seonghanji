@@ -1,10 +1,11 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
-> **2026-09-06 병렬 검수 완료 — 다음 단일 작성 작업 확정:** 기준선은 `main` `7c7c6c5`다.
+> **2026-09-06 G-10 phase/result 슬라이스 검증 완료 — 다음 단일 작성 작업 확정:** 기준선은 `main` `6efab57`다.
 > G-10은 `675347f`의 조건 원장·DEC-01·pending battle과 `7c7c6c5`의 participant manifest·
-> `pending → active` 전이까지 전용 시험 4종(81/50/40/73, 실패 0)을 통과했다. 활성 5페이즈·
-> resolved 결과·뉴스 exactly-once·HomeMap 코어 projection은 미구현이므로 완료 승격 금지.
-> 다음 단일 작성 작업은 적벽 active phase 1→2와 resolved 결과 1회 적용, 저장·재생·tamper 시험이다.
+> `pending → active` 전이, `145dfbb`·`6efab57`의 결정론적 active phase 1→2와 resolved 결과 1회 적용까지
+> 전용 시험 5종(81/50/40/73/25, 실패 0)과 전체 코어 35섹션·701단언(실패 0)을 통과했다. phase 3~5·
+> 뉴스 exactly-once·HomeMap 코어 projection은 미구현이므로 완료 승격 금지.
+> 다음 단일 작성 작업은 적벽 전이 뉴스 exactly-once 원장과 HomeMapSnapshot core projection이다.
 > 일반 `_resolve_battle()`·뉴스·UI·해무 함대 변경은 범위 밖으로 둔다.
 
 > **2026-09-06 홈 지도·함대 항행 검수:** 기본 `scenes/main.tscn` 경로와 HomeMapSnapshot·
@@ -34,8 +35,8 @@
 > 필수 콘텐츠 범위 = `단기판 필수 범위 v1.0` (§8.5). 착수 승인 시 최소 기록 ✅5 / 🟨2
 > (3 밸런스 기준선 실제 잠금 = `Q-01` 완료 시 · 5 D3·D7 병렬 — 둘 다 개발 착수 후).
 >
-> **다음 단일 작성 작업 = G-10 적벽 active phase 1→2 + resolved 결과 1회 적용 + 저장·재생·
-> tamper 시험.** `A-01`·`A-02`·`A-03`·`A-07`은 구현 후 검증 대기를 유지한다.
+> **다음 단일 작성 작업 = G-10 적벽 전이 뉴스 exactly-once 원장 + HomeMapSnapshot core projection.**
+> `A-01`·`A-02`·`A-03`·`A-07`은 구현 후 검증 대기를 유지한다.
 >
 > **여전히 미착수:** 명장 초상 120 대량 생성(별도 승인) · Runway 가입/결제/영상 생성
 > (S6.1 약관 선행) · L2 3D 실착수(L1 완성 S4 후) · G-08·G-09 설계(L1 완성 후) · L3 컷씬(S6).

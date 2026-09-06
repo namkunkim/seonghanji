@@ -5,8 +5,9 @@
 > 범위: 시나리오 3 「적벽 전야」의 조건 판정부터 저장·복원·재생 가능한 지속 전투와 홈 표시까지의 경계. 이 문서는 규칙값이나 코드를 만들지 않는다.
 
 > 구현 기준선: `675347f`(조건 원장·DEC-01·pending battle), `7c7c6c5`(participant manifest·
-> `pending → active`). 전용 시험 4종은 81/50/40/73단언, 실패 0. 활성 5페이즈·resolved 결과·
-> 뉴스 exactly-once·HomeMap 코어 projection은 아직 없다.
+> `pending → active`), `145dfbb`·`6efab57`(phase 1→2·resolved 결과 1회 적용). 전용 시험 5종은
+> 81/50/40/73/25단언, 실패 0이며 전체 코어는 35섹션·701단언, 실패 0이다. phase 3~5·뉴스 exactly-once·
+> HomeMap 코어 projection은 아직 없다.
 
 ## 1. 목표와 비목표
 
@@ -21,9 +22,9 @@
 
 ## 2. 현재 구현과 결손
 
-`Campaign.step()`은 도달 명령, 월 정산, 함대 도착, AI, 이벤트, 종료를 고정 순서로 처리한다. 일반 적대 권역 도착은 기존 `_resolve_battle()`의 즉시 전투를 유지한다. 적벽만 안정 ID `SCN-03-E09-RED-CLIFF-01`로 `pending`을 만들고 participant manifest의 필수 함대가 SYS-13에 모이면 `active` phase 1로 전이한다. 참가자 목록·역할·시작 tick은 전이 시 고정된다. 다만 phase 2~5 진행, 손실·점령을 포함한 resolved 결과, 전이 뉴스는 아직 없다 (`core/campaign.gd`, `core/combat/active_battle.gd`). `Battle`은 기존 일반 전투의 정수 산식 모듈이다 (`core/combat/battle.gd`).
+`Campaign.step()`은 도달 명령, 월 정산, 함대 도착, AI, 이벤트, 종료를 고정 순서로 처리한다. 일반 적대 권역 도착은 기존 `_resolve_battle()`의 즉시 전투를 유지한다. 적벽만 안정 ID `SCN-03-E09-RED-CLIFF-01`로 `pending`을 만들고 participant manifest의 필수 함대가 SYS-13에 모이면 `active` phase 1로 전이한다. 참가자 목록·역할·시작 tick은 전이 시 고정되고, 다음 tick에 phase 2로 결정론적으로 전이한다. phase 2의 canonical 승자 결과는 player command log에서 한 번만 적용되어 `resolved`가 된다. phase 3~5, 손실·점령을 포함한 결과 효과, 전이 뉴스는 아직 없다 (`core/campaign.gd`, `core/combat/active_battle.gd`). `Battle`은 기존 일반 전투의 정수 산식 모듈이다 (`core/combat/battle.gd`).
 
-캠페인 저장·재생은 시드, 플레이어 명령 로그, 목표 틱에서 재구성한다. 현재 pending/active 상태·manifest·phase 1은 replay/digest 대상이며 manifest 변조 검출 시험도 통과했다. 아직 존재하지 않는 phase 진행·resolved 결과·뉴스의 저장·복원은 검증할 수 없다. V-62의 원칙대로 파생 가능한 상태는 로그 재생으로 만들고, 스냅숏은 캐시이며 로그와 충돌하면 로그가 정본이다.
+캠페인 저장·재생은 시드, 플레이어 명령 로그, 목표 tick에서 재구성한다. pending/active/resolved 상태·manifest·phase 1/2·결과는 replay/digest 대상이며, manifest·phase·결과·중복 적용 변조 검출 시험도 통과했다. 뉴스의 저장·복원은 아직 검증할 수 없다. V-62의 원칙대로 파생 가능한 상태는 로그 재생으로 만들고, 스냅숏은 캐시이며 로그와 충돌하면 로그가 정본이다.
 
 현 `HomeMapSnapshot`의 `active_battles`, `red_cliff_conditions`, `news`는 `runtime` 입력의 fixture 또는 unsupported이다. capability는 모두 `false`, provenance는 `runtime_fixture`/`unsupported`이며 저장 가능한 코어 사실이 아니다. `scripts/Main.gd` 기반 기본 홈 경로는 전용 회귀를 통과했지만 코어 active battle projection은 없다. 미커밋 `app/main.gd`/`app/main.tscn` 별도 표면은 parse/setup 오류가 있는 실험 경로이므로 본 계약의 구현 대상으로 삼지 않는다.
 
@@ -119,9 +120,9 @@ result (resolved에서만), news_transition_ids[]
 
 1. ✅ 조건 원장·안정 ID·미발생 DEC-01·중복 방지 (`675347f`).
 2. ✅ 전장 anchor·participant manifest·pending 재검증·`pending → active` phase 1 (`7c7c6c5`).
-3. 다음: 결정론적 active phase 1→2와 resolved 결과 1회 적용을 최소 슬라이스로 구현한다.
-4. 각 active phase 및 resolved 상태의 저장·복원·재생·지문 변조 시험을 통과한다.
-5. 뉴스 exactly-once 원장과 HomeMapSnapshot projection을 연결한다.
+3. ✅ 결정론적 active phase 1→2와 resolved 결과 1회 적용을 최소 슬라이스로 구현했다 (`145dfbb`·`6efab57`).
+4. ✅ phase 1·phase 2·resolved 상태의 저장·복원·재생·manifest/phase/result/reapply 변조 시험을 통과했다.
+5. 다음: 뉴스 exactly-once 원장과 HomeMapSnapshot projection을 연결한다.
 6. C-02 배너·전투 진입 및 Windows 1600×900 수용을 진행한다.
 
 ## 13. 검증 기준

@@ -1,9 +1,9 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
-> **2026-09-06 병렬 검수 결과:** `main` `7c7c6c5`에서 G-10의 조건 원장·DEC-01·pending battle·
-> participant manifest·`pending → active` 전이는 구현 및 전용 시험 통과. 그러나 active 5페이즈·
-> resolved 결과·뉴스 exactly-once·HomeMap 코어 projection은 미구현이므로 G-10은 완료가 아니다.
-> 다음 단일 작성 슬라이스는 phase 1→2와 resolved 결과 1회 적용 및 저장·재생·tamper 시험이다.
+> **2026-09-06 G-10 phase/result 검증 결과:** `main` `6efab57`에서 조건 원장·DEC-01·pending battle·
+> participant manifest·`pending → active`와 결정론적 phase 1→2·resolved 결과 1회 적용을 구현 및 전용 시험 통과.
+> phase 3~5·뉴스 exactly-once·HomeMap 코어 projection은 미구현이므로 G-10은 완료가 아니다.
+> 다음 단일 작성 슬라이스는 전이 뉴스 exactly-once 원장과 HomeMapSnapshot core projection이다.
 > 홈 지도/함대 이동은 기본 실행 경로의 전용 시험을 통과했으나 C-01·Windows 실기·3D/자산 수용이
 > 남아 C-04 완료 승격 금지. `app/main.tscn` 실험 경로의 parse/setup 오류는 독립 수정 또는 제외한다.
 
@@ -101,7 +101,7 @@
 | G-07 | 승패 조건·복귀 브리핑·튜토리얼 | ⬜ | C-02, G-01 | 단기판의 시작·진행·종료·재진입 흐름이 완결됨 |
 | G-08 | 무장 위성 방어 시스템 설계·구현 | ⬜ | A-05 | D4 = ㉯ 시스템 신설(V-58). 권역 방어 시설 — `combat.md` §8.2 재설계 + `domestic.md` 건설 명령 + `star-map.md` §5 승격 + `ship-specs.md` §3.5 관계. `VID-002` 컷씬은 이 뒤. **첫 프로토타입 범위 밖(V-59)** — L1 완성(S4) 후 착수 |
 | G-09 | 기동병기 상세 설계(에이스 판정) | ⬜ | — | D5 = ㉮ 설계 선행(V-58). 유인/무인 기동병기·강습정 판정 규칙. 시각 쟁점 5·음원 검토 4·`VFX-007`(L2 연출)의 공통 선행. `HANDOVER.md` §4.4 미착수 영역을 큐로 승격. **첫 프로토타입 범위 밖(V-59)** |
-| G-10 | 적벽 개전·활성 전투·뉴스 수직 흐름 | ⬜ 설계/계약 준비 | A-01, A-02, A-03, A-05, C-01 | 발주자 승인 계약과 기반 슬라이스 `675347f` 기록: Event 09 조건 원장·SCN-03 사건 기록·저장/재생·구지 pending 전투까지 구현/전용 시험 통과. 아직 participant manifest·`pending → active`·5페이즈·뉴스/C-02/HomeMapSnapshot·시각 수용 검증은 미착수이므로 완료나 진행 중으로 승격하지 않는다. 완료 기준은 동일 시드/입력에서 조건 충족 → 사건·뉴스 → 활성 전투 → 홈 지도·배너 → 종료 → 저장·복원 동일 결과. |
+| G-10 | 적벽 개전·활성 전투·뉴스 수직 흐름 | 🟨 부분 구현·검증 | A-01, A-02, A-03, A-05, C-01 | `675347f`·`7c7c6c5`·`145dfbb`·`6efab57`: Event 09 조건 원장·pending·participant manifest·`pending → active` phase 1·결정론적 phase 1→2·resolved 결과 1회 적용·저장/재생/변조 시험까지 구현·검증. 전용 5종 81/50/40/73/25 및 전체 코어 35섹션·701단언 실패 0. phase 3~5·뉴스/C-02/HomeMapSnapshot·시각 수용은 미구현이므로 완료로 승격하지 않는다. 완료 기준은 동일 시드/입력에서 조건 충족 → 사건·뉴스 → 활성 전투 → 홈 지도·배너 → 종료 → 저장·복원 동일 결과. |
 
 ### D4. 개발 착수 후: 밸런스·품질
 
