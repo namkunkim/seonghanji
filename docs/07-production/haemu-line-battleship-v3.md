@@ -67,6 +67,21 @@
 이 베이스는 선수·4기 엔진·주포·측면 장갑·우현 정비 베이를 실제 메시로 분리해 두었다.
 정식 LOD0 인수 전에는 §3의 재질 슬롯 4개 이하와 70k–100k triangle 목표에 맞춰 병합·베이크·상세화를 수행한다.
 
+### 2.3 게임용 V3 최종화 패스 — 2026-09-06
+
+변경된 `wei_haemu_concept_rebuild_v3.blend`의 둥근 선수 실루엣을 유지한 채, 곡면 추종 장갑 타일·제조 이음·포탑 기계부·열교환기·정비 베이 내부·4기 엔진 리브를 추가했다. `finalize_haemu_v3_game_asset.py`가 원본을 보존하면서 정적 메시 병합, UV 생성, 공용 4K PBR 세트, LOD0~3을 재생성한다.
+
+| 산출물 | 실측 |
+|---|---:|
+| `haemu_line_ship_v3_final.blend` | 편집 가능한 최종화 원본 |
+| `haemu_line_ship_lod0_v3_final.glb` | 74,208 triangles · 6 mesh batches |
+| `haemu_line_ship_lod1_v3_final.glb` | 27,450 triangles · 6 mesh batches |
+| `haemu_line_ship_lod2_v3_final.glb` | 5,560 triangles · 6 mesh batches |
+| `haemu_line_ship_lod3_v3_final.glb` | 636 triangles · 6 mesh batches |
+| 4K PBR | `BaseColor`, OpenGL `Normal`, `ORM`, `Emissive` |
+
+검증: `tests/verify_haemu_v3.gd`가 네 GLB를 `GLTFDocument`로 파싱하고 씬 생성을 확인한다. 2026-09-06 실행 결과 4/4 통과. `test_home_fleet_route_integration.gd`는 V3 연결 뒤 83/83 통과했다.
+
 ## 3. 모델·재질 납품물
 
 | 납품물 | 필수 기준 |

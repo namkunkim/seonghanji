@@ -29,5 +29,8 @@ theme/custom_font="res://assets/fonts/NotoSansKR-Regular.tres"
 
 [rendering]
 
-renderer/rendering_method="gl_compatibility"
+# PC builds use Forward+ so the hero-vessel observation view can enable
+# screen-space lighting and reflections. Handheld builds retain the
+# Compatibility renderer as the supported fallback.
+renderer/rendering_method="forward_plus"
 renderer/rendering_method.mobile="gl_compatibility"
