@@ -1,27 +1,36 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
-> **2026-09-07 안정화 감사 완료 — 기준선 `main`/`origin/main` = `540189e`:** `26595be`의 최신
+> **2026-09-07 안정화 감사 완료 — 기준선과 완료 상태를 분리:** 안정화 시작 기준선은
+> `540189e`이며, 구현 커밋은 `9195a4a`·`8a2585b`, 문서 커밋은 `fb8f89b`다. 재확인 시점의
+> 로컬 HEAD는 `fb8f89b`, `origin/main`은 `540189e`이고 로컬은 **ahead 3 / behind 0**이다. `9195a4a`는
 > 3D 항행 계약은 코어 제3함대의 실제 1척을 바꾸지 않고 **관측용 전대 1개 28척**(전열 11·포격 6·강습 4·
 > 전자 3·공성 1·보급 3)을 어린진으로 축약한다. 노후 통합 시험의 1척 표시 기대를 이 계약으로 교체했고,
 > 구현에서 중앙열에 있던 보급함 1척을 후방으로 옮겨 공성 1·보급 3 전부가 후방 지원 역할을 갖게 했다.
 > `HomeFleetRouteIntegration` 86/0, `FleetRouteTransition` 54/0이다. C-04·C-05·P-02 승격 근거가 아니다.
 >
-> **홈맵 적벽 marker:** 화면 회귀가 아니라 시험 fixture 노후화였다. `HomeMapSnapshot`은 runtime
-> `active_battles`/조건 주입을 읽지 않고 Campaign 재생에서 파생한 active battle만 투영한다. 따라서
+> **홈맵 적벽 marker:** 화면 회귀가 아니라 시험 fixture 노후화였다. **적벽 canonical identity에는** runtime
+> `active_battles`/조건 주입을 읽지 않고 Campaign 재생에서 파생한 active battle만 투영한다(비적벽 generic
+> runtime fixture는 별도 허용). 따라서
 > `test_home_map_zoom.gd`가 Event 03/04/06/07 결과에서 canonical pending을 만들고 최소 active로 전이하도록
 > 고쳤으며, marker 0건 뒤 배열 `[0]` 접근은 2차 오류였다. `HomeMapZoom` 175/0,
 > `HomeMapSnapshot` 348/0, `HomeSubmenuRouting` 347/0, 적벽 phase/result 38/0이다.
 >
 > **`540189e` 은하 지도 내비게이션과 작업 트리:** `540189e`는 `app/main.gd`·`app/main.tscn`·
-> `app/views/galaxy_map_view.gd`의 내비게이션 커밋이며, 위 홈맵 회귀로 유지 확인됐다. 상태 출력의 295개
-> 항목(디렉터리 축약)을 실제 경로로 펼치면 약 663개다: A 정본 후보 54, B 런타임 후보 25, C 생성/캐시 522,
-> D archive/중복 24, E 소유권 불명확 35. root 함선 GLB 5종은 현 항행이 참조하지 않는 대형 재수출 후보이므로
-> 반입·복원·삭제를 보류한다. `out/**`·캐시·`.import`/`.uid`를 일괄 add하지 않는다. 다음 단일 작성 작업은
+> `app/views/galaxy_map_view.gd`의 내비게이션 커밋이며, 위 홈맵 회귀로 유지 확인됐다. `status`의 295행은
+> untracked 디렉터리를 축약한 수치이고, `ls-files --others` 651개와 수정 9개를 합친 실제 감사 대상은 660개다:
+> A 54, B 46, C 511, D 42, E 7. 상세은 `docs/07-production/worktree-artifact-triage-2026-09-07.md`다.
+> root 함선 GLB 5종은 현 항행이 **직접 참조하는 런타임 후보**이므로 보존·검증 후 별도 반입만 허용한다.
+> `out/**`·캐시·`.import`/`.uid`를 일괄 add하지 않는다. 다음 단일 작성 작업은
 > 여전히 **G-10 C-02 배너/action 계약 + canonical `battle_id` 전투 진입 경계**다.
 >
-> 전체 `run_tests.gd`는 현 환경의 `user://` 로그/저장 쓰기 거부로 저장 섹션이 실패하여 698/701 단언,
-> 실패 2, exit 1이다. 저장 시험 제외나 하한 조정은 하지 않았으며, 이는 위 기능 회귀와 별도인 A-07 환경
-> 신뢰성 후속이다.
+> 전체 `run_tests.gd`는 현 환경의 `user://` 로그/저장 쓰기 거부로 저장 섹션이 실패하여 698단언(697 통과),
+> 실패 2, exit 1이다. 저장 실패 뒤 빈 Dictionary의 `seed` 접근이 연쇄됐으며 기능 회귀가 아니다. 저장 시험 제외나
+> 하한 조정은 하지 않았다. A-07-E1(실행 환경)과 A-07-E2(3D teardown)를 후속으로 둔다.
+
+> **A-07 후속(이번 세션 구현 금지):** **A-07-E1**은 headless `user://` 로그·저장 생성, 저장 섹션 정상 실행,
+> 35섹션·701단언 이상, 실패 0·exit 0, 저장 실패 뒤 빈 Dictionary 역참조 금지가 완료 기준이다. **A-07-E2**는
+> `HomeFleetRouteIntegration` 기능 단언을 유지하면서 생성 노드·Mesh·Material·Texture의 명시 해제와
+> ObjectDB/RID 누수 제거(또는 엔진 한계 공식 분류), 기능·teardown 결과 분리 보고가 완료 기준이다.
 
 > **2026-09-07 항행 상세 3D 전대 연출 완료(로컬):** `app/views/fleet_voyage_3d.gd`가 제공된 6종
 > GLB를 `assets/models/ships/voyage_lod/`의 전대 관측 LOD로 읽는다. 기본 균형 편성 28척은 전열 11·
