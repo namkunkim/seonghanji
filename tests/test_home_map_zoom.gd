@@ -105,6 +105,27 @@ func _ready_conditions() -> Dictionary:
 	}
 
 
+## G-10 이후 적벽 표식은 runtime fixture가 아니라 Campaign replay 파생 전투만
+## 투영한다. 이 helper는 Event 03/04/06/07의 정본 결과를 접어 pending을 만들고,
+## snapshot 투영용 최소 active 상태만 명시적으로 만든다.
+func _ready_red_cliff_campaign() -> Campaign:
+	var ready_campaign := Campaign.scenario_03(GameData.load_all(), 208)
+	ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT03,
+		{"cao_southward_complete": true})
+	ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT04,
+		{"sun_quan_independent": true})
+	ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT06,
+		{"liu_bei_hostile_to_cao": true})
+	ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT07, {
+		"sun_liu_military_pact": true, "yangtze_defense_line": true,
+	})
+	assert(ready_campaign.active_battles.size() == 1,
+		"ready fixture must derive the canonical Red-Cliffs pending battle")
+	ready_campaign.active_battles[0].activate_red_cliff([], [], {}, "",
+		ready_campaign.world.clock.tick)
+	return ready_campaign
+
+
 func _function_source(path: String, function_name: String) -> String:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
@@ -177,10 +198,7 @@ func _init() -> void:
 		"active_battles": [{"id": "BATTLE-RED-CLIFF", "status": "active"}],
 	})
 	_eq(battle_only.active_battles(), [], "활성 전투 입력만으로 적벽 marker 활성화 금지")
-	var ready = Snapshot.from_campaign(campaign, 208, {
-		"active_battles": [{"id": "BATTLE-RED-CLIFF", "status": "active"}],
-		"red_cliff_conditions": _ready_conditions(),
-	})
+	var ready = Snapshot.from_campaign(_ready_red_cliff_campaign(), 208)
 	_eq(ready.active_battles().size(), 1, "ready snapshot에서만 적벽 marker 활성")
 	_eq(ready.active_battles()[0].get("anchor_body_id"), "BODY-RGN-04-01",
 		"활성 적벽 marker는 구지에 고정")
