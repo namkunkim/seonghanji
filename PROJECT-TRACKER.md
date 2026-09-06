@@ -1,7 +1,22 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
+> **2026-09-06 병렬 검수 결과:** `main` `7c7c6c5`에서 G-10의 조건 원장·DEC-01·pending battle·
+> participant manifest·`pending → active` 전이는 구현 및 전용 시험 통과. 그러나 active 5페이즈·
+> resolved 결과·뉴스 exactly-once·HomeMap 코어 projection은 미구현이므로 G-10은 완료가 아니다.
+> 다음 단일 작성 슬라이스는 phase 1→2와 resolved 결과 1회 적용 및 저장·재생·tamper 시험이다.
+> 홈 지도/함대 이동은 기본 실행 경로의 전용 시험을 통과했으나 C-01·Windows 실기·3D/자산 수용이
+> 남아 C-04 완료 승격 금지. `app/main.tscn` 실험 경로의 parse/setup 오류는 독립 수정 또는 제외한다.
+
+> **2026-09-06 홈 은하 지도 연동 — 진행 중:** 로컬 작업 트리에서 `app/home_map_snapshot.gd`가 `Campaign`/`GameData`의 읽기 전용 표시 스냅샷을 만들고, `app/main.tscn`·`app/main.gd`가 은하 지도 선택→성계 뷰 및 전술 경로 진입을 연결했다. 홈 지도 회귀 시험은 스냅샷 199·HUD 라우팅 239·의미 확대 175·활성 전투 상태 4, 총 **617 통과·실패 0**이다. 다만 변경은 아직 미커밋이고 Windows 1600×900 실기 캡처·입력 검증 및 C-01 선행이 남아 있으므로 **C-04 또는 기존 개발 큐를 완료로 승격하지 않는다.** 전체 `run_tests.gd`는 현 실행 환경의 `user://` 쓰기 차단으로 저장 섹션이 실패해 698/701에 그쳤으며, D1 검증 증거로 사용하지 않는다.
+
+> **2026-09-04 경로 우선 지도 v3 산출:** V-67~V-69에 따라 거주 행성계 22개·천체/시설 191개·행성 간 경로 150개와 혼합 장애물을 추가했다. 성간 경로 37개는 기저항로 15/회랑 13/고속항로 5/고속항로+관문 4로 역할을 분리하고 지형 추종 곡선으로 생성한다. 회랑 내부 40%·주변 70% 이상이며 하천 형상은 지형 참고선이다. Godot 이동·전투·저장 배선은 완료로 승격하지 않는다.
+
+> **2026-09-03 별도 지도 산출:** 중국 지형 기반 공통 공간 데이터·좌표표·연속 확대 미리보기 작성. 기존 성계 19/권역 45/회랑 15/항로 37 유지, 행성·시설 표시 104개. 수로 100% 개방과 분지·평원 장애 면적 20~30%, 고정 지형 재생성 검증을 통과했다. 증거 `out/galaxy-map/validation.json`, `browser-validation.json`; 설명 `docs/01-world/galaxy-detail-map.md`. **Godot 이동·전투·저장 연동은 미완료**이며 기존 개발 큐 항목을 완료로 승격하지 않는다.
+
+> **2026-09-03 플랫폼 우선순위 변경:** 발주자가 **Windows PC 먼저 개발, Android·iOS 플레이 지원**을 지정했다. 현재 화면·입력 검증의 첫 대상은 Windows PC다. 기존 Android 실기 항목은 후속 플랫폼 검증으로 구분하며, 각 작업의 기존 완료 증거는 보존한다. 요구 정본 `docs/07-production/requirements.md` B1·C1; 기존 일정의 재산정은 별도 작업이다.
+
 > **프로젝트 진행 관리의 기준 파일.** 구현 지시서가 아니라, 우선순위·의존성·완료 증거를 관리한다.
-> 기준일: **2026-09-01**
+> 기준일: **2026-09-06**
 > 최신 구현 상태의 근거: `HANDOVER.md`, Git 이력, 각 작업의 변경 파일과 검증 결과.
 >
 > **현재 단계: 개발 착수 (D1 기반 안정화).** 프리프로덕션(P0-01~P0-09)이 2026-09-01 에
@@ -30,6 +45,7 @@
 | 데이터·스키마 | 🟦 문서 정합성 보완 | 구조·참조 검사는 통과, 문서 카운트 불일치 1건 |
 | 한글 폰트 | 🟦 기기 검증 대기 | 한글 11,172자 누락 0, 장식 기호 시스템 폴백 경고 |
 | 저장/재생 | 🟦 코어 인수 검증 대기 | 캠페인 저장 계약 = `preproduction-save-contract.md` (V-62). `A-01` 모델 + `A-02` 지문·변조·손상 복구 구현, C-03 UI 후속 |
+| 홈 은하 지도 | 🟨 로컬 연동·시각 검증 중 | 기본 실행 경로의 `HomeMapSnapshot`·지도/경로·함대 이동 전용 회귀 650 통과. `app/main.tscn` 실험 경로 오류, Windows 실기 캡처/입력, C-01, 3D 대표 편대·자산 수용이 남아 C-04 완료 아님 |
 
 ---
 
@@ -164,6 +180,7 @@ D3·D7 · 음원 검토 5 · 시각 쟁점 4·5·7·8. 집계 36항 = **해소 2
 
 | 날짜 | ID | 결과 | 커밋 / 검증 | 비고 |
 |---|---|---|---|---|
+| 2026-09-06 | 홈 은하 지도 연동 | 🟨 **진행 — 읽기 전용 홈 표시 스냅샷과 화면 전환을 로컬 작업 트리에 구현.** `HomeMapSnapshot`은 `Campaign`/`GameData`에서 시나리오 시계·세력·권역·관측 가능한 함대·동맹·대기 명령을 투영하고, 정본 지형(성계 19·권역 45·천체 245·항로 37)과 가변 상태를 분리한다. `app/main`은 은하 지도에서 성계를 고르면 기존 성계 뷰로, 전술 경로 요청 시 전술 경로 뷰로 전환한다. 미구현 전투·뉴스·외부 세력은 capability/provenance로 fallback임을 명시한다 | 변경: `app/home_map_snapshot.gd`, `app/main.gd`, `app/main.tscn`, `app/views/galaxy_map_view.gd`, `app/views/tactical_route_view.gd`, `scripts/Main.gd`, `scripts/HomeSubmenu.gd`, 관련 시험. Godot 4.7.2 headless: `test_home_map_snapshot.gd` 199, `test_home_submenu_routing.gd` 239, `test_home_map_zoom.gd` 175, `test_home_active_battle_status.gd` 4 — **합계 617 통과·실패 0** | 미커밋 변경이며 `run_tests.gd` 전체는 현 환경에서 `user://` 로그/저장 쓰기가 막혀 세이브 섹션 실패·698/701로 종료. 따라서 D1·C-04 완료 증거가 아니며, Windows 1600×900 캡처·입력/미니맵 확인 및 C-01 선행 후에만 C-04 수용 여부를 판정 |
 | 2026-09-02 | **A-02** | 🟦 **검증 대기 — 저장 지문·변조·손상 복구 인수 구현.** `Save.inspect(d)`가 스키마·ruleset·부분 손상을 재생과 분리 판정하고 `Campaign.from_save_result/read_save_result`가 재생 지문을 검증한다. major/future minor 거부, old minor 세이브 규칙 재생, patch 무시. 첫 손상 명령 발행 틱 직전까지 복구하고 이후 로그 폐기 + 복원 개월 고지. JSON 64비트 손실을 발견해 캠페인 지문을 무손실 31비트로 고정. 플레이어 함대 이동 로그 재생으로 위치·척수·사기·이동 상태 일치 확인 후 잠정 `fleets_snapshot` 제거 | **`a69ab85`** · 구현: `core/save.gd`·`core/campaign.gd`·`schema/save-campaign.json`·`tests/run_save_restore.gd`. 시험: 정상/5종 변조×3시드, 중간 파일 왕복+새 GameData 2시드, ruleset 4경로, 월 경계, 손상 3종, 함대 파생. `run_save_restore` **73단언·SKIP 2·실패 0** | 문서 `preproduction-save-contract.md` §4.2 매핑·§3.5·검토 3/4·체크박스, HANDOVER §4.0 동기화. 🟦→✅ 승격은 검수자·발주자 몫 |
 | 2026-09-02 | **A-01** | 🟨 **진행 — 캠페인 저장·복원 모델 구현 착수분** (계약 = `preproduction-save-contract.md` §2·§3·§4 · V-62). ① `schema/save-campaign.json` 신설 — World 세이브(`save.json`)를 `$ref` 로 품고 캠페인 계층의 외생 입력(`hb_milli`·`ai_domestic_enabled`)·`digest`·종료 상태(`ended`·`end_reason`)·`fleets_snapshot`(§2.4 잠정 · TODO(A-03)) 추가. `save.json` 이 `additionalProperties:false` 라 확장 아닌 별도 파일(발주자 결정). ② `core/save.gd` — `to_dict` 가 `origin=="ai"` 명령을 직렬화에서 제외(재생 중 `step()` 이 결정론적으로 재발행 → 이중 발행 방지 · §2.3 전제 2 · A-03 origin 규약), `replay` 의 `_seq` 를 `max(seq)+1`(필터 후 불연속 대응), 범용 `write_dict()`. ③ `core/campaign.gd` — `Campaign.digest()` (§4.3 필드: 세력·함대·권역·외교·이벤트를 정렬 순회로 접고 진단 계수 제외) · `to_save_dict()` · `static from_save()` (셋업 `scenario_03(seed)` → 플레이어 명령 주입 → `replay_to(목표틱)`) · `replay_to()` (`run_to_end` 와 달리 종료 강제 안 함) · `write_save()`/`read_save()` · `_settle_month()` 에 자동 저장 플러시 지점 표식(주기·UI 는 C-03). ④ `core/world.gd` — 호출부 없는 `to_save()` 삭제, `Save.to_dict` 를 세이브 직렬화 정본으로 일원화(검토 8). ⑤ `tests/run_campaign_replay.gd` 신설(standalone · `run_tests.gd` 미변경 → 하한 664 델타 0) — 조건 1(지문 존재·상태 민감)·2(저장 전 = 재생 후, 도중 저장 3시드 + 파일 왕복) 통과, 조건 3·4 미리보기 통과. **불러오기 시간 실측(검토 포인트 1):** 전장 SCN-03(2160틱 = 3게임년) 재생 5시드 평균 **1528ms**(1096~2108ms · 틱당 0.71ms). → **순수 로그 재생 유지 권고** — 단일 시나리오 단기판은 허용 범위. 경계 스냅숏은 다중 시나리오(28년 전장) 진입 시 재검토(§3.4) | `a101327` (save.gd + schema) · `[이 커밋]` (campaign.gd·world.gd·schema 보강·`run_campaign_replay.gd`·트래커). 검증(HEAD `27a3509` 트리): `--import` 오류 0 · `run_tests` 34/34 · 664/664 · 실패 0 · `run_campaign_replay` **29/29** · `--quit-after 200` 오류 0 · `run_campaign`(M0) 은 A-07 이 공유 트리에서 100회 완주 확인(105초 · 합격 2/3 = 기준선) — A-01 변경은 `run_to_end`/`step` 핫패스를 건드리지 않음(신규 메서드 append + 주석 + 삭제만) | **잔여(A-01 소관):** 지문 인수 조건 3~7 정식 시험 = **A-02**(`run_save_restore.gd` 채움 · §4.2) · `HANDOVER.md` §0 저장/재생 행·§4.0 A-01 행 동기화 · `save-contract.md` 미작성 항목 체크박스(스키마·`digest()`·재생 경로) 해소 표시. **범위 밖:** 경계 스냅숏 구현(실측 후 별도 판정) · S3.8 UI(C-03). doc-data-check: 한자 0(신규분) · SF 어휘 해당 없음(코드). ⚠ 이 세션의 `git stash` 사고 → A-03 이 `git stash pop` 복구(충돌 0). 🟨→🟦/✅ 승격은 검수자·발주자 몫 |
 | 2026-09-02 | **A-07** | 🟦 **검증 대기 — 구현 완료** (자기 ✅ 금지). 테스트 실행 신뢰성 보강 (계약 = `DECISIONS.md` V-61 ④). ① `tests/harness.gd` 신설 — `EXIT_PASS=0`/`EXIT_FAIL=1` · `MIN_UNIT_ASSERTIONS=664`(하한 · 두 러너 preload). ② `run_tests.gd` — `_failed_sections` 추적, `_ok`/`_eq` 실패 시 현재 섹션 기록, 요약에 실패 섹션 목록 · 단언 수(`_pass+_fail`) < 664 시 실패 종료 · `Harness.EXIT_*`. 기존 `EXPECTED_SECTIONS := 34` 섹션 소멸 가드 유지 — 둘은 서로 다른 회귀를 잡는다(섹션 통째 vs 섹션 안 단언). ③ `run_campaign.gd` — `구조 검증` 블록: 완주 100/100 · HB 300/300 · 세계상태·리더 산출 · 전투·틱·명령 누적 → `struct_fail>0` 이면 exit 1. **밸런스(합격 N/3)·미발동 이벤트는 exit에 반영 안 함** — 기준선은 `Q-01` 완료 시 잠금(V-61 ③). ④ `tests/run_save_restore.gd` 신설 — 시험 5층 중 저장 복원 층 **스텁**(SKIP·exit 0). 케이스 = `A-02`, `save-contract.md` §4.2 인수 7종 목록 명시 | `f3fd832` (path-scoped 4파일 · 커밋 순서 ④: ①`821d225`→②`4ada641` A-03→③`a101327` A-01→④). 검증(HEAD `a101327` 트리): `--import` exit 0 · 오류 0 / `run_tests` 섹션 34/34 · 단언 664 (하한 664) · 실패 0 · **exit 0** / 고의 파손 A(단언 1개 위조) → 해당 섹션만 실패 목록 · 2~34 끝까지 · **exit 1** / 고의 파손 B(`_test_power()` 주석) → `EXPECTED_SECTIONS 33≠34` + `단언 656<664` 두 가드 발화 · **exit 1** / 복원 664·0·exit 0 / `--quit-after 300` exit 0 / `run_save_restore` 스킵 exit 0 / `run_campaign` 메인 100회 완주 104.9초 · 합격 2/3 (재현율 67% 미달을 exit에 반영 안 함) | **후속(A-07 소관):** `EXPECTED_SECTIONS` 34→35 는 A-03 「35. 명령 판정」 섹션 커밋에 원자적(A-03 진행, 내 ④ 위에) · `MIN_UNIT_ASSERTIONS` 664→~704 상향은 A-01(`run_campaign_replay.gd`)·A-03 단언 델타 확정 후 A-07 후속 커밋 · `Q-05` 가 이 5층 하네스를 CI 고정 절차로. **범위 밖:** `validate_data.py` 위반 1건 — `CLAUDE.md §8` 「변경 이력 48」 이 실제 65(P0-09 세션들이 V-49~V-65 추가하며 미갱신). HEAD에 이미 존재하는 드리프트, 별도 처리 필요. `run_campaign` HB+구조검증 블록 전체 완주는 다중 세션 CPU 부하로 타임아웃(행 아님, 지연) — 부하 없을 때 `struct_fail==0`·exit 0 재확인 |

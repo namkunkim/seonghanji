@@ -1,8 +1,10 @@
 # SEONGHANJI — 에셋 라이선스 대장 v0.2
 
+> **2026-09-03 추가:** 중국 지형 기반 은하 지도의 공개 지리 원자료와 자작 지도 패키지를 §2.0에 기록했다. 아래 ‘에셋 0개’ 등의 2026-08-30 스냅숏과 구분한다. 이번 지도 작업은 Windows PC 우선 검토용이며 최종 게임 아트 확보 완료를 뜻하지 않는다.
+
 > 상위: `docs/07-production/dev-requirements.md` §5 · `roadmap-solo.md` §3
 > 판정 절차: `.claude/skills/asset-sourcing/SKILL.md`
-> 작성일: 2026-08-24 · 최종 갱신: **2026-08-30** · 상태: **개설 — 물량 확정, 확보 미착수**
+> 작성일: 2026-08-24 · 최종 갱신: **2026-09-06** · 상태: **부분 확보 — 함선·기동병기 8종 추가**
 >
 > ⚠ **실측 2026-08-30 — 저장소에 에셋 파일이 0개다.**
 > `.png` · `.jpg` · `.ttf` · `.ogg` · `.wav` · `.glb` · `.mp4` 전부 없다.
@@ -81,6 +83,42 @@
 
 > **범례** — 확보: `자작` / `무료` / `AI` / `외주`
 > 상태: `판정` (방법만 정함) → `확보` (파일 있음) → `검증` (라이선스 확인 완료)
+
+### 2.0 중국 지형 기반 은하 지도 — 2026-09-03 확보
+
+| ID | 항목 | 확보 | 출처 | 라이선스 | 표기 의무 | 수정 | 확인일 |
+|---|---|---|---|---|---|---|---|
+| `ART-GEO001` | 지형 면 참고 데이터 | 공개 원자료 | [Natural Earth 지형 면](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-physical-labels/) · `assets/geography/natural-earth/ne_10m_geography_regions_polys.geojson` | Public Domain · [조건](https://www.naturalearthdata.com/about/terms-of-use/) | 없음, 문서에 출처 기록 | 동아시아 관련 피처·속성 선별 | 2026-09-03 |
+| `ART-GEO002` | 수로 선형 참고 데이터 | 공개 원자료 | [Natural Earth 하천](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-rivers-lake-centerlines/) · `assets/geography/natural-earth/ne_10m_rivers_lake_centerlines.geojson` | Public Domain · 위 조건 적용 | 없음, 문서에 출처 기록 | 피처·속성 선별, 게임에서 고정 폭의 개방수로로 변환 | 2026-09-03 |
+| `ART-GEO003` | 지리 대조용 해안선 | 공개 원자료 | [Natural Earth 해안선](https://www.naturalearthdata.com/downloads/50m-physical-vectors/50m-coastline/) · `assets/geography/natural-earth/ne_50m_coastline.geojson` | Public Domain · 위 조건 적용 | 없음, 문서에 출처 기록 | 피처 선별, 대조 모드에서만 표시 | 2026-09-03 |
+| `ART-GEO004` | 은하 공통 지도·절차적 행성/소행성 표시 | 자작 | `data/maps/` · `tools/build_galaxy_map.py` · `docs/assets/galaxy-detail-map.html` | 프로젝트 제작물 + 위 공개 지리 형상 가공 | 원자료 강제 표기 없음. 서체는 기존 FNT-001 조건 유지 | 공개 자료 투영·게임용 배치·밀도/수로 규칙·고정 상세 생성 | 2026-09-03 |
+
+`ART-GEO004`는 2026-09-04 지도 v3에서 거주 행성계 22개, 혼합 장애물, 소형 소행성, 행성 간 이동 경로 표시로 확장했다. 전부 자작 절차 데이터·코드이며 외부 에셋을 추가하지 않았다. 이전 지도 데이터는 `data/maps/archive/`에 보관한다.
+
+같은 날 V-68·V-69에 따라 성간 경로 우선 지형으로 갱신했다. 기저항로의 상시 표시 제거, 회랑 통로·차단대, 지형 추종 곡선 항로, 비가시 지형 참고선과 상세 가스·먼지·방사 레이어는 모두 기존 자작 데이터·코드의 절차 표현이며 외부 에셋을 추가하지 않았다.
+
+원본 릴리스 `v5.1.2`, 실제 URL·원본/선별 SHA-256·수정 범위는 `assets/geography/natural-earth/sources.json`에 고정했다. 지도는 다른 게임의 이미지를 재사용하지 않았다. 지리 원자료는 완성 지도 아트가 아니라 분석·구조 대응의 근거다. 지도 패키지와 검토 표시를 확보했으나 최종 3D 소행성·행성 아트는 별도 작업이다.
+
+### 2.0-a 전술 함선·기동병기 스프라이트 — 2026-09-06 확보
+
+모두 프로젝트용으로 생성한 2D PNG(투명 배경)이며 `assets/ships/`에 보관한다. 함선 6종은
+`TacticalRouteView`가 `Fleet.plan`의 함종 비중에 따라 표시한다. 내부 키 `강습`은
+**강습모함**을 뜻한다. 전자전함은 초기 원반 안테나 시안을 폐기하고, 센서·배열 안테나를
+선체에 내장한 프리깃형 최종본만 아래에 기록한다.
+폐기 시안은 `assets/ships/archive/electronic-ship-dish-concept.png`로 격리했으며 게임 코드가
+참조하지 않는다. 초기 일반 강습정 시안도 `assets/ships/archive/assault-ship-precarrier-concept.png`
+로 격리했으며, 최종 강습모함과 바꾸어 쓰지 않는다.
+
+| ID | 파일 · 항목 | 확보 | 출처 | 라이선스 | 표기 의무 | 확인일 | 상태 |
+|---|---|---|---|---|---|---|---|
+| `ART-SH001` | `assets/ships/line-ship.png` · 전열함 | AI 생성 | OpenAI 이미지 생성 도구 | 서비스 상업 이용 조건 출시 전 재확인 | AI 생성 표기 필요성 검토 | 2026-09-06 | 확보 |
+| `ART-SH002` | `assets/ships/artillery-ship.png` · 포격함 | AI 생성 | OpenAI 이미지 생성 도구 | 동상 | 동상 | 2026-09-06 | 확보 |
+| `ART-SH003` | `assets/ships/assault-carrier.png` · 강습모함 | AI 생성 | OpenAI 이미지 생성 도구 | 동상 | 동상 | 2026-09-06 | 확보 |
+| `ART-SH004` | `assets/ships/electronic-ship.png` · 전자전함 | AI 생성 | OpenAI 이미지 생성 도구 | 동상 | 동상 | 2026-09-06 | 확보 |
+| `ART-SH005` | `assets/ships/siege-ship.png` · 공성함 | AI 생성 | OpenAI 이미지 생성 도구 | 동상 | 동상 | 2026-09-06 | 확보 |
+| `ART-SH006` | `assets/ships/supply-ship.png` · 보급함 | AI 생성 | OpenAI 이미지 생성 도구 | 동상 | 동상 | 2026-09-06 | 확보 |
+| `ART-M001` | `assets/ships/interceptor-fighter.png` · 유인 요격기 | AI 생성 | OpenAI 이미지 생성 도구 | 동상 | 동상 | 2026-09-06 | 확보 |
+| `ART-M002` | `assets/ships/combat-walker.png` · 인간 탑승형 전투 워커 | AI 생성 | OpenAI 이미지 생성 도구 | 동상 | 동상 | 2026-09-06 | 확보 |
 
 ### 2.1 L1 — 필수
 

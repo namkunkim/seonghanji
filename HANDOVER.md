@@ -1,7 +1,26 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
+> **2026-09-06 병렬 검수 완료 — 다음 단일 작성 작업 확정:** 기준선은 `main` `7c7c6c5`다.
+> G-10은 `675347f`의 조건 원장·DEC-01·pending battle과 `7c7c6c5`의 participant manifest·
+> `pending → active` 전이까지 전용 시험 4종(81/50/40/73, 실패 0)을 통과했다. 활성 5페이즈·
+> resolved 결과·뉴스 exactly-once·HomeMap 코어 projection은 미구현이므로 완료 승격 금지.
+> 다음 단일 작성 작업은 적벽 active phase 1→2와 resolved 결과 1회 적용, 저장·재생·tamper 시험이다.
+> 일반 `_resolve_battle()`·뉴스·UI·해무 함대 변경은 범위 밖으로 둔다.
+
+> **2026-09-06 홈 지도·함대 항행 검수:** 기본 `scenes/main.tscn` 경로와 HomeMapSnapshot·
+> A-03 이동 명령 경로는 전용 회귀 650단언(334+175+54+83+4, 실패 0)을 통과했다. 다만
+> `app/main.tscn` 실험 경로는 `app/views/galaxy_map_view.gd:79` parse 오류와 setup 계약 불일치가
+> 있으며, 3D 대표 편대·정본 항로 형상·함선 자산 출처/라이선스·Windows 실기 검증이 남았다.
+> C-01 선행 전 C-04 완료 승격 금지. `.uid`·`.import`·`.godot-appdata/**`·`out/**`는 소스가 아니다.
+
+> **2026-09-04 경로 우선 지도 v3:** 거주 행성계 22개·표시 천체/시설 191개·행성 간 경로 150개. 기존 성간 경로 37개는 지형 추종 고정 곡선이며 기저항로 15개는 명령 시에만 표시한다. 회랑은 내부 약 40%·주변 70% 이상으로 우회 불가, 고속항로는 상시 표시한다. 하천 형상은 이동 규칙이 아닌 지형 참고선이다. 최대 상세에서 소행성·먼지·가스·방사를 함께 표시한다. v1·v2는 `data/maps/archive/`, 상세 `docs/01-world/galaxy-detail-map.md`. Godot 미연동.
+
+> **2026-09-03 은하 상세지도:** 중국 지형 기반 공간 데이터 `data/maps/galaxy-map.json`과 `docs/assets/galaxy-detail-map.html`을 추가했다. 기존 19개 성계·45개 권역·15개 회랑·37개 항로를 유지한다. 수로 100% 개방, 분지·평원 장애 면적 20~30%는 사용자 확정. 구지 표기 중복을 생성기에서 정규화해 형주 태양계권에 1회 배치한다. 검증 및 미연동 범위는 `docs/01-world/galaxy-detail-map.md`. 기존 Godot 뷰·명령·전투 코드는 이 작업에서 수정하지 않았다.
+
+> **2026-09-03 발주자 플랫폼 변경:** 플레이 지원 대상은 **Windows PC·Android·iOS**, 개발은 **Windows PC 우선**. 이전 Android 태블릿 선행 계획과 구분한다. 요구 정본 `docs/07-production/requirements.md` B1·C1, 화면·입력 `docs/06-tech/map-ux-concept.md` §6 참조. 기존 구현·검증 상태는 이 결정만으로 완료 승격하지 않는다.
+
 > **새 세션·새 작업자를 위한 단일 진입점.**
-> 갱신일: **2026-09-02** — **D1 기반 안정화 구현 완료 · 검증 대기.**
+> 갱신일: **2026-09-06** — **D1 검증 대기 · G-10 및 홈 지도/함대 항행 부분 구현 검수 완료.**
 >
 > **작업 상태의 정본은 `PROJECT-TRACKER.md` 다.** 우선순위·의존성·완료 증거는 거기서 관리한다.
 > 2026-08-23 에 닫힌 `JOBS.md` 큐를 대체한다. HANDOVER 는 맥락·확정 사항·함정을,
@@ -15,8 +34,8 @@
 > 필수 콘텐츠 범위 = `단기판 필수 범위 v1.0` (§8.5). 착수 승인 시 최소 기록 ✅5 / 🟨2
 > (3 밸런스 기준선 실제 잠금 = `Q-01` 완료 시 · 5 D3·D7 병렬 — 둘 다 개발 착수 후).
 >
-> **다음 = D1 첫 착수 묶음: `A-01`(캠페인 저장 모델) · `A-03`(명령 판정 코어 이동) ·
-> `A-07`(테스트 신뢰성).** 각 완료 기준·계약은 P0-09 게이트에 명시돼 있다 (§4.1).
+> **다음 단일 작성 작업 = G-10 적벽 active phase 1→2 + resolved 결과 1회 적용 + 저장·재생·
+> tamper 시험.** `A-01`·`A-02`·`A-03`·`A-07`은 구현 후 검증 대기를 유지한다.
 >
 > **여전히 미착수:** 명장 초상 120 대량 생성(별도 승인) · Runway 가입/결제/영상 생성
 > (S6.1 약관 선행) · L2 3D 실착수(L1 완성 S4 후) · G-08·G-09 설계(L1 완성 후) · L3 컷씬(S6).
@@ -437,7 +456,8 @@ godot --headless --path . --script tests/verify_glyphs.gd
 그리고 GUI 또는 실기에서 대표 문자열 `건안 십삼년 시월` · `형주성역` · `중부권`을
 눈으로 확인한다. **두부는 엔진 오류가 아니므로 이 절차를 생략하지 않는다.**
 
-Godot 는 `%USERPROFILE%\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe` 다.
+Godot 콘솔 실행 파일은 `C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe` 다.
+GUI 실행 파일은 `C:\Tools\Godot\Godot_v4.7.2-stable_win64.exe` 다.
 **GUI exe 는 stdout 을 삼킨다.**
 
 수치를 건드렸으면 검산기도 함께 돌린다 — `verify_power` · `verify_budget` · `verify_chibi`.
