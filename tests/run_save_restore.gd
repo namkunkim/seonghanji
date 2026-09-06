@@ -104,6 +104,9 @@ func _test_ruleset_isolation(data: GameData) -> void:
 	print("4. 규칙 세대 격리")
 	var c := Campaign.scenario_03(data, 901)
 	c.replay_to(180)
+	# RS-0.2는 G-10 scenario-outcome replay generation이다. 실제 RS-0.1 저장을
+	# 명시적으로 만든 뒤 old-minor 호환을 검증한다.
+	c.world.ruleset = "RS-0.1.0"
 	var old := c.to_save_dict()
 	var result := Campaign.from_save_result(old, data, "RS-0.2.0")
 	_eq(result["status"], Save.STATUS_OLD_MINOR, "낮은 minor 는 세이브 규칙으로 로드")
@@ -114,7 +117,7 @@ func _test_ruleset_isolation(data: GameData) -> void:
 	major["world"]["ruleset"] = "RS-1.1.0"
 	_eq(Save.inspect(major)["status"], Save.STATUS_MAJOR_MISMATCH, "major 불일치 거부")
 	var future := old.duplicate(true)
-	future["world"]["ruleset"] = "RS-0.2.0"
+	future["world"]["ruleset"] = "RS-0.3.0"
 	_eq(Save.inspect(future)["status"], Save.STATUS_NEWER_MINOR, "더 새 minor 거부")
 	print("")
 

@@ -23,6 +23,27 @@ const EFFECTIVE_FLOOR_PCT: int = 10
 ## 캠페인 세이브 형식 판 (schema/save-campaign.json). World 세이브의 판과 별개다.
 const SAVE_CAMPAIGN_VERSION: int = 1
 
+## SCN-03 시나리오 사건 ID. 기능 이벤트(F-01~F-40)가 아니라 208 서사 사건이다.
+const SCN03_EVENT03: String = "SCN-03-E03"
+const SCN03_EVENT04: String = "SCN-03-E04"
+const SCN03_EVENT06: String = "SCN-03-E06"
+const SCN03_EVENT07: String = "SCN-03-E07"
+const SCN03_EVENT09: String = "SCN-03-E09"
+## G-10 slice 3 canonical pending identity. It is derived only from SCN-03 Event 09
+## and its fixed ordinal; display names, fleets, region ownership, and UI order never enter it.
+const SCN03_RED_CLIFF_PENDING_BATTLE_ID: String = "SCN-03-E09-RED-CLIFF-01"
+## 외생 시나리오 결과 입력. World 명령 로그에만 남고, 진행 원장은 재생 파생값이다.
+const CMD_SCN03_EVENT_OUTCOME: String = "scenario_event_outcome"
+
+## Event 09 (scenario-200-208.md §ACT 7)의 순서는 지문에도 고정한다.
+const SCN03_RED_CLIFF_CONDITIONS: Array[String] = [
+	"cao_southward_complete",
+	"sun_quan_independent",
+	"liu_bei_hostile_to_cao",
+	"sun_liu_military_pact",
+	"yangtze_defense_line",
+]
+
 
 var world: World
 
@@ -52,6 +73,21 @@ var stagnation_hits: int = 0
 ## ---------------------------------------------------------------- 기능 이벤트
 ## 이벤트 ID → 발동 횟수. **「미발동 0종」 지표의 분모다**
 var events_fired: Dictionary = {}
+
+## 208 서사 사건 결과의 결정론적 원장. 값이 없으면 unknown 이며 false가 아니다.
+## 외부 사건/명령 계층은 `issue_scn03_event_outcome`으로 player 입력을 로그화하고,
+## 이 원장은 도달한 명령을 `record_scn03_event_outcome` reducer로 적용한 파생값이다.
+var scn03_progress: Dictionary = {}
+var _scn03_event09_evaluated: bool = false
+## 기능 이벤트 계측(`events_fired`)과 분리된, 208 서사 사건의 one-shot 기록.
+var scenario_event_records: Dictionary = {}
+## Event 09에서만 파생하는 적벽 지속형 전투 상태. 세이브 스냅숏 정본이 아니며,
+## player scenario-outcome 명령 재생으로 같은 순서에 다시 만든다.
+var active_battles: Array[ActiveBattle] = []
+## 재생 입력은 발행 틱에만 World 대기열로 옮긴다. 저장 상태가 아니며 digest에도
+## 직접 넣지 않는다 — World의 applied/pending player 명령이 같은 사실을 이미 접는다.
+var _replay_player_commands: Array[Dictionary] = []
+var _replay_player_cursor: int = 0
 var alliances_broken: int = 0
 var backstabs: int = 0
 var revolts: int = 0
@@ -144,6 +180,9 @@ static func scenario_03(data_ref: GameData, master_seed: int) -> Campaign:
 	var c := Campaign.new()
 	c.data = data_ref
 	c.world = World.new()
+	# SCN-03 progress-command reducer is a RS-0.2 generation addition. Keeping RS-0.1
+	# replays on their old digest path preserves saves made before G-10 slice 2.
+	c.world.ruleset = Save.CURRENT_RULESET
 	c.world.rng_seed = master_seed
 	c.world.scenario = "SCN-03"
 	c.world.attach(data_ref, "")
@@ -422,6 +461,7 @@ func _refresh_scheme_staff(fl: Fleet) -> void:
 func step() -> void:
 	if ended:
 		return
+	_stage_replay_player_commands()
 	world.clock.step_ticks(1)
 	Sim._advance_one_tick(world)
 	_apply_arrived()          # ①-b 도달한 명령에 효과를 붙인다 (S2.9)
@@ -433,6 +473,133 @@ func step() -> void:
 		_ai_operational()
 	_check_events()           # ⑥ 이벤트 판정 (function-events.md)
 	_check_end()
+
+
+## 재생 로그를 한꺼번에 pending에 싣지 않는다. 실제 플레이에서는 tick N의 step이 끝난
+## 뒤 발행된 zero-delay 명령이 다음 step에만 전달된다. 재생도 tick N 시작에 N까지 발행된
+## 입력만 주입해야 같은 전달 순서를 유지한다.
+func _stage_replay_player_commands() -> void:
+	while _replay_player_cursor < _replay_player_commands.size():
+		var command: Dictionary = _replay_player_commands[_replay_player_cursor]
+		if int(command["issued_tick"]) > world.clock.tick:
+			return
+		world.pending_commands.append(command.duplicate(true))
+		_replay_player_cursor += 1
+
+
+## SCN-03 Event 03/04/06/07의 **확정 결과만** 적벽 원장에 기록한다.
+##
+## 매핑은 `scenario-200-208.md` ACT 2~5의 직접 문장에 한정한다:
+## E03 조조의 남하 → 조조 남하 완료, E04 항복인가 항전인가 → 손권 독립 유지,
+## E06 땅 없는 자의 외교 → 유비 대조조 적대, E07 손유 회담의 군사협정/공동 방어
+## → 손유 군사협정/장강 방어선. Event 05는 이 다섯 조건의 직접 원인이 아니다.
+##
+## `outcome`은 아래 정확한 키와 bool 값만 받는다. 같은 결과의 재기록은 idempotent;
+## 다른 결과, 알 수 없는 사건, 불완전한 사전은 거부한다. 지역·전력·외교 tier·함대
+## 위치는 여기서 읽거나 추론하지 않는다.
+func record_scn03_event_outcome(event_id: String, outcome: Dictionary) -> bool:
+	if world == null or world.scenario != "SCN-03" or not _uses_scn03_progress_rules():
+		return false
+	var expected := _scn03_expected_outcome_keys(event_id)
+	if expected.is_empty() or not _is_valid_scn03_event_outcome(event_id, outcome):
+		return false
+
+	var same := true
+	for key in expected:
+		if scn03_progress.has(key) and bool(scn03_progress[key]) != bool(outcome[key]):
+			return false
+		if not scn03_progress.has(key) or bool(scn03_progress[key]) != bool(outcome[key]):
+			same = false
+	if same:
+		return true
+	for key in expected:
+		scn03_progress[key] = bool(outcome[key])
+	_evaluate_scn03_event09_if_ready()
+	return true
+
+
+## 외부 플레이어가 확정한 208 사건 결과의 유일한 입력 경로.
+##
+## 진행 원장과 Event 09 기록은 이 명령이 도달했을 때만 파생한다. 따라서 세이브는
+## 원장을 직렬화하지 않고 이 명령(origin="player")만 기록하며, 재생도 같은 틱에 같은
+## reducer를 지난다. `record_scn03_event_outcome`은 도달한 명령의 reducer 및 기존 단위
+## 시험 호환용이다. UI/시나리오 호출자는 반드시 이 함수를 사용한다.
+func issue_scn03_event_outcome(event_id: String, outcome: Dictionary,
+		delay_ticks: int = 0) -> Dictionary:
+	if world == null or world.scenario != "SCN-03" or not _uses_scn03_progress_rules():
+		return {}
+	if delay_ticks < 0 or not _is_valid_scn03_event_outcome(event_id, outcome):
+		return {}
+	return world.issue(CMD_SCN03_EVENT_OUTCOME, {
+		"event_id": event_id,
+		"outcome": outcome.duplicate(true),
+	}, delay_ticks, "player")
+
+
+static func _scn03_expected_outcome_keys(event_id: String) -> Array[String]:
+	match event_id:
+		SCN03_EVENT03:
+			return ["cao_southward_complete"]
+		SCN03_EVENT04:
+			return ["sun_quan_independent"]
+		SCN03_EVENT06:
+			return ["liu_bei_hostile_to_cao"]
+		SCN03_EVENT07:
+			return ["sun_liu_military_pact", "yangtze_defense_line"]
+	return []
+
+
+## Save.inspect와 도달 reducer가 같은 payload 계약을 쓴다. 여기서는 World나 UI 상태를
+## 읽지 않아 재생 중에도 순수하다.
+static func _is_valid_scn03_event_outcome(event_id: String, outcome: Dictionary) -> bool:
+	var expected := _scn03_expected_outcome_keys(event_id)
+	if expected.is_empty() or outcome.size() != expected.size():
+		return false
+	for key in expected:
+		if not outcome.has(key) or not (outcome[key] is bool):
+			return false
+	for key in outcome:
+		if not expected.has(String(key)):
+			return false
+	# Event 07의 「공동 방어 = 장강 방어선 공동 운용」은 군사협정 없이 성립할 수 없다.
+	return event_id != SCN03_EVENT07 or not bool(outcome["yangtze_defense_line"]) \
+		or bool(outcome["sun_liu_military_pact"])
+
+
+func _uses_scn03_progress_rules() -> bool:
+	var version := Save._parse_ruleset(world.ruleset)
+	return version.size() == 3 and version[0] == 0 and version[1] >= 2
+
+
+func _evaluate_scn03_event09_if_ready() -> void:
+	if _scn03_event09_evaluated:
+		return
+	for key in SCN03_RED_CLIFF_CONDITIONS:
+		if not scn03_progress.has(key):
+			return                         # unknown은 false도, 종료 트리거도 아니다.
+	_scn03_event09_evaluated = true
+	for key in SCN03_RED_CLIFF_CONDITIONS:
+		if not bool(scn03_progress[key]):
+			# DEC-01은 마지막 선행 사건 결과가 확정되는 이 전이에만 우선한다.
+			ended = true
+			end_reason = "DEC-01: 적벽 미발생"
+			return
+	scenario_event_records[SCN03_EVENT09] = 1
+	_ensure_scn03_red_cliff_pending_battle()
+
+
+## Event 09 success is the sole creation cause for this slice. Participants and roles
+## deliberately remain unassembled: no region owner, generic fleet, power ratio, or
+## diplomacy heuristic may fill them before the later activation contract exists.
+func _ensure_scn03_red_cliff_pending_battle() -> void:
+	if int(scenario_event_records.get(SCN03_EVENT09, 0)) != 1:
+		return
+	for battle in active_battles:
+		if battle.battle_id == SCN03_RED_CLIFF_PENDING_BATTLE_ID:
+			return
+	active_battles.append(ActiveBattle.red_cliff_pending(world.clock.tick,
+		SCN03_RED_CLIFF_PENDING_BATTLE_ID, SCN03_EVENT09))
+	active_battles.sort_custom(func(a, b): return a.battle_id < b.battle_id)
 
 
 ## 점시점 판정(Orders)에 마지막 단계 2 판독의 신선도를 결합한다 (§12.3).
@@ -524,6 +691,20 @@ func run_to_end(max_ticks: int = SCN03_END_TICK) -> void:
 ## 여기서 **효과가 붙는다.**
 func _apply_arrived() -> void:
 	for c in world.last_arrived:
+		if String(c.get("kind", "")) == CMD_SCN03_EVENT_OUTCOME:
+			var scenario_payload: Dictionary = c.get("payload", {})
+			var scenario_outcome: Dictionary = {}
+			var raw_scenario_outcome = scenario_payload.get("outcome", {})
+			if raw_scenario_outcome is Dictionary:
+				scenario_outcome = raw_scenario_outcome
+			if String(c.get("origin", "player")) == "player" \
+					and raw_scenario_outcome is Dictionary \
+					and record_scn03_event_outcome(String(scenario_payload.get("event_id", "")),
+							scenario_outcome):
+				cmds_applied += 1
+			else:
+				cmds_rejected += 1
+			continue
 		var fid := String(c.get("payload", {}).get("faction", ""))
 		var f: Faction = factions.get(fid)
 		if f == null or not f.alive:
@@ -1289,6 +1470,9 @@ func _ai_operational() -> void:
 
 ## ---------------------------------------------------------------- 종료 판정
 func _check_end() -> void:
+	# 마지막 SCN-03 선행 결과가 DEC-01을 세운 같은 전이에서는 이를 덮어쓰지 않는다.
+	if ended:
+		return
 	var alive_ids: Array[String] = []
 	for fid in faction_ids:
 		if factions[fid].alive:
@@ -1713,6 +1897,18 @@ func digest() -> int:
 		h = Save._fold(h, int(c["seq"]))
 		h = Save._fold(h, int(c["arrival_tick"]))
 		h = Save._fold(h, Rng._hash_string(String(c["kind"])))
+		# RS-0.2의 발행 tick은 replay staging의 입력이고, scenario outcome payload는
+		# 아직 reducer가 만들지 않은 pending 상태에서도 플레이어 정본이다. 기존
+		# RS-0.1 지문은 이 필드들을 접지 않아 과거 저장을 그대로 재생한다.
+		if _uses_scn03_progress_rules():
+			h = Save._fold(h, int(c["issued_tick"]))
+			if String(c["kind"]) == CMD_SCN03_EVENT_OUTCOME:
+				var command_payload: Dictionary = c.get("payload", {})
+				var command_event_id := String(command_payload.get("event_id", ""))
+				h = Save._fold(h, Rng._hash_string(command_event_id))
+				var command_outcome: Dictionary = command_payload.get("outcome", {})
+				for key in _scn03_expected_outcome_keys(command_event_id):
+					h = Save._fold(h, 1 if bool(command_outcome.get(key, false)) else 0)
 	# ── 세력 (정렬된 faction_ids) ──────────────────────────────────────
 	for fid in faction_ids:
 		var f: Faction = factions[fid]
@@ -1788,6 +1984,27 @@ func digest() -> int:
 	for eid in eids:
 		h = Save._fold(h, Rng._hash_string(String(eid)))
 		h = Save._fold(h, int(events_fired[eid]))
+	# RS-0.2부터 서사 진행은 전투·UI 파생값이 아닌 결정론적 게임 상태다. unknown도
+	# 접는다. RS-0.1 저장은 이 필드가 존재하기 전 지문 알고리즘을 그대로 유지한다.
+	if _uses_scn03_progress_rules():
+		for key in SCN03_RED_CLIFF_CONDITIONS:
+			h = Save._fold(h, Rng._hash_string(key))
+			h = Save._fold(h, 0 if not scn03_progress.has(key) else 1)
+			h = Save._fold(h, 1 if bool(scn03_progress.get(key, false)) else 0)
+		h = Save._fold(h, 1 if _scn03_event09_evaluated else 0)
+		var scenario_event_ids: Array = scenario_event_records.keys()
+		scenario_event_ids.sort()
+		for event_id in scenario_event_ids:
+			h = Save._fold(h, Rng._hash_string(String(event_id)))
+			h = Save._fold(h, int(scenario_event_records[event_id]))
+		# Active battles are derived gameplay state in RS-0.2, not save snapshots.
+		# Fold their normalized pending contract so replay omissions are observable.
+		var sorted_active_battles: Array[ActiveBattle] = active_battles.duplicate()
+		sorted_active_battles.sort_custom(func(a, b): return a.battle_id < b.battle_id)
+		h = Save._fold(h, sorted_active_battles.size())
+		for battle in sorted_active_battles:
+			for value in battle.digest_values():
+				h = Save._fold(h, value)
 	var ck: Array = _event_cooldown.keys()      # 재발동 쿨다운 (§1.2)
 	ck.sort()
 	for k in ck:
@@ -1824,8 +2041,8 @@ func to_save_dict() -> Dictionary:
 ## 캠페인 세이브 사전에서 캠페인을 되살린다.
 ##
 ## **셋업부터 목표 틱까지 다시 돌린다** (§3.1 순수 로그 재생). `scenario_03(seed)` 로
-## 결정론적 초기 상태를 세우고, 저장된 플레이어 명령(origin != "ai")을 명령 대기열에
-## 주입한 뒤 목표 틱까지 `step()` 을 반복한다. AI 명령·전투·이벤트·경제는 재생 중
+## 결정론적 초기 상태를 세우고, 저장된 플레이어 명령(origin != "ai")을 발행 틱에 맞춰
+## 명령 대기열에 주입한 뒤 목표 틱까지 `step()` 을 반복한다. AI 명령·전투·이벤트·경제는 재생 중
 ## 시드에서 다시 만들어진다 (§2.2 파생).
 ##
 ## ⚠ 단기판은 `SCN-03` 하나뿐이다 (CLAUDE.md 함정 · save-contract §3). 다른 시나리오
@@ -1842,14 +2059,14 @@ static func _from_clean_save(d: Dictionary, data_ref: GameData) -> Campaign:
 	c.world.ruleset = String(w.get("ruleset", c.world.ruleset))
 	c.world.player_faction = String(w.get("player_faction", ""))
 
-	# 플레이어 명령 주입 — 저장된 seq·도달 시각을 리터럴로 (Save.replay 와 같은 방식).
-	# AI 명령은 직렬화에서 제외됐으므로 여기 없다.
+	# 플레이어 명령은 발행 틱에 stage한다. 전부를 미리 pending에 넣으면 zero-delay
+	# 입력이 라이브보다 한 tick 일찍 도달한다. AI 명령은 직렬화에서 제외됐으므로 여기 없다.
 	var cmds: Array = w.get("commands", [])
 	var sorted_cmds: Array = cmds.duplicate()
 	sorted_cmds.sort_custom(func(a, b): return int(a["seq"]) < int(b["seq"]))
 	var max_seq := -1
 	for cm in sorted_cmds:
-		c.world.pending_commands.append({
+		c._replay_player_commands.append({
 			"seq": int(cm["seq"]),
 			"issued_tick": int(cm["issued_tick"]),
 			"arrival_tick": int(cm.get("arrival_tick", cm["issued_tick"])),
@@ -1903,6 +2120,8 @@ static func from_save(d: Dictionary, data_ref: GameData) -> Campaign:
 func replay_to(target_tick: int) -> void:
 	while not ended and world.clock.tick < target_tick:
 		step()
+	# 마지막 step 직후 발행되어 저장 시점에는 pending이던 입력도 같은 상태로 남긴다.
+	_stage_replay_player_commands()
 
 
 ## 캠페인 세이브를 파일로 쓴다 (schema/save-campaign.json).

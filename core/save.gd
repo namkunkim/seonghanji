@@ -24,7 +24,9 @@ extends RefCounted
 ## 다르면 어딘가에서 결정론이 깨진 것이다 — 그것을 잡는 것이 이 함수의 목적이다.
 
 const SAVE_VERSION := 1
-const CURRENT_RULESET := "RS-0.1.0"
+## RS-0.2 introduces replay-derived SCN-03 scenario outcomes. RS-0.1 remains loadable
+## as an old minor generation and keeps its pre-G-10 campaign digest path.
+const CURRENT_RULESET := "RS-0.2.0"
 
 const STATUS_OK := "ok"
 const STATUS_OLD_MINOR := "old_minor"
@@ -224,6 +226,18 @@ static func _command_error(value, index: int) -> String:
 		return "world.commands[%d].arrival_tick: 정수 또는 null 이어야 한다" % index
 	if c.has("payload") and not c["payload"] is Dictionary:
 		return "world.commands[%d].payload: 객체가 아니다" % index
+	if String(c["kind"]) == Campaign.CMD_SCN03_EVENT_OUTCOME:
+		var payload: Dictionary = c.get("payload", {})
+		var extra_payload := _unexpected_key(payload, ["event_id", "outcome"])
+		if extra_payload != "":
+			return "world.commands[%d].payload.%s: 허용되지 않은 키" % [index, extra_payload]
+		if not payload.has("event_id") or not payload.has("outcome"):
+			return "world.commands[%d].payload: event_id/outcome 필수" % index
+		if not payload["event_id"] is String or not payload["outcome"] is Dictionary:
+			return "world.commands[%d].payload: scenario outcome 형식이 아니다" % index
+		if not Campaign._is_valid_scn03_event_outcome(String(payload["event_id"]),
+				payload["outcome"]):
+			return "world.commands[%d].payload: 허용되지 않은 scenario outcome" % index
 	return ""
 
 
