@@ -5,9 +5,9 @@
 > 범위: 시나리오 3 「적벽 전야」의 조건 판정부터 저장·복원·재생 가능한 지속 전투와 홈 표시까지의 경계. 이 문서는 규칙값이나 코드를 만들지 않는다.
 
 > 구현 기준선: `675347f`(조건 원장·DEC-01·pending battle), `7c7c6c5`(participant manifest·
-> `pending → active`), `145dfbb`·`6efab57`(phase 1→2·resolved 결과 1회 적용). 전용 시험 5종은
-> 81/50/40/73/25단언, 실패 0이며 전체 코어는 35섹션·701단언, 실패 0이다. phase 3~5·뉴스 exactly-once·
-> HomeMap 코어 projection은 아직 없다.
+> `pending → active`), `145dfbb`·`6efab57`(phase 1→2·resolved 결과 1회 적용), `c1e6de1`
+> (전이 뉴스 exactly-once·HomeMap core projection). 전용 적벽 시험은 38단언, HomeMapSnapshot은 348단언,
+> 전체 코어는 35섹션·701단언, 실패 0이다. phase 3~5·C-02 배너/action·전투 진입은 아직 없다.
 
 ## 1. 목표와 비목표
 
@@ -26,7 +26,7 @@
 
 캠페인 저장·재생은 시드, 플레이어 명령 로그, 목표 tick에서 재구성한다. pending/active/resolved 상태·manifest·phase 1/2·결과는 replay/digest 대상이며, manifest·phase·결과·중복 적용 변조 검출 시험도 통과했다. 뉴스의 저장·복원은 아직 검증할 수 없다. V-62의 원칙대로 파생 가능한 상태는 로그 재생으로 만들고, 스냅숏은 캐시이며 로그와 충돌하면 로그가 정본이다.
 
-현 `HomeMapSnapshot`의 `active_battles`, `red_cliff_conditions`, `news`는 `runtime` 입력의 fixture 또는 unsupported이다. capability는 모두 `false`, provenance는 `runtime_fixture`/`unsupported`이며 저장 가능한 코어 사실이 아니다. `scripts/Main.gd` 기반 기본 홈 경로는 전용 회귀를 통과했지만 코어 active battle projection은 없다. 미커밋 `app/main.gd`/`app/main.tscn` 별도 표면은 parse/setup 오류가 있는 실험 경로이므로 본 계약의 구현 대상으로 삼지 않는다.
+`HomeMapSnapshot`은 SCN-03의 적벽 조건을 `Campaign.scn03_progress`에서, canonical active battle을 `Campaign.active_battles`에서 투영한다. core 행은 canonical `battle_id`와 `campaign_core` provenance를 가지며 runtime fixture가 적벽 사실을 주입하거나 무관 전투를 적벽으로 오인할 수 없다. 뉴스는 아직 runtime fixture/unsupported이고 capability는 `false`다. `scripts/Main.gd` 기반 기본 홈 경로는 전용 회귀를 통과했지만 C-02 배너·전투 진입은 없다. 미커밋 `app/main.gd`/`app/main.tscn` 별도 표면은 parse/setup 오류가 있는 실험 경로이므로 본 계약의 구현 대상으로 삼지 않는다.
 
 ## 3. 적벽 개전 조건의 정본과 미정값
 
@@ -122,8 +122,8 @@ result (resolved에서만), news_transition_ids[]
 2. ✅ 전장 anchor·participant manifest·pending 재검증·`pending → active` phase 1 (`7c7c6c5`).
 3. ✅ 결정론적 active phase 1→2와 resolved 결과 1회 적용을 최소 슬라이스로 구현했다 (`145dfbb`·`6efab57`).
 4. ✅ phase 1·phase 2·resolved 상태의 저장·복원·재생·manifest/phase/result/reapply 변조 시험을 통과했다.
-5. 다음: 뉴스 exactly-once 원장과 HomeMapSnapshot projection을 연결한다.
-6. C-02 배너·전투 진입 및 Windows 1600×900 수용을 진행한다.
+5. ✅ 뉴스 exactly-once 원장과 HomeMapSnapshot core projection을 연결했다 (`c1e6de1`).
+6. 다음: C-02 배너·canonical `battle_id` 전투 진입 및 Windows 1600×900 수용을 진행한다.
 
 ## 13. 검증 기준
 
