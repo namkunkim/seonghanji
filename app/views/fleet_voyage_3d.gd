@@ -11,11 +11,6 @@ signal closed(fleet_id: int)
 ## 원거리 함대는 이 씬을 인스턴스화하지 않고 LOD/MultiMesh 경로를 유지한다.
 ## GLB는 임포트 캐시가 없는 CI에서도 열 수 있도록 런타임 glTF 문서로 읽는다.
 const HAE_MU_HERO_GLB_PATH := "res://assets/models/iron-vanguard-space-battleship.glb"
-const AZURE_DREADNOUGHT_GLB_PATH := "res://assets/models/ships/artillery_ship.glb"
-const ASSAULT_CARRIER_GLB_PATH := "res://assets/models/ships/assault_carrier.glb"
-const ELECTRONIC_WARFARE_GLB_PATH := "res://assets/models/ships/electronic_ship.glb"
-const SIEGE_SHIP_GLB_PATH := "res://assets/models/ships/siege_ship.glb"
-const SUPPLY_SHIP_GLB_PATH := "res://assets/models/ships/supply_ship.glb"
 const VOYAGE_LOD_ROOT := "res://assets/models/ships/voyage_lod/"
 const HAE_MU_HERO_FALLBACK_SCENE: PackedScene = preload("res://assets/models/ships/haemu_line_ship_lod0_v2.glb")
 const STARFIELD: Texture2D = preload("res://assets/ui-mockups/fleet-voyage-starfield-v1.png")
