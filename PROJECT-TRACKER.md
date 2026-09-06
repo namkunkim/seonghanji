@@ -1,5 +1,26 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
+> **2026-09-07 안정화 감사 — 시작/검증 기준선:** `main`과 `origin/main`은 모두 `540189e`다.
+> `540189e`의 은하 지도 내비게이션은 홈맵 회귀로 유지 확인됐지만 C-04 완료가 아니다. `26595be`의
+> 3D 관측 정본은 코어 제3함대 1척과 별개인 28척 전대(전열 11·포격 6·강습 4·전자 3·공성 1·보급 3)다.
+> 노후 1척 통합 시험을 이 계약으로 갱신하고, 중앙열 보급함을 후방으로 옮겼다.
+> `HomeFleetRouteIntegration` 86/0·`FleetRouteTransition` 54/0.
+>
+> 적벽 marker 0건은 실제 projection/UI 회귀가 아니라, runtime fixture 대신 Campaign 재생 파생 active
+> battle만 투영하는 G-10 계약과 낡은 zoom fixture의 불일치였다. fixture를 Event 03/04/06/07 결과→pending→
+> 최소 active 흐름으로 고쳐 marker 부재 뒤 index 오류도 해소했다. `HomeMapZoom` 175/0,
+> `HomeMapSnapshot` 348/0, `HomeSubmenuRouting` 347/0, 적벽 phase/result 38/0. phase 3~5,
+> C-02 배너/action, canonical `battle_id` 전투 진입, Windows 수용은 여전히 미구현이므로 G-10·C-04·C-05·P-02를
+> 완료로 올리지 않는다.
+>
+> 작업 트리의 상태 출력 295개 항목은 untracked 디렉터리 축약이며, 실제 관측 경로는 약 663개다:
+> A 정본 후보 54 / B 런타임 후보 25 / C 생성·캐시 522 / D archive·중복 24 / E 소유권 불명확 35.
+> root GLB 5종은 현 `voyage_lod/` 경로가 참조하지 않는 대형 재수출 후보이므로 보류한다. 안전한 후속 묶음은
+> (1) voyage 코드+시험, (2) home fixture, (3) 출처·재현을 검증한 galaxy/ship/terrain 별도 묶음뿐이며,
+> bulk add/delete는 금지다. 전체 `run_tests.gd`는 `user://` 쓰기 거부 때문에 저장 섹션에서 698/701·실패 2·exit 1;
+> 기능 회귀가 아닌 A-07 환경 후속으로 기록한다. 다음 단일 작성 작업은 변함없이
+> **G-10 C-02 배너/action 계약 + canonical `battle_id` 전투 진입 경계**다.
+
 > **2026-09-07 항행 상세 3D 전대 연출 — 로컬 구현·캡처 검증:** `app/views/fleet_voyage_3d.gd`에
 > 6개 함종의 제공 GLB를 전대 1개(28척) 관측으로 배치했다. 기본 균형 편성은 전열 11·포격 6·강습 4·
 > 전자 3·공성 1·보급 3이며, 사용자 지정 어린진 슬롯(전열 선두/양익 → 중앙 포격·강습·전자전 →
