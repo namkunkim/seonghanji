@@ -18,10 +18,13 @@ var active_menu_id := "overview"
 var map_context_menu_id := "overview"
 var submenu: Control
 var map_input_blocker: Control
+var fleet_move_panel: Control
+var tactical_route_view: Control
+var fleet_voyage_view: Control
 var projected_systems: Array = []
 var data
 var campaign
-var playback_speeds := [1, 2, 4]
+var playback_speeds := [1, 2, 4, 16, 64]
 var playback_speed_index := 0
 var pause_button: Button
 var speed_button: Button
@@ -32,6 +35,8 @@ var _terrain_data: Dictionary = {}
 var _map_fleets: Array = []
 var _route_payload: Dictionary = {}
 var _selection_data: Dictionary = {}
+var _fleet_navigation_state: Dictionary = {}
+var _tactical_route_context: Dictionary = {}
 var _refresh_count := 0
 var stage_title_labels: Array[Label] = []
 var stage_caption_labels: Array[Label] = []
@@ -43,6 +48,9 @@ const GameDataScript = preload("res://core/data/game_data.gd")
 const CampaignScript = preload("res://core/campaign.gd")
 const HomeMapSnapshotScript = preload("res://app/home_map_snapshot.gd")
 const HOME_SUBMENU_PATH := "res://scripts/HomeSubmenu.gd"
+const FLEET_MOVE_PANEL_PATH := "res://scripts/FleetMovePanel.gd"
+const TACTICAL_ROUTE_VIEW_PATH := "res://app/views/tactical_route_view.gd"
+const FLEET_VOYAGE_3D_PATH := "res://app/views/fleet_voyage_3d.gd"
 var hud_safe_rect := Rect2(184.0, 70.0, 1116.0, 620.0)
 var home_state: Dictionary = {}
 var home_snapshot
@@ -261,6 +269,10 @@ func _refresh_home_snapshot() -> void:
     active_menu_id = preserved_active_menu
     map_context_menu_id = preserved_map_context
     _refresh_menu_styles()
+    if fleet_move_panel != null and fleet_move_panel.visible and fleet_move_panel.has_method("refresh"):
+        fleet_move_panel.call("refresh")
+    if tactical_route_view != null and tactical_route_view.visible and tactical_route_view.has_method("refresh"):
+        tactical_route_view.call("refresh")
     _refresh_count += 1
 
 
@@ -297,17 +309,27 @@ func _adapt_observed_fleets(state: Dictionary, systems: Array, regions: Array) -
         if start.x < 0.0:
             continue
         var finish := start
+        var progress := 0.0
         if str(observed.get("status", "")) == "moving":
             var destination_id := str(observed.get("dest_region", ""))
             if destination_id != "":
                 finish = _find_projected(regions, "id", destination_id, start)
+            var fleet = _player_fleet(int(observed.get("fleet_id", -1)))
+            if fleet != null and fleet.departure_tick >= 0 and fleet.arrival_tick > fleet.departure_tick:
+                progress = clampf(float(campaign.world.clock.tick - fleet.departure_tick) \
+                    / float(fleet.arrival_tick - fleet.departure_tick), 0.0, 1.0)
+        var selection: Dictionary = observed.duplicate(true)
+        selection["type"] = "fleet"
         out.append({
             "fleet_id": str(observed.get("fleet_id", "")),
             "name": str(observed.get("display_name", "관측 함대")),
             "faction": str(observed.get("faction", "")),
             "size": int(observed.ships),
             "path": [[start.x, start.y], [finish.x, finish.y]],
+            # GalaxyMap의 과거 어댑터 계약. 실제 위치는 아래 progress 정본으로 읽는다.
             "speed": 0.0,
+            "progress": progress,
+            "selection": selection,
         })
     return out
 
@@ -745,6 +767,7 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     zoom_panel.add_child(zoom_label)
     get_viewport().size_changed.connect(_layout_ui)
     _ensure_submenu()
+    _ensure_fleet_overlays()
     _layout_ui()
     _on_zoom_level_changed(map.semantic_level)
     if pause_button:
@@ -827,6 +850,71 @@ func _ensure_submenu() -> void:
     if submenu.has_signal("action_requested"):
         submenu.connect("action_requested", _on_submenu_action_requested)
 
+
+func _ensure_fleet_overlays() -> void:
+    if ui_root == null:
+        return
+    if fleet_move_panel == null and ResourceLoader.exists(FLEET_MOVE_PANEL_PATH):
+        var move_script: Script = load(FLEET_MOVE_PANEL_PATH)
+        if move_script != null:
+            var move_instance = move_script.new()
+            if move_instance is Control:
+                fleet_move_panel = move_instance as Control
+                fleet_move_panel.name = "FleetMovePanel"
+                fleet_move_panel.visible = false
+                fleet_move_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+                ui_root.add_child(fleet_move_panel)
+                fleet_move_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+                if fleet_move_panel.has_method("setup"):
+                    fleet_move_panel.call("setup", data, campaign)
+                if fleet_move_panel.has_signal("move_requested"):
+                    fleet_move_panel.connect("move_requested", _on_fleet_move_requested)
+                if fleet_move_panel.has_signal("closed"):
+                    fleet_move_panel.connect("closed", _on_fleet_move_panel_closed)
+            else:
+                move_instance.queue_free()
+    if tactical_route_view == null and ResourceLoader.exists(TACTICAL_ROUTE_VIEW_PATH):
+        var route_script: Script = load(TACTICAL_ROUTE_VIEW_PATH)
+        if route_script != null:
+            var route_instance = route_script.new()
+            if route_instance is Control:
+                tactical_route_view = route_instance as Control
+                tactical_route_view.name = "TacticalRouteView"
+                tactical_route_view.visible = false
+                tactical_route_view.mouse_filter = Control.MOUSE_FILTER_STOP
+                ui_root.add_child(tactical_route_view)
+                # TacticalRouteView의 _ready 기본값은 전체 화면이므로 호스트의
+                # HUD 안전 영역 계약으로 자식 준비 완료 뒤 다시 제한한다.
+                tactical_route_view.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+                if tactical_route_view.has_method("setup"):
+                    tactical_route_view.call("setup", data, campaign)
+                if tactical_route_view.has_signal("closed"):
+                    tactical_route_view.connect("closed", _on_tactical_route_closed)
+                if tactical_route_view.has_signal("detail_requested"):
+                    tactical_route_view.connect("detail_requested", _on_tactical_route_detail_requested)
+                if tactical_route_view.has_signal("speed_requested"):
+                    tactical_route_view.connect("speed_requested", _cycle_playback_speed)
+            else:
+                route_instance.queue_free()
+    if fleet_voyage_view == null and ResourceLoader.exists(FLEET_VOYAGE_3D_PATH):
+        var voyage_script: Script = load(FLEET_VOYAGE_3D_PATH)
+        if voyage_script != null:
+            var voyage_instance = voyage_script.new()
+            if voyage_instance is Control:
+                fleet_voyage_view = voyage_instance as Control
+                fleet_voyage_view.name = "FleetVoyage3D"
+                fleet_voyage_view.visible = false
+                fleet_voyage_view.mouse_filter = Control.MOUSE_FILTER_STOP
+                ui_root.add_child(fleet_voyage_view)
+                fleet_voyage_view.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+                if fleet_voyage_view.has_method("setup"):
+                    fleet_voyage_view.call("setup", campaign)
+                if fleet_voyage_view.has_signal("closed"):
+                    fleet_voyage_view.connect("closed", _on_fleet_voyage_closed)
+            else:
+                voyage_instance.queue_free()
+    _layout_fleet_overlays()
+
 func _on_stage_pressed(stage_index: int, title: String, position: Vector2, zoom: float) -> void:
     var battle_active := _has_active_red_cliff_battle(home_state.get("active_battles", []))
     var locked := stage_index == 4 and not battle_active
@@ -850,11 +938,7 @@ func _route_home_action(route_id: String, title: String = "", icon: String = "",
             _refresh_home_snapshot()
             return
         "speed":
-            playback_speed_index = (playback_speed_index + 1) % playback_speeds.size()
-            campaign.world.clock.speed = playback_speeds[playback_speed_index]
-            if speed_button:
-                speed_button.text = "%dx" % int(playback_speeds[playback_speed_index])
-            _refresh_home_snapshot()
+            _cycle_playback_speed()
             return
         "overview", "stage:1":
             _close_home_submenu()
@@ -941,6 +1025,10 @@ func _on_submenu_action_requested(action_id: String = "", payload: Dictionary = 
             _route_home_action("focus_region", "", "", payload)
         "fleet_selected":
             _open_related_selection(home_state.get("observed_fleets", []), "fleet_id", str(payload.get("fleet_id", "")), "함대")
+        "fleet_move_requested":
+            _open_fleet_move(int(payload.get("fleet_id", -1)))
+        "fleet_route_requested":
+            _open_tactical_route(int(payload.get("fleet_id", -1)))
         "external_power_selected":
             _open_related_selection(home_state.get("external_powers", []), "id", String(payload.get("external_power_id", "")), "외부 세력")
         "news_selected":
@@ -962,6 +1050,167 @@ func _open_related_selection(rows, key: String, wanted: String, fallback_title: 
             _route_home_action("selection", title, "◎", row)
             return
 
+
+func _open_fleet_move(fleet_id: int) -> void:
+    var fleet = _player_fleet(fleet_id)
+    if fleet == null or fleet.is_moving():
+        return
+    _ensure_fleet_overlays()
+    if fleet_move_panel == null:
+        return
+    _capture_fleet_navigation_state()
+    _block_home_for_fleet_overlay()
+    if tactical_route_view != null:
+        tactical_route_view.visible = false
+    fleet_move_panel.visible = true
+    fleet_move_panel.call("open_fleet", fleet_id)
+
+
+func _open_tactical_route(fleet_id: int, pending_context: Dictionary = {}) -> void:
+    if _player_fleet(fleet_id) == null:
+        return
+    _ensure_fleet_overlays()
+    if tactical_route_view == null:
+        return
+    _capture_fleet_navigation_state()
+    _block_home_for_fleet_overlay()
+    if fleet_move_panel != null:
+        fleet_move_panel.visible = false
+    _tactical_route_context = pending_context.duplicate(true)
+    tactical_route_view.visible = true
+    tactical_route_view.call("open_fleet", fleet_id, pending_context)
+
+
+func _on_fleet_move_requested(fleet_id: int, destination_region: String,
+        preview: Dictionary) -> void:
+    var fleet = _player_fleet(fleet_id)
+    if fleet == null or fleet.is_moving() or destination_region == "":
+        return
+    _ensure_fleet_overlays()
+    if tactical_route_view == null:
+        return
+    var from_system := String(fleet.at_system)
+    var receipt: Dictionary = campaign.world.issue(Domestic.CMD_FLEET_MOVE, {
+        "faction": String(fleet.owner),
+        "fleet": fleet_id,
+        "region": destination_region,
+    }, 0)
+    var pending_context := receipt.duplicate(true)
+    pending_context["status"] = "pending"
+    pending_context["command_seq"] = int(receipt.get("seq", -1))
+    pending_context["from_system"] = from_system
+    pending_context["dest_region"] = destination_region
+    for key in ["estimated_arrival_tick", "expected_arrival_tick", "route_arrival_tick"]:
+        if preview.has(key):
+            pending_context[key] = preview[key]
+    if not pending_context.has("estimated_arrival_tick") and preview.has("travel_ticks"):
+        pending_context["estimated_arrival_tick"] = int(receipt.get("issued_tick", 0)) \
+            + maxi(int(preview.get("travel_ticks", 0)), 1)
+    if fleet_move_panel != null:
+        fleet_move_panel.visible = false
+    _open_tactical_route(fleet_id, pending_context)
+
+
+func _on_fleet_move_panel_closed() -> void:
+    if fleet_move_panel != null:
+        fleet_move_panel.visible = false
+    _restore_fleet_navigation_state()
+
+
+func _on_tactical_route_closed(_fleet_id: int) -> void:
+    if tactical_route_view != null:
+        tactical_route_view.visible = false
+    _tactical_route_context.clear()
+    _restore_fleet_navigation_state()
+
+
+func _on_tactical_route_detail_requested(fleet_id: int) -> void:
+    _ensure_fleet_overlays()
+    if fleet_voyage_view == null:
+        return
+    if tactical_route_view != null:
+        tactical_route_view.visible = false
+    fleet_voyage_view.visible = true
+    fleet_voyage_view.call("open_fleet", fleet_id)
+
+
+func _on_fleet_voyage_closed(fleet_id: int) -> void:
+    if fleet_voyage_view != null:
+        fleet_voyage_view.visible = false
+    if tactical_route_view != null:
+        tactical_route_view.visible = true
+        tactical_route_view.call("open_fleet", fleet_id, _tactical_route_context)
+
+
+func _capture_fleet_navigation_state() -> void:
+    if not _fleet_navigation_state.is_empty():
+        return
+    _fleet_navigation_state = {
+        "camera_position": cam.position,
+        "camera_zoom": cam.zoom,
+        "semantic": map.semantic_level,
+        "active_menu": active_menu_id,
+        "map_context": map_context_menu_id,
+        "selection": _selection_data.duplicate(true),
+        "route_payload": _route_payload.duplicate(true),
+        "submenu_visible": submenu != null and submenu.visible,
+        "submenu_route": String(submenu.get("current_route")) if submenu != null else "",
+    }
+
+
+func _block_home_for_fleet_overlay() -> void:
+    if submenu != null:
+        submenu.visible = false
+    if map_input_blocker != null:
+        map_input_blocker.visible = true
+    if map != null:
+        map.dragging = false
+        map.set_process_unhandled_input(false)
+
+
+func _restore_fleet_navigation_state() -> void:
+    if _fleet_navigation_state.is_empty():
+        if map_input_blocker != null:
+            map_input_blocker.visible = false
+        if map != null:
+            map.set_process_unhandled_input(true)
+        return
+    var restored := _fleet_navigation_state.duplicate(true)
+    _fleet_navigation_state.clear()
+    cam.position = restored.get("camera_position", cam.position)
+    cam.zoom = restored.get("camera_zoom", cam.zoom)
+    cam.reset_smoothing()
+    map.semantic_level = int(restored.get("semantic", map.semantic_level))
+    active_menu_id = String(restored.get("active_menu", active_menu_id))
+    map_context_menu_id = String(restored.get("map_context", map_context_menu_id))
+    _selection_data = (restored.get("selection", {}) as Dictionary).duplicate(true)
+    _route_payload = (restored.get("route_payload", {}) as Dictionary).duplicate(true)
+    var restore_submenu := bool(restored.get("submenu_visible", false))
+    if submenu != null:
+        if restore_submenu:
+            var submenu_state := home_state.duplicate(true)
+            if not _route_payload.is_empty():
+                submenu_state["route_payload"] = _route_payload.duplicate(true)
+            if String(restored.get("submenu_route", "")) == "selection" \
+                    and not _selection_data.is_empty():
+                submenu_state["selection"] = _selection_data.duplicate(true)
+            submenu.call("setup", submenu_state, home_snapshot)
+        submenu.visible = restore_submenu
+    if map_input_blocker != null:
+        map_input_blocker.visible = restore_submenu
+    map.set_process_unhandled_input(true)
+    _refresh_menu_styles()
+
+
+func _player_fleet(fleet_id: int):
+    if campaign == null or fleet_id < 0:
+        return null
+    for fleet in campaign.fleets:
+        if int(fleet.id) == fleet_id and String(fleet.owner) == String(campaign.world.player_faction) \
+                and fleet.is_alive():
+            return fleet
+    return null
+
 func _closest_playback_speed_index(value: float) -> int:
     var best_index := 0
     var best_distance := INF
@@ -971,6 +1220,16 @@ func _closest_playback_speed_index(value: float) -> int:
             best_distance = distance
             best_index = index
     return best_index
+
+
+func _cycle_playback_speed() -> void:
+    if campaign == null or campaign.world == null:
+        return
+    playback_speed_index = (playback_speed_index + 1) % playback_speeds.size()
+    campaign.world.clock.speed = playback_speeds[playback_speed_index]
+    if speed_button:
+        speed_button.text = "%dx" % int(playback_speeds[playback_speed_index])
+    _refresh_home_snapshot()
 
 func _on_map_blocker_gui_input(_event: InputEvent) -> void:
     get_viewport().set_input_as_handled()
@@ -1003,6 +1262,22 @@ func _layout_submenu() -> void:
     submenu.position = hud_safe_rect.get_center() - panel_size * 0.5
     submenu.size = panel_size
 
+
+func _layout_fleet_overlays() -> void:
+    if fleet_move_panel != null:
+        var move_size := Vector2(
+            minf(760.0, hud_safe_rect.size.x - 36.0),
+            minf(560.0, hud_safe_rect.size.y - 36.0)
+        )
+        fleet_move_panel.position = hud_safe_rect.get_center() - move_size * 0.5
+        fleet_move_panel.size = move_size
+    if tactical_route_view != null:
+        tactical_route_view.position = hud_safe_rect.position
+        tactical_route_view.size = hud_safe_rect.size
+    if fleet_voyage_view != null:
+        fleet_voyage_view.position = hud_safe_rect.position
+        fleet_voyage_view.size = hud_safe_rect.size
+
 func _layout_ui() -> void:
     if ui_root == null:
         return
@@ -1027,6 +1302,7 @@ func _layout_ui() -> void:
     if minimap:
         minimap.set_map_screen_rect(hud_safe_rect)
     _layout_submenu()
+    _layout_fleet_overlays()
 
 func _on_selected(data: Dictionary) -> void:
     for c in inspector_body.get_children():

@@ -186,6 +186,20 @@ func _try_select(screen_pos: Vector2) -> void:
     var world_pos: Vector2 = get_canvas_transform().affine_inverse() * screen_pos
     var best: Dictionary = {}
     var best_d: float = 50.0
+    # 함대는 성계와 겹칠 수 있으므로 먼저 판정한다. 전략 화면의 편대를 바로
+    # 선택해 명령 또는 상세 관측으로 들어가는 것이 홈 화면의 기본 동선이다.
+    var fleet_radius := 34.0 / maxf(camera.zoom.x if camera != null else 1.0, 0.1)
+    for fleet in fleets:
+        var fleet_pos := _fleet_position(fleet)
+        if fleet_pos == Vector2.ZERO:
+            continue
+        var distance := fleet_pos.distance_to(world_pos)
+        if distance < fleet_radius:
+            var selection = fleet.get("selection", {})
+            if selection is Dictionary:
+                object_selected.emit((selection as Dictionary).duplicate(true))
+                focus_world(fleet_pos, maxf(camera.zoom.x, 0.9))
+                return
     for s in systems:
         var p: Vector2 = Vector2(float(s.pos[0]), float(s.pos[1]))
         var d: float = p.distance_to(world_pos)
@@ -506,7 +520,6 @@ func _draw_status_icons(p: Vector2, c: Color, kind: String) -> void:
         draw_line(warning+Vector2(0,-7),warning+Vector2(6,5),Color(1.0,0.58,0.27,0.86),2.0,true)
         draw_line(warning+Vector2(6,5),warning+Vector2(-6,5),Color(1.0,0.58,0.27,0.86),2.0,true)
 func _draw_fleets() -> void:
-    if semantic_level < 3: return
     for f in fleets:
         var path: Array = f.path
         var pts: PackedVector2Array = []
@@ -514,19 +527,31 @@ func _draw_fleets() -> void:
             pts.append(Vector2(float(a[0]),float(a[1])))
         draw_polyline(pts,Color(1,1,1,0.10),2.0,true)
 
-        var t: float = fmod(fleet_time*float(f.speed),1.0)
-        var p: Vector2 = _point_on_path(pts,t)
+        var p: Vector2 = _fleet_position(f)
         var c: Color = faction_colors.get(str(f.faction),Color.WHITE)
 
-        draw_circle(p,22.0,Color(c.r,c.g,c.b,0.05))
+        # 기본 전략 축척에서도 편대의 존재와 선택 가능성을 유지한다. 확대하면
+        # 수백 척을 암시하는 점 진형으로 밀도를 드러낸다.
+        draw_circle(p,22.0,Color(c.r,c.g,c.b,0.08))
         var tri: PackedVector2Array = PackedVector2Array([
             p+Vector2(17,0),p+Vector2(-8,-7),p+Vector2(-3,0),p+Vector2(-8,7)
         ])
         draw_colored_polygon(tri,c)
 
-        if semantic_level >= 4:
+        if semantic_level >= 3:
             _draw_label("%s · %s척" % [f.name,str(f.size)],p+Vector2(22,-12),16,Color.WHITE)
             _draw_fleet_formation(p,c,int(f.size))
+
+
+func _fleet_position(fleet: Dictionary) -> Vector2:
+    var path: Array = fleet.get("path", [])
+    var points := PackedVector2Array()
+    for point in path:
+        if point is Array and point.size() >= 2:
+            points.append(Vector2(float(point[0]), float(point[1])))
+    if points.size() < 2:
+        return Vector2.ZERO
+    return _point_on_path(points, clampf(float(fleet.get("progress", 0.0)), 0.0, 1.0))
 
 func _draw_fleet_formation(center: Vector2, c: Color, size: int) -> void:
     var count: int = int(min(150,max(35,size/100)))

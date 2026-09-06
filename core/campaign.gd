@@ -37,9 +37,16 @@ const CMD_SCN03_EVENT_OUTCOME: String = "scenario_event_outcome"
 ## Event 07's approved Red-Cliffs participant ledger is an external player command.
 ## It is replayed like the event outcomes; no campaign snapshot owns it.
 const CMD_SCN03_RED_CLIFF_MANIFEST: String = "scn03_red_cliff_manifest"
+## The active-battle result is an explicit player fact.  It is accepted only
+## after the deterministic Contact → Barrage transition, then replayed from the
+## normal player command log.
+const CMD_SCN03_RED_CLIFF_RESULT: String = "scn03_red_cliff_result"
 const SCN03_CAO_OWNER: String = "조조"
 const SCN03_SUN_OWNER: String = "손권"
 const SCN03_LIU_CONTINGENT_ID: String = "SCN-03-LIU-BEI-CONTINGENT"
+## 홈의 3D 항행 관측용 제3함대는 대형 편대가 아니라 독립 전열함 해무급 한 척이다.
+## 이 값은 뷰 연출용 대체가 아니라 시나리오 초기 Fleet 정본에 반영한다.
+const SCN03_HAEMU_SOLO_FLEET_ID: int = 3
 
 ## Event 09 (scenario-200-208.md §ACT 7)의 순서는 지문에도 고정한다.
 const SCN03_RED_CLIFF_CONDITIONS: Array[String] = [
@@ -305,6 +312,9 @@ func _spawn_fleet(owner: String, at: String) -> Fleet:
 	_next_fleet_id += 1
 	fl.owner = owner
 	fl.at_system = at
+	if fl.id == SCN03_HAEMU_SOLO_FLEET_ID and owner == SCN03_SUN_OWNER:
+		fl.ships = 1
+		fl.plan = Economy.PLAN_DEFAULT
 	# **천명이 초기 사기에 들어간다** (combat.md §1.2 · function-events.md §0.3-①).
 	# 2026-08-25 배선 — 그 전까지 모든 함대가 명목 100 으로 시작했고,
 	# **조조의 황제 보유가 전투에서 아무 값도 하지 않았다.**
@@ -570,6 +580,25 @@ func issue_scn03_red_cliff_manifest(cao_fleet_ids: Array, sun_liu_fleet_ids: Arr
 	return world.issue(CMD_SCN03_RED_CLIFF_MANIFEST, payload, delay_ticks, "player")
 
 
+func issue_scn03_red_cliff_result(winner_faction_id: String, delay_ticks: int = 0) -> Dictionary:
+	if world == null or world.scenario != "SCN-03" or not _uses_scn03_red_cliff_phase_rules() \
+			or delay_ticks < 0:
+		return {}
+	var battle := _scn03_red_cliff_battle()
+	if battle == null or battle.status != ActiveBattle.STATUS_ACTIVE or battle.combat_phase != 2 \
+			or battle.result_applied:
+		return {}
+	var payload := {
+		"battle_id": battle.battle_id,
+		"phase": battle.combat_phase,
+		"winner_faction_id": winner_faction_id,
+	}
+	if not _is_valid_scn03_red_cliff_result_payload(payload) \
+			or _has_pending_scn03_red_cliff_result():
+		return {}
+	return world.issue(CMD_SCN03_RED_CLIFF_RESULT, payload, delay_ticks, "player")
+
+
 ## Save.inspect uses this same structural contract before replay.  It intentionally
 ## cannot validate live fleet liveness/ownership; the reducer below does that at the
 ## command's arrival tick, where those facts are authoritative.
@@ -654,6 +683,29 @@ func _manifest_fleets_valid_now(manifest: Dictionary) -> bool:
 	return true
 
 
+static func _is_valid_scn03_red_cliff_result_payload(payload: Dictionary) -> bool:
+	if payload.size() != 3 or String(payload.get("battle_id", "")) != SCN03_RED_CLIFF_PENDING_BATTLE_ID:
+		return false
+	if not (payload.get("phase", null) is int) or int(payload["phase"]) != 2:
+		return false
+	var winner := String(payload.get("winner_faction_id", ""))
+	return winner == "cao_side" or winner == "sun_liu_side"
+
+
+func _scn03_red_cliff_battle() -> ActiveBattle:
+	for battle in active_battles:
+		if battle.battle_id == SCN03_RED_CLIFF_PENDING_BATTLE_ID:
+			return battle
+	return null
+
+
+func _has_pending_scn03_red_cliff_result() -> bool:
+	for command in world.pending_commands:
+		if String(command.get("kind", "")) == CMD_SCN03_RED_CLIFF_RESULT:
+			return true
+	return false
+
+
 func _fleet_by_id(fleet_id: int) -> Fleet:
 	for fleet in fleets:
 		if fleet.id == fleet_id:
@@ -665,9 +717,14 @@ func _advance_scn03_red_cliff_pending_battle() -> void:
 	if not _uses_scn03_progress_rules():
 		return
 	for battle in active_battles:
-		if battle.battle_id != SCN03_RED_CLIFF_PENDING_BATTLE_ID \
-				or battle.status != ActiveBattle.STATUS_PENDING:
+		if battle.battle_id != SCN03_RED_CLIFF_PENDING_BATTLE_ID:
 			continue
+		if battle.status == ActiveBattle.STATUS_ACTIVE:
+			if _uses_scn03_red_cliff_phase_rules():
+				battle.advance_red_cliff_phase(world.clock.tick)
+			return
+		if battle.status != ActiveBattle.STATUS_PENDING:
+			return
 		if ended:
 			battle.cancel_pending(world.clock.tick, "scenario_ended")
 			return
@@ -740,6 +797,11 @@ static func _is_valid_scn03_event_outcome(event_id: String, outcome: Dictionary)
 func _uses_scn03_progress_rules() -> bool:
 	var version := Save._parse_ruleset(world.ruleset)
 	return version.size() == 3 and version[0] == 0 and version[1] >= 2
+
+
+func _uses_scn03_red_cliff_phase_rules() -> bool:
+	var version := Save._parse_ruleset(world.ruleset)
+	return version.size() == 3 and version[0] == 0 and version[1] >= 3
 
 
 func _evaluate_scn03_event09_if_ready() -> void:
@@ -881,6 +943,18 @@ func _apply_arrived() -> void:
 			var manifest_payload: Dictionary = c.get("payload", {})
 			if String(c.get("origin", "player")) == "player" \
 					and _record_scn03_red_cliff_manifest(manifest_payload):
+				cmds_applied += 1
+			else:
+				cmds_rejected += 1
+			continue
+		if String(c.get("kind", "")) == CMD_SCN03_RED_CLIFF_RESULT:
+			var result_payload: Dictionary = c.get("payload", {})
+			var battle := _scn03_red_cliff_battle()
+			if String(c.get("origin", "player")) == "player" \
+					and _uses_scn03_red_cliff_phase_rules() \
+					and _is_valid_scn03_red_cliff_result_payload(result_payload) \
+					and battle != null \
+					and battle.resolve_red_cliff(String(result_payload["winner_faction_id"]), world.clock.tick):
 				cmds_applied += 1
 			else:
 				cmds_rejected += 1
@@ -1078,6 +1152,7 @@ func _arrive_fleets() -> void:
 	for fl in arrived:
 		var rid := fl.target_region
 		fl.arrival_tick = -1
+		fl.departure_tick = -1
 		fl.at_system = data.system_of(rid)
 		fl.target_region = ""
 		# The approved manifest's required fleet is arriving for the one persistent
@@ -2141,6 +2216,11 @@ func digest() -> int:
 			elif String(c["kind"]) == CMD_SCN03_RED_CLIFF_MANIFEST:
 				for value in _scn03_red_cliff_manifest_digest_values(c.get("payload", {})):
 					h = Save._fold(h, value)
+			elif String(c["kind"]) == CMD_SCN03_RED_CLIFF_RESULT:
+				var result_payload: Dictionary = c.get("payload", {})
+				h = Save._fold(h, Rng._hash_string(String(result_payload.get("battle_id", ""))))
+				h = Save._fold(h, int(result_payload.get("phase", -1)))
+				h = Save._fold(h, Rng._hash_string(String(result_payload.get("winner_faction_id", ""))))
 	# ── 세력 (정렬된 faction_ids) ──────────────────────────────────────
 	for fid in faction_ids:
 		var f: Faction = factions[fid]
@@ -2187,6 +2267,7 @@ func digest() -> int:
 		h = Save._fold(h, Rng._hash_string(fl.owner))
 		h = Save._fold(h, Rng._hash_string(fl.at_system))
 		h = Save._fold(h, Rng._hash_string(fl.target_region))
+		h = Save._fold(h, fl.departure_tick)
 		h = Save._fold(h, fl.arrival_tick)
 		h = Save._fold(h, fl.ships)
 		h = Save._fold(h, fl.morale)

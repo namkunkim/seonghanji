@@ -36,7 +36,7 @@ const TICKS_PER_MONTH: int = 60
 const TICKS_PER_YEAR: int = TICKS_PER_MONTH * 12
 
 ## 허용 배속. 상한은 미결 — roadmap-solo.md 검토 포인트 1
-const SPEEDS: Array[int] = [1, 2, 4]
+const SPEEDS: Array[int] = [1, 2, 4, 16, 64]
 
 ## 게임 내 경과 틱. 세이브에 그대로 들어간다 (schema/save.json 의 game_tick)
 var tick: int = 0

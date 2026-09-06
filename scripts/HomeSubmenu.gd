@@ -344,6 +344,23 @@ func _render_selection() -> void:
 	for key in ["faction", "system_id", "region_id", "grade", "status"]:
 		if data.has(key):
 			_add_info_row(_field_label(key), _field_value(key, String(data[key])), "선택 정보")
+	if String(data.get("type", "")) == "fleet" and _is_player_fleet(data):
+		var fleet_id := int(data.get("fleet_id", -1))
+		var status := String(data.get("status", ""))
+		if fleet_id >= 0 and status == "stationed":
+			_add_action_row("이동 명령", "목적 권역과 경로·도착 예정을 검토합니다",
+				"선택한 아군 함대에 이동 명령을 발행합니다.",
+				"fleet_move_requested", {"fleet_id": fleet_id})
+		elif fleet_id >= 0 and status == "moving":
+			_add_action_row("항로 관측", "현재 경로와 도착 예정을 확인합니다",
+				"이동 중인 아군 함대의 읽기 전용 항로 화면을 엽니다.",
+				"fleet_route_requested", {"fleet_id": fleet_id})
+
+
+func _is_player_fleet(selected: Dictionary) -> bool:
+	var player: Dictionary = _state.get("player_state", {})
+	var player_faction := String(player.get("faction_id", ""))
+	return player_faction != "" and String(selected.get("faction", "")) == player_faction
 
 
 func _render_unavailable(title: String, reason: String) -> void:

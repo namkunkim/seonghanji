@@ -15,6 +15,10 @@ var target_region: String = ""
 ## 도착 틱. -1 이면 이동 중이 아니다
 var arrival_tick: int = -1
 
+## 출항 틱. 이동 중인 함대의 항로 진행률을 판정하는 정본이며, -1 이면 주둔 상태다.
+## `at_system`은 이동 중 출발 성계를 유지하므로, 이 값과 `arrival_tick`은 한 쌍이다.
+var departure_tick: int = -1
+
 var ships: int = Battle.FLEET_SHIPS
 var morale: int = Battle.MORALE_NOMINAL
 
@@ -106,6 +110,36 @@ var drilling: bool = false
 ## 이 함대의 전대 수 (1/1000 단위). 함선 200척 = 5전대
 func squadrons_milli() -> int:
 	return ships * 1000 / Battle.SQUADRON_SHIPS
+
+
+## 현재 함대의 함종별 실척수. 함종별 손실 모델이 도입되기 전까지는
+## 총 척수와 편성안에서 결정론적으로 배분한다. 모든 화면은 이 값을 함께 읽는다.
+func ships_by_kind() -> Dictionary:
+	var weights: Array = Economy.PLANS.get(plan, Economy.PLANS[Economy.PLAN_DEFAULT])
+	var total_weight := 0
+	for weight in weights:
+		total_weight += maxi(int(weight), 0)
+	var result: Dictionary = {}
+	if total_weight <= 0:
+		return result
+	var assigned := 0
+	var remainders: Array = []
+	for index in range(Economy.SHIP_KINDS.size()):
+		var kind: String = Economy.SHIP_KINDS[index]
+		var weighted := ships * maxi(int(weights[index]), 0)
+		var count := int(weighted / total_weight)
+		result[kind] = count
+		assigned += count
+		remainders.append({"kind": kind, "remainder": weighted % total_weight,
+			"index": index})
+	remainders.sort_custom(func(a, b):
+		if int(a["remainder"]) == int(b["remainder"]):
+			return int(a["index"]) < int(b["index"])
+		return int(a["remainder"]) > int(b["remainder"]))
+	for index in range(ships - assigned):
+		var kind: String = String(remainders[index]["kind"])
+		result[kind] = int(result[kind]) + 1
+	return result
 
 
 ## 훈련도 상한. 전대장이 없으면 40 이다 —

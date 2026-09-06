@@ -420,7 +420,7 @@ func _init() -> void:
 	_ok(not main.submenu.visible, "close_panel submenu 숨김")
 	_ok(not main.map_input_blocker.visible, "close_panel blocker 숨김")
 
-	# pause 두 번과 speed 세 번은 Campaign 시계와 UI만 시작 상태로 왕복한다.
+	# pause 두 번과 speed 다섯 번은 Campaign 시계와 UI만 시작 상태로 왕복한다.
 	if top_buttons.size() == 10:
 		var original_pause_text := String(main.pause_button.text)
 		var original_speed_text := String(main.speed_button.text)
@@ -432,10 +432,10 @@ func _init() -> void:
 		top_buttons[6].pressed.emit()
 		_ok(not main.campaign.world.clock.paused, "pause 두 번 원상 복귀")
 		_eq(String(main.pause_button.text), original_pause_text, "pause 버튼 문자 원상 복귀")
-		for _step in range(3):
+		for _step in range(5):
 			top_buttons[7].pressed.emit()
-		_eq(main.playback_speed_index, original_speed_index, "speed 세 번 index 원상 복귀")
-		_eq(main.campaign.world.clock.speed, 1, "speed 세 번 Campaign 시계 원상 복귀")
+		_eq(main.playback_speed_index, original_speed_index, "speed 다섯 번 index 원상 복귀")
+		_eq(main.campaign.world.clock.speed, 1, "speed 다섯 번 Campaign 시계 원상 복귀")
 		_eq(String(main.speed_button.text), original_speed_text, "speed 버튼 문자 원상 복귀")
 		_ok(is_equal_approx(Engine.time_scale, original_time_scale),
 			"speed가 Engine time_scale에 영향 없음")
@@ -479,6 +479,14 @@ func _init() -> void:
 	tick_before = int(main.campaign.world.clock.tick)
 	main._process(60.0)
 	_eq(main.campaign.world.clock.tick, tick_before + 4, "x4는 60초에 4 tick")
+	top_buttons[7].pressed.emit()
+	tick_before = int(main.campaign.world.clock.tick)
+	main._process(60.0)
+	_eq(main.campaign.world.clock.tick, tick_before + 16, "x16은 60초에 16 tick")
+	top_buttons[7].pressed.emit()
+	tick_before = int(main.campaign.world.clock.tick)
+	main._process(60.0)
+	_eq(main.campaign.world.clock.tick, tick_before + 64, "x64는 60초에 64 tick")
 	top_buttons[7].pressed.emit()
 	_eq(main.campaign.world.clock.speed, 1, "진행 비율 시험 후 x1 복귀")
 

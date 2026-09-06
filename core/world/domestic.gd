@@ -456,6 +456,7 @@ static func _apply_fleet_move(data: GameData, graph: Dictionary, fleets: Array,
 	if not bool(r["ok"]):
 		return String(r["reason"])
 	fl.target_region = rid
+	fl.departure_tick = now_tick
 	fl.arrival_tick = now_tick + maxi(int(r["travel_ticks"]), 1)
 	return ""
 
