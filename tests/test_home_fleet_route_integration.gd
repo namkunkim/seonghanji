@@ -182,9 +182,9 @@ func _test_main_integration() -> void:
 	if fleet == null:
 		main.free()
 		return
-	_eq(fleet.ships, 1, "제3함대 정본 편성은 전열함 한 척")
+	_eq(fleet.ships, 1, "제3함대 코어 정본은 전열함 한 척")
 	_eq(int(fleet.ships_by_kind().get("전열", 0)), 1,
-		"제3함대 유일 함선의 함종은 전열")
+		"제3함대 코어 유일 함선의 함종은 전열")
 	var selected: Dictionary = _observed_fleet(main.home_state, fleet.id)
 	_ok(not selected.is_empty(), "홈 스냅샷에서 아군 함대 선택 데이터 확보")
 	if selected.is_empty():
@@ -276,13 +276,29 @@ func _test_main_integration() -> void:
 	main._on_tactical_route_detail_requested(fleet.id)
 	_ok(main.fleet_voyage_view.visible, "함대 선택 뒤 3D 항행 관측 표시")
 	_ok(not main.tactical_route_view.visible, "3D 관측 중 전략 항로 숨김")
-	var represented_line_ships := 0
-	for ship in main.fleet_voyage_view.get("_formation").get_children():
-		if String(ship.get_meta("fleet_ship_kind", "")) == "전열":
-			represented_line_ships += 1
-	_eq(represented_line_ships, 1, "3D 관측 함대는 전열함 한 척만 표시")
-	_eq(main.fleet_voyage_view.get("_formation").get_child_count(), 1,
-		"3D 관측 함대에는 호위·축약 함선이 없음")
+	# 3D 관측은 코어 Fleet의 실제 한 척을 바꾸지 않고, 28척 전대를 관측용으로 축약한다.
+	# 26595be 계약: 전열 11·포격 6·강습 4·전자 3·공성 1·보급 3.
+	var squadron = main.fleet_voyage_view.get("_formation")
+	_eq(squadron.get_child_count(), 28, "3D 관측은 전대 한 개 28척을 표시")
+	var squadron_counts := {"전열": 0, "포격": 0, "강습": 0, "전자": 0, "공성": 0, "보급": 0}
+	var central_roles: Array[String] = []
+	var rear_support_count := 0
+	for index in squadron.get_child_count():
+		var ship = squadron.get_child(index) as Node3D
+		var ship_kind := String(ship.get_meta("fleet_ship_kind", ""))
+		if squadron_counts.has(ship_kind):
+			squadron_counts[ship_kind] = int(squadron_counts[ship_kind]) + 1
+		if index >= 3 and index <= 5:
+			central_roles.append(ship_kind)
+		if ship_kind in ["공성", "보급"] and ship.position.z <= -2.65:
+			rear_support_count += 1
+	_eq(squadron_counts, {"전열": 11, "포격": 6, "강습": 4, "전자": 3, "공성": 1, "보급": 3},
+		"3D 전대 관측은 역할별 28척 편성을 보존")
+	_eq(String((squadron.get_child(0) as Node3D).get_meta("fleet_ship_kind", "")), "전열",
+		"어린진 관측의 선두는 전열함")
+	_eq(central_roles, ["포격", "강습", "전자"],
+		"어린진 관측 중앙열은 포격·강습·전자전 역할을 둠")
+	_eq(rear_support_count, 4, "어린진 관측은 공성 1·보급 3 지원함 전부를 후방에 배치")
 	main._on_fleet_voyage_closed(fleet.id)
 	_ok(main.tactical_route_view.visible, "3D 관측 닫기 뒤 전략 항로 복귀")
 	_eq((main.tactical_route_view.get("_context") as Dictionary)["destination_region"],
