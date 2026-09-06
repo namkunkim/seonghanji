@@ -1,8 +1,23 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
-> **2026-09-07 안정화 감사 — 기준선 분리:** 안정화 시작 기준선은 `540189e`; 구현 커밋은
+> **2026-09-07 안정화 정정 — 기준선·자산 분류:** 이번 정정 시작 HEAD와 `origin/main`은 모두
+> `4518e05009bf22301af943d0df6f97d19a757b6a`다. 코딩 담당은 `gpt-5.3-codex-spark`, 오케스트레이션과
+> 독립 감사는 `gpt-5.6-terra`가 맡았다. 기존 감사의 과거 기준선·A~E 합계는 확장자 기반 오분류를 포함한
+> 1차 값으로 폐기하며, 정확한 전수 재집계 전에는 새 합계를 주장하지 않는다.
+> root `artillery_ship`·`assault_carrier`·`electronic_ship`·`siege_ship`·`supply_ship` GLB 5종은
+> 미사용 상수 때문에 B 직접 참조로 잘못 분류됐다. 실제 항행은 `voyage_lod/` GLB를 사용하므로 root GLB는
+> D/E 보류(삭제·복원·재수출 금지), `voyage_lod/**`는 B 직접 런타임 참조 유지다. `.codex/config.toml`은
+> `model = "gpt-5.6-terra"`인 A 프로젝트 정본으로 Git 추적하며 `.codex/`의 다른 파일은 추가하지 않는다.
+> `.uid`·`.import`의 일괄 C/삭제 가능 판정은 철회한다. 대응 소스·런타임 자산은 보존 후보, 원본 없는 `.uid`와
+> archive 자산은 보류, 명확한 `out`/cache 재생성 파일만 C 후보다.
+> 이번 절대 Godot 4.7.2 콘솔 재실행은 `HomeFleetRouteIntegration` 86/0, `FleetRouteTransition` 54/0,
+> `HomeMapZoom` 175/0, `HomeMapSnapshot` 348/0으로 각각 exit 0이다. 전체 `run_tests.gd`는 35/35 섹션,
+> 698 단언(697 통과), 실패 2, exit 1을 재현했다. `user://` 파일 저장 실패 뒤 `tests/run_tests.gd:824`의 빈
+> Dictionary `seed` 접근과 701 단언 하한 guard가 뒤따른 A-07-E1 환경 잔여이며, 하한을 낮추거나 시험을 숨기지 않았다.
+>
+> 기존 안정화 감사 — 기준선 분리: 안정화 시작 기준선은 `540189e`; 구현 커밋은
 > `9195a4a`·`8a2585b`; 문서 커밋은 `fb8f89b`다. 재확인 시 로컬 HEAD `fb8f89b`, `origin/main`
-> `540189e`, 로컬은 **ahead 3 / behind 0**이다.
+> `540189e`, 로컬은 **ahead 3 / behind 0**이었다.
 > `540189e`의 은하 지도 내비게이션은 홈맵 회귀로 유지 확인됐지만 C-04 완료가 아니다. `26595be`의
 > 3D 관측 정본은 코어 제3함대 1척과 별개인 28척 전대(전열 11·포격 6·강습 4·전자 3·공성 1·보급 3)다.
 > 노후 1척 통합 시험을 이 계약으로 갱신하고, 중앙열 보급함을 후방으로 옮겼다.
@@ -17,9 +32,9 @@
 > 완료로 올리지 않는다.
 >
 > 작업 트리의 status 295행은 untracked 디렉터리 축약이다. 실제 untracked 651개와 수정 9개를 상호배타 분류한
-> 660개는 A 정본 후보 54, B 런타임 후보 46, C 생성·캐시 511, D archive·중복 42, E 소유권 불명확 7이다.
-> 상세 근거는 `docs/07-production/worktree-artifact-triage-2026-09-07.md`다. root GLB 5종은 현 항행이 직접
-> 참조하는 런타임 후보이므로 보존·검증 후 별도 반입한다. 안전한 후속 묶음은
+> 1차 감사의 660개·A 54/B 46/C 511/D 42/E 7은 폐기된 값이다. 상세 정정 근거는
+> `docs/07-production/worktree-artifact-triage-2026-09-07.md`다. root GLB 5종은 현 항행이 직접 참조하지 않는
+> D/E 보류 자산이고, 실제 `voyage_lod/**`만 B 런타임 참조다. 안전한 후속 묶음은
 > (1) voyage 코드+시험, (2) home fixture, (3) 출처·재현을 검증한 galaxy/ship/terrain 별도 묶음뿐이며,
 > bulk add/delete는 금지다. 전체 `run_tests.gd`는 `user://` 쓰기 거부 때문에 저장 섹션에서 698/701·실패 2·exit 1;
 > 기능 회귀가 아닌 A-07-E1 환경 후속으로 기록한다. 다음 단일 작성 작업은 변함없이

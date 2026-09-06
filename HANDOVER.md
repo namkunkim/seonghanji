@@ -1,6 +1,22 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
-> **2026-09-07 안정화 감사 완료 — 기준선과 완료 상태를 분리:** 안정화 시작 기준선은
+> **2026-09-07 안정화 정정:** 시작 HEAD와 `origin/main`은 모두
+> `4518e05009bf22301af943d0df6f97d19a757b6a`다. 코딩·디버깅 담당은 `gpt-5.3-codex-spark`,
+> 오케스트레이터·독립 감사는 `gpt-5.6-terra`다. root `artillery_ship`·`assault_carrier`·
+> `electronic_ship`·`siege_ship`·`supply_ship` GLB는 미사용 상수만 있었고 B 직접 참조가 아니다.
+> 실제 `_hero_glb_path()`는 `assets/models/ships/voyage_lod/`의 동명 GLB를 사용한다. root GLB는 D/E
+> 보류로 옮기며 삭제·복원·재수출 금지, `voyage_lod/**` B 참조는 유지한다. `.codex/config.toml`은
+> `model = "gpt-5.6-terra"`를 고정하는 A 프로젝트 정본으로 Git 추적한다(다른 `.codex/` 파일은 제외).
+> `.uid`·`.import`는 더 이상 일괄 C/삭제 가능이 아니다: 소스·런타임/승인 자산 대응 파일은 보존 후보,
+> 원본 없는 `.uid`와 archive는 보류, 명확한 `out`/cache 재생성 파일만 C 후보다. 이전 A~E 합계는
+> 폐기된 1차 감사값이며 전수 재집계 전 새 합계를 주장하지 않는다. C-04/C-05/P-02/G-10 상태는 승격하지 않으며,
+> 다음 단일 구현 작업은 **G-10 C-02 배너/action 계약 + canonical `battle_id` 전투 진입 경계**다.
+> 이번 절대 Godot 4.7.2 콘솔 재실행은 `HomeFleetRouteIntegration` 86/0, `FleetRouteTransition` 54/0,
+> `HomeMapZoom` 175/0, `HomeMapSnapshot` 348/0으로 각각 exit 0이다. 전체 `run_tests.gd`는 35/35 섹션,
+> 698 단언(697 통과), 실패 2, exit 1을 재현했다. `user://` 파일 저장 실패 뒤 `tests/run_tests.gd:824`의 빈
+> Dictionary `seed` 접근과 701 단언 하한 guard가 뒤따른 A-07-E1 환경 잔여이며, 하한을 낮추거나 시험을 숨기지 않았다.
+>
+> 기존 2026-09-07 안정화 감사 완료 — 기준선과 완료 상태를 분리: 안정화 시작 기준선은
 > `540189e`이며, 구현 커밋은 `9195a4a`·`8a2585b`, 문서 커밋은 `fb8f89b`다. 재확인 시점의
 > 로컬 HEAD는 `fb8f89b`, `origin/main`은 `540189e`이고 로컬은 **ahead 3 / behind 0**이다. `9195a4a`는
 > 3D 항행 계약은 코어 제3함대의 실제 1척을 바꾸지 않고 **관측용 전대 1개 28척**(전열 11·포격 6·강습 4·
@@ -19,7 +35,7 @@
 > `app/views/galaxy_map_view.gd`의 내비게이션 커밋이며, 위 홈맵 회귀로 유지 확인됐다. `status`의 295행은
 > untracked 디렉터리를 축약한 수치이고, `ls-files --others` 651개와 수정 9개를 합친 실제 감사 대상은 660개다:
 > A 54, B 46, C 511, D 42, E 7. 상세은 `docs/07-production/worktree-artifact-triage-2026-09-07.md`다.
-> root 함선 GLB 5종은 현 항행이 **직접 참조하는 런타임 후보**이므로 보존·검증 후 별도 반입만 허용한다.
+> root 함선 GLB 5종은 현 항행이 직접 참조하지 않는 D/E 보류 자산이며, 실제 B 참조는 `voyage_lod/**`다.
 > `out/**`·캐시·`.import`/`.uid`를 일괄 add하지 않는다. 다음 단일 작성 작업은
 > 여전히 **G-10 C-02 배너/action 계약 + canonical `battle_id` 전투 진입 경계**다.
 >
@@ -55,7 +71,8 @@
 > A-03 이동 명령 경로는 전용 회귀 650단언(334+175+54+83+4, 실패 0)을 통과했다. 다만
 > `app/main.tscn` 실험 경로는 `app/views/galaxy_map_view.gd:79` parse 오류와 setup 계약 불일치가
 > 있으며, 3D 대표 편대·정본 항로 형상·함선 자산 출처/라이선스·Windows 실기 검증이 남았다.
-> C-01 선행 전 C-04 완료 승격 금지. `.uid`·`.import`·`.godot-appdata/**`·`out/**`는 소스가 아니다.
+> C-01 선행 전 C-04 완료 승격 금지. `.uid`·`.import`는 대응 원본과 자산별로 보존 판단하며, `.godot-appdata/**`와
+> 명확한 `out/**` 재생성물만 생성물 후보다.
 
 > **2026-09-04 경로 우선 지도 v3:** 거주 행성계 22개·표시 천체/시설 191개·행성 간 경로 150개. 기존 성간 경로 37개는 지형 추종 고정 곡선이며 기저항로 15개는 명령 시에만 표시한다. 회랑은 내부 약 40%·주변 70% 이상으로 우회 불가, 고속항로는 상시 표시한다. 하천 형상은 이동 규칙이 아닌 지형 참고선이다. 최대 상세에서 소행성·먼지·가스·방사를 함께 표시한다. v1·v2는 `data/maps/archive/`, 상세 `docs/01-world/galaxy-detail-map.md`. Godot 미연동.
 
