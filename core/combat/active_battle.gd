@@ -8,6 +8,9 @@ extends RefCounted
 ## power ratio, diplomacy tier, or object address. This slice creates `pending` only.
 
 const STATUS_PENDING: String = "pending"
+const STATUS_ACTIVE: String = "active"
+const STATUS_RESOLVED: String = "resolved"
+const STATUS_CANCELLED: String = "cancelled"
 const RED_CLIFF_REGION_ID: String = "RGN-04"
 const RED_CLIFF_SYSTEM_ID: String = "SYS-13"
 ## Canonical map-body identity for the display anchor named 구지 (Guji).
@@ -25,6 +28,13 @@ var system_id: String = RED_CLIFF_SYSTEM_ID
 var anchor_body_id: String = RED_CLIFF_ANCHOR_BODY_ID
 
 var created_tick: int = 0
+## Undefined while pending.  The phase engine is intentionally out of this slice;
+## activation merely establishes its deterministic first phase.
+var started_tick: int = -1
+var campaign_stage: int = 0
+var combat_phase: int = -1
+var cancelled_tick: int = -1
+var cancellation_reason: String = ""
 ## Reserved deterministic anchor for a later phase engine. It consumes no Rng stream.
 var rng_anchor: String = ""
 
@@ -35,6 +45,9 @@ var defender_faction_id: String = ""
 var attacker_fleet_ids: Array[String] = []
 var defender_fleet_ids: Array[String] = []
 var participant_roles: Dictionary = {}
+## A scenario participant, not a general faction or Fleet.  It never enters fleet
+## arrival checks and exists only when the approved Event 07 manifest says so.
+var liu_contingent_id: String = ""
 var entry_available: bool = false
 
 
@@ -58,6 +71,42 @@ func _normalize_pending_identity() -> void:
 	defender_faction_id = ""
 	entry_available = false
 	status = STATUS_PENDING
+	started_tick = -1
+	campaign_stage = 0
+	combat_phase = -1
+	cancelled_tick = -1
+	cancellation_reason = ""
+	liu_contingent_id = ""
+
+
+func activate_red_cliff(attacker_ids: Array[String], defender_ids: Array[String],
+		roles: Dictionary, contingent_id: String, at_tick: int) -> void:
+	if status != STATUS_PENDING:
+		return
+	attacker_fleet_ids = attacker_ids.duplicate()
+	defender_fleet_ids = defender_ids.duplicate()
+	attacker_fleet_ids.sort()
+	defender_fleet_ids.sort()
+	participant_roles = roles.duplicate(true)
+	attacker_faction_id = "cao_side"
+	defender_faction_id = "sun_liu_side"
+	liu_contingent_id = contingent_id
+	started_tick = at_tick
+	campaign_stage = 7
+	combat_phase = 1
+	cancelled_tick = -1
+	cancellation_reason = ""
+	entry_available = true
+	status = STATUS_ACTIVE
+
+
+func cancel_pending(at_tick: int, reason: String) -> void:
+	if status != STATUS_PENDING:
+		return
+	cancelled_tick = at_tick
+	cancellation_reason = reason
+	entry_available = false
+	status = STATUS_CANCELLED
 
 
 ## Ordered scalar values only: Campaign.digest owns the hash and avoids Dictionary order.
@@ -71,16 +120,27 @@ func digest_values() -> Array:
 		Rng._hash_string(system_id),
 		Rng._hash_string(anchor_body_id),
 		created_tick,
+		started_tick,
+		campaign_stage,
+		combat_phase,
+		cancelled_tick,
+		Rng._hash_string(cancellation_reason),
 		Rng._hash_string(rng_anchor),
 		Rng._hash_string(attacker_faction_id),
 		Rng._hash_string(defender_faction_id),
 		attacker_fleet_ids.size(),
 		defender_fleet_ids.size(),
 		participant_roles.size(),
+		Rng._hash_string(liu_contingent_id),
 		1 if entry_available else 0,
 	]
 	for fleet_id in attacker_fleet_ids:
 		values.append(Rng._hash_string(fleet_id))
 	for fleet_id in defender_fleet_ids:
 		values.append(Rng._hash_string(fleet_id))
+	var role_ids: Array = participant_roles.keys()
+	role_ids.sort()
+	for fleet_id in role_ids:
+		values.append(Rng._hash_string(String(fleet_id)))
+		values.append(Rng._hash_string(String(participant_roles[fleet_id])))
 	return values

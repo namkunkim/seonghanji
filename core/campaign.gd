@@ -34,6 +34,12 @@ const SCN03_EVENT09: String = "SCN-03-E09"
 const SCN03_RED_CLIFF_PENDING_BATTLE_ID: String = "SCN-03-E09-RED-CLIFF-01"
 ## 외생 시나리오 결과 입력. World 명령 로그에만 남고, 진행 원장은 재생 파생값이다.
 const CMD_SCN03_EVENT_OUTCOME: String = "scenario_event_outcome"
+## Event 07's approved Red-Cliffs participant ledger is an external player command.
+## It is replayed like the event outcomes; no campaign snapshot owns it.
+const CMD_SCN03_RED_CLIFF_MANIFEST: String = "scn03_red_cliff_manifest"
+const SCN03_CAO_OWNER: String = "조조"
+const SCN03_SUN_OWNER: String = "손권"
+const SCN03_LIU_CONTINGENT_ID: String = "SCN-03-LIU-BEI-CONTINGENT"
 
 ## Event 09 (scenario-200-208.md §ACT 7)의 순서는 지문에도 고정한다.
 const SCN03_RED_CLIFF_CONDITIONS: Array[String] = [
@@ -81,6 +87,9 @@ var scn03_progress: Dictionary = {}
 var _scn03_event09_evaluated: bool = false
 ## 기능 이벤트 계측(`events_fired`)과 분리된, 208 서사 사건의 one-shot 기록.
 var scenario_event_records: Dictionary = {}
+## Replay-derived Event 07 participant ledger.  Actual fleet IDs are explicit player
+## input; this state never selects by owner, distance, region, or strength.
+var scn03_red_cliff_manifest: Dictionary = {}
 ## Event 09에서만 파생하는 적벽 지속형 전투 상태. 세이브 스냅숏 정본이 아니며,
 ## player scenario-outcome 명령 재생으로 같은 순서에 다시 만든다.
 var active_battles: Array[ActiveBattle] = []
@@ -467,12 +476,14 @@ func step() -> void:
 	_apply_arrived()          # ①-b 도달한 명령에 효과를 붙인다 (S2.9)
 	_settle_month()           # ②-b 월 정산 — 자금·행정비·유지비 (S2.9)
 	_arrive_fleets()
+	_advance_scn03_red_cliff_pending_battle()
 	if world.clock.tick % Strategy.GRAND_PERIOD_TICKS == 0:
 		_ai_grand()
 	if world.clock.tick % Strategy.OPERATIONAL_PERIOD_TICKS == 0:
 		_ai_operational()
 	_check_events()           # ⑥ 이벤트 판정 (function-events.md)
 	_check_end()
+	_advance_scn03_red_cliff_pending_battle()
 
 
 ## 재생 로그를 한꺼번에 pending에 싣지 않는다. 실제 플레이에서는 tick N의 step이 끝난
@@ -534,6 +545,166 @@ func issue_scn03_event_outcome(event_id: String, outcome: Dictionary,
 		"event_id": event_id,
 		"outcome": outcome.duplicate(true),
 	}, delay_ticks, "player")
+
+
+## The Event 07 participant manifest's only player-facing entry point.  Fleet IDs
+## are canonical Campaign IDs, while the Liu contingent is deliberately a scenario
+## identifier rather than a Fleet or a new faction.
+func issue_scn03_red_cliff_manifest(cao_fleet_ids: Array, sun_liu_fleet_ids: Array,
+		fleet_roles: Dictionary, liu_contingent_id: String = SCN03_LIU_CONTINGENT_ID,
+		delay_ticks: int = 0) -> Dictionary:
+	var payload := {
+		"cao_fleet_ids": cao_fleet_ids.duplicate(),
+		"sun_liu_fleet_ids": sun_liu_fleet_ids.duplicate(),
+		"fleet_roles": fleet_roles.duplicate(true),
+		"liu_contingent_id": liu_contingent_id,
+	}
+	if world == null or world.scenario != "SCN-03" or not _uses_scn03_progress_rules():
+		return {}
+	if delay_ticks < 0 or not _is_valid_scn03_red_cliff_manifest_payload(payload):
+		return {}
+	if not bool(scn03_progress.get("sun_liu_military_pact", false)) \
+			or not bool(scn03_progress.get("yangtze_defense_line", false)) \
+			or not _manifest_fleets_valid_now(_canonical_scn03_red_cliff_manifest(payload)):
+		return {}
+	return world.issue(CMD_SCN03_RED_CLIFF_MANIFEST, payload, delay_ticks, "player")
+
+
+## Save.inspect uses this same structural contract before replay.  It intentionally
+## cannot validate live fleet liveness/ownership; the reducer below does that at the
+## command's arrival tick, where those facts are authoritative.
+static func _is_valid_scn03_red_cliff_manifest_payload(payload: Dictionary) -> bool:
+	var required: Array[String] = ["cao_fleet_ids", "sun_liu_fleet_ids", "fleet_roles",
+		"liu_contingent_id"]
+	if payload.size() != required.size():
+		return false
+	for key in required:
+		if not payload.has(key):
+			return false
+	if not payload["cao_fleet_ids"] is Array or not payload["sun_liu_fleet_ids"] is Array \
+			or not payload["fleet_roles"] is Dictionary \
+			or not payload["liu_contingent_id"] is String \
+			or String(payload["liu_contingent_id"]) != SCN03_LIU_CONTINGENT_ID:
+		return false
+	var unique: Dictionary = {}
+	for side_ids in [payload["cao_fleet_ids"], payload["sun_liu_fleet_ids"]]:
+		if side_ids.is_empty():
+			return false
+		for raw_id in side_ids:
+			if not Save._is_json_integer(raw_id) or int(raw_id) < 0 or unique.has(int(raw_id)):
+				return false
+			unique[int(raw_id)] = true
+	var roles: Dictionary = payload["fleet_roles"]
+	if roles.size() != unique.size():
+		return false
+	for raw_id in unique.keys():
+		var role_key := str(raw_id)
+		if not roles.has(role_key) or not roles[role_key] is String \
+			or String(roles[role_key]).strip_edges() == "":
+			return false
+	for role_key in roles:
+		if not role_key is String:
+			return false
+		var role_key_text := String(role_key)
+		if not role_key_text.is_valid_int() or not unique.has(int(role_key_text)):
+			return false
+	return true
+
+
+func _record_scn03_red_cliff_manifest(payload: Dictionary) -> bool:
+	if world == null or world.scenario != "SCN-03" or not _uses_scn03_progress_rules() \
+			or not _is_valid_scn03_red_cliff_manifest_payload(payload):
+		return false
+	# Event 07 success, not merely Event 07's arrival, is the prerequisite.
+	if not bool(scn03_progress.get("sun_liu_military_pact", false)) \
+			or not bool(scn03_progress.get("yangtze_defense_line", false)):
+		return false
+	var canonical := _canonical_scn03_red_cliff_manifest(payload)
+	if not _manifest_fleets_valid_now(canonical):
+		return false
+	if not scn03_red_cliff_manifest.is_empty():
+		return scn03_red_cliff_manifest == canonical
+	scn03_red_cliff_manifest = canonical
+	return true
+
+
+func _canonical_scn03_red_cliff_manifest(payload: Dictionary) -> Dictionary:
+	var cao_ids: Array = payload["cao_fleet_ids"].duplicate()
+	var sun_ids: Array = payload["sun_liu_fleet_ids"].duplicate()
+	cao_ids.sort()
+	sun_ids.sort()
+	var roles: Dictionary = payload["fleet_roles"].duplicate(true)
+	return {
+		"cao_fleet_ids": cao_ids,
+		"sun_liu_fleet_ids": sun_ids,
+		"fleet_roles": roles,
+		"liu_contingent_id": String(payload["liu_contingent_id"]),
+	}
+
+
+func _manifest_fleets_valid_now(manifest: Dictionary) -> bool:
+	for raw_id in manifest.get("cao_fleet_ids", []):
+		var cao_fleet := _fleet_by_id(int(raw_id))
+		if cao_fleet == null or not cao_fleet.is_alive() or cao_fleet.owner != SCN03_CAO_OWNER:
+			return false
+	for raw_id in manifest.get("sun_liu_fleet_ids", []):
+		var sun_fleet := _fleet_by_id(int(raw_id))
+		if sun_fleet == null or not sun_fleet.is_alive() or sun_fleet.owner != SCN03_SUN_OWNER:
+			return false
+	return true
+
+
+func _fleet_by_id(fleet_id: int) -> Fleet:
+	for fleet in fleets:
+		if fleet.id == fleet_id:
+			return fleet
+	return null
+
+
+func _advance_scn03_red_cliff_pending_battle() -> void:
+	if not _uses_scn03_progress_rules():
+		return
+	for battle in active_battles:
+		if battle.battle_id != SCN03_RED_CLIFF_PENDING_BATTLE_ID \
+				or battle.status != ActiveBattle.STATUS_PENDING:
+			continue
+		if ended:
+			battle.cancel_pending(world.clock.tick, "scenario_ended")
+			return
+		if scn03_red_cliff_manifest.is_empty():
+			return
+		var status := _scn03_red_cliff_manifest_arrival_status(scn03_red_cliff_manifest)
+		if String(status["state"]) == "cancelled":
+			battle.cancel_pending(world.clock.tick, String(status["reason"]))
+			return
+		if String(status["state"]) != "ready":
+			return
+		var attacker_ids: Array[String] = []
+		var defender_ids: Array[String] = []
+		for raw_id in scn03_red_cliff_manifest["cao_fleet_ids"]:
+			attacker_ids.append(str(raw_id))
+		for raw_id in scn03_red_cliff_manifest["sun_liu_fleet_ids"]:
+			defender_ids.append(str(raw_id))
+		battle.activate_red_cliff(attacker_ids, defender_ids,
+			scn03_red_cliff_manifest["fleet_roles"],
+			String(scn03_red_cliff_manifest["liu_contingent_id"]), world.clock.tick)
+		return
+
+
+func _scn03_red_cliff_manifest_arrival_status(manifest: Dictionary) -> Dictionary:
+	for entry in [["cao_fleet_ids", SCN03_CAO_OWNER], ["sun_liu_fleet_ids", SCN03_SUN_OWNER]]:
+		for raw_id in manifest[String(entry[0])]:
+			var fleet := _fleet_by_id(int(raw_id))
+			if fleet == null or not fleet.is_alive():
+				return {"state": "cancelled", "reason": "required_fleet_destroyed"}
+			if fleet.owner != String(entry[1]):
+				return {"state": "cancelled", "reason": "manifest_invalid"}
+			# A move issued while already at the battle system is an explicit withdrawal.
+			if fleet.is_moving() and fleet.at_system == ActiveBattle.RED_CLIFF_SYSTEM_ID:
+				return {"state": "cancelled", "reason": "required_fleet_withdrawn"}
+			if fleet.is_moving() or fleet.at_system != ActiveBattle.RED_CLIFF_SYSTEM_ID:
+				return {"state": "waiting"}
+	return {"state": "ready"}
 
 
 static func _scn03_expected_outcome_keys(event_id: String) -> Array[String]:
@@ -683,6 +854,7 @@ func run_to_end(max_ticks: int = SCN03_END_TICK) -> void:
 	if not ended:
 		ended = true
 		end_reason = "정규 종료"
+	_advance_scn03_red_cliff_pending_battle()
 
 
 ## ---------------------------------------------------------------- 내정 (S2.9)
@@ -701,6 +873,14 @@ func _apply_arrived() -> void:
 					and raw_scenario_outcome is Dictionary \
 					and record_scn03_event_outcome(String(scenario_payload.get("event_id", "")),
 							scenario_outcome):
+				cmds_applied += 1
+			else:
+				cmds_rejected += 1
+			continue
+		if String(c.get("kind", "")) == CMD_SCN03_RED_CLIFF_MANIFEST:
+			var manifest_payload: Dictionary = c.get("payload", {})
+			if String(c.get("origin", "player")) == "player" \
+					and _record_scn03_red_cliff_manifest(manifest_payload):
 				cmds_applied += 1
 			else:
 				cmds_rejected += 1
@@ -900,11 +1080,29 @@ func _arrive_fleets() -> void:
 		fl.arrival_tick = -1
 		fl.at_system = data.system_of(rid)
 		fl.target_region = ""
+		# The approved manifest's required fleet is arriving for the one persistent
+		# Red-Cliffs battle, not entering the generic immediate-resolution path.
+		# No other battle or unlisted fleet changes behaviour here.
+		if _is_red_cliff_pending_arrival_fleet(fl):
+			continue
 		var st: RegionState = world.region_states[rid]
 		if st.owner == fl.owner or st.owner == "":
 			_capture(fl.owner, rid)
 		else:
 			_resolve_battle(fl, rid)
+
+
+func _is_red_cliff_pending_arrival_fleet(fleet: Fleet) -> bool:
+	if scn03_red_cliff_manifest.is_empty() or fleet.at_system != ActiveBattle.RED_CLIFF_SYSTEM_ID:
+		return false
+	for battle in active_battles:
+		if battle.battle_id != SCN03_RED_CLIFF_PENDING_BATTLE_ID \
+				or battle.status != ActiveBattle.STATUS_PENDING:
+			continue
+		for key in ["cao_fleet_ids", "sun_liu_fleet_ids"]:
+			if scn03_red_cliff_manifest.get(key, []).has(fleet.id):
+				return true
+	return false
 
 
 ## 5페이즈 전투 (combat.md §2). 방어측은 그 성계의 주둔 함대 합.
@@ -1872,6 +2070,37 @@ func _adjacent_region_of(fid: String, owner: String) -> String:
 ## 않는다 (§4.3 제외) — 세계 상태가 아니라 계측이고, 밸런스 조정 때마다 바뀌어
 ## 인수 시험을 깨뜨린다. AI 명령의 순번·부기도 접지 않는다 — 파생이며, 그
 ## 효과는 아래 세력·함대·권역·외교·이벤트 상태로 이미 접힌다.
+static func _scn03_red_cliff_manifest_digest_values(raw_payload) -> Array:
+	if not raw_payload is Dictionary or not _is_valid_scn03_red_cliff_manifest_payload(raw_payload):
+		return [Rng._hash_string("invalid_scn03_red_cliff_manifest")]
+	var manifest := _canonical_manifest_for_digest(raw_payload)
+	var values: Array = [Rng._hash_string(String(manifest["liu_contingent_id"]))]
+	for key in ["cao_fleet_ids", "sun_liu_fleet_ids"]:
+		var ids: Array = manifest[key]
+		values.append(ids.size())
+		for fleet_id in ids:
+			values.append(int(fleet_id))
+	var role_keys: Array = manifest["fleet_roles"].keys()
+	role_keys.sort()
+	for role_key in role_keys:
+		values.append(Rng._hash_string(String(role_key)))
+		values.append(Rng._hash_string(String(manifest["fleet_roles"][role_key])))
+	return values
+
+
+static func _canonical_manifest_for_digest(payload: Dictionary) -> Dictionary:
+	var cao_ids: Array = payload["cao_fleet_ids"].duplicate()
+	var sun_ids: Array = payload["sun_liu_fleet_ids"].duplicate()
+	cao_ids.sort()
+	sun_ids.sort()
+	return {
+		"cao_fleet_ids": cao_ids,
+		"sun_liu_fleet_ids": sun_ids,
+		"fleet_roles": payload["fleet_roles"].duplicate(true),
+		"liu_contingent_id": String(payload["liu_contingent_id"]),
+	}
+
+
 func digest() -> int:
 	var h := 0
 	# ── 시간 · 규칙 · 외생 입력 ──────────────────────────────────────────
@@ -1909,6 +2138,9 @@ func digest() -> int:
 				var command_outcome: Dictionary = command_payload.get("outcome", {})
 				for key in _scn03_expected_outcome_keys(command_event_id):
 					h = Save._fold(h, 1 if bool(command_outcome.get(key, false)) else 0)
+			elif String(c["kind"]) == CMD_SCN03_RED_CLIFF_MANIFEST:
+				for value in _scn03_red_cliff_manifest_digest_values(c.get("payload", {})):
+					h = Save._fold(h, value)
 	# ── 세력 (정렬된 faction_ids) ──────────────────────────────────────
 	for fid in faction_ids:
 		var f: Faction = factions[fid]
