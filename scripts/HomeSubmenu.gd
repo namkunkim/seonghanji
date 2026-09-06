@@ -154,7 +154,7 @@ func _render_current() -> void:
 		"domestic": _render_domestic()
 		"talent": _render_unavailable("확인 가능한 인재 없음", "적벽 전야 인재 명부가 열리면 등용 가능 인물과 배치 현황이 표시됩니다.")
 		"diplomacy": _render_diplomacy()
-		"tech": _render_unavailable("확인 가능한 기술 없음", "세력 기술 정보가 열리면 연구 단계와 적용 효과가 표시됩니다.")
+		"tech": _render_tech()
 		"records": _render_records()
 		"mail": _render_records(true)
 		"settings": _render_settings()
@@ -195,7 +195,7 @@ func _render_systems() -> void:
 	var systems: Array = _state.get("canonical_systems", [])
 	var regions: Array = _state.get("canonical_regions", [])
 	var routes: Array = _state.get("canonical_routes", [])
-	_add_summary("208 · 적벽 전야", "%d성역 · %d권역 · %d항로" % [systems.size(), regions.size(), routes.size()])
+	_add_summary("%s · 적벽 전야" % _campaign_date_label(), "%d성역 · %d권역 · %d항로" % [systems.size(), regions.size(), routes.size()])
 	for system in systems:
 		var sid := String(system.get("id", ""))
 		var name := String(system.get("display_name", system.get("name", sid)))
@@ -210,9 +210,15 @@ func _render_fleets() -> void:
 		_add_notice("현재 확인된 함대 없음", "아군 정찰망에 포착된 함대가 없습니다. 새로운 관측 정보가 들어오면 이곳에 표시됩니다.")
 		return
 	for fleet in fleets:
-		var fid := String(fleet.get("id", fleet.get("fleet_id", "")))
-		var name := String(fleet.get("name", fid if fid != "" else "관측 함대"))
-		var detail := _known_fields(fleet, ["faction", "system_id", "status", "ships"])
+		var fid := str(fleet.get("fleet_id", ""))
+		var name := str(fleet.get("display_name", "관측 함대"))
+		var details: Array[String] = []
+		if str(fleet.get("faction", "")) != "":
+			details.append("세력 %s" % _field_value("faction", str(fleet.faction)))
+		details.append("성역 %s" % str(fleet.get("system_id", "미확인")))
+		details.append("상태 %s" % _status_label(str(fleet.get("status", ""))))
+		details.append("척수 %s" % str(fleet.get("ships_display", "미확인")))
+		var detail := " · ".join(details)
 		_add_action_row(name, detail, "관측이 허용한 정보만 표시", "fleet_selected", {"fleet_id": fid})
 
 
@@ -234,6 +240,25 @@ func _render_domestic() -> void:
 	_add_notice("읽기 전용", "개발·복구·징병·건조·위임 명령은 이 요약에서 실행하지 않습니다.")
 
 
+func _render_tech() -> void:
+	var player: Dictionary = _state.get("player_state", {})
+	var tech: Dictionary = player.get("tech", {})
+	var research: Dictionary = player.get("tech_research", {})
+	_add_summary("%s 세력 기술" % String(player.get("faction_id", "관측 세력")),
+		"화력 · 방어 · 특수의 실제 Campaign 단계")
+	for axis in ["화력", "방어", "특수"]:
+		_add_info_row(axis, "%d단계" % int(tech.get(axis, 0)), "현재 적용 중인 기술 단계")
+	if research.is_empty():
+		_add_notice("진행 중인 연구 없음", "새 연구가 시작되면 완료 예정 tick을 표시합니다.")
+	else:
+		var now_tick := int((_state.get("scenario", {}) as Dictionary).get("tick", 0))
+		var done_tick := int(research.get("done_tick", now_tick))
+		_add_info_row("진행 중인 연구", String(research.get("axis", "분야 미확인")),
+			"Campaign에 기록된 연구 분야")
+		_add_info_row("완료까지", "%d tick" % maxi(0, done_tick - now_tick),
+			"Campaign 완료 tick에서 현재 tick을 뺀 값")
+
+
 func _render_diplomacy() -> void:
 	var alliances: Array = _state.get("alliances", [])
 	_add_summary("현재 맹약", "%d건" % alliances.size())
@@ -252,7 +277,7 @@ func _render_records(mail_only: bool = false) -> void:
 	var news: Array = _state.get("news", [])
 	var battles: Array = _state.get("active_battles", [])
 	if not mail_only:
-		_add_summary("208 · 적벽 전야 기록", "소식 %d건 · 활성 전투 %d건" % [news.size(), battles.size()])
+		_add_summary("%s · 적벽 전야 기록" % _campaign_date_label(), "소식 %d건 · 활성 전투 %d건" % [news.size(), battles.size()])
 		_render_current_status()
 	if mail_only and news.is_empty():
 		_add_notice("새 서신 없음", "새로운 외교 서신과 군령이 도착하면 이곳에 표시됩니다.")
@@ -334,7 +359,7 @@ func _render_current_status() -> void:
 		if String(owner) != "":
 			owner_set[String(owner)] = true
 	_add_section("현재 상황")
-	_add_info_row("건안 13년 캠페인", "%d개 통치 세력 · %d개 권역" % [owner_set.size(), regions.size()], "208년 적벽 전야")
+	_add_info_row("%s 캠페인" % _campaign_date_label(), "%d개 통치 세력 · %d개 권역" % [owner_set.size(), regions.size()], "적벽 전야")
 	_add_info_row("형주 북부권", _field_value("faction", String(owners.get("RGN-01", "미확인"))), "형주 권역 통치 현황")
 	var active := false
 	for battle in _state.get("active_battles", []):
@@ -350,7 +375,7 @@ func _render_current_status() -> void:
 
 
 func _add_summary(title: String, detail: String) -> void:
-	_add_info_row(title, detail, "현재 208년 홈 스냅숏 요약", true)
+	_add_info_row(title, detail, "현재 캠페인 홈 스냅숏 요약", true)
 
 
 func _add_section(text: String) -> void:
@@ -433,6 +458,7 @@ func _status_label(value: String) -> String:
 		"inactive": "비활성",
 		"ready": "준비 완료",
 		"moving": "이동 중",
+		"stationed": "주둔",
 	}.get(value, value if value != "" else "미확인")
 
 
@@ -452,6 +478,13 @@ func _type_label(value: String) -> String:
 		"planet": "행성",
 		"moon": "위성",
 	}.get(value, value if value != "" else "유형 미확인")
+
+
+func _campaign_date_label() -> String:
+	var scenario: Dictionary = _state.get("scenario", {})
+	var year := int(scenario.get("year", 208))
+	var month := int(scenario.get("month", 1))
+	return "건안 %d년 %d월" % [13 + (year - 208), month]
 
 
 func _tab_style(selected: bool) -> StyleBoxFlat:

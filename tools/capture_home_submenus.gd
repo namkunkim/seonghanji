@@ -31,12 +31,12 @@ var _failures: Array[String] = []
 var _capture_hashes: Dictionary = {}
 
 const ROUTE_SENTINELS := {
-	"systems": "208 · 적벽 전야",
-	"fleets": "현재 확인된 함대 없음",
+	"systems": "건안 13년 1월 · 적벽 전야",
+	"fleets": "제3함대",
 	"domestic": "권역 통치 현황",
 	"talent": "확인 가능한 인재 없음",
 	"diplomacy": "현재 접촉 가능",
-	"tech": "확인 가능한 기술 없음",
+	"tech": "손권 세력 기술",
 	"records": "현재 상황",
 	"resource:funds": "자금",
 	"mail": "새 서신 없음",

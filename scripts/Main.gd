@@ -19,12 +19,23 @@ var map_context_menu_id := "overview"
 var submenu: Control
 var map_input_blocker: Control
 var projected_systems: Array = []
-var playback_speeds := [1.0, 2.0, 4.0]
+var data
+var campaign
+var playback_speeds := [1, 2, 4]
 var playback_speed_index := 0
 var pause_button: Button
 var speed_button: Button
-var _initial_tree_paused := false
-var _initial_time_scale := 1.0
+var resource_value_labels: Dictionary = {}
+var resource_delta_labels: Dictionary = {}
+var status_rows_container: VBoxContainer
+var _terrain_data: Dictionary = {}
+var _map_fleets: Array = []
+var _route_payload: Dictionary = {}
+var _selection_data: Dictionary = {}
+var _refresh_count := 0
+var stage_title_labels: Array[Label] = []
+var stage_caption_labels: Array[Label] = []
+var stage_previews: Array[TextureRect] = []
 
 const WORLD_SIZE := Vector2(3200.0, 1800.0)
 const CANONICAL_WORLD_SIZE := Vector2(37312.0, 30000.0)
@@ -37,21 +48,24 @@ var home_state: Dictionary = {}
 var home_snapshot
 
 func _ready() -> void:
-    _initial_tree_paused = get_tree().paused
-    _initial_time_scale = Engine.time_scale
-    playback_speed_index = _closest_playback_speed_index(_initial_time_scale)
     RenderingServer.set_default_clear_color(Color("#020a12"))
     var galaxy_data: Dictionary = _load_json("res://data/galaxy.json")
-    var terrain_data: Dictionary = _load_json("res://data/terrain.json")
-    var game_data = GameDataScript.load_all()
-    var campaign = CampaignScript.scenario_03(game_data, 20803)
-    home_snapshot = HomeMapSnapshotScript.from_campaign(campaign, 208)
+    _terrain_data = _load_json("res://data/terrain.json")
+    data = GameDataScript.load_all()
+    campaign = CampaignScript.scenario_03(data, 20803)
+    campaign.world.player_faction = "손권"
+    campaign.world.clock.speed = 1
+    campaign.world.clock.paused = false
+    playback_speed_index = 0
+    home_snapshot = HomeMapSnapshotScript.from_campaign(campaign, 208,
+        {"viewer_faction": "손권"})
     home_state = home_snapshot.snapshot()
     var systems: Array = _project_systems(home_state, campaign)
     projected_systems = systems
     var regions: Array = _project_regions(home_state)
     var bodies: Array = _project_body_rows(home_snapshot.visible_bodies(2))
     var routes: Array = _project_routes(home_state)
+    _map_fleets = _adapt_observed_fleets(home_state, systems, regions)
 
     map = GalaxyMap.new()
     map.name = "GalaxyMap"
@@ -72,13 +86,13 @@ func _ready() -> void:
     map.add_child(cam)
     cam.make_current()
 
-    map.setup(cam, systems, [], terrain_data, regions, routes, bodies,
+    map.setup(cam, systems, _map_fleets, _terrain_data, regions, routes, bodies,
         home_state.get("active_battles", []), home_state.get("external_powers", []))
     map.set_input_safe_rect(hud_safe_rect)
     var continent: ConnectedContinent = ConnectedContinent.new()
     continent.name = "ConnectedContinent"
     map.add_child(continent)
-    continent.build(terrain_data)
+    continent.build(_terrain_data)
 
 
 
@@ -99,11 +113,11 @@ func _ready() -> void:
 
     _build_ui(galaxy_data, systems)
 
-func _exit_tree() -> void:
-    Engine.time_scale = _initial_time_scale
-    var tree := get_tree()
-    if tree != null:
-        tree.paused = _initial_tree_paused
+func _process(delta: float) -> void:
+    if campaign == null or campaign.ended or campaign.world.clock.paused:
+        return
+    if campaign.advance(int(delta * 1000.0)) > 0:
+        _refresh_home_snapshot()
 
 func _project_point(raw) -> Array:
     if not raw is Array or raw.size() < 2:
@@ -186,6 +200,173 @@ func _find_projected(rows: Array, key: String, value: String, fallback: Vector2)
                 return Vector2(float(p[0]), float(p[1]))
     return fallback
 
+
+func _snapshot_runtime_context() -> Dictionary:
+    var runtime := {"viewer_faction": "손권"}
+    var provenance: Dictionary = home_state.get("provenance", {})
+    for key in ["active_battles", "red_cliff_conditions", "news"]:
+        var value = home_state.get(key)
+        if (value is Array or value is Dictionary) and (not value.is_empty() \
+                or String(provenance.get(key, "")) == "runtime_fixture"):
+            runtime[key] = home_state[key].duplicate(true)
+    return runtime
+
+
+func _refresh_home_snapshot() -> void:
+    if campaign == null:
+        return
+    var camera_position := cam.position
+    var camera_zoom := cam.zoom
+    var semantic := map.semantic_level
+    var preserved_active_menu := active_menu_id
+    var preserved_map_context := map_context_menu_id
+    var submenu_was_visible := submenu != null and submenu.visible
+    var selected := _resolve_selection(_selection_data)
+
+    var next_snapshot = HomeMapSnapshotScript.from_campaign(
+        campaign, 208, _snapshot_runtime_context())
+    var next_state: Dictionary = next_snapshot.snapshot()
+    var next_systems: Array = _project_systems(next_state, campaign)
+    var next_regions: Array = _project_regions(next_state)
+    var next_bodies: Array = _project_body_rows(next_snapshot.visible_bodies(2))
+    var next_routes: Array = _project_routes(next_state)
+    var next_fleets: Array = _adapt_observed_fleets(next_state, next_systems, next_regions)
+
+    home_snapshot = next_snapshot
+    home_state = next_state
+    projected_systems = next_systems
+    _map_fleets = next_fleets
+    if not selected.is_empty():
+        _selection_data = _resolve_selection(selected)
+    map.setup(cam, projected_systems, _map_fleets, _terrain_data,
+        next_regions, next_routes, next_bodies,
+        home_state.get("active_battles", []), home_state.get("external_powers", []))
+    map.semantic_level = semantic
+    cam.position = camera_position
+    cam.zoom = camera_zoom
+    cam.reset_smoothing()
+    if minimap:
+        minimap.setup(cam, home_state, projected_systems, hud_safe_rect)
+        minimap.set_semantic_level(semantic)
+    _refresh_resource_labels()
+    _refresh_status_rows()
+    _refresh_stage_five()
+    if submenu != null and submenu_was_visible:
+        var submenu_state := home_state.duplicate(true)
+        if not _route_payload.is_empty():
+            submenu_state["route_payload"] = _route_payload.duplicate(true)
+        if String(submenu.get("current_route")) == "selection" and not _selection_data.is_empty():
+            submenu_state["selection"] = _selection_data.duplicate(true)
+        submenu.call("setup", submenu_state, home_snapshot)
+    active_menu_id = preserved_active_menu
+    map_context_menu_id = preserved_map_context
+    _refresh_menu_styles()
+    _refresh_count += 1
+
+
+func _resolve_selection(previous: Dictionary) -> Dictionary:
+    if previous.is_empty():
+        return {}
+    var wanted := String(previous.get("id", ""))
+    if wanted != "":
+        for row in projected_systems:
+            if String(row.get("id", "")) == wanted:
+                return row.duplicate(true)
+        for key in ["canonical_regions", "external_powers", "active_battles"]:
+            for row in home_state.get(key, []):
+                if String(row.get("id", "")) == wanted:
+                    return row.duplicate(true)
+    var fleet_id := str(previous.get("fleet_id", ""))
+    if fleet_id != "":
+        for row in home_state.get("observed_fleets", []):
+            if str(row.get("fleet_id", "")) == fleet_id:
+                return row.duplicate(true)
+    return previous.duplicate(true)
+
+
+## GalaxyMap의 legacy fleet renderer는 정확한 함선 수와 path를 요구한다. 안전
+## snapshot에 정확한 ships가 있는 관측만 연결하며, 코어에 없는 항로/속도를 만들지
+## 않는다. 이동 중에는 현재 성역→목적 권역 직선만 정적으로 그리고, 주둔은 같은 점
+## 두 개를 사용한다.
+func _adapt_observed_fleets(state: Dictionary, systems: Array, regions: Array) -> Array:
+    var out: Array = []
+    for observed in state.get("observed_fleets", []):
+        if not observed is Dictionary or not observed.has("ships"):
+            continue
+        var start := _find_projected(systems, "id", str(observed.get("system_id", "")), Vector2(-1, -1))
+        if start.x < 0.0:
+            continue
+        var finish := start
+        if str(observed.get("status", "")) == "moving":
+            var destination_id := str(observed.get("dest_region", ""))
+            if destination_id != "":
+                finish = _find_projected(regions, "id", destination_id, start)
+        out.append({
+            "fleet_id": str(observed.get("fleet_id", "")),
+            "name": str(observed.get("display_name", "관측 함대")),
+            "faction": str(observed.get("faction", "")),
+            "size": int(observed.ships),
+            "path": [[start.x, start.y], [finish.x, finish.y]],
+            "speed": 0.0,
+        })
+    return out
+
+
+func _resource_specs() -> Array:
+    var scenario: Dictionary = home_state.get("scenario", {})
+    var player: Dictionary = home_state.get("player_state", {})
+    var year := int(scenario.get("year", 208))
+    var month := int(scenario.get("month", 1))
+    var era_year := 13 + (year - 208)
+    var budget: Dictionary = player.get("budget", {})
+    var net := int(budget.get("net", 0))
+    var net_text := "%+d" % net if player.has("treasury") else ""
+    return [
+        ["resource:calendar", "◷", "건안 %d년 %d월" % [era_year, month], "", Color("75d989"), 126, "현재 캠페인 시점을 확인합니다.", "연대"],
+        ["resource:funds", "◆", str(player.get("treasury", "—")), net_text, Color("8fe98f"), 98, "손권 세력의 실제 자금과 순변동을 확인합니다.", "자금"],
+        ["resource:mandate", "◇", str(player.get("mandate", "—")), "", Color("8edfff"), 98, "손권 세력의 천명을 확인합니다.", "천명"],
+        ["resource:hegemony", "✦", str(player.get("hegemony", "—")), "", Color("d4a9ff"), 98, "손권 세력의 패권 압력을 확인합니다.", "패권 압력"],
+        ["resource:mobilized", "●", str(player.get("mobilized", "—")), "", Color("ffd875"), 92, "손권 세력의 실제 동원력을 확인합니다.", "동원력"],
+        ["resource:capacity", "▲", "%s/%s" % [str(player.get("fleet_used_milli", "—")), str(player.get("fleet_capacity_milli", "—"))], "", Color("9edfff"), 106, "실제 함대 사용량과 수용량을 확인합니다.", "함대 수용량"],
+    ]
+
+
+func _resource_payload(route_id: String) -> Dictionary:
+    for resource in _resource_specs():
+        if String(resource[0]) == route_id:
+            return {"display_value": String(resource[2]), "display_delta": String(resource[3])}
+    return {}
+
+
+func _refresh_resource_labels() -> void:
+    for resource in _resource_specs():
+        var route_id := String(resource[0])
+        if resource_value_labels.has(route_id):
+            (resource_value_labels[route_id] as Label).text = String(resource[2])
+        if resource_delta_labels.has(route_id):
+            (resource_delta_labels[route_id] as Label).text = String(resource[3])
+    if submenu != null and submenu.visible and String(submenu.get("current_route")).begins_with("resource:"):
+        _route_payload = _resource_payload(String(submenu.get("current_route")))
+
+
+func _refresh_stage_five() -> void:
+    if stage_buttons.size() < 5:
+        return
+    var active := _has_active_red_cliff_battle(home_state.get("active_battles", []))
+    var button := stage_buttons[4]
+    button.set_meta("route_id", "stage:5" if active else "red_cliff_lock")
+    button.tooltip_text = "적벽 단계로 이동합니다." if active else "적벽 개전 조건이 아직 충족되지 않았습니다. 눌러 조건을 확인합니다."
+    button.add_theme_stylebox_override("normal", HudStyle.card_style() if active else HudStyle.card_disabled_style())
+    if stage_title_labels.size() >= 5:
+        stage_title_labels[4].text = "적벽" if active else "🔒 적벽"
+        stage_title_labels[4].add_theme_color_override("font_color", Color("eff9ff") if active else Color("8799a3"))
+    if stage_caption_labels.size() >= 5:
+        stage_caption_labels[4].text = "교전 활성" if active else "전투 조건 미충족"
+        stage_caption_labels[4].add_theme_color_override("font_color", Color("e8f7ff") if active else Color("9babb3"))
+    if stage_previews.size() >= 5:
+        stage_previews[4].self_modulate = Color(0.78, 0.90, 1.0, 0.92) if active else Color(0.34, 0.40, 0.46, 0.68)
+    _on_zoom_level_changed(map.semantic_level)
+
 func _load_json(path: String) -> Dictionary:
     var f: FileAccess = FileAccess.open(path, FileAccess.READ)
     if f == null: return {}
@@ -241,14 +422,9 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     top_h.add_child(spacer)
 
-    var resources = [
-        ["resource:calendar", "◷", "건안 13년 · 208", "", Color("75d989"), 126, "달력과 캠페인 시점을 확인합니다.", "연대"],
-        ["resource:funds", "◆", "12.4M", "+24", Color("8fe98f"), 98, "자금 보유량과 증감 정보를 확인합니다.", "자금"],
-        ["resource:supply", "◇", "8.7M", "+317", Color("8edfff"), 98, "군량 보유량과 보급 정보를 확인합니다.", "군량"],
-        ["resource:influence", "✦", "3.1M", "+92", Color("d4a9ff"), 98, "영향력 현황을 확인합니다.", "영향력"],
-        ["resource:intel", "●", "421K", "+11", Color("ffd875"), 92, "정보 자원과 관측 현황을 확인합니다.", "정보"],
-        ["resource:capacity", "▲", "98/120", "", Color("9edfff"), 92, "지휘 수용력과 현재 사용량을 확인합니다.", "함대 수용력"]
-    ]
+    resource_value_labels.clear()
+    resource_delta_labels.clear()
+    var resources := _resource_specs()
     for resource in resources:
         var b: Button = Button.new()
         b.text = ""
@@ -278,19 +454,21 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
         resource_value.add_theme_color_override("font_color", Color("e8f7ff"))
         resource_value.mouse_filter = Control.MOUSE_FILTER_IGNORE
         resource_row.add_child(resource_value)
+        var resource_delta: Label = null
         if not String(resource[3]).is_empty():
-            var resource_delta := Label.new()
+            resource_delta = Label.new()
             resource_delta.text = String(resource[3])
             resource_delta.add_theme_font_size_override("font_size", 10)
             resource_delta.add_theme_color_override("font_color", Color(resource[4], 0.82))
             resource_delta.mouse_filter = Control.MOUSE_FILTER_IGNORE
             resource_row.add_child(resource_delta)
         b.add_child(resource_row)
-        b.pressed.connect(_route_home_action.bind(String(resource[0]), String(resource[7]), String(resource[1]), {
-            "display_value": String(resource[2]),
-            "display_delta": String(resource[3]),
-        }))
+        b.pressed.connect(_open_resource_route.bind(
+            String(resource[0]), String(resource[7]), String(resource[1])))
         top_route_buttons[String(resource[0])] = b
+        resource_value_labels[String(resource[0])] = resource_value
+        if resource_delta != null:
+            resource_delta_labels[String(resource[0])] = resource_delta
         top_h.add_child(b)
 
     for utility_data in [
@@ -423,42 +601,10 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     news_header_row.add_child(more_news)
     right_v.add_child(news_header)
 
-    var news_rows: Array = []
-    for item in home_state.get("news", []):
-        news_rows.append([String(item.get("icon", "•")), Color(String(item.get("color", "99caff"))),
-            String(item.get("headline", item.get("title", ""))), String(item.get("date", "건안 13년"))])
-    if news_rows.is_empty():
-        news_rows = _current_status_rows()
-    for n in news_rows:
-        var row := PanelContainer.new()
-        row.custom_minimum_size = Vector2(260,52)
-        row.add_theme_stylebox_override("panel", HudStyle.news_style())
-        var news_row := HBoxContainer.new()
-        news_row.add_theme_constant_override("separation", 8)
-        row.add_child(news_row)
-        var news_icon := Label.new()
-        news_icon.text = String(n[0])
-        news_icon.custom_minimum_size = Vector2(20, 0)
-        news_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        news_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        news_icon.add_theme_font_size_override("font_size", 19)
-        news_icon.add_theme_color_override("font_color", n[1])
-        news_row.add_child(news_icon)
-        var row_body := VBoxContainer.new()
-        row_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        news_row.add_child(row_body)
-        var headline := Label.new()
-        headline.text = String(n[2])
-        headline.add_theme_font_size_override("font_size",14)
-        headline.add_theme_color_override("font_color", Color("f0f9ff"))
-        headline.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-        row_body.add_child(headline)
-        var date := Label.new()
-        date.text = String(n[3])
-        date.add_theme_font_size_override("font_size",12)
-        date.add_theme_color_override("font_color",Color("b2cfdd"))
-        row_body.add_child(date)
-        right_v.add_child(row)
+    status_rows_container = VBoxContainer.new()
+    status_rows_container.add_theme_constant_override("separation", 5)
+    right_v.add_child(status_rows_container)
+    _refresh_status_rows()
 
     # Bottom semantic zoom strip
     bottom_panel = PanelContainer.new()
@@ -494,6 +640,9 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     ]
     stage_buttons.clear()
     stage_badges.clear()
+    stage_title_labels.clear()
+    stage_caption_labels.clear()
+    stage_previews.clear()
     for stage_index in range(stages.size()):
         var s: Array = stages[stage_index]
         var b := Button.new()
@@ -530,6 +679,7 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
         preview.self_modulate = Color(0.34, 0.40, 0.46, 0.68) if stage_index == 4 and not battle_active else Color(0.78, 0.90, 1.0, 0.92)
         preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
         b.add_child(preview)
+        stage_previews.append(preview)
         var number_badge := PanelContainer.new()
         number_badge.position = Vector2(8, 5)
         number_badge.custom_minimum_size = Vector2(25, 23)
@@ -552,6 +702,7 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
         title_label.add_theme_color_override("font_color", Color("8799a3") if stage_index == 4 and not battle_active else Color("eff9ff"))
         title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
         b.add_child(title_label)
+        stage_title_labels.append(title_label)
         var caption_panel := PanelContainer.new()
         caption_panel.anchor_top = 1.0
         caption_panel.anchor_right = 1.0
@@ -570,6 +721,7 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
         caption.add_theme_color_override("font_color", Color("9babb3") if stage_index == 4 and not battle_active else Color("e8f7ff"))
         caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
         caption_panel.add_child(caption)
+        stage_caption_labels.append(caption)
         b.add_child(caption_panel)
         var stage_route := "stage:%d" % (stage_index + 1)
         if is_locked_red_cliff:
@@ -578,9 +730,7 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
         else:
             b.tooltip_text = "%s 단계로 이동합니다." % String(s[0])
         b.set_meta("route_id", stage_route)
-        b.pressed.connect(_route_home_action.bind(stage_route, "적벽 개전 조건" if is_locked_red_cliff else String(s[0]), "🔒" if is_locked_red_cliff else str(stage_index + 1), {
-            "position": s[3], "zoom": s[4], "battle_active": battle_active,
-        }))
+        b.pressed.connect(_on_stage_pressed.bind(stage_index, String(s[0]), s[3], float(s[4])))
         bottom_h.add_child(b)
         stage_buttons.append(b)
 
@@ -598,10 +748,54 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     _layout_ui()
     _on_zoom_level_changed(map.semantic_level)
     if pause_button:
-        pause_button.text = "▶" if get_tree().paused else "II"
+        pause_button.text = "▶" if campaign.world.clock.paused else "II"
     if speed_button:
         speed_button.text = "%dx" % int(playback_speeds[playback_speed_index])
     _refresh_menu_styles()
+
+
+func _refresh_status_rows() -> void:
+    if status_rows_container == null:
+        return
+    for child in status_rows_container.get_children():
+        status_rows_container.remove_child(child)
+        child.queue_free()
+    var news_rows: Array = []
+    for item in home_state.get("news", []):
+        news_rows.append([String(item.get("icon", "•")), Color(String(item.get("color", "99caff"))),
+            String(item.get("headline", item.get("title", ""))), String(item.get("date", "건안 13년"))])
+    if news_rows.is_empty():
+        news_rows = _current_status_rows()
+    for n in news_rows:
+        var row := PanelContainer.new()
+        row.custom_minimum_size = Vector2(260,52)
+        row.add_theme_stylebox_override("panel", HudStyle.news_style())
+        var news_row := HBoxContainer.new()
+        news_row.add_theme_constant_override("separation", 8)
+        row.add_child(news_row)
+        var news_icon := Label.new()
+        news_icon.text = String(n[0])
+        news_icon.custom_minimum_size = Vector2(20, 0)
+        news_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+        news_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        news_icon.add_theme_font_size_override("font_size", 19)
+        news_icon.add_theme_color_override("font_color", n[1])
+        news_row.add_child(news_icon)
+        var row_body := VBoxContainer.new()
+        row_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        news_row.add_child(row_body)
+        var headline := Label.new()
+        headline.text = String(n[2])
+        headline.add_theme_font_size_override("font_size",14)
+        headline.add_theme_color_override("font_color", Color("f0f9ff"))
+        headline.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+        row_body.add_child(headline)
+        var date := Label.new()
+        date.text = String(n[3])
+        date.add_theme_font_size_override("font_size",12)
+        date.add_theme_color_override("font_color",Color("b2cfdd"))
+        row_body.add_child(date)
+        status_rows_container.add_child(row)
 
 func _ensure_submenu() -> void:
     if submenu != null or not ResourceLoader.exists(HOME_SUBMENU_PATH):
@@ -633,20 +827,34 @@ func _ensure_submenu() -> void:
     if submenu.has_signal("action_requested"):
         submenu.connect("action_requested", _on_submenu_action_requested)
 
+func _on_stage_pressed(stage_index: int, title: String, position: Vector2, zoom: float) -> void:
+    var battle_active := _has_active_red_cliff_battle(home_state.get("active_battles", []))
+    var locked := stage_index == 4 and not battle_active
+    var route_id := "red_cliff_lock" if locked else "stage:%d" % (stage_index + 1)
+    _route_home_action(route_id, "적벽 개전 조건" if locked else title,
+        "🔒" if locked else str(stage_index + 1), {
+            "position": position, "zoom": zoom, "battle_active": battle_active,
+        })
+
+
+func _open_resource_route(route_id: String, title: String, icon: String) -> void:
+    _route_home_action(route_id, title, icon, _resource_payload(route_id))
+
+
 func _route_home_action(route_id: String, title: String = "", icon: String = "", payload: Dictionary = {}) -> void:
     match route_id:
         "pause":
-            get_tree().paused = not get_tree().paused
+            campaign.world.clock.paused = not campaign.world.clock.paused
             if pause_button:
-                pause_button.text = "▶" if get_tree().paused else "II"
-            _refresh_menu_styles()
+                pause_button.text = "▶" if campaign.world.clock.paused else "II"
+            _refresh_home_snapshot()
             return
         "speed":
             playback_speed_index = (playback_speed_index + 1) % playback_speeds.size()
-            Engine.time_scale = playback_speeds[playback_speed_index]
+            campaign.world.clock.speed = playback_speeds[playback_speed_index]
             if speed_button:
                 speed_button.text = "%dx" % int(playback_speeds[playback_speed_index])
-            _refresh_menu_styles()
+            _refresh_home_snapshot()
             return
         "overview", "stage:1":
             _close_home_submenu()
@@ -687,6 +895,7 @@ func _open_home_submenu(route_id: String, title: String, icon: String, route_pay
     _refresh_menu_styles()
     if submenu == null:
         return
+    _route_payload = route_payload.duplicate(true)
     var submenu_state: Dictionary = home_state
     if not route_payload.is_empty():
         submenu_state = home_state.duplicate(true)
@@ -695,6 +904,7 @@ func _open_home_submenu(route_id: String, title: String, icon: String, route_pay
         if submenu_state == home_state:
             submenu_state = home_state.duplicate(true)
         submenu_state["selection"] = route_payload.duplicate(true)
+        _selection_data = route_payload.duplicate(true)
     submenu.call("setup", submenu_state, home_snapshot)
     submenu.call("open_route", route_id, title, icon)
     submenu.visible = true
@@ -730,7 +940,7 @@ func _on_submenu_action_requested(action_id: String = "", payload: Dictionary = 
         "region_selected":
             _route_home_action("focus_region", "", "", payload)
         "fleet_selected":
-            _open_related_selection(home_state.get("observed_fleets", []), "fleet_id", String(payload.get("fleet_id", "")), "함대")
+            _open_related_selection(home_state.get("observed_fleets", []), "fleet_id", str(payload.get("fleet_id", "")), "함대")
         "external_power_selected":
             _open_related_selection(home_state.get("external_powers", []), "id", String(payload.get("external_power_id", "")), "외부 세력")
         "news_selected":
@@ -744,11 +954,11 @@ func _open_related_selection(rows, key: String, wanted: String, fallback_title: 
     if not rows is Array:
         return
     for value in rows:
-        if value is Dictionary and String(value.get(key, value.get("id", ""))) == wanted:
+        if value is Dictionary and str(value.get(key, value.get("id", ""))) == wanted:
             var row: Dictionary = value.duplicate(true)
             if not row.has("type"):
                 row["type"] = {"함대": "fleet", "외부 세력": "external_power", "전투": "battle", "권역": "region"}.get(fallback_title, "")
-            var title := String(row.get("name", row.get("headline", fallback_title)))
+            var title := str(row.get("display_name", row.get("name", row.get("headline", fallback_title))))
             _route_home_action("selection", title, "◎", row)
             return
 
@@ -773,7 +983,7 @@ func _refresh_menu_styles() -> void:
         var button: Button = top_route_buttons[route_id]
         var selected := String(route_id) == active_menu_id
         if String(route_id) == "pause":
-            selected = get_tree().paused
+            selected = campaign != null and campaign.world.clock.paused
         elif String(route_id) == "speed":
             selected = playback_speed_index != 0
         button.add_theme_stylebox_override("normal", HudStyle.resource_selected_style() if selected else HudStyle.resource_style())

@@ -9,6 +9,7 @@ extends RefCounted
 ## 남긴다. 문서에서 상태를 발명해 채우지 않는다.
 
 const MAP_PATH := "res://data/maps/galaxy-map.json"
+const SCHEMA_VERSION := 1
 const SCENARIO_03_ID := "SCN-03"
 const SCENARIO_03_YEAR := 208
 const SOLAR_DETAIL_MIN_ZOOM := 2
@@ -65,6 +66,11 @@ static func from_campaign(campaign, year: int = -1,
 		resolved_year = -1
 	if not valid:
 		resolved_year = -1
+	var viewer_faction := ""
+	if valid:
+		viewer_faction = String(runtime.get("viewer_faction",
+			campaign.world.player_faction))
+	var player_faction := String(campaign.world.player_faction) if valid else ""
 
 	var systems: Array = map_data.get("systems", []).duplicate(true)
 	var regions: Array = map_data.get("regions", []).duplicate(true)
@@ -80,23 +86,35 @@ static func from_campaign(campaign, year: int = -1,
 	}
 
 	out._state = {
+		"schema_version": SCHEMA_VERSION,
 		"scenario_id": sid,
 		"year": resolved_year,
 		"valid": valid,
 		"validation_error": validation_error,
+		"scenario": _scenario(campaign, sid, resolved_year) if valid else _empty_scenario(),
+		"viewer": {
+			"faction_id": viewer_faction,
+			"valid": valid and viewer_faction != "" and campaign.factions.has(viewer_faction),
+		},
+		"player_state": _player_state(campaign, player_faction) if valid else _empty_player_state(),
+		"factions": _factions(campaign) if valid else [],
 		"canonical_systems": systems,
 		"canonical_regions": regions,
 		"canonical_bodies": bodies,
 		"canonical_routes": routes,
 		"terrain": terrain,
 		"region_owner": _region_owners(campaign, regions) if valid else {},
+		"region_states": _region_states(campaign, regions, player_faction) if valid else {},
 		"alliances": _alliances(campaign) if valid else [],
-		"observed_fleets": _observed_fleets(campaign,
-			String(runtime.get("viewer_faction", ""))) if valid else [],
+		"observed_fleets": _observed_fleets(campaign, viewer_faction) if valid else [],
+		"pending_commands": _pending_commands(campaign, player_faction) if valid else [],
+		"event_counts": _event_counts(campaign) if valid else {},
 		"active_battles": _active_battles(map_data, sid, runtime) if valid else [],
 		"red_cliff_conditions": _red_cliff_conditions(runtime) if valid else {},
 		"news": _news(runtime.get("news", [])) if valid else [],
 		"external_powers": _external_powers(resolved_year) if valid else [],
+		"capabilities": _capabilities(),
+		"provenance": _provenance(runtime),
 		"presentation": {
 			"valid": valid,
 			"invalid_reason": validation_error,
@@ -110,6 +128,26 @@ static func from_campaign(campaign, year: int = -1,
 ## 전체 계약의 깊은 복사본. 호출자가 중첩 배열을 수정해도 원본은 유지된다.
 func snapshot() -> Dictionary:
 	return _state.duplicate(true)
+
+
+func schema_version() -> int:
+	return int(_state.get("schema_version", 0))
+
+
+func scenario() -> Dictionary:
+	return (_state.get("scenario", {}) as Dictionary).duplicate(true)
+
+
+func viewer() -> Dictionary:
+	return (_state.get("viewer", {}) as Dictionary).duplicate(true)
+
+
+func player_state() -> Dictionary:
+	return (_state.get("player_state", {}) as Dictionary).duplicate(true)
+
+
+func factions() -> Array:
+	return (_state.get("factions", []) as Array).duplicate(true)
 
 
 func scenario_id() -> String:
@@ -169,12 +207,24 @@ func region_owner() -> Dictionary:
 	return (_state.get("region_owner", {}) as Dictionary).duplicate(true)
 
 
+func region_states() -> Dictionary:
+	return (_state.get("region_states", {}) as Dictionary).duplicate(true)
+
+
 func alliances() -> Array:
 	return (_state.get("alliances", []) as Array).duplicate(true)
 
 
 func observed_fleets() -> Array:
 	return (_state.get("observed_fleets", []) as Array).duplicate(true)
+
+
+func pending_commands() -> Array:
+	return (_state.get("pending_commands", []) as Array).duplicate(true)
+
+
+func event_counts() -> Dictionary:
+	return (_state.get("event_counts", {}) as Dictionary).duplicate(true)
 
 
 func active_battles() -> Array:
@@ -191,6 +241,14 @@ func news() -> Array:
 
 func external_powers() -> Array:
 	return (_state.get("external_powers", []) as Array).duplicate(true)
+
+
+func capabilities() -> Dictionary:
+	return (_state.get("capabilities", {}) as Dictionary).duplicate(true)
+
+
+func provenance() -> Dictionary:
+	return (_state.get("provenance", {}) as Dictionary).duplicate(true)
 
 
 ## 형주성역의 네 권역. 정본 ID/좌표를 그대로 반환한다.
@@ -226,6 +284,196 @@ static func red_cliff_ready(conditions: Dictionary) -> bool:
 		if not bool(conditions.get(key, false)):
 			return false
 	return true
+
+
+static func _scenario(campaign, scenario_id: String, start_year: int) -> Dictionary:
+	var calendar: Array = campaign.world.clock.calendar(start_year)
+	return {
+		"id": scenario_id,
+		"start_year": start_year,
+		"tick": campaign.world.clock.tick,
+		"year": int(calendar[0]),
+		"month": int(calendar[1]),
+		"speed": campaign.world.clock.speed,
+		"paused": campaign.world.clock.paused,
+		"ended": campaign.ended,
+		"end_reason": campaign.end_reason,
+	}
+
+
+static func _empty_scenario() -> Dictionary:
+	return {
+		"id": "", "start_year": -1, "tick": 0, "year": -1, "month": -1,
+		"speed": 1, "paused": false, "ended": false, "end_reason": "",
+	}
+
+
+static func _player_state(campaign, player_faction: String) -> Dictionary:
+	var out := _empty_player_state()
+	out["faction_id"] = player_faction
+	if player_faction == "" or not campaign.factions.has(player_faction):
+		return out
+	var faction = campaign.factions[player_faction]
+	var budget: Array = campaign.budget(player_faction)
+	var mobilized: int = faction.mobilized(campaign.data, campaign.world.region_states,
+		campaign.world.graph, campaign.world.clock.tick)
+	var capacity_milli: int = Economy.squadrons_milli(mobilized, faction.plan)
+	var used_milli: int = 0
+	for fleet in campaign.fleets:
+		if fleet.owner == player_faction and fleet.is_alive():
+			used_milli += fleet.squadrons_milli()
+	return {
+		"faction_id": player_faction,
+		"treasury": faction.treasury,
+		"budget": {
+			"income": int(budget[0]), "admin": int(budget[1]),
+			"fleet": int(budget[2]), "drill": int(budget[3]),
+			"recovery": int(budget[4]), "net": int(budget[5]),
+		},
+		"mandate": faction.mandate,
+		"hegemony": faction.hegemony,
+		"mobilized": mobilized,
+		"fleet_capacity_milli": capacity_milli,
+		"fleet_used_milli": used_milli,
+		"tech": faction.tech.duplicate(true),
+		"tech_research": faction.tech_research.duplicate(true),
+	}
+
+
+static func _empty_player_state() -> Dictionary:
+	return {
+		"faction_id": "", "treasury": 0,
+		"budget": {"income": 0, "admin": 0, "fleet": 0, "drill": 0,
+			"recovery": 0, "net": 0},
+		"mandate": 0, "hegemony": 0, "mobilized": 0,
+		"fleet_capacity_milli": 0, "fleet_used_milli": 0,
+		"tech": {}, "tech_research": {},
+	}
+
+
+static func _factions(campaign) -> Array:
+	var out: Array = []
+	for faction_id in campaign.faction_ids:
+		var faction = campaign.factions[faction_id]
+		out.append({
+			"id": faction.id,
+			"name": faction.name,
+			"capital_system": faction.capital_system,
+			"region_count": faction.regions.size(),
+			"alive": faction.alive,
+			"wandering": faction.wandering,
+		})
+	return out
+
+
+static func _region_states(campaign, canonical_regions: Array,
+		player_faction: String) -> Dictionary:
+	var out := {}
+	for region in canonical_regions:
+		var region_id := String(region.get("id", ""))
+		var state = campaign.world.region_states.get(region_id)
+		if state == null:
+			continue
+		var row := {
+			"owner": state.owner,
+			"contested": state.contested,
+			"detail_visibility": "full" if player_faction != "" \
+				and String(state.owner) == player_faction else "public",
+		}
+		if row["detail_visibility"] == "full":
+			row.merge({
+				"war_damage_milli": state.war_damage_milli,
+				"acquired_tick": state.acquired_tick,
+				"acquired_by": state.acquired_by,
+				"recovery_investment": state.recovery_investment,
+				"development": state.development,
+				"delegated": state.delegated,
+				"garrison": state.garrison,
+				"stability": state.stability,
+				"stability_initial": state.stability_initial,
+				"pacified": state.pacified,
+			})
+		out[region_id] = row
+	return out
+
+
+static func _pending_commands(campaign, player_faction: String) -> Array:
+	var out: Array = []
+	if player_faction == "":
+		return out
+	for command in campaign.world.pending_commands:
+		if String(command.get("origin", "player")) == "ai":
+			continue
+		var payload: Dictionary = command.get("payload", {})
+		if String(payload.get("faction", "")) != player_faction:
+			continue
+		var safe_payload := {}
+		for key in ["region", "fleet", "into", "axis", "stage", "amount", "on",
+				"plan", "formation", "step"]:
+			if payload.has(key):
+				safe_payload[key] = payload[key]
+		out.append({
+			"seq": int(command.get("seq", -1)),
+			"kind": String(command.get("kind", "")),
+			"issued_tick": int(command.get("issued_tick", 0)),
+			"arrival_tick": int(command.get("arrival_tick", command.get("issued_tick", 0))),
+			"remaining_ticks": maxi(0, int(command.get("arrival_tick", 0)) - campaign.world.clock.tick),
+			"payload": safe_payload,
+		})
+	out.sort_custom(func(a, b): return int(a["seq"]) < int(b["seq"]))
+	return out
+
+
+static func _event_counts(campaign) -> Dictionary:
+	var out := {}
+	var event_ids: Array = campaign.events_fired.keys()
+	event_ids.sort()
+	for event_id in event_ids:
+		out[String(event_id)] = int(campaign.events_fired[event_id])
+	return out
+
+
+static func _capabilities() -> Dictionary:
+	return {
+		"scenario_clock": true,
+		"player_faction": true,
+		"treasury": true,
+		"budget": true,
+		"mandate": true,
+		"hegemony": true,
+		"mobilized": true,
+		"fleet_capacity": true,
+		"region_states": true,
+		"observed_fleets": true,
+		"alliances": true,
+		"pending_commands": true,
+		"event_counts": true,
+		"date_day": false,
+		"supply_resource": false,
+		"influence_resource": false,
+		"intel_resource": false,
+		"active_battles": false,
+		"red_cliff_conditions": false,
+		"news": false,
+		"external_powers": false,
+		"liu_bei_wandering": false,
+	}
+
+
+static func _provenance(runtime: Dictionary) -> Dictionary:
+	return {
+		"scenario": "campaign_core",
+		"viewer": "campaign_core_or_runtime_override",
+		"player_state": "campaign_core",
+		"factions": "campaign_core",
+		"region_states": "campaign_core",
+		"pending_commands": "campaign_core_filtered",
+		"event_counts": "campaign_core_aggregate",
+		"active_battles": "runtime_fixture" if runtime.has("active_battles") else "unsupported",
+		"red_cliff_conditions": "runtime_fixture" if runtime.has("red_cliff_conditions") else "unsupported",
+		"news": "runtime_fixture" if runtime.has("news") else "unsupported",
+		"external_powers": EXTERNAL_POWER_SOURCE,
+	}
 
 
 static func _read_map(path: String) -> Dictionary:
@@ -280,7 +528,21 @@ static func _observed_fleets(campaign, viewer: String) -> Array:
 			campaign.world, campaign.data, viewer, fleet, campaign.fleets)
 		if not bool(observed.get("visible", false)):
 			continue
-		out.append(observed.duplicate(true))
+		var safe: Dictionary = observed.duplicate(true)
+		var own_fleet := String(fleet.owner) == viewer
+		safe["fleet_id"] = fleet.id
+		safe["system_id"] = String(observed.get("system", ""))
+		safe["status"] = "moving" if bool(observed.get("moving", false)) else "stationed"
+		safe["display_name"] = "제%d함대" % fleet.id if own_fleet else "미확인 함대 #%d" % fleet.id
+		safe["faction"] = String(fleet.owner) if own_fleet else ""
+		if int(observed.get("stage", 0)) >= 2:
+			safe["ships"] = int(observed.get("ships_exact", 0))
+			safe["ships_display"] = str(safe["ships"])
+		else:
+			safe["ships_display"] = "%d–%d" % [
+				int(observed.get("ships_low", 0)), int(observed.get("ships_high", 0))]
+		out.append(safe)
+	out.sort_custom(func(a, b): return int(a["fleet_id"]) < int(b["fleet_id"]))
 	return out
 
 
