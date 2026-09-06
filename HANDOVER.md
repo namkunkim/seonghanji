@@ -1,5 +1,15 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
+> **2026-09-07 항행 상세 3D 전대 연출 완료(로컬):** `app/views/fleet_voyage_3d.gd`가 제공된 6종
+> GLB를 `assets/models/ships/voyage_lod/`의 전대 관측 LOD로 읽는다. 기본 균형 편성 28척은 전열 11·
+> 포격 6·강습 4·전자 3·공성 1·보급 3이며, 사용자 지정 어린진 슬롯으로 전열 선두/양익, 중앙 포격·
+> 강습·전자전, 후방 공성·보급 순서로 놓인다. 전 함선에는 청백색 코어·청색 플룸·후방 광원을 붙였고,
+> 성운 파노라마는 시간 회전하지 않으며 별 입자만 카메라 쪽으로 흘러 전진감을 만든다.
+> 검증: Godot 4.7.2 Compatibility 캡처 성공 —
+> `out/fleet-reference-scene/fleet-voyage-3d-fleet-v2.png`. 캡처 종료 시 OpenGL 리소스 해제 경고는
+> 테스트 종료 경로에서 발생하며, 캡처 성공 판정과 별개다. 다음 작업자는 이 화면을 C-04/C-05 완료로
+> 승격하지 말고 Windows 실기·입력·성능 수용과 자산 출처/라이선스 기록을 별도로 진행할 것.
+
 > **2026-09-06 G-10 core news/home projection 슬라이스 검증 완료 — 다음 단일 작성 작업 확정:** 기준선은 `main` `c1e6de1`다.
 > G-10은 `675347f`의 조건 원장·DEC-01·pending battle과 `7c7c6c5`의 participant manifest·
 > `pending → active` 전이, `145dfbb`·`6efab57`의 결정론적 active phase 1→2와 resolved 결과 1회 적용까지

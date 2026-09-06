@@ -1,5 +1,12 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
+> **2026-09-07 항행 상세 3D 전대 연출 — 로컬 구현·캡처 검증:** `app/views/fleet_voyage_3d.gd`에
+> 6개 함종의 제공 GLB를 전대 1개(28척) 관측으로 배치했다. 기본 균형 편성은 전열 11·포격 6·강습 4·
+> 전자 3·공성 1·보급 3이며, 사용자 지정 어린진 슬롯(전열 선두/양익 → 중앙 포격·강습·전자전 →
+> 후방 공성·보급), 청백색 추진 플룸, 고정 성운과 후방으로 흐르는 별 입자를 적용했다. Godot 4.7.2
+> Compatibility 캡처가 `out/fleet-reference-scene/fleet-voyage-3d-fleet-v2.png`로 생성됨을 확인했다.
+> 이는 자산·UI 연출의 로컬 수용 기록일 뿐, C-04·C-05 또는 P-02 완료 승격 근거는 아니다.
+
 > **2026-09-06 G-10 core news/home projection 검증 결과:** `main` `c1e6de1`에서 조건 원장·DEC-01·pending battle·
 > participant manifest·`pending → active`와 결정론적 phase 1→2·resolved 결과 1회 적용을 구현 및 전용 시험 통과.
 > phase 3~5·C-02 배너/action·전투 진입·Windows 수용은 미구현이므로 G-10은 완료가 아니다.
