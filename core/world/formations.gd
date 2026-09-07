@@ -168,19 +168,22 @@ static func has_paljin_trait(traits: Array) -> bool:
 ## A non-eligible 팔진 is safely neutral rather than being silently upgraded.
 static func combat_verdict(formation_id: String, opposing_formation_id: String,
 		phase: int, command: int, staff_traits: Array, terrain: String) -> Dictionary:
-	var valid := exists_id(formation_id)
+	var requested_valid := exists_id(formation_id)
 	var forced := forced_formation(terrain)
-	var allowed := valid and allowed_in(name_for_id(formation_id), terrain)
-	var paljin_eligible := formation_id != PALJIN_ID \
+	var effective_id := effective_formation_id(formation_id, command, staff_traits, terrain)
+	var valid := effective_id != ""
+	var allowed := valid and allowed_in(name_for_id(effective_id), terrain)
+	var paljin_eligible := effective_id != PALJIN_ID \
 		or (command >= required_command(name_for_id(PALJIN_ID)) and has_paljin_trait(staff_traits))
 	var usable := valid and allowed and paljin_eligible
-	var formation_milli := coefficient_milli(formation_id, phase) if usable else 1000
-	var matchup_milli := matchup_modifier_milli(formation_id, opposing_formation_id, phase) if usable else 1000
+	var formation_milli := coefficient_milli(effective_id, phase) if usable else 1000
+	var matchup_milli := matchup_modifier_milli(effective_id, opposing_formation_id, phase) if usable else 1000
 	return {
 		"valid": valid,
 		"usable": usable,
-		"formation_id": formation_id if valid else "",
-		"formation_name": name_for_id(formation_id) if valid else "",
+		"requested_valid": requested_valid,
+		"formation_id": effective_id,
+		"formation_name": name_for_id(effective_id),
 		"forced_formation_id": id_for_name(forced),
 		"terrain_allowed": allowed,
 		"paljin_eligible": paljin_eligible,
@@ -188,6 +191,26 @@ static func combat_verdict(formation_id: String, opposing_formation_id: String,
 		"matchup_milli": matchup_milli,
 		"combat_milli": formation_milli * matchup_milli / 1000,
 	}
+
+
+## Initial/frozen formations never bypass command or terrain rules.  Terrain
+## force wins; illegal/unknown requests safely fall back through the documented
+## downgrade chain instead of remaining an invalid stored display value.
+static func effective_formation_id(formation_id: String, command: int,
+		staff_traits: Array, terrain: String) -> String:
+	var forced := forced_formation(terrain)
+	if forced != "":
+		return id_for_name(forced)
+	if not exists_id(formation_id):
+		return id_for_name(downgrade(command, DEFAULT_NAME))
+	var name := name_for_id(formation_id)
+	if not allowed_in(name, terrain):
+		return id_for_name(downgrade(command, name))
+	if formation_id == PALJIN_ID and not (command >= required_command(name) and has_paljin_trait(staff_traits)):
+		return id_for_name(downgrade(command, DEFAULT_NAME))
+	if command < required_command(name):
+		return id_for_name(downgrade(command, name))
+	return formation_id
 
 
 static func matchup_modifier_milli(formation_id: String, opposing_formation_id: String,

@@ -24,6 +24,8 @@ func _init() -> void:
 	_test_paljin_and_terrain_verdicts()
 	_test_fixed_point_composition()
 	_test_generic_resolver_reads_live_formation()
+	_test_battle_change_contract()
+	_test_exhaustive_coefficients_and_command_arrival()
 	print("통과 %d · 실패 %d" % [_pass, _fail])
 	quit(Harness.EXIT_FAIL if _fail > 0 else Harness.EXIT_PASS)
 
@@ -64,11 +66,11 @@ func _test_paljin_and_terrain_verdicts() -> void:
 	_eq(int(eligible["formation_milli"]), 1200, "eligible 팔진 coefficient")
 	var no_trait := Formations.combat_verdict("FRM-07", "FRM-01", Battle.Phase.CONTACT,
 		90, ["팔진 전용"], "개활")
-	_ok(not bool(no_trait["usable"]), "display trait label cannot unlock 팔진")
-	_eq(int(no_trait["combat_milli"]), 1000, "ineligible 팔진 safely neutral")
+	_eq(String(no_trait["formation_id"]), "FRM-01", "display trait label cannot unlock 팔진")
+	_eq(int(no_trait["combat_milli"]), 1000, "ineligible 팔진 safely downgrades")
 	var grand := Formations.combat_verdict("FRM-02", "FRM-06", Battle.Phase.CONTACT,
 		80, [], "대회랑")
-	_ok(not bool(grand["usable"]), "대회랑 rejects non-장사진")
+	_eq(String(grand["formation_id"]), "FRM-06", "대회랑 forces 장사진")
 	_eq(String(grand["forced_formation_id"]), "FRM-06", "대회랑 forced ID")
 
 
@@ -115,3 +117,40 @@ func _generic_battle_result(attacker_formation: String) -> Array:
 	campaign.fleets.append(defender)
 	campaign._resolve_battle(attacker, region_id)
 	return [attacker.ships, attacker.morale, defender.ships, defender.morale]
+
+
+func _test_battle_change_contract() -> void:
+	var campaign := Campaign.scenario_03(GameData.load_all(), 51002)
+	var fleet := Fleet.new()
+	fleet.id = 98001
+	fleet.command = 50
+	campaign._battle_formation_commands["B-1"] = [{
+		"next_phase": 2, "fleet_id": fleet.id, "target_formation_id": "FRM-02", "seq": 1,
+	}]
+	var used := {}
+	var failed := campaign._apply_battle_formation_change("B-1", 2, fleet, "FRM-01", "개활", used)
+	_eq(int(failed["penalty_milli"]), 800, "command failure applies only destination 800 multiplier")
+	_eq(String(failed["formation_id"]), "FRM-01", "failed change retains prior formation")
+	campaign._apply_battle_formation_change("B-1", 2, fleet, "FRM-01", "개활", used)
+	_eq(String(campaign.battle_formation_results.back()["status"]), "rejected_duplicate", "once per fleet per battle")
+	_eq(campaign.issue_battle_formation_change(Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID, 2,
+		fleet.id, "FRM-02"), {}, "G10 battle ID rejected before command log")
+
+
+func _test_exhaustive_coefficients_and_command_arrival() -> void:
+	for formation_index in range(1, 8):
+		var formation_id := "FRM-%02d" % formation_index
+		var row := Formations.coefficients(Formations.name_for_id(formation_id))
+		for phase in range(5):
+			_eq(Formations.coefficient_milli(formation_id, phase),
+				roundi(float(row[Formations.PHASE_KEYS[phase]]) * 1000.0),
+				"%s phase %d coefficient" % [formation_id, phase + 1])
+	var campaign := Campaign.scenario_03(GameData.load_all(), 51003)
+	var fleet_id := 98003
+	_ok(not campaign.issue_battle_formation_change("B-ARRIVE", 2, fleet_id, "FRM-02").is_empty(),
+		"generic formation command issued")
+	campaign.step()
+	_ok(campaign._battle_formation_commands.has("B-ARRIVE"), "arrived World command queues generic battle change")
+	var replay := Campaign.from_save_result(campaign.to_save_dict(), GameData.load_all())
+	_eq(String(replay["status"]), Save.STATUS_OK, "formation command save/replay verifies")
+	_eq(int(replay["actual_digest"]), campaign.digest(), "formation command replay digest identity")

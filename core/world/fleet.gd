@@ -19,6 +19,11 @@ var arrival_tick: int = -1
 ## `at_system`은 이동 중 출발 성계를 유지하므로, 이 값과 `arrival_tick`은 한 쌍이다.
 var departure_tick: int = -1
 
+## Move resolution freezes the exact worst terrain for its next encounter.
+## Combat must never infer this from a destination region.
+var encounter_terrain: String = ""
+var encounter_battle_id: String = ""
+
 var ships: int = Battle.FLEET_SHIPS
 var morale: int = Battle.MORALE_NOMINAL
 

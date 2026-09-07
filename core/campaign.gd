@@ -41,6 +41,7 @@ const CMD_SCN03_RED_CLIFF_MANIFEST: String = "scn03_red_cliff_manifest"
 ## after the deterministic Contact → Barrage transition, then replayed from the
 ## normal player command log.
 const CMD_SCN03_RED_CLIFF_RESULT: String = "scn03_red_cliff_result"
+const CMD_BATTLE_FORMATION_CHANGE: String = "battle_formation_change"
 ## Transition-news IDs are derived from this canonical battle ID plus one fixed
 ## transition token; they never use UI order, text, or an incrementing counter.
 const SCN03_RED_CLIFF_TRANSITION_ACTIVE_PHASE_1: String = "active_phase_1"
@@ -105,6 +106,8 @@ var scn03_red_cliff_manifest: Dictionary = {}
 ## Event 09에서만 파생하는 적벽 지속형 전투 상태. 세이브 스냅숏 정본이 아니며,
 ## player scenario-outcome 명령 재생으로 같은 순서에 다시 만든다.
 var active_battles: Array[ActiveBattle] = []
+var _battle_formation_commands: Dictionary = {}
+var battle_formation_results: Array[Dictionary] = []
 ## Immutable, replay-derived transition facts for the canonical Red-Cliffs
 ## battle.  This is deliberately not C-02 policy or a UI feed: consumers can
 ## later project these facts without being allowed to create or alter them.
@@ -608,6 +611,16 @@ func issue_scn03_red_cliff_result(winner_faction_id: String, delay_ticks: int = 
 	return world.issue(CMD_SCN03_RED_CLIFF_RESULT, payload, delay_ticks, "player")
 
 
+func issue_battle_formation_change(battle_id: String, next_phase: int, fleet_id: int,
+		target_formation_id: String, delay_ticks: int = 0) -> Dictionary:
+	if battle_id == SCN03_RED_CLIFF_PENDING_BATTLE_ID or delay_ticks < 0 \
+			or next_phase < 2 or next_phase > 5 or not Formations.exists_id(target_formation_id):
+		return {}
+	return world.issue(CMD_BATTLE_FORMATION_CHANGE, {"battle_id": battle_id,
+		"next_phase": next_phase, "fleet_id": fleet_id,
+		"target_formation_id": target_formation_id}, delay_ticks, "player")
+
+
 ## Save.inspect uses this same structural contract before replay.  It intentionally
 ## cannot validate live fleet liveness/ownership; the reducer below does that at the
 ## command's arrival tick, where those facts are authoritative.
@@ -971,6 +984,19 @@ func run_to_end(max_ticks: int = SCN03_END_TICK) -> void:
 ## 여기서 **효과가 붙는다.**
 func _apply_arrived() -> void:
 	for c in world.last_arrived:
+		if String(c.get("kind", "")) == CMD_BATTLE_FORMATION_CHANGE:
+			var p: Dictionary = c.get("payload", {})
+			if String(c.get("origin", "player")) == "player" and p.size() == 4 \
+					and Formations.exists_id(String(p.get("target_formation_id", ""))):
+				var bid := String(p.get("battle_id", ""))
+				if not _battle_formation_commands.has(bid):
+					_battle_formation_commands[bid] = []
+				var queued: Dictionary = p.duplicate(true)
+				queued["seq"] = int(c.get("seq", -1))
+				_battle_formation_commands[bid].append(queued)
+			else:
+				cmds_rejected += 1
+			continue
 		if String(c.get("kind", "")) == CMD_SCN03_EVENT_OUTCOME:
 			var scenario_payload: Dictionary = c.get("payload", {})
 			var scenario_outcome: Dictionary = {}
@@ -1289,6 +1315,16 @@ func _resolve_battle(att: Fleet, rid: String) -> void:
 	var sb := _scheme_side(defs[0])
 	var ew_pct: int = int(Economy.PLANS.get(att.plan,
 		Economy.PLANS[Economy.PLAN_DEFAULT])[3])
+	var battle_id := att.encounter_battle_id
+	var terrain := att.encounter_terrain
+	if terrain == "":
+		terrain = "개활"
+	var attacker_formation_id := Formations.effective_formation_id(
+		Formations.id_for_name(att.formation), att.command, att.staff_traits, terrain)
+	var defender_formation_id := Formations.effective_formation_id(
+		Formations.id_for_name(defs[0].formation), def_command, defs[0].staff_traits, terrain)
+	var formation_used: Dictionary = {}
+	var formation_penalty: Dictionary = {}
 	if corridor != "":
 		corridor_battles += 1
 		corridor_battles_as_attacker[att.owner] = \
@@ -1300,6 +1336,15 @@ func _resolve_battle(att: Fleet, rid: String) -> void:
 			focus_noncorridor_attacks += 1
 
 	for phase in 5:
+		var next_phase := phase + 1
+		var a_change := _apply_battle_formation_change(battle_id, next_phase, att,
+			attacker_formation_id, terrain, formation_used)
+		attacker_formation_id = String(a_change["formation_id"])
+		formation_penalty["att"] = int(a_change["penalty_milli"])
+		var b_change := _apply_battle_formation_change(battle_id, next_phase, defs[0],
+			defender_formation_id, terrain, formation_used)
+		defender_formation_id = String(b_change["formation_id"])
+		formation_penalty["def"] = int(b_change["penalty_milli"])
 		# 매복이 연 것은 **다음 페이즈**의 손실이다 (§5.5 「적 ② 손실률 ×1.5」).
 		# 걸어 둔 배수를 페이즈 머리에서 회수한다 — 같은 페이즈에 터지면 매복이 아니다.
 		var a_mult: int = int(sa["next_loss_mult"])
@@ -1337,18 +1382,14 @@ func _resolve_battle(att: Fleet, rid: String) -> void:
 		# 유인 — 끌어낸 쪽이 회랑 전개 상한을 벗어난다 (§5.5)
 		var a_corr: String = "" if bool(sa["free_terrain"]) else corridor
 		var b_corr: String = "" if bool(sb["free_terrain"]) else corridor
-		var terrain := corridor if corridor != "" else "개활"
-		var attacker_formation_id := Formations.id_for_name(att.formation)
-		# The existing defender side is an aggregate whose command/morale already
-		# belong to the sorted lead fleet.  Its formation follows that same stable
-		# lead until A-05-03 introduces battle-local multi-fleet state.
-		var defender_formation_id := Formations.id_for_name(defs[0].formation)
 		var a_ship_coeff := Battle.formation_adjusted_ship_coefficient_milli(1000,
 			attacker_formation_id, defender_formation_id, phase, att.command,
 			att.staff_traits, terrain)
 		var b_ship_coeff := Battle.formation_adjusted_ship_coefficient_milli(1000,
 			defender_formation_id, attacker_formation_id, phase, def_command,
 			defs[0].staff_traits, terrain)
+		a_ship_coeff = a_ship_coeff * int(formation_penalty.get("att", 1000)) / 1000
+		b_ship_coeff = b_ship_coeff * int(formation_penalty.get("def", 1000)) / 1000
 
 		var pa := Battle.combat_power_milli(att.ships, a_ship_coeff, a_stat, phase,
 			att.morale, 1000, a_tech, a_corr)
@@ -1394,6 +1435,43 @@ func _resolve_battle(att: Fleet, rid: String) -> void:
 		_capture(att.owner, rid)
 	elif att.ships <= 0:
 		fleets.erase(att)
+	_battle_formation_commands.erase(battle_id)
+	att.encounter_terrain = ""
+	att.encounter_battle_id = ""
+
+
+func _apply_battle_formation_change(battle_id: String, next_phase: int, fleet: Fleet,
+		current_id: String, terrain: String, used: Dictionary) -> Dictionary:
+	var out := {"formation_id": current_id, "penalty_milli": 1000}
+	if battle_id == "" or not _battle_formation_commands.has(battle_id):
+		return out
+	for command in _battle_formation_commands[battle_id]:
+		if int(command.get("next_phase", -1)) != next_phase or int(command.get("fleet_id", -1)) != fleet.id:
+			continue
+		var result := {"battle_id": battle_id, "next_phase": next_phase, "fleet_id": fleet.id,
+			"target_formation_id": String(command.get("target_formation_id", "")), "seq": int(command.get("seq", -1))}
+		if used.has(fleet.id):
+			result["status"] = "rejected_duplicate"
+			battle_formation_results.append(result)
+			continue
+		var target := String(command.get("target_formation_id", ""))
+		if not Formations.exists_id(target) or Formations.forced_formation(terrain) != "" \
+				or not Formations.allowed_in(Formations.name_for_id(target), terrain):
+			result["status"] = "rejected_illegal"
+			battle_formation_results.append(result)
+			continue
+		used[fleet.id] = true
+		if target == Formations.PALJIN_ID and fleet.command >= 90 and Formations.has_paljin_trait(fleet.staff_traits):
+			out["formation_id"] = target
+			result["status"] = "applied"
+		elif fleet.command >= Formations.required_command(Formations.name_for_id(target)):
+			out["formation_id"] = target
+			result["status"] = "applied"
+		else:
+			out["penalty_milli"] = 800
+			result["status"] = "failed_command"
+		battle_formation_results.append(result)
+	return out
 
 
 ## ---------------------------------------------------------------- 계략 (combat.md §5)
@@ -2281,6 +2359,12 @@ func digest() -> int:
 				h = Save._fold(h, Rng._hash_string(String(result_payload.get("battle_id", ""))))
 				h = Save._fold(h, int(result_payload.get("phase", -1)))
 				h = Save._fold(h, Rng._hash_string(String(result_payload.get("winner_faction_id", ""))))
+			elif String(c["kind"]) == CMD_BATTLE_FORMATION_CHANGE:
+				var formation_payload: Dictionary = c.get("payload", {})
+				h = Save._fold(h, Rng._hash_string(String(formation_payload.get("battle_id", ""))))
+				h = Save._fold(h, int(formation_payload.get("next_phase", -1)))
+				h = Save._fold(h, int(formation_payload.get("fleet_id", -1)))
+				h = Save._fold(h, Rng._hash_string(String(formation_payload.get("target_formation_id", ""))))
 	# ── 세력 (정렬된 faction_ids) ──────────────────────────────────────
 	for fid in faction_ids:
 		var f: Faction = factions[fid]
@@ -2329,6 +2413,8 @@ func digest() -> int:
 		h = Save._fold(h, Rng._hash_string(fl.target_region))
 		h = Save._fold(h, fl.departure_tick)
 		h = Save._fold(h, fl.arrival_tick)
+		h = Save._fold(h, Rng._hash_string(fl.encounter_terrain))
+		h = Save._fold(h, Rng._hash_string(fl.encounter_battle_id))
 		h = Save._fold(h, fl.ships)
 		h = Save._fold(h, fl.morale)
 		h = Save._fold(h, fl.drill)
@@ -2388,6 +2474,13 @@ func digest() -> int:
 				h = Save._fold(h, Rng._hash_string(String(record.get("battle_id", ""))))
 				h = Save._fold(h, Rng._hash_string(String(record.get("transition", ""))))
 				h = Save._fold(h, int(record.get("tick", -1)))
+	var formation_results := battle_formation_results.duplicate()
+	formation_results.sort_custom(func(a, b): return int(a.get("seq", -1)) < int(b.get("seq", -1)))
+	h = Save._fold(h, formation_results.size())
+	for record in formation_results:
+		for key in ["battle_id", "next_phase", "fleet_id", "target_formation_id", "seq", "status"]:
+			var value = record.get(key, "")
+			h = Save._fold(h, value if value is int else Rng._hash_string(String(value)))
 	var ck: Array = _event_cooldown.keys()      # 재발동 쿨다운 (§1.2)
 	ck.sort()
 	for k in ck:

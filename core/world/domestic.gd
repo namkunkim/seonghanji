@@ -463,6 +463,8 @@ static func _apply_fleet_move(data: GameData, graph: Dictionary, fleets: Array,
 	fl.target_region = rid
 	fl.departure_tick = now_tick
 	fl.arrival_tick = now_tick + maxi(int(r["travel_ticks"]), 1)
+	fl.encounter_terrain = String(r["terrain"])
+	fl.encounter_battle_id = "BATTLE-%d-%d-%s" % [fl.id, now_tick, rid]
 	return ""
 
 
