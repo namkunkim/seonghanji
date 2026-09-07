@@ -1,5 +1,20 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
+> **2026-09-07 G-10 적벽 배너·전투 진입 경계 — 부분 구현·독립 검증:** 시작 HEAD와
+> `origin/main`은 `9452b6d2517b4ce8b973ff63dfcee76a030381bd`였다. 구현·디버깅은
+> `gpt-5.6-terra`, 읽기 전용 계약 감사와 P1 재검증은 `gpt-5.6-terra`가 수행했다.
+> Campaign의 exactly-once 전이 뉴스는 `HomeMapSnapshot`에서 깊은 복사 `campaign_core`
+> 뉴스로 투영되고, active phase 1의 `SCN-03-E09-RED-CLIFF-01`만 1행 비차단 적벽 배너를
+> 만든다. action은 `open_active_battle`이며 호스트는 현재 core active phase 1·entry_available와
+> 일치하는 canonical `battle_id`에 한해 `battle_entry_requested(battle_id)`를 낸다.
+> UI 표시 ID `BATTLE-RED-CLIFF`, unknown·resolved·phase 2 ID는 거부한다. runtime fixture는
+> canonical news/battle/action identity를 주입·덮어쓸 수 없고, expiry는 `unsupported`이며
+> default delegation은 미구현이다. `test_red_cliff_interrupt_banner.gd` 50/0 및 기존 적벽·홈맵
+> 대상 시험은 모두 exit 0; 전체 코어는 기존 A-07-E1 `user://` 저장 실패로 698단언·실패 2·exit 1이다.
+> Windows 1600×900 캡처는 이번 환경에서 수행하지 않았다. G-10은 🟨 부분 구현·검증을 유지하며,
+> C-01·C-02·C-04·C-05·P-02·G-05를 승격하지 않는다. 다음 단일 작업은 Windows 1600×900
+> 실기 캡처·입력 수용 또는 C-02의 별도 일반 정책 설계다.
+
 > **2026-09-07 안정화 정정 — 기준선·자산 분류:** 이번 정정 시작 HEAD와 `origin/main`은 모두
 > `4518e05009bf22301af943d0df6f97d19a757b6a`다. 코딩 담당은 `gpt-5.3-codex-spark`, 오케스트레이션과
 > 독립 감사는 `gpt-5.6-terra`가 맡았다. 기존 감사의 과거 기준선·A~E 합계는 확장자 기반 오분류를 포함한
@@ -154,7 +169,7 @@
 | G-07 | 승패 조건·복귀 브리핑·튜토리얼 | ⬜ | C-02, G-01 | 단기판의 시작·진행·종료·재진입 흐름이 완결됨 |
 | G-08 | 무장 위성 방어 시스템 설계·구현 | ⬜ | A-05 | D4 = ㉯ 시스템 신설(V-58). 권역 방어 시설 — `combat.md` §8.2 재설계 + `domestic.md` 건설 명령 + `star-map.md` §5 승격 + `ship-specs.md` §3.5 관계. `VID-002` 컷씬은 이 뒤. **첫 프로토타입 범위 밖(V-59)** — L1 완성(S4) 후 착수 |
 | G-09 | 기동병기 상세 설계(에이스 판정) | ⬜ | — | D5 = ㉮ 설계 선행(V-58). 유인/무인 기동병기·강습정 판정 규칙. 시각 쟁점 5·음원 검토 4·`VFX-007`(L2 연출)의 공통 선행. `HANDOVER.md` §4.4 미착수 영역을 큐로 승격. **첫 프로토타입 범위 밖(V-59)** |
-| G-10 | 적벽 개전·활성 전투·뉴스 수직 흐름 | 🟨 부분 구현·검증 | A-01, A-02, A-03, A-05, C-01 | `675347f`·`7c7c6c5`·`145dfbb`·`6efab57`·`c1e6de1`: Event 09 조건 원장·pending·participant manifest·`pending → active` phase 1·결정론적 phase 1→2·resolved 결과 1회 적용·저장/재생/변조·전이 뉴스 exactly-once·HomeMapSnapshot core projection까지 구현·검증. 전용 G-10 시험 38단언, HomeMapSnapshot 348단언, 전체 코어 35섹션·701단언 실패 0. phase 3~5·C-02 배너/action·전투 진입·시각 수용은 미구현이므로 완료로 승격하지 않는다. 완료 기준은 동일 시드/입력에서 조건 충족 → 사건·뉴스 → 활성 전투 → 홈 지도·배너 → 종료 → 저장·복원 동일 결과. |
+| G-10 | 적벽 개전·활성 전투·뉴스 수직 흐름 | 🟨 부분 구현·검증 | A-01, A-02, A-03, A-05, C-01 | `675347f`·`7c7c6c5`·`145dfbb`·`6efab57`·`c1e6de1`: 조건·pending·manifest·active phase 1·phase 1→2·resolved·저장/재생/변조·전이 뉴스 exactly-once까지 구현. 이번 슬라이스는 core 뉴스→snapshot→active phase 1 전용 1행 배너→canonical `battle_id` 요청 신호를 추가했다. `BATTLE-RED-CLIFF`는 표시 전용이며, runtime canonical 주입·unknown·phase 2·resolved 진입은 거부한다. 전용 배너 시험 50/0, 기존 대상 회귀 38/0·348/0·175/0·347/0·4/0. phase 3~5·실제 전투 화면·expiry/default delegation·C-02 일반화·Windows 수용은 미구현이므로 완료로 승격하지 않는다. |
 
 ### D4. 개발 착수 후: 밸런스·품질
 

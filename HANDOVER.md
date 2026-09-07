@@ -1,5 +1,19 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
+> **2026-09-07 G-10 적벽 배너/action·canonical 전투 진입 경계:** 시작 HEAD/`origin/main`은
+> `9452b6d2517b4ce8b973ff63dfcee76a030381bd`다. 구현·디버깅과 독립 읽기 감사는 모두
+> `gpt-5.6-terra`로 수행했다. `HomeMapSnapshot`은 Campaign exactly-once 전이 뉴스를
+> `campaign_core` 읽기 모델로 깊은 복사하고, active phase 1의
+> `SCN-03-E09-RED-CLIFF-01`만 시각 바 아래 1행 배너를 만든다. action은 내부 ID를 노출하지
+> 않으며, `battle_entry_requested`에는 canonical ID만 전달된다. host는 snapshot provenance,
+> active·phase 1·`entry_available`와 live Campaign을 재검증한다. `BATTLE-RED-CLIFF`, unknown,
+> phase 2, resolved, runtime-origin은 모두 거부되고 `stage:5`는 카메라 이동으로 남는다.
+> runtime canonical news/battle/action 주입은 snapshot과 Main refresh 양쪽에서 차단했다.
+> `test_red_cliff_interrupt_banner.gd` 50/0 및 기존 대상 회귀는 모두 exit 0; 전체 suite의
+> 698/701·실패 2·exit 1은 기존 A-07-E1 `user://` 저장 환경 잔여다. 캡처는 미수행.
+> expiry는 `unsupported`, default delegation·실제 전투 화면·일반 C-02는 미구현이며 G-10은
+> 부분 구현 상태를 유지한다. 다음 단일 작업은 Windows 1600×900 시각/입력 수용이다.
+
 > **2026-09-07 안정화 정정:** 시작 HEAD와 `origin/main`은 모두
 > `4518e05009bf22301af943d0df6f97d19a757b6a`다. 코딩·디버깅 담당은 `gpt-5.3-codex-spark`,
 > 오케스트레이터·독립 감사는 `gpt-5.6-terra`다. root `artillery_ship`·`assault_carrier`·

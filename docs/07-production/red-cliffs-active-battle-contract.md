@@ -1,13 +1,18 @@
 # SEONGHANJI — 적벽 개전·활성 전투·뉴스 수직 흐름 계약 초안
 
 > 상위: `PROJECT-TRACKER.md` D1 · `docs/07-production/preproduction-save-contract.md` (V-62) · `docs/07-production/preproduction-dev-gate.md` §8
-> 작성일: 2026-09-06 · 상태: **부분 구현 검수 완료 — G-10 전체 완료 아님.**
+> 작성일: 2026-09-06 · 갱신: 2026-09-07 · 상태: **부분 구현 검수 완료 — G-10 전체 완료 아님.**
 > 범위: 시나리오 3 「적벽 전야」의 조건 판정부터 저장·복원·재생 가능한 지속 전투와 홈 표시까지의 경계. 이 문서는 규칙값이나 코드를 만들지 않는다.
 
 > 구현 기준선: `675347f`(조건 원장·DEC-01·pending battle), `7c7c6c5`(participant manifest·
 > `pending → active`), `145dfbb`·`6efab57`(phase 1→2·resolved 결과 1회 적용), `c1e6de1`
-> (전이 뉴스 exactly-once·HomeMap core projection). 전용 적벽 시험은 38단언, HomeMapSnapshot은 348단언,
-> 전체 코어는 35섹션·701단언, 실패 0이다. phase 3~5·C-02 배너/action·전투 진입은 아직 없다.
+> (전이 뉴스 exactly-once·HomeMap core projection). 2026-09-07 슬라이스는 `HomeMapSnapshot`
+> 뉴스 투영·active phase 1 전용 1행 배너·canonical `battle_id` 진입 요청 신호를 추가했다.
+> 시작 HEAD/`origin/main`은 `9452b6d2517b4ce8b973ff63dfcee76a030381bd`; 구현·디버깅과
+> 읽기 전용 독립 감사는 `gpt-5.6-terra`가 수행했다. 신규 배너 시험은 50단언·실패 0,
+> 기존 대상 회귀는 38/0·348/0·175/0·347/0·4/0이다. 전체 코어의 698/701·실패 2는
+> 기존 A-07-E1 `user://` 저장 실패이며 이번 슬라이스 실패가 아니다. phase 3~5·실제 전투 화면·
+> 일반 C-02 정책·Windows 실기 수용은 아직 없다.
 
 ## 1. 목표와 비목표
 
@@ -22,11 +27,11 @@
 
 ## 2. 현재 구현과 결손
 
-`Campaign.step()`은 도달 명령, 월 정산, 함대 도착, AI, 이벤트, 종료를 고정 순서로 처리한다. 일반 적대 권역 도착은 기존 `_resolve_battle()`의 즉시 전투를 유지한다. 적벽만 안정 ID `SCN-03-E09-RED-CLIFF-01`로 `pending`을 만들고 participant manifest의 필수 함대가 SYS-13에 모이면 `active` phase 1로 전이한다. 참가자 목록·역할·시작 tick은 전이 시 고정되고, 다음 tick에 phase 2로 결정론적으로 전이한다. phase 2의 canonical 승자 결과는 player command log에서 한 번만 적용되어 `resolved`가 된다. phase 3~5, 손실·점령을 포함한 결과 효과, 전이 뉴스는 아직 없다 (`core/campaign.gd`, `core/combat/active_battle.gd`). `Battle`은 기존 일반 전투의 정수 산식 모듈이다 (`core/combat/battle.gd`).
+`Campaign.step()`은 도달 명령, 월 정산, 함대 도착, AI, 이벤트, 종료를 고정 순서로 처리한다. 일반 적대 권역 도착은 기존 `_resolve_battle()`의 즉시 전투를 유지한다. 적벽만 안정 ID `SCN-03-E09-RED-CLIFF-01`로 `pending`을 만들고 participant manifest의 필수 함대가 SYS-13에 모이면 `active` phase 1로 전이한다. 참가자 목록·역할·시작 tick은 전이 시 고정되고, 다음 tick에 phase 2로 결정론적으로 전이한다. phase 2의 canonical 승자 결과는 player command log에서 한 번만 적용되어 `resolved`가 된다. phase 3~5와 손실·점령을 포함한 결과 효과는 아직 없다 (`core/campaign.gd`, `core/combat/active_battle.gd`). `Battle`은 기존 일반 전투의 정수 산식 모듈이다 (`core/combat/battle.gd`).
 
-캠페인 저장·재생은 시드, 플레이어 명령 로그, 목표 tick에서 재구성한다. pending/active/resolved 상태·manifest·phase 1/2·결과는 replay/digest 대상이며, manifest·phase·결과·중복 적용 변조 검출 시험도 통과했다. 뉴스의 저장·복원은 아직 검증할 수 없다. V-62의 원칙대로 파생 가능한 상태는 로그 재생으로 만들고, 스냅숏은 캐시이며 로그와 충돌하면 로그가 정본이다.
+캠페인 저장·재생은 시드, 플레이어 명령 로그, 목표 tick에서 재구성한다. pending/active/resolved 상태·manifest·phase 1/2·결과는 replay/digest 대상이며, manifest·phase·결과·중복 적용 변조 검출 시험도 통과했다. 전이 뉴스는 별도 저장 스냅숏이 아니라 재생에서 파생되며, 그 ID는 replay 후에도 같다. V-62의 원칙대로 파생 가능한 상태는 로그 재생으로 만들고, 스냅숏은 캐시이며 로그와 충돌하면 로그가 정본이다.
 
-`HomeMapSnapshot`은 SCN-03의 적벽 조건을 `Campaign.scn03_progress`에서, canonical active battle을 `Campaign.active_battles`에서 투영한다. core 행은 canonical `battle_id`와 `campaign_core` provenance를 가지며 runtime fixture가 적벽 사실을 주입하거나 무관 전투를 적벽으로 오인할 수 없다. 뉴스는 아직 runtime fixture/unsupported이고 capability는 `false`다. `scripts/Main.gd` 기반 기본 홈 경로는 전용 회귀를 통과했지만 C-02 배너·전투 진입은 없다. 미커밋 `app/main.gd`/`app/main.tscn` 별도 표면은 parse/setup 오류가 있는 실험 경로이므로 본 계약의 구현 대상으로 삼지 않는다.
+`HomeMapSnapshot`은 SCN-03의 적벽 조건을 `Campaign.scn03_progress`에서, canonical active battle과 exactly-once 전이 뉴스를 Campaign에서 투영한다. core 행은 canonical `battle_id`와 `campaign_core` provenance를 가지며 runtime fixture가 적벽 사실·뉴스·action identity를 주입하거나 덮어쓸 수 없다. SCN-03 뉴스 capability/provenance는 ledger가 비어도 원자적으로 `true`/`campaign_core`다. active phase 1 뉴스만 `severity`, headline/template, `open_active_battle`, canonical `action_battle_id`, core `can_open`, `acknowledged: false`, `expiry_kind: "unsupported"`를 가진 1행 배너 대상이다. `scripts/Main.gd` 기반 기본 홈 경로는 별도 `battle_entry_requested(battle_id)` 신호를 내며 host가 canonical/current active phase 1/entry availability를 재검증한다. `stage:5`는 카메라 포커스일 뿐 전투 명령 진입이 아니다. 미커밋 `app/main.gd`/`app/main.tscn` 별도 표면은 parse/setup 오류가 있는 실험 경로이므로 본 계약의 구현 대상으로 삼지 않는다.
 
 ## 3. 적벽 개전 조건의 정본과 미정값
 
@@ -123,7 +128,8 @@ result (resolved에서만), news_transition_ids[]
 3. ✅ 결정론적 active phase 1→2와 resolved 결과 1회 적용을 최소 슬라이스로 구현했다 (`145dfbb`·`6efab57`).
 4. ✅ phase 1·phase 2·resolved 상태의 저장·복원·재생·manifest/phase/result/reapply 변조 시험을 통과했다.
 5. ✅ 뉴스 exactly-once 원장과 HomeMapSnapshot core projection을 연결했다 (`c1e6de1`).
-6. 다음: C-02 배너·canonical `battle_id` 전투 진입 및 Windows 1600×900 수용을 진행한다.
+6. ✅ 적벽 active phase 1 뉴스만 core snapshot → 1행 비차단 배너 → canonical `battle_id` 요청 신호로 연결했다. runtime canonical 주입은 차단했고, `stage:5`와 분리했다.
+7. 다음: Windows 1600×900 시각·입력 수용을 검증한다. expiry/default delegation·실제 전투 화면·일반 C-02 정책은 후속 범위다.
 
 ## 13. 검증 기준
 
