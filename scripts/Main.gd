@@ -20,6 +20,9 @@ var top_route_buttons: Dictionary = {}
 var red_cliff_banner: PanelContainer
 var red_cliff_banner_action: Button
 var red_cliff_banner_headline: Label
+var battle_screen: PanelContainer
+var battle_screen_state: Label
+var battle_screen_battle_id := ""
 var active_menu_id := "overview"
 var map_context_menu_id := "overview"
 var submenu: Control
@@ -124,6 +127,7 @@ func _ready() -> void:
 
     map.object_selected.connect(_on_selected)
     map.zoom_level_changed.connect(_on_zoom_level_changed)
+    battle_entry_requested.connect(_open_red_cliff_battle_entry_shell)
 
     _build_ui(galaxy_data, systems)
 
@@ -283,6 +287,7 @@ func _refresh_home_snapshot() -> void:
     _refresh_resource_labels()
     _refresh_status_rows()
     _refresh_red_cliff_banner()
+    _refresh_battle_entry_shell()
     _refresh_stage_five()
     if submenu != null and submenu_was_visible:
         var submenu_state := home_state.duplicate(true)
@@ -432,6 +437,11 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     active_menu_id = "overview"
     submenu = null
     map_input_blocker = null
+    battle_screen = null
+    battle_screen_state = null
+    battle_screen_battle_id = ""
+    if map != null:
+        map.visible = true
     ui_layer = CanvasLayer.new()
     ui_layer.layer = 20
     add_child(ui_layer)
@@ -912,6 +922,130 @@ func _request_red_cliff_battle_entry(battle_id: String) -> bool:
             battle_entry_requested.emit(battle_id)
             return true
     return false
+
+
+## This is deliberately a read-only entry shell, not the battle simulation.  The
+## signal may be emitted by UI code, so repeat the canonical identity and active
+## record checks at the receiving boundary rather than trusting a display route.
+func _open_red_cliff_battle_entry_shell(battle_id: String) -> bool:
+    if battle_id != Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID:
+        return false
+    var battle = _canonical_active_red_cliff_battle()
+    if battle == null:
+        return false
+    _ensure_red_cliff_battle_entry_shell()
+    if not is_instance_valid(battle_screen):
+        return false
+    battle_screen_battle_id = battle_id
+    _set_home_ui_visible(false)
+    map.visible = false
+    battle_screen.visible = true
+    _render_red_cliff_battle_state(battle)
+    return true
+
+
+func _canonical_active_red_cliff_battle():
+    if campaign == null:
+        return null
+    for battle in campaign.active_battles:
+        if String(battle.battle_id) == Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID \
+                and String(battle.status) == ActiveBattle.STATUS_ACTIVE:
+            return battle
+    return null
+
+
+func _ensure_red_cliff_battle_entry_shell() -> void:
+    if is_instance_valid(battle_screen):
+        return
+    if ui_root == null:
+        return
+    battle_screen = PanelContainer.new()
+    battle_screen.name = "RedCliffBattleEntryShell"
+    battle_screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    battle_screen.add_theme_stylebox_override("panel", HudStyle.panel_style(0.98))
+    battle_screen.visible = false
+    ui_root.add_child(battle_screen)
+
+    var content := VBoxContainer.new()
+    content.name = "Content"
+    content.set_anchors_preset(Control.PRESET_CENTER)
+    content.position = Vector2(-280.0, -150.0)
+    content.size = Vector2(560.0, 300.0)
+    content.add_theme_constant_override("separation", 16)
+    battle_screen.add_child(content)
+
+    var heading := Label.new()
+    heading.text = "적벽 전투"
+    heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    heading.add_theme_font_size_override("font_size", 30)
+    heading.add_theme_color_override("font_color", Color("f5fbff"))
+    content.add_child(heading)
+
+    var subtitle := Label.new()
+    subtitle.text = "구지 궤도 · 현재 전투 상태"
+    subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    subtitle.add_theme_font_size_override("font_size", 16)
+    subtitle.add_theme_color_override("font_color", Color("9fc6dc"))
+    content.add_child(subtitle)
+
+    battle_screen_state = Label.new()
+    battle_screen_state.name = "State"
+    battle_screen_state.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    battle_screen_state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    battle_screen_state.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    battle_screen_state.add_theme_font_size_override("font_size", 18)
+    battle_screen_state.add_theme_color_override("font_color", Color("e8f7ff"))
+    content.add_child(battle_screen_state)
+
+    var close := Button.new()
+    close.name = "ReturnHome"
+    close.text = "천하도로 돌아가기"
+    close.custom_minimum_size = Vector2(180.0, 38.0)
+    close.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+    close.add_theme_stylebox_override("normal", HudStyle.resource_style())
+    close.add_theme_stylebox_override("hover", HudStyle.resource_hover_style())
+    close.add_theme_stylebox_override("pressed", HudStyle.resource_pressed_style())
+    close.pressed.connect(_close_red_cliff_battle_entry_shell)
+    content.add_child(close)
+
+
+func _render_red_cliff_battle_state(battle) -> void:
+    if battle_screen_state == null:
+        return
+    battle_screen_state.text = "상태: %s\n전투 단계: %d\n공격측 함대: %d · 방어측 함대: %d" % [
+        String(battle.status), int(battle.combat_phase),
+        battle.attacker_fleet_ids.size(), battle.defender_fleet_ids.size(),
+    ]
+
+
+func _refresh_battle_entry_shell() -> void:
+    if not is_instance_valid(battle_screen) or not battle_screen.visible:
+        return
+    var battle = _canonical_active_red_cliff_battle()
+    if battle == null:
+        # A shell already open remains an observation surface for the latest core
+        # fact; it never manufactures a resolved/pending battle from UI state.
+        battle_screen_state.text = "상태: 현재 활성 전투가 아닙니다."
+        return
+    _render_red_cliff_battle_state(battle)
+
+
+func _set_home_ui_visible(visible: bool) -> void:
+    for control in [top_panel, left_panel, right_panel, bottom_panel, red_cliff_banner]:
+        if is_instance_valid(control):
+            control.visible = visible
+
+
+func _close_red_cliff_battle_entry_shell() -> void:
+    if not is_instance_valid(battle_screen):
+        return
+    battle_screen.visible = false
+    battle_screen_battle_id = ""
+    map.visible = true
+    _set_home_ui_visible(true)
+    _refresh_red_cliff_banner()
+    if map_input_blocker != null:
+        map_input_blocker.visible = submenu != null and submenu.visible
 
 
 func _refresh_status_rows() -> void:
