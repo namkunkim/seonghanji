@@ -12,7 +12,9 @@
 > 읽기 전용 독립 감사는 `gpt-5.6-terra`가 수행했다. 신규 배너 시험은 50단언·실패 0,
 > 기존 대상 회귀는 38/0·348/0·175/0·347/0·4/0이다. 전체 코어의 698/701·실패 2는
 > 기존 A-07-E1 `user://` 저장 실패이며 이번 슬라이스 실패가 아니다. phase 3~5·실제 전투 화면·
-> 일반 C-02 정책·Windows 실기 수용은 아직 없다.
+> 일반 C-02 정책·expiry/default delegation은 아직 없다. Windows 1600×900의 기본
+> `scenes/main.tscn` + `scripts/Main.gd` 경로에서 active phase 1의 배너 표시와 입력 경계는
+> 2026-09-07에 별도 수용 검증했다.
 
 ## 1. 목표와 비목표
 
@@ -129,7 +131,12 @@ result (resolved에서만), news_transition_ids[]
 4. ✅ phase 1·phase 2·resolved 상태의 저장·복원·재생·manifest/phase/result/reapply 변조 시험을 통과했다.
 5. ✅ 뉴스 exactly-once 원장과 HomeMapSnapshot core projection을 연결했다 (`c1e6de1`).
 6. ✅ 적벽 active phase 1 뉴스만 core snapshot → 1행 비차단 배너 → canonical `battle_id` 요청 신호로 연결했다. runtime canonical 주입은 차단했고, `stage:5`와 분리했다.
-7. 다음: Windows 1600×900 시각·입력 수용을 검증한다. expiry/default delegation·실제 전투 화면·일반 C-02 정책은 후속 범위다.
+7. ✅ Windows 1600×900에서 canonical `SCN-03-E09-RED-CLIFF-01` active phase 1을 만들고,
+   기본 `scenes/main.tscn` + `scripts/Main.gd` 경로의 한 행 배너를 수용 검증했다.
+   `적벽 전투 개전` headline은 headline 노드 참조로 갱신하며, 42px 행·safe rectangle·
+   `MOUSE_FILTER_IGNORE`·표시용 `전투 진입` action을 유지한다. `test_red_cliff_interrupt_banner.gd`
+   는 50/0이며, Windows 캡처는 로컬 `out/**` 증적으로만 남기고 버전 관리하지 않는다.
+8. 다음: expiry/default delegation·실제 전투 화면·일반 C-02 정책은 후속 범위다.
 
 ## 13. 검증 기준
 
@@ -137,7 +144,9 @@ result (resolved에서만), news_transition_ids[]
 - 통합: 같은 시드·입력에서 조건 → 사건 → active → 종료와 battle/news ID·결과가 같다. 기존 즉시 전투 회귀 또는 적벽 분기의 RNG 동등성을 확인한다.
 - 저장: `pending`과 각 active phase에서 저장·복원 후 최종 지문이 무저장 실행과 같고, 상태/참가자/페이즈/뉴스 ID 1비트 변조는 검출된다.
 - UI: fixture가 아닌 core capability/provenance, unknown 보존, 전쟁 안개 누출 없음, 다른 전투가 적벽 동선을 열지 않음, 뉴스 순서와 route 일치.
-- 시각·입력: Windows 1600×900에서 기본 잠금, 일부 조건/unknown, 개전 직후 구지 anchor와 뉴스·C-02 한 행, 배너→결정→전투, 종료, 저장 복원 재생의 여섯 장면을 캡처한다. 기존 safe rectangle과 HUD 입력 차단도 확인한다.
+- 시각·입력: Windows 1600×900에서 G-10 범위의 canonical active phase 1 한 행 배너를 캡처하고,
+  한글 headline·safe rectangle·비차단 입력·표시 action의 내부 ID 미노출을 확인했다.
+  배너→결정→전투, 종료, 저장 복원 재생과 일반 C-02 정책은 이 슬라이스의 인수 기준이 아니다.
 
 ## 14. 실패 시 롤백 경계
 

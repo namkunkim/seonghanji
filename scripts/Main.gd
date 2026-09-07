@@ -18,6 +18,7 @@ var menu_buttons: Dictionary = {}
 var top_route_buttons: Dictionary = {}
 var red_cliff_banner: PanelContainer
 var red_cliff_banner_action: Button
+var red_cliff_banner_headline: Label
 var active_menu_id := "overview"
 var map_context_menu_id := "overview"
 var submenu: Control
@@ -826,14 +827,14 @@ func _build_red_cliff_banner() -> void:
     marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
     row.add_child(marker)
 
-    var headline := Label.new()
-    headline.name = "Headline"
-    headline.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    headline.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    headline.add_theme_font_size_override("font_size", 15)
-    headline.add_theme_color_override("font_color", Color("f5fbff"))
-    headline.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    row.add_child(headline)
+    red_cliff_banner_headline = Label.new()
+    red_cliff_banner_headline.name = "Headline"
+    red_cliff_banner_headline.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    red_cliff_banner_headline.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    red_cliff_banner_headline.add_theme_font_size_override("font_size", 15)
+    red_cliff_banner_headline.add_theme_color_override("font_color", Color("f5fbff"))
+    red_cliff_banner_headline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    row.add_child(red_cliff_banner_headline)
 
     red_cliff_banner_action = Button.new()
     red_cliff_banner_action.name = "OpenActiveBattle"
@@ -856,9 +857,8 @@ func _refresh_red_cliff_banner() -> void:
     red_cliff_banner.visible = not banner_item.is_empty()
     if banner_item.is_empty():
         return
-    var headline: Label = red_cliff_banner.get_node_or_null("HBoxContainer/Headline") as Label
-    if headline != null:
-        headline.text = String(banner_item.get("headline", "적벽 전투 개전"))
+    if red_cliff_banner_headline != null:
+        red_cliff_banner_headline.text = String(banner_item.get("headline", "적벽 전투 개전"))
     var action_battle_id := String(banner_item.get("action_battle_id", ""))
     red_cliff_banner_action.set_meta("action_id", String(banner_item.get("action_id", "")))
     red_cliff_banner_action.set_meta("action_battle_id", action_battle_id)
