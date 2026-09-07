@@ -1016,11 +1016,20 @@ func _render_red_cliff_battle_state(battle) -> void:
         return
     # These fields are copied only for display.  The shell never derives a new
     # battle from labels, faction ownership, or fleet counts.
-    battle_screen_state.text = "정본 전투 ID: %s\n상태: %s\n전장: 구지 궤도 · %s / %s\n전투 단계: %d\n공격측: %s (%d척)\n방어측: %s (%d척)" % [
+    var formation_lines := ""
+    var verdicts: Dictionary = campaign.active_battle_formation_verdicts(battle) if campaign != null else {}
+    if not verdicts.is_empty():
+        var attacker_verdict: Dictionary = verdicts.get("attacker", {})
+        var defender_verdict: Dictionary = verdicts.get("defender", {})
+        formation_lines = "\n진형: %s ×%.1f / %s ×%.1f" % [
+            String(attacker_verdict.get("formation_name", "—")), float(attacker_verdict.get("combat_milli", 1000)) / 1000.0,
+            String(defender_verdict.get("formation_name", "—")), float(defender_verdict.get("combat_milli", 1000)) / 1000.0,
+        ]
+    battle_screen_state.text = "정본 전투 ID: %s\n상태: %s\n전장: 구지 궤도 · %s / %s\n전투 단계: %d\n공격측: %s (%d척)\n방어측: %s (%d척)%s" % [
         String(battle.battle_id), String(battle.status),
         String(battle.region_id), String(battle.system_id), int(battle.combat_phase),
         String(battle.attacker_faction_id), battle.attacker_fleet_ids.size(),
-        String(battle.defender_faction_id), battle.defender_fleet_ids.size(),
+        String(battle.defender_faction_id), battle.defender_fleet_ids.size(), formation_lines,
     ]
 
 

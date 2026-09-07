@@ -763,6 +763,28 @@ func _fleet_by_id(fleet_id: int) -> Fleet:
 	return null
 
 
+## Read-only shared formation projection for UI, AI, and replay diagnostics.
+func formation_verdict_for_fleet(fleet: Fleet, opposing: Fleet, phase: int,
+		terrain: String) -> Dictionary:
+	if fleet == null or opposing == null:
+		return {}
+	return Formations.combat_verdict(Formations.id_for_name(fleet.formation),
+		Formations.id_for_name(opposing.formation), phase, fleet.command,
+		fleet.staff_traits, terrain)
+
+
+func active_battle_formation_verdicts(battle: ActiveBattle) -> Dictionary:
+	if battle == null or battle.status != ActiveBattle.STATUS_ACTIVE or battle.combat_phase < 1:
+		return {}
+	var attacker := _fleet_by_id(int(battle.attacker_fleet_ids[0])) if not battle.attacker_fleet_ids.is_empty() else null
+	var defender := _fleet_by_id(int(battle.defender_fleet_ids[0])) if not battle.defender_fleet_ids.is_empty() else null
+	if attacker == null or defender == null:
+		return {}
+	return {"attacker": formation_verdict_for_fleet(attacker, defender,
+		battle.combat_phase - 1, "개활"), "defender": formation_verdict_for_fleet(defender,
+		attacker, battle.combat_phase - 1, "개활")}
+
+
 func _advance_scn03_red_cliff_pending_battle() -> void:
 	if not _uses_scn03_progress_rules():
 		return

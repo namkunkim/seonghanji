@@ -26,6 +26,7 @@ func _init() -> void:
 	_test_generic_resolver_reads_live_formation()
 	_test_battle_change_contract()
 	_test_exhaustive_coefficients_and_command_arrival()
+	_test_shared_projection()
 	print("통과 %d · 실패 %d" % [_pass, _fail])
 	quit(Harness.EXIT_FAIL if _fail > 0 else Harness.EXIT_PASS)
 
@@ -154,3 +155,16 @@ func _test_exhaustive_coefficients_and_command_arrival() -> void:
 	var replay := Campaign.from_save_result(campaign.to_save_dict(), GameData.load_all())
 	_eq(String(replay["status"]), Save.STATUS_OK, "formation command save/replay verifies")
 	_eq(int(replay["actual_digest"]), campaign.digest(), "formation command replay digest identity")
+
+
+func _test_shared_projection() -> void:
+	var campaign := Campaign.scenario_03(GameData.load_all(), 51004)
+	var a := Fleet.new()
+	a.formation = "학익진"
+	a.command = 80
+	var b := Fleet.new()
+	b.formation = "어린진"
+	b.command = 80
+	_eq(campaign.formation_verdict_for_fleet(a, b, Battle.Phase.ENGAGEMENT, "개활"),
+		Formations.combat_verdict("FRM-02", "FRM-01", Battle.Phase.ENGAGEMENT, 80, [], "개활"),
+		"campaign UI/AI projection delegates to shared verdict")
