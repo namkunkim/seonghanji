@@ -1,5 +1,7 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
+> **2026-09-07 A-05-02 진형 계수·상성·팔진 배선 — PASS:** 일반 5페이즈 전투가 실제 `Fleet.formation`을 읽어 JSON 계수와 ③ 교전 오각 상성을 고정소수점으로 합성한다. 장사진 −10%, 팔진 상성 무효·통솔 90+`신기묘산` 조건, unknown 거부, 기존 한글 저장 호환을 확인했다. `test_a05_formation_combat.gd` 49/0, 전체 35/35·701/0. 다음 = A-05-03 지형 강제·변경 상태기계.
+
 > **2026-09-07 A-05-01 진형 전투 계약·기준선 — PASS:** `docs/07-production/a05-01-formation-battle-contract.md`가 7개 `FRM-*` 입력/기존 `Fleet.formation` 한글 저장 호환, 팔진 실제 조건 `신기묘산`+통솔 90, 지형 단일 권위, 페이즈 경계 1회 변경 명령·재생, G-10은 phase 1~2 공용 판정만이라는 범위를 동결했다. Godot 4.7.2 전체 코어 기준선은 35/35 섹션·701 단언·실패 0. 다음 = A-05-02 계수·상성·팔진 배선; phase 3~5 전용 전투/UI·밸런스 조정은 범위 밖이다.
 
 > **2026-09-07 G-10-QA-01 적벽 개전부터 전투 화면 진입까지 E2E 검증 — PASS:** 기능 24/0, GPU GUI 1600×900 36/0 및 독립 재검증 PASS. 4개 캡처와 hash는 `docs/07-production/g10-qa01-red-cliffs-entry-e2e-acceptance.md`; `out/`은 미커밋이다. G-10 수직 슬라이스는 완료했지만 phase 3~5·expiry/default delegation·일반 C-02는 별도 후속이다.

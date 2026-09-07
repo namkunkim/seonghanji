@@ -396,10 +396,15 @@ static func _apply_fleet_plan(fleets: Array, f: Faction, p: Dictionary) -> Strin
 	var plan := String(p.get("plan", ""))
 	if not Economy.PLANS.has(plan):
 		return "알 수 없는 편성안: " + plan
-	fl.plan = plan
 	var fm := String(p.get("formation", ""))
+	var normalized := ""
 	if fm != "" and "formation" in fl:
-		fl.set("formation", fm)
+		normalized = Formations.normalized_persisted_name(fm)
+		if normalized == "":
+			return "알 수 없는 진형: " + fm
+	fl.plan = plan
+	if normalized != "":
+		fl.set("formation", normalized)
 	return ""
 
 

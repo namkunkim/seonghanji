@@ -20,6 +20,20 @@ extends RefCounted
 ## 화면의 정적 호출부(`FormationIcon` 등)가 데이터 핸들 없이 부르기 때문이다.
 
 const DEFAULT_NAME: String = "어린진"       ## `Fleet.formation` 초기값 (§10.4 판정 3)
+const DEFAULT_ID: String = "FRM-01"
+const PALJIN_ID: String = "FRM-07"
+const PALJIN_TRAIT: String = "신기묘산"
+
+## JSON phase keys are deliberately kept here: data owns the values, while this
+## core class owns the stable enum-to-data mapping used by combat.
+const PHASE_KEYS: Array[String] = ["contact", "barrage", "engagement", "assault", "resolution"]
+const MATCHUP_WINNER: Dictionary = {
+	"FRM-02": "FRM-01", # 학익 → 어린
+	"FRM-01": "FRM-03", # 어린 → 방원
+	"FRM-03": "FRM-05", # 방원 → 봉시
+	"FRM-05": "FRM-04", # 봉시 → 안행
+	"FRM-04": "FRM-02", # 안행 → 학익
+}
 
 ## §4.5 진형 하향 사슬 — 요구 통솔 미달이면 충족하는 가장 가까운 하위 진형으로.
 ##   학익 75 → 봉시 70 → 안행 65 → 어린 60 → 방원 55 → 장사 40
@@ -29,6 +43,7 @@ const DOWNGRADE_CHAIN: Array[String] = [
 
 static var _rows: Array = []
 static var _by_name: Dictionary = {}
+static var _by_id: Dictionary = {}
 
 
 static func _ensure() -> void:
@@ -45,6 +60,7 @@ static func _ensure() -> void:
 	_rows = parsed
 	for r in _rows:
 		_by_name[String(r["name"])] = r
+		_by_id[String(r["id"])] = r
 
 
 ## JSON 원본 행 배열. **이름 순이 아니라 파일 순서** — 선택 목록이 매번 같아야 한다.
@@ -65,6 +81,35 @@ static func all_names() -> Array[String]:
 static func exists(name: String) -> bool:
 	_ensure()
 	return _by_name.has(name)
+
+
+## New combat/command APIs accept data IDs only.  Existing Fleet saves retain
+## Korean names, so persistence boundaries use `id_for_name`/`name_for_id`.
+static func exists_id(formation_id: String) -> bool:
+	_ensure()
+	return _by_id.has(formation_id)
+
+
+static func id_for_name(name: String) -> String:
+	_ensure()
+	var row: Dictionary = _by_name.get(name, {})
+	return String(row.get("id", ""))
+
+
+static func name_for_id(formation_id: String) -> String:
+	_ensure()
+	var row: Dictionary = _by_id.get(formation_id, {})
+	return String(row.get("name", ""))
+
+
+## Strategic persistence accepts either a legacy Korean name or an explicit
+## FRM ID, but never silently substitutes an unknown formation.
+static func normalized_persisted_name(value: String) -> String:
+	if exists_id(value):
+		return name_for_id(value)
+	if exists(value):
+		return value
+	return ""
 
 
 static func _row(name: String) -> Dictionary:
@@ -96,6 +141,66 @@ static func coefficients(name: String) -> Dictionary:
 	var r := _row(name)
 	var c = r.get("coefficients") if not r.is_empty() else null
 	return c.duplicate() if c is Dictionary else {}
+
+
+static func coefficient_milli(formation_id: String, phase: int) -> int:
+	if not exists_id(formation_id) or phase < 0 or phase >= PHASE_KEYS.size():
+		return 1000
+	var row: Dictionary = _by_id[formation_id]
+	var coefficients: Dictionary = row.get("coefficients", {})
+	# JSON carries human-readable decimals; combat receives fixed-point integers.
+	return roundi(float(coefficients.get(PHASE_KEYS[phase], 1.0)) * 1000.0)
+
+
+static func has_paljin_trait(traits: Array) -> bool:
+	for raw_trait in traits:
+		var trait_text := String(raw_trait)
+		# Character data stores descriptive trait strings such as
+		# "「신기묘산」 전투 전 배치...".  The actual trait name is the
+		# canonical token, not formations.json's display label.
+		if trait_text == PALJIN_TRAIT or trait_text.begins_with("「%s」" % PALJIN_TRAIT):
+			return true
+	return false
+
+
+## Shared, stateless formation-combat verdict.  IDs are mandatory here so new
+## combat and command surfaces cannot accidentally use localized display text.
+## A non-eligible 팔진 is safely neutral rather than being silently upgraded.
+static func combat_verdict(formation_id: String, opposing_formation_id: String,
+		phase: int, command: int, staff_traits: Array, terrain: String) -> Dictionary:
+	var valid := exists_id(formation_id)
+	var forced := forced_formation(terrain)
+	var allowed := valid and allowed_in(name_for_id(formation_id), terrain)
+	var paljin_eligible := formation_id != PALJIN_ID \
+		or (command >= required_command(name_for_id(PALJIN_ID)) and has_paljin_trait(staff_traits))
+	var usable := valid and allowed and paljin_eligible
+	var formation_milli := coefficient_milli(formation_id, phase) if usable else 1000
+	var matchup_milli := matchup_modifier_milli(formation_id, opposing_formation_id, phase) if usable else 1000
+	return {
+		"valid": valid,
+		"usable": usable,
+		"formation_id": formation_id if valid else "",
+		"formation_name": name_for_id(formation_id) if valid else "",
+		"forced_formation_id": id_for_name(forced),
+		"terrain_allowed": allowed,
+		"paljin_eligible": paljin_eligible,
+		"formation_milli": formation_milli,
+		"matchup_milli": matchup_milli,
+		"combat_milli": formation_milli * matchup_milli / 1000,
+	}
+
+
+static func matchup_modifier_milli(formation_id: String, opposing_formation_id: String,
+		phase: int) -> int:
+	if phase != 2 or not exists_id(formation_id) or not exists_id(opposing_formation_id):
+		return 1000
+	if formation_id == PALJIN_ID or opposing_formation_id == PALJIN_ID:
+		return 1000
+	if formation_id == "FRM-06":
+		return 900
+	if MATCHUP_WINNER.get(formation_id, "") == opposing_formation_id:
+		return 1200
+	return 1000
 
 
 ## ---------------------------------------------------------------- 지형 강제 (§3.3 · ship-specs §5.3)

@@ -164,6 +164,17 @@ static func combat_power_milli(ships: int, ship_phase_coeff_milli: int,
 	return v
 
 
+## Formation is a multiplier on (never a replacement for) the existing ship
+## phase coefficient.  `Formations` owns rule derivation; Battle owns the
+## fixed-point composition used by every resolver.
+static func formation_adjusted_ship_coefficient_milli(ship_phase_coeff_milli: int,
+		formation_id: String, opposing_formation_id: String, phase: int,
+		command: int, staff_traits: Array, terrain: String) -> int:
+	var verdict := Formations.combat_verdict(formation_id, opposing_formation_id,
+		phase, command, staff_traits, terrain)
+	return ship_phase_coeff_milli * int(verdict["combat_milli"]) / 1000
+
+
 ## ---------------------------------------------------------------- 전력비
 ##
 ## §3.3  1.5배 유리 · 3배 압도적 · 5배 이상 추가 이득 급감

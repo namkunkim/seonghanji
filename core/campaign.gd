@@ -1337,10 +1337,22 @@ func _resolve_battle(att: Fleet, rid: String) -> void:
 		# 유인 — 끌어낸 쪽이 회랑 전개 상한을 벗어난다 (§5.5)
 		var a_corr: String = "" if bool(sa["free_terrain"]) else corridor
 		var b_corr: String = "" if bool(sb["free_terrain"]) else corridor
+		var terrain := corridor if corridor != "" else "개활"
+		var attacker_formation_id := Formations.id_for_name(att.formation)
+		# The existing defender side is an aggregate whose command/morale already
+		# belong to the sorted lead fleet.  Its formation follows that same stable
+		# lead until A-05-03 introduces battle-local multi-fleet state.
+		var defender_formation_id := Formations.id_for_name(defs[0].formation)
+		var a_ship_coeff := Battle.formation_adjusted_ship_coefficient_milli(1000,
+			attacker_formation_id, defender_formation_id, phase, att.command,
+			att.staff_traits, terrain)
+		var b_ship_coeff := Battle.formation_adjusted_ship_coefficient_milli(1000,
+			defender_formation_id, attacker_formation_id, phase, def_command,
+			defs[0].staff_traits, terrain)
 
-		var pa := Battle.combat_power_milli(att.ships, 1000, a_stat, phase,
+		var pa := Battle.combat_power_milli(att.ships, a_ship_coeff, a_stat, phase,
 			att.morale, 1000, a_tech, a_corr)
-		var pb := Battle.combat_power_milli(def_ships, 1000, b_stat, phase,
+		var pb := Battle.combat_power_milli(def_ships, b_ship_coeff, b_stat, phase,
 			def_morale, 1000, b_tech, b_corr)
 
 		# 계략의 손실은 **그 페이즈 손실률에 얹힌다** — 그리고 그 손실이 다시
