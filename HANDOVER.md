@@ -1,5 +1,7 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
+> **2026-09-07 G-10-QA-01 적벽 개전부터 전투 화면 진입까지 E2E 검증 — PASS:** 기능 24/0, GPU GUI 1600×900 36/0 및 독립 재검증 PASS. 4개 캡처와 hash는 `docs/07-production/g10-qa01-red-cliffs-entry-e2e-acceptance.md`; `out/`은 미커밋이다. G-10 수직 슬라이스는 완료했지만 phase 3~5·expiry/default delegation·일반 C-02는 별도 후속이다.
+
 > **2026-09-07 G-10-UI-04 적벽 전투 화면 상태 표시 및 홈 복귀 경계 — PASS:** read-only 셸은 canonical ID, 위치, 상태, phase, 세력/함대를 표시한다. 홈 복귀·재진입은 단일 셸을 재사용하며 save contract는 불변이다. 전용 29/0·배너 61/0 및 독립 재실행 PASS. 상세: `docs/07-production/g10-ui04-red-cliffs-battle-state-return.md`. 다음은 G-10-QA-01; G-10은 🟨다.
 
 > **2026-09-07 G-10-UI-03 canonical battle_id 기반 적벽 전투 화면 진입 셸 — PASS:** active canonical record만 재검증해 단일 read-only 셸을 열며, display/unknown/resolved는 거부한다. 상태·phase·양측 함대 수 표시와 홈 복귀를 전용 20/0·UI-02 61/0 및 독립 재실행으로 확인했다. 상세: `docs/07-production/g10-ui03-red-cliffs-battle-entry-shell.md`. 다음 작업은 G-10-UI-04이며 G-10은 🟨다.

@@ -1,5 +1,7 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
+> **2026-09-07 G-10-QA-01 적벽 개전부터 전투 화면 진입까지 E2E 검증 — PASS:** headless 기능 E2E 24/0, Windows GPU GUI 1600×900 캡처 E2E 36/0, 독립 재검증 PASS. 조건→뉴스/active→배너→canonical 셸→홈→재진입을 확인했다. 캡처·해시는 `docs/07-production/g10-qa01-red-cliffs-entry-e2e-acceptance.md`에 기록했고 `out/`은 커밋하지 않는다. G-10은 이번 수직 슬라이스 범위에서 완료다.
+
 > **2026-09-07 G-10-UI-04 적벽 전투 화면 상태 표시 및 홈 복귀 경계 — PASS:** canonical ID·상태·위치·phase·교전 세력 표시, 홈 복귀/재진입 단일 셸, resolved/display/unknown 거부와 저장 계약 불변을 전용 29/0·배너 회귀 61/0 및 독립 재검증으로 확인했다. 다음은 G-10-QA-01이며 G-10은 🟨 유지.
 
 > **2026-09-07 G-10-UI-03 canonical battle_id 기반 적벽 전투 화면 진입 셸 — PASS:** `battle_entry_requested`는 active canonical battle 재조회 뒤 단일 read-only 셸을 연다. display·unknown·resolved는 거부하며 상태/phase/함대 수를 표시하고 홈으로 복귀한다. 전용 20/0 및 UI-02 회귀 61/0, 독립 `gpt-5.6-terra / medium` 재검증 PASS. 다음은 UI-04다; G-10은 🟨 유지.
