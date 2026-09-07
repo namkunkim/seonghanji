@@ -13,6 +13,7 @@ var top_panel: PanelContainer
 var left_panel: PanelContainer
 var right_panel: PanelContainer
 var bottom_panel: PanelContainer
+var ui_layer: CanvasLayer
 var stage_badges: Array[PanelContainer] = []
 var menu_buttons: Dictionary = {}
 var top_route_buttons: Dictionary = {}
@@ -420,20 +421,26 @@ func _load_json(path: String) -> Dictionary:
     return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
 
 func _build_ui(galaxy: Dictionary, systems: Array) -> void:
+    # The home HUD is rebuilt by state/viewport regression paths.  Keep a single
+    # owned canvas layer so reconstructed UI cannot leave an earlier interrupt
+    # banner (and its button signal) active underneath the new HUD.
+    if is_instance_valid(ui_layer):
+        ui_layer.free()
+    ui_layer = null
     menu_buttons.clear()
     top_route_buttons.clear()
     active_menu_id = "overview"
     submenu = null
     map_input_blocker = null
-    var ui: CanvasLayer = CanvasLayer.new()
-    ui.layer = 20
-    add_child(ui)
+    ui_layer = CanvasLayer.new()
+    ui_layer.layer = 20
+    add_child(ui_layer)
 
     ui_root = Control.new()
     ui_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     ui_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
     ui_root.process_mode = Node.PROCESS_MODE_ALWAYS
-    ui.add_child(ui_root)
+    ui_layer.add_child(ui_root)
 
     # Top bar
     top_panel = PanelContainer.new()
@@ -791,7 +798,8 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     zoom_label.add_theme_color_override("font_color",Color("c2d7e1"))
     zoom_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     zoom_panel.add_child(zoom_label)
-    get_viewport().size_changed.connect(_layout_ui)
+    if not get_viewport().size_changed.is_connected(_layout_ui):
+        get_viewport().size_changed.connect(_layout_ui)
     _ensure_submenu()
     _ensure_fleet_overlays()
     _layout_ui()

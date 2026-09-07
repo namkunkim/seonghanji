@@ -1,5 +1,7 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
+> **2026-09-07 G-10-UI-02 적벽 인터럽트 배너 Windows 1600×900 시각·입력 수용 — PASS:** 시작 `main`/`origin/main`은 모두 `f57f5bfabcb3a49163e4c4ec592559d31e7421a3`였다. `gpt-5.6-terra / medium` 구현·시험과 독립 검수가 1600×900 배너 위치·가독성·ID 비노출·입력 경계·canonical 신호·재구성 뒤 중복 방지·`stage:5` 카메라 경로를 검증했다. 전용 시험 61/0, HomeMapSnapshot 348/0, HomeMapZoom 175/0, HomeSubmenuRouting 347/0. GPU GUI 캡처 및 해시는 `docs/07-production/g10-ui02-red-cliffs-banner-windows-acceptance.md`에 기록했다. G-10은 UI-03~QA-01과 실제 전투 화면이 남아 🟨를 유지한다.
+
 > **2026-09-07 G-10 적벽 배너·전투 진입 경계 — 부분 구현·독립 검증:** 시작 HEAD와
 > `origin/main`은 `9452b6d2517b4ce8b973ff63dfcee76a030381bd`였다. 구현·디버깅은
 > `gpt-5.6-terra`, 읽기 전용 계약 감사와 P1 재검증은 `gpt-5.6-terra`가 수행했다.
@@ -169,7 +171,7 @@
 | G-07 | 승패 조건·복귀 브리핑·튜토리얼 | ⬜ | C-02, G-01 | 단기판의 시작·진행·종료·재진입 흐름이 완결됨 |
 | G-08 | 무장 위성 방어 시스템 설계·구현 | ⬜ | A-05 | D4 = ㉯ 시스템 신설(V-58). 권역 방어 시설 — `combat.md` §8.2 재설계 + `domestic.md` 건설 명령 + `star-map.md` §5 승격 + `ship-specs.md` §3.5 관계. `VID-002` 컷씬은 이 뒤. **첫 프로토타입 범위 밖(V-59)** — L1 완성(S4) 후 착수 |
 | G-09 | 기동병기 상세 설계(에이스 판정) | ⬜ | — | D5 = ㉮ 설계 선행(V-58). 유인/무인 기동병기·강습정 판정 규칙. 시각 쟁점 5·음원 검토 4·`VFX-007`(L2 연출)의 공통 선행. `HANDOVER.md` §4.4 미착수 영역을 큐로 승격. **첫 프로토타입 범위 밖(V-59)** |
-| G-10 | 적벽 개전·활성 전투·뉴스 수직 흐름 | 🟨 부분 구현·검증 | A-01, A-02, A-03, A-05, C-01 | `675347f`·`7c7c6c5`·`145dfbb`·`6efab57`·`c1e6de1`: 조건·pending·manifest·active phase 1·phase 1→2·resolved·저장/재생/변조·전이 뉴스 exactly-once까지 구현. 이번 슬라이스는 core 뉴스→snapshot→active phase 1 전용 1행 배너→canonical `battle_id` 요청 신호를 추가했다. `BATTLE-RED-CLIFF`는 표시 전용이며, runtime canonical 주입·unknown·phase 2·resolved 진입은 거부한다. 전용 배너 시험 50/0, 기존 대상 회귀 38/0·348/0·175/0·347/0·4/0. phase 3~5·실제 전투 화면·expiry/default delegation·C-02 일반화·Windows 수용은 미구현이므로 완료로 승격하지 않는다. |
+| G-10 | 적벽 개전·활성 전투·뉴스 수직 흐름 | 🟨 부분 구현·검증 | A-01, A-02, A-03, A-05, C-01 | `675347f`·`7c7c6c5`·`145dfbb`·`6efab57`·`c1e6de1`: 조건·pending·manifest·active phase 1·phase 1→2·resolved·저장/재생/변조·전이 뉴스 exactly-once까지 구현. G-10-UI-02는 1600×900에서 core 뉴스→snapshot→active phase 1 전용 1행 배너→canonical `battle_id` 요청 신호와 재구성 후 중복 방지를 PASS(61/0, 관련 회귀 348/0·175/0·347/0)로 확인했다. `BATTLE-RED-CLIFF`는 표시 전용이며, runtime canonical 주입·unknown·phase 2·resolved 진입은 거부한다. phase 3~5·실제 전투 화면·expiry/default delegation·C-02 일반화는 미구현이므로 완료로 승격하지 않는다. |
 
 ### D4. 개발 착수 후: 밸런스·품질
 

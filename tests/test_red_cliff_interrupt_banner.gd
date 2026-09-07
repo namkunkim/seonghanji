@@ -73,6 +73,8 @@ func _news_by_transition(rows: Array, transition: String) -> Dictionary:
 
 func _run() -> void:
     print("G-10 적벽 전용 interrupt banner")
+    get_root().size = Vector2i(1600, 900)
+    await process_frame
     var campaign := _active_phase_one_campaign()
     var battle: ActiveBattle = campaign.active_battles[0]
     _eq(battle.combat_phase, 1, "active phase 1 도달")
@@ -147,11 +149,28 @@ func _run() -> void:
     main._refresh_home_snapshot()
     await process_frame
     _ok(main.red_cliff_banner.visible, "active phase 1 배너 1행 표시")
+    _eq(main.get_viewport().get_visible_rect().size, Vector2(1600, 900),
+        "acceptance viewport는 Windows 1600x900")
+    _eq(main.top_panel.size.y, 70.0, "배너는 시간 바 바로 아래의 70px top bar 기준")
+    _eq(main.red_cliff_banner.position, Vector2(196, 78),
+        "배너는 시간 바 아래 safe content 시작점에 배치")
+    _ok(is_equal_approx(main.red_cliff_banner.size.x, 1091.2),
+        "1600x900에서 중앙 safe content 폭만 사용")
     _eq(main.red_cliff_banner.size.y, 42.0, "배너는 1행 높이")
     _eq(main.red_cliff_banner.mouse_filter, Control.MOUSE_FILTER_IGNORE,
         "배너 표시만으로 현재 화면 입력을 차단하지 않음")
+    _eq(main.red_cliff_banner.get_child(0).mouse_filter, Control.MOUSE_FILTER_IGNORE,
+        "배너 여백은 지도 외부 클릭을 가로채지 않음")
     _eq(main.red_cliff_banner_action.text, "전투 진입", "action에 내부 ID를 노출하지 않음")
     _ok(not main.red_cliff_banner_action.disabled, "entry_available이면 action 활성")
+    if "--visual-hold" in OS.get_cmdline_user_args():
+        var capture_dir := ProjectSettings.globalize_path("res://out/g10-ui02-red-cliffs-banner-windows-acceptance")
+        DirAccess.make_dir_recursive_absolute(capture_dir)
+        var capture_path := capture_dir.path_join("red-cliffs-banner-1600x900.png")
+        _ok(main.get_viewport().get_texture().get_image().save_png(capture_path) == OK,
+            "Windows 1600x900 active banner capture 저장")
+        print("G-10-UI-02 visual hold: active banner is visible for 60 seconds")
+        await create_timer(60.0).timeout
     main.home_state = main.home_state.duplicate(true)
     main.home_state["news"].append({
         "news_id": "fixture:other-action", "battle_id": "BATTLE-FIXTURE",
@@ -168,6 +187,20 @@ func _run() -> void:
         "canonical active battle_id만 entry signal 발생")
     main._route_home_action("stage:5", "", "", {"position": main.cam.position, "zoom": 1.65})
     _eq(requested.size(), 1, "stage:5 카메라 경로는 entry signal과 분리")
+
+    var ui_layer_before: CanvasLayer = main.ui_layer
+    var galaxy: Dictionary = main._load_json("res://data/galaxy.json")
+    main._build_ui(galaxy, main.projected_systems)
+    await process_frame
+    _ok(not is_instance_valid(ui_layer_before), "UI 재구성 시 이전 banner canvas 제거")
+    _eq(main.get_tree().get_nodes_in_group("RedCliffInterruptBanner").size(), 0,
+        "banner는 group 없이 별도 중복 등록하지 않음")
+    _eq(main.ui_layer.get_child_count(), 1, "UI 재구성 뒤 owned canvas에는 단일 root만 존재")
+    _eq(main.red_cliff_banner.name, "RedCliffInterruptBanner", "재구성 뒤 banner identity 유지")
+    _ok(main.red_cliff_banner.visible, "재구성 뒤 active phase 1 banner 유지")
+    main.red_cliff_banner_action.pressed.emit()
+    _eq(requested, [Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID,
+        Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID], "재구성 뒤 action signal은 한 번만 발생")
 
     battle.entry_available = false
     main._refresh_home_snapshot()
