@@ -117,7 +117,8 @@ func _test_ruleset_isolation(data: GameData) -> void:
 	major["world"]["ruleset"] = "RS-1.1.0"
 	_eq(Save.inspect(major)["status"], Save.STATUS_MAJOR_MISMATCH, "major 불일치 거부")
 	var future := old.duplicate(true)
-	future["world"]["ruleset"] = "RS-0.3.0"
+	# Save.CURRENT_RULESET is RS-0.4.0; keep this fixture newer than it.
+	future["world"]["ruleset"] = "RS-0.5.0"
 	_eq(Save.inspect(future)["status"], Save.STATUS_NEWER_MINOR, "더 새 minor 거부")
 	print("")
 

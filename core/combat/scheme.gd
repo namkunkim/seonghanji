@@ -102,7 +102,7 @@ const TERRAIN_BASE_ROUTE_AMBUSH_MILLI: int = 50000    # 기저 항로 — 매복
 ## 「봉쇄는 성립하되 봉쇄만으로는 이길 수 없다」(불가침 §2-4)의 반대편이 됐다.
 ## **회랑 전투력(§3.3 일부당관)·통과 비용은 그대로다** — 여기서 낮춘 것은
 ## 계략 판정 한 항목뿐이다.
-const TERRAIN_CORRIDOR_EXIT_AMBUSH_MILLI: int = 15000
+const TERRAIN_CORRIDOR_EXIT_AMBUSH_MILLI: int = 0
 const TERRAIN_DENSE_FIRE_MILLI: int = 20000           # 밀집 진형 — 화공
 
 ## 「계략 중시」 방침 (§5.3)
