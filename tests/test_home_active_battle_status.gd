@@ -37,10 +37,18 @@ func _run() -> void:
     var unrelated_rows: Array = main._current_status_rows()
     _check(String(unrelated_rows[2][2]) == "적벽 전투: 미활성", "무관한 전투는 적벽을 활성화하지 않음")
 
-    var ready = Snapshot.from_campaign(campaign, 208, {
-        "active_battles": [{"id": "BATTLE-RED-CLIFF", "status": "active"}],
-        "red_cliff_conditions": READY_CONDITIONS,
-    })
+    var ready_campaign := Campaign.scenario_03(GameData.load_all(), 20802)
+    ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT03,
+        {"cao_southward_complete": true})
+    ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT04,
+        {"sun_quan_independent": true})
+    ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT06,
+        {"liu_bei_hostile_to_cao": true})
+    ready_campaign.record_scn03_event_outcome(Campaign.SCN03_EVENT07,
+        {"sun_liu_military_pact": true, "yangtze_defense_line": true})
+    ready_campaign.active_battles[0].activate_red_cliff([], [], {}, "",
+        ready_campaign.world.clock.tick)
+    var ready = Snapshot.from_campaign(ready_campaign, 208)
     main.home_state = ready.snapshot()
     var ready_rows: Array = main._current_status_rows()
     _check(String(ready_rows[2][2]) == "적벽 전투: 교전 활성", "ready 적벽은 교전 활성")

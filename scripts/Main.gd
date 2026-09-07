@@ -1,5 +1,7 @@
 extends Node
 
+signal battle_entry_requested(battle_id: String)
+
 var map: GalaxyMap
 var cam: Camera2D
 var inspector_body: VBoxContainer
@@ -14,6 +16,8 @@ var bottom_panel: PanelContainer
 var stage_badges: Array[PanelContainer] = []
 var menu_buttons: Dictionary = {}
 var top_route_buttons: Dictionary = {}
+var red_cliff_banner: PanelContainer
+var red_cliff_banner_action: Button
 var active_menu_id := "overview"
 var map_context_menu_id := "overview"
 var submenu: Control
@@ -214,6 +218,24 @@ func _snapshot_runtime_context() -> Dictionary:
     var provenance: Dictionary = home_state.get("provenance", {})
     for key in ["active_battles", "red_cliff_conditions", "news"]:
         var value = home_state.get(key)
+        if key == "news":
+            if value is Array:
+                var safe_news: Array = []
+                for item in value:
+                    if not item is Dictionary:
+                        continue
+                    var row: Dictionary = (item as Dictionary).duplicate(true)
+                    var battle_id := String(row.get("battle_id", ""))
+                    var news_id := String(row.get("news_id", ""))
+                    var action_battle_id := String(row.get("action_battle_id", ""))
+                    if battle_id == Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID \
+                            or news_id.begins_with(Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID + ":") \
+                            or action_battle_id == Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID:
+                        continue
+                    safe_news.append(row)
+                if not safe_news.is_empty() or String(provenance.get("news", "")) == "runtime_fixture":
+                    runtime[key] = safe_news.duplicate(true)
+            continue
         if (value is Array or value is Dictionary) and (not value.is_empty() \
                 or String(provenance.get(key, "")) == "runtime_fixture"):
             runtime[key] = home_state[key].duplicate(true)
@@ -258,6 +280,7 @@ func _refresh_home_snapshot() -> void:
         minimap.set_semantic_level(semantic)
     _refresh_resource_labels()
     _refresh_status_rows()
+    _refresh_red_cliff_banner()
     _refresh_stage_five()
     if submenu != null and submenu_was_visible:
         var submenu_state := home_state.duplicate(true)
@@ -415,6 +438,8 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     top_panel = PanelContainer.new()
     ui_root.add_child(top_panel)
     top_panel.add_theme_stylebox_override("panel", HudStyle.panel_style(0.94))
+
+    _build_red_cliff_banner()
 
     var top_h: HBoxContainer = HBoxContainer.new()
     top_h.add_theme_constant_override("separation",10)
@@ -775,6 +800,110 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     if speed_button:
         speed_button.text = "%dx" % int(playback_speeds[playback_speed_index])
     _refresh_menu_styles()
+    _refresh_red_cliff_banner()
+
+
+func _build_red_cliff_banner() -> void:
+    red_cliff_banner = PanelContainer.new()
+    red_cliff_banner.name = "RedCliffInterruptBanner"
+    red_cliff_banner.visible = false
+    red_cliff_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    red_cliff_banner.add_theme_stylebox_override("panel", HudStyle.news_style())
+    ui_root.add_child(red_cliff_banner)
+
+    var row := HBoxContainer.new()
+    row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    row.add_theme_constant_override("separation", 10)
+    red_cliff_banner.add_child(row)
+
+    var marker := Label.new()
+    marker.text = "×"
+    marker.custom_minimum_size = Vector2(24, 0)
+    marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    marker.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    marker.add_theme_font_size_override("font_size", 20)
+    marker.add_theme_color_override("font_color", Color("ff5b7f"))
+    marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    row.add_child(marker)
+
+    var headline := Label.new()
+    headline.name = "Headline"
+    headline.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    headline.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    headline.add_theme_font_size_override("font_size", 15)
+    headline.add_theme_color_override("font_color", Color("f5fbff"))
+    headline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    row.add_child(headline)
+
+    red_cliff_banner_action = Button.new()
+    red_cliff_banner_action.name = "OpenActiveBattle"
+    red_cliff_banner_action.text = "전투 진입"
+    red_cliff_banner_action.custom_minimum_size = Vector2(100, 32)
+    red_cliff_banner_action.add_theme_font_size_override("font_size", 13)
+    red_cliff_banner_action.add_theme_stylebox_override("normal", HudStyle.resource_style())
+    red_cliff_banner_action.add_theme_stylebox_override("hover", HudStyle.resource_hover_style())
+    red_cliff_banner_action.add_theme_stylebox_override("pressed", HudStyle.resource_pressed_style())
+    red_cliff_banner_action.add_theme_stylebox_override("disabled", HudStyle.resource_disabled_style())
+    red_cliff_banner_action.add_theme_stylebox_override("focus", HudStyle.resource_focus_style())
+    red_cliff_banner_action.pressed.connect(_on_red_cliff_banner_pressed)
+    row.add_child(red_cliff_banner_action)
+
+
+func _refresh_red_cliff_banner() -> void:
+    if red_cliff_banner == null:
+        return
+    var banner_item := _red_cliff_interrupt_banner_item()
+    red_cliff_banner.visible = not banner_item.is_empty()
+    if banner_item.is_empty():
+        return
+    var headline: Label = red_cliff_banner.get_node_or_null("HBoxContainer/Headline") as Label
+    if headline != null:
+        headline.text = String(banner_item.get("headline", "적벽 전투 개전"))
+    var action_battle_id := String(banner_item.get("action_battle_id", ""))
+    red_cliff_banner_action.set_meta("action_id", String(banner_item.get("action_id", "")))
+    red_cliff_banner_action.set_meta("action_battle_id", action_battle_id)
+    red_cliff_banner_action.disabled = not bool(banner_item.get("can_open", false))
+    red_cliff_banner_action.tooltip_text = "전투 진입은 아직 준비되지 않았습니다." \
+        if red_cliff_banner_action.disabled else "적벽 전투 진입 요청을 보냅니다."
+
+
+func _red_cliff_interrupt_banner_item() -> Dictionary:
+    for value in home_state.get("news", []):
+        if not value is Dictionary:
+            continue
+        var row: Dictionary = value
+        if bool(row.get("is_interrupt_banner", false)) \
+                and String(row.get("news_id", "")).begins_with(
+                    Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID + ":") \
+                and String(row.get("battle_id", "")) == Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID \
+                and String(row.get("action_id", "")) == "open_active_battle" \
+                and String(row.get("action_battle_id", "")) == Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID:
+            return row.duplicate(true)
+    return {}
+
+
+func _on_red_cliff_banner_pressed() -> void:
+    if red_cliff_banner_action == null:
+        return
+    _request_red_cliff_battle_entry(
+        String(red_cliff_banner_action.get_meta("action_battle_id", "")))
+
+
+func _request_red_cliff_battle_entry(battle_id: String) -> bool:
+    # The display route ID (BATTLE-RED-CLIFF) is deliberately not accepted here.
+    # This boundary receives and emits only the canonical Campaign battle identity.
+    if battle_id != Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID or campaign == null:
+        return false
+    var banner_item := _red_cliff_interrupt_banner_item()
+    if banner_item.is_empty() or not bool(banner_item.get("can_open", false)):
+        return false
+    for battle in campaign.active_battles:
+        if String(battle.battle_id) == battle_id \
+                and String(battle.status) == ActiveBattle.STATUS_ACTIVE \
+                and int(battle.combat_phase) == 1 and bool(battle.entry_available):
+            battle_entry_requested.emit(battle_id)
+            return true
+    return false
 
 
 func _refresh_status_rows() -> void:
@@ -1290,6 +1419,10 @@ func _layout_ui() -> void:
 
     top_panel.position = Vector2.ZERO
     top_panel.size = Vector2(viewport_size.x, top_height)
+    if red_cliff_banner != null:
+        red_cliff_banner.position = Vector2(left_width + 12.0, top_height + 8.0)
+        red_cliff_banner.size = Vector2(
+            maxf(0.0, viewport_size.x - left_width - right_width - 24.0), 42.0)
     left_panel.position = Vector2(0.0, top_height)
     left_panel.size = Vector2(left_width, content_height)
     right_panel.position = Vector2(viewport_size.x - right_width, top_height)

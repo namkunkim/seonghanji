@@ -111,10 +111,10 @@ static func from_campaign(campaign, year: int = -1,
 		"event_counts": _event_counts(campaign) if valid else {},
 		"active_battles": _active_battles(campaign, map_data, sid, runtime) if valid else [],
 		"red_cliff_conditions": _red_cliff_conditions(campaign, sid, runtime) if valid else {},
-		"news": _news(runtime.get("news", [])) if valid else [],
+		"news": _news(campaign, sid, runtime) if valid else [],
 		"external_powers": _external_powers(resolved_year) if valid else [],
 		"capabilities": _capabilities(sid),
-		"provenance": _provenance(sid, runtime),
+		"provenance": _provenance(campaign, sid, runtime),
 		"presentation": {
 			"valid": valid,
 			"invalid_reason": validation_error,
@@ -455,15 +455,20 @@ static func _capabilities(scenario_id: String) -> Dictionary:
 		"intel_resource": false,
 		"active_battles": has_scn03_red_cliff_core,
 		"red_cliff_conditions": has_scn03_red_cliff_core,
-		"news": false,
+		"news": has_scn03_red_cliff_core,
 		"external_powers": false,
 		"liu_bei_wandering": false,
 	}
 
 
-static func _provenance(scenario_id: String, runtime: Dictionary) -> Dictionary:
+static func _provenance(campaign, scenario_id: String, runtime: Dictionary) -> Dictionary:
 	var has_scn03_red_cliff_core := scenario_id == SCENARIO_03_ID
 	var has_runtime_noncanonical_battle := _has_runtime_noncanonical_battle(runtime)
+	var has_runtime_noncanonical_news := _has_runtime_noncanonical_news(runtime)
+	# `news` is a SCN-03 Campaign capability even before its first transition
+	# fact exists.  A missing ledger row means an empty core feed, not an
+	# unsupported feed; runtime rows are still separately identified below.
+	var has_core_news := scenario_id == SCENARIO_03_ID
 	return {
 		"scenario": "campaign_core",
 		"viewer": "campaign_core_or_runtime_override",
@@ -474,7 +479,7 @@ static func _provenance(scenario_id: String, runtime: Dictionary) -> Dictionary:
 		"event_counts": "campaign_core_aggregate",
 		"active_battles": "campaign_core_or_runtime_fixture" if has_scn03_red_cliff_core and has_runtime_noncanonical_battle else "campaign_core" if has_scn03_red_cliff_core else "runtime_fixture" if has_runtime_noncanonical_battle else "unsupported",
 		"red_cliff_conditions": "campaign_core" if has_scn03_red_cliff_core else "runtime_fixture" if runtime.has("red_cliff_conditions") else "unsupported",
-		"news": "runtime_fixture" if runtime.has("news") else "unsupported",
+		"news": "campaign_core_or_runtime_fixture" if has_core_news and has_runtime_noncanonical_news else "campaign_core" if has_core_news else "runtime_fixture" if has_runtime_noncanonical_news else "unsupported",
 		"external_powers": EXTERNAL_POWER_SOURCE,
 	}
 
@@ -624,10 +629,120 @@ static func _has_runtime_noncanonical_battle(runtime: Dictionary) -> bool:
 	return false
 
 
-static func _news(value) -> Array:
-	if not value is Array:
-		return []
-	return (value as Array).duplicate(true)
+static func _has_runtime_noncanonical_news(runtime: Dictionary) -> bool:
+	var provided = runtime.get("news", [])
+	if not provided is Array:
+		return false
+	for value in provided:
+		if value is Dictionary and not _is_canonical_red_cliff_news(value):
+			return true
+	return false
+
+
+static func _news(campaign, scenario_id: String, runtime: Dictionary) -> Array:
+	var out: Array = []
+	out.append_array(_scn03_news_rows(campaign, scenario_id))
+	for value in _runtime_news_rows(runtime):
+		out.append(value)
+	out.sort_custom(func(a, b):
+		return String(a.get("news_id", "")) < String(b.get("news_id", "")) \
+				if a.has("news_id") and b.has("news_id") else \
+			String(a.get("headline", "")) < String(b.get("headline", "")))
+	return out
+
+
+static func _scn03_news_rows(campaign, scenario_id: String) -> Array:
+	var out: Array = []
+	if scenario_id != SCENARIO_03_ID:
+		return out
+	if campaign == null or campaign.world == null:
+		return out
+	var entry_available := _scn03_red_cliff_entry_available(campaign)
+	for row in campaign.scn03_red_cliff_transition_news:
+		if not row is Dictionary:
+			continue
+		var transition := String(row.get("transition", ""))
+		if String(row.get("battle_id", "")) != Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID \
+				or not [Campaign.SCN03_RED_CLIFF_TRANSITION_ACTIVE_PHASE_1,
+				Campaign.SCN03_RED_CLIFF_TRANSITION_PHASE_2,
+				Campaign.SCN03_RED_CLIFF_TRANSITION_RESOLVED].has(transition):
+			continue
+		var can_open := transition == Campaign.SCN03_RED_CLIFF_TRANSITION_ACTIVE_PHASE_1 \
+			and _scn03_red_cliff_active_battle_is_openable(campaign)
+		# This is a read-model flag, not UI policy.  The phase-one transition
+		# remains in the immutable news history after phase 2, but only the
+		# current Contact phase is an interrupt banner candidate.
+		var is_interrupt_banner := transition == Campaign.SCN03_RED_CLIFF_TRANSITION_ACTIVE_PHASE_1 \
+			and _scn03_red_cliff_active_battle_is_phase_one(campaign)
+		var is_active := transition == Campaign.SCN03_RED_CLIFF_TRANSITION_ACTIVE_PHASE_1
+		out.append({
+			"news_id": String(row.get("news_id", "")),
+			"battle_id": Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID,
+			"transition": transition,
+			"tick": int(row.get("tick", 0)),
+			"severity": "critical" if is_active else "medium",
+			"headline": "적벽 전투 개전" if is_active else
+				("적벽 전투 진행 전환" if transition == Campaign.SCN03_RED_CLIFF_TRANSITION_PHASE_2 else "적벽 전투 결말"),
+			"action_id": "open_active_battle",
+			"action_battle_id": Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID,
+			"can_open": can_open,
+			"is_interrupt_banner": is_interrupt_banner,
+			"acknowledged": false,
+			"expiry_kind": "unsupported",
+			"icon": "×" if is_active else "•",
+			"color": "ff5b7f" if is_active else "99caff",
+			"date": "건안 13년" if int(row.get("tick", 0)) <= 0 else "건안 13년 (%d)" % int(row.get("tick", 0)),
+			"entry_available": entry_available,
+		})
+	return out
+
+
+static func _runtime_news_rows(runtime: Dictionary) -> Array:
+	var out: Array = []
+	var provided = runtime.get("news", [])
+	if not provided is Array:
+		return out
+	for value in provided:
+		if not value is Dictionary:
+			continue
+		var row := (value as Dictionary).duplicate(true)
+		if _is_canonical_red_cliff_news(row):
+			continue
+		out.append(row)
+	return out
+
+
+static func _is_canonical_red_cliff_news(news_row: Dictionary) -> bool:
+	if not news_row is Dictionary:
+		return false
+	var battle_id := String(news_row.get("battle_id", ""))
+	var news_id := String(news_row.get("news_id", ""))
+	return battle_id == Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID \
+			or news_id.begins_with(Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID + ":") \
+			or String(news_row.get("action_battle_id", "")) == Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID
+
+
+static func _scn03_red_cliff_entry_available(campaign) -> bool:
+	for battle in campaign.active_battles:
+		if String(battle.battle_id) == Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID:
+			return bool(battle.entry_available)
+	return false
+
+
+static func _scn03_red_cliff_active_battle_is_openable(campaign) -> bool:
+	for battle in campaign.active_battles:
+		if String(battle.battle_id) == Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID \
+				and String(battle.status) == "active":
+			return bool(battle.entry_available)
+	return false
+
+
+static func _scn03_red_cliff_active_battle_is_phase_one(campaign) -> bool:
+	for battle in campaign.active_battles:
+		if String(battle.battle_id) == Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID \
+				and String(battle.status) == "active" and int(battle.combat_phase) == 1:
+			return true
+	return false
 
 
 ## 외부 세력은 영토 소유자와 섞지 않는다. 좌표가 정본 지도에 없는 세력에는
