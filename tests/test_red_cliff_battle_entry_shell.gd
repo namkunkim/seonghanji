@@ -1,7 +1,7 @@
 extends SceneTree
 
-## G-10-UI-03: the entry shell receives only the canonical active battle.  It is
-## intentionally a read-only state display; no combat command is created here.
+## G-10-UI-04: the entry shell exposes a canonical active-battle observation
+## without changing the campaign's replay-derived save contract.
 
 var _pass := 0
 var _fail := 0
@@ -80,6 +80,7 @@ func _run() -> void:
     _ok(main.battle_screen == null, "rejected IDs create no battle screen")
 
     var canonical := Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID
+    var save_before_open: Dictionary = main.campaign.to_save_dict()
     _ok(main._open_red_cliff_battle_entry_shell(canonical), "canonical active battle opens")
     _ok(main.battle_screen != null and main.battle_screen.visible, "battle shell becomes visible")
     if main.battle_screen == null:
@@ -89,22 +90,36 @@ func _run() -> void:
         return
     _eq(main.battle_screen_battle_id, canonical, "shell retains canonical ID only")
     _ok(not main.map.visible, "home map switches to battle shell")
+    _ok("정본 전투 ID: %s" % canonical in main.battle_screen_state.text,
+        "canonical identity is displayed")
     _ok("상태: active" in main.battle_screen_state.text, "current active status is displayed")
+    _ok("전장: 구지 궤도 · RGN-04 / SYS-13" in main.battle_screen_state.text,
+        "canonical battle location is displayed")
     _ok("전투 단계: 1" in main.battle_screen_state.text, "current combat phase is displayed")
+    _ok("공격측: cao_side" in main.battle_screen_state.text,
+        "attacking canonical faction is displayed")
+    _ok("방어측: sun_liu_side" in main.battle_screen_state.text,
+        "defending canonical faction is displayed")
     var shell: PanelContainer = main.battle_screen
     _ok(main._open_red_cliff_battle_entry_shell(canonical), "reopening canonical battle is safe")
     _eq(main.battle_screen, shell, "reopening reuses one battle screen")
+    _eq(main.campaign.to_save_dict(), save_before_open, "entry shell does not alter save contract")
 
     var battle: ActiveBattle = main.campaign.active_battles[0]
     battle.advance_red_cliff_phase(main.campaign.world.clock.tick + 1)
     main._refresh_battle_entry_shell()
     _ok("전투 단계: 2" in main.battle_screen_state.text, "shell refreshes current state")
-    battle.resolve_red_cliff("sun_liu_side", main.campaign.world.clock.tick + 2)
-    _ok(not main._open_red_cliff_battle_entry_shell(canonical), "resolved battle is rejected")
-
+    var save_before_return: Dictionary = main.campaign.to_save_dict()
     main._close_red_cliff_battle_entry_shell()
     _ok(main.map.visible, "return action switches back to home")
     _ok(not main.battle_screen.visible, "return action hides battle shell")
+    _eq(main.battle_screen_battle_id, canonical, "home return retains canonical shell identity")
+    _ok(main._open_red_cliff_battle_entry_shell(canonical), "home return re-enters same active battle")
+    _eq(main.battle_screen, shell, "home return re-entry creates no duplicate shell")
+    _eq(main.campaign.to_save_dict(), save_before_return, "return and re-entry do not alter save contract")
+
+    battle.resolve_red_cliff("sun_liu_side", main.campaign.world.clock.tick + 2)
+    _ok(not main._open_red_cliff_battle_entry_shell(canonical), "resolved battle is rejected")
     main.free()
     print("RedCliffBattleEntryShell: %d 통과 / %d 실패" % [_pass, _fail])
     quit(0 if _fail == 0 else 1)

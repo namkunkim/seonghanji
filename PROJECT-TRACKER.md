@@ -1,5 +1,7 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
+> **2026-09-07 G-10-UI-04 적벽 전투 화면 상태 표시 및 홈 복귀 경계 — PASS:** canonical ID·상태·위치·phase·교전 세력 표시, 홈 복귀/재진입 단일 셸, resolved/display/unknown 거부와 저장 계약 불변을 전용 29/0·배너 회귀 61/0 및 독립 재검증으로 확인했다. 다음은 G-10-QA-01이며 G-10은 🟨 유지.
+
 > **2026-09-07 G-10-UI-03 canonical battle_id 기반 적벽 전투 화면 진입 셸 — PASS:** `battle_entry_requested`는 active canonical battle 재조회 뒤 단일 read-only 셸을 연다. display·unknown·resolved는 거부하며 상태/phase/함대 수를 표시하고 홈으로 복귀한다. 전용 20/0 및 UI-02 회귀 61/0, 독립 `gpt-5.6-terra / medium` 재검증 PASS. 다음은 UI-04다; G-10은 🟨 유지.
 
 > **2026-09-07 G-10-UI-02 적벽 인터럽트 배너 Windows 1600×900 시각·입력 수용 — PASS:** 시작 `main`/`origin/main`은 모두 `f57f5bfabcb3a49163e4c4ec592559d31e7421a3`였다. `gpt-5.6-terra / medium` 구현·시험과 독립 검수가 1600×900 배너 위치·가독성·ID 비노출·입력 경계·canonical 신호·재구성 뒤 중복 방지·`stage:5` 카메라 경로를 검증했다. 전용 시험 61/0, HomeMapSnapshot 348/0, HomeMapZoom 175/0, HomeSubmenuRouting 347/0. GPU GUI 캡처 및 해시는 `docs/07-production/g10-ui02-red-cliffs-banner-windows-acceptance.md`에 기록했다. G-10은 UI-03~QA-01과 실제 전투 화면이 남아 🟨를 유지한다.

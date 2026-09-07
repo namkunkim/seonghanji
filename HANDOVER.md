@@ -1,5 +1,7 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
+> **2026-09-07 G-10-UI-04 적벽 전투 화면 상태 표시 및 홈 복귀 경계 — PASS:** read-only 셸은 canonical ID, 위치, 상태, phase, 세력/함대를 표시한다. 홈 복귀·재진입은 단일 셸을 재사용하며 save contract는 불변이다. 전용 29/0·배너 61/0 및 독립 재실행 PASS. 상세: `docs/07-production/g10-ui04-red-cliffs-battle-state-return.md`. 다음은 G-10-QA-01; G-10은 🟨다.
+
 > **2026-09-07 G-10-UI-03 canonical battle_id 기반 적벽 전투 화면 진입 셸 — PASS:** active canonical record만 재검증해 단일 read-only 셸을 열며, display/unknown/resolved는 거부한다. 상태·phase·양측 함대 수 표시와 홈 복귀를 전용 20/0·UI-02 61/0 및 독립 재실행으로 확인했다. 상세: `docs/07-production/g10-ui03-red-cliffs-battle-entry-shell.md`. 다음 작업은 G-10-UI-04이며 G-10은 🟨다.
 
 > **2026-09-07 G-10-UI-02 적벽 인터럽트 배너 Windows 1600×900 시각·입력 수용 — PASS:** 시작 `main`/`origin/main`은 `f57f5bfabcb3a49163e4c4ec592559d31e7421a3`였다. `gpt-5.6-terra / medium` 구현·시험 및 독립 검수 모두 PASS했다. HUD 재구성은 이전 CanvasLayer를 해제해 살아남은 적벽 버튼/신호를 막으며, `size_changed` 연결도 중복하지 않는다. 전용 61/0, HomeMapSnapshot 348/0, HomeMapZoom 175/0, HomeSubmenuRouting 347/0. Vulkan GPU GUI 1600×900 캡처는 `out/g10-ui02-red-cliffs-banner-windows-acceptance/red-cliffs-banner-1600x900.png`(1,069,749 bytes, SHA-256 `F304C9795BEA1E73D27BC38B603541F9687C67A50E2A728E734D07CA19BE3BC9`)이며 수용 상세는 `docs/07-production/g10-ui02-red-cliffs-banner-windows-acceptance.md`에 있다. G-10은 🟨 유지. 다음 순서 작업은 **G-10-UI-03 — canonical battle_id 기반 적벽 전투 화면 진입 셸**이다.

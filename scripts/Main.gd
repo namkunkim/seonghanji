@@ -975,6 +975,7 @@ func _ensure_red_cliff_battle_entry_shell() -> void:
     battle_screen.add_child(content)
 
     var heading := Label.new()
+    heading.name = "BattleTitle"
     heading.text = "적벽 전투"
     heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     heading.add_theme_font_size_override("font_size", 30)
@@ -982,6 +983,7 @@ func _ensure_red_cliff_battle_entry_shell() -> void:
     content.add_child(heading)
 
     var subtitle := Label.new()
+    subtitle.name = "BattleLocation"
     subtitle.text = "구지 궤도 · 현재 전투 상태"
     subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     subtitle.add_theme_font_size_override("font_size", 16)
@@ -1012,9 +1014,13 @@ func _ensure_red_cliff_battle_entry_shell() -> void:
 func _render_red_cliff_battle_state(battle) -> void:
     if battle_screen_state == null:
         return
-    battle_screen_state.text = "상태: %s\n전투 단계: %d\n공격측 함대: %d · 방어측 함대: %d" % [
-        String(battle.status), int(battle.combat_phase),
-        battle.attacker_fleet_ids.size(), battle.defender_fleet_ids.size(),
+    # These fields are copied only for display.  The shell never derives a new
+    # battle from labels, faction ownership, or fleet counts.
+    battle_screen_state.text = "정본 전투 ID: %s\n상태: %s\n전장: 구지 궤도 · %s / %s\n전투 단계: %d\n공격측: %s (%d척)\n방어측: %s (%d척)" % [
+        String(battle.battle_id), String(battle.status),
+        String(battle.region_id), String(battle.system_id), int(battle.combat_phase),
+        String(battle.attacker_faction_id), battle.attacker_fleet_ids.size(),
+        String(battle.defender_faction_id), battle.defender_fleet_ids.size(),
     ]
 
 
@@ -1040,7 +1046,9 @@ func _close_red_cliff_battle_entry_shell() -> void:
     if not is_instance_valid(battle_screen):
         return
     battle_screen.visible = false
-    battle_screen_battle_id = ""
+    # Keep the observed canonical identity while the reusable shell is hidden.
+    # Re-entry still revalidates it against Campaign, so this is not UI state
+    # persistence and cannot resurrect a resolved record.
     map.visible = true
     _set_home_ui_visible(true)
     _refresh_red_cliff_banner()
