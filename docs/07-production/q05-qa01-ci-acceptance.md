@@ -2,7 +2,7 @@
 >
 > 공식 제목: 로컬·원격 CI 동등성 및 실패 검출 수용
 >
-> 상태: PARTIAL — 2026-09-08 깨끗한 worktree에서 추적되지 않은 필수 폰트·승인 PNG 누락으로 단위시험이 실패했고, campaign 단계 hang도 재현됨; 별도 자산 추적 Task와 실행 안정화 뒤 재수용 필요
+> 상태: PARTIAL — 2026-09-08 깨끗한 worktree의 Godot fresh-import race와 campaign 단계 hang을 재현함; Q-06-01 import 교정 뒤 campaign 안정화 수용이 필요
 
 # Q-05-QA-01 로컬·원격 CI 동등성 및 실패 검출 수용
 
@@ -49,9 +49,9 @@
 
 ## 깨끗한 worktree 재현 (오케스트레이터)
 
-`b184fc7`에서 `out/q05-clean` detached worktree를 만든 뒤 동일 실행기를 단독 실행했다. import는 exit 0이었지만, 새 clone에 없는 `assets/fonts/NotoSansKR-VF.ttf`와 `assets/preproduction/p0-04/production-v1/final/flux/ART-C901`~`911.png` 때문에 단위시험의 P0-04 초상 섹션이 23건 실패했다. 결과는 35/35 섹션, 690 단언(하한 701), exit 1이다. 이는 기존 dirty worktree의 미추적 자산이 현 로컬 PASS를 가린다는 증거다.
+`b184fc7`에서 `out/q05-clean` detached worktree를 만든 뒤 동일 실행기를 단독 실행했다. import는 exit 0이었지만, 아직 완료되지 않은 Godot cache 때문에 단위시험의 P0-04 초상 섹션이 23건 실패했다. 결과는 35/35 섹션, 690 단언(하한 701), exit 1이다. Q-06-01에서 해당 원본 폰트·PNG가 모두 Git 추적임을 확인했고, 두 pass import/cache 준비 뒤 단위시험 35/35·701/0으로 정상화했다.
 
-같은 깨끗한 실행의 `campaign-locked-100`도 배너 뒤 진행하지 않고 유휴 상태가 되어, 자원 누수를 막기 위해 PID 27184를 종료했다. 따라서 현재 판정은 **PARTIAL/미수용**이다. (1) 필수 폰트·승인 PNG의 추적/배포 계약을 별도 Task로 해결하고, (2) campaign hang 원인을 고치고, (3) 격리된 깨끗한 환경에서 aggregate 0과 나머지 음성 항목, 원격 workflow 결과를 실제 값으로 채워야 PASS로 변경한다.
+같은 깨끗한 실행의 `campaign-locked-100`도 배너 뒤 진행하지 않고 유휴 상태가 되어, 자원 누수를 막기 위해 PID 27184를 종료했다. 따라서 현재 판정은 **PARTIAL/미수용**이다. import race는 Q-06-01에서 교정했지만 campaign hang 원인을 고치고, 격리된 깨끗한 환경에서 aggregate 0과 나머지 음성 항목, 원격 workflow 결과를 실제 값으로 채워야 PASS로 변경한다.
 
 ## 원격 상태
 

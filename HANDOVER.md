@@ -1,5 +1,7 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
+> **2026-09-08 Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화 — PARTIAL:** `NotoSansKR-VF.ttf`와 P0-04 승인 PNG는 추적 파일이었다. fresh checkout 실패는 자산 누락이 아니라 Godot import race이며, 두 pass import 뒤 단위시험 35/35·701/0을 확인했다. 다만 잠금 100회 campaign은 import 후에도 시작 banner에서 유휴 상태를 재현했다. 실행기는 timeout 실패를 기록하고 후속 단계를 계속하지만 aggregate 0은 아직 없다. 다음은 campaign 초기화/`run_to_end()` blocking 원인 진단이다.
+
 > **2026-09-08 Q-05-LT-01 — 테스트·검산기 CI 기준화 및 자동 실패 게이트 구축 — PARTIAL:** `Q-05-01`~`Q-05-QA-01`으로 검산기 종료 코드, 11단계 PowerShell 게이트, GitHub Actions workflow를 도입했다. 그러나 `b184fc7` 깨끗한 worktree에서 추적되지 않은 `NotoSansKR-VF.ttf`와 승인 PNG 누락으로 P0-04 단위시험 23건·690<701이 실패했고, `campaign-locked-100`은 유휴 hang을 재현했다. 실패를 성공으로 숨기지 않았으며 정상 aggregate 0·원격 green은 아직 없다. 다음은 **Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화**다.
 
 > **2026-09-08 Q-01-MGMT-01 — Q-01 무인 장기 작업 상위 기록 마감 — PASS:** **Q-01-NIGHT-01 — 8시간 무인 계략·전투 밸런스 조정 및 회귀 검증**의 하위 `A-05-MGMT-01`, `Q-01-01`~`03`, `Q-01-QA-01`, `Q-02-01`, `Q-01 최종 증거 보완`을 연결해 마감했다. 현재 잠금 ruleset은 회랑 출구 매복 보정 0이며, 최신 지표는 재현율 **60.0%**·조기 종료율 **0.0%**·주역 편차 **1.3배**다. Q-02의 독립 100회도 일치했다. 오래된 67.0%는 조정 전 역사 기록이며 현재 기준선이 아니다. Q-01·Q-02는 완료 상태를 유지한다.
