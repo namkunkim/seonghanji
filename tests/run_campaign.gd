@@ -317,9 +317,9 @@ func _init() -> void:
 	print("  「조조가 회랑 공세를 걸 때 매복 피격률」로 정밀 재측정해 낮췄다 — 위 표 참조.")
 	print("")
 
-	# ---- 구조 검증 (A-07 · V-61 ②). **밸런스 판정이 아니다.**
-	# 위 「합격 %d/%d」(재현율·조기 종료율·주역 편차)와 미발동 이벤트는
-	# exit 코드에 반영하지 않는다 — 밸런스 기준선은 Q-01 완료 시 잠근다 (V-61 ③).
+	# ---- 구조·잠금 기준선 검증 (A-07 · Q-01-QA-01).
+	# Q-01-QA-01이 고정 시드 1000..1099·표준 HB 0.25의 수용 기준선을 잠갔다.
+	# 재현율·조기 종료율·주역 편차는 이제 회귀 실패로 종료한다. F-10 미발동은 G-02 범위다.
 	# 여기서 잡는 것은 「시뮬레이터가 완주하지 못하고 조용히 멈췄다」뿐이다.
 	print("구조 검증 — A-07")
 	var struct_fail := 0
@@ -330,9 +330,10 @@ func _init() -> void:
 	struct_fail += _sc(total_battles > 0, "전투 발생 (평균 %.1f회/판)" % (float(total_battles) / RUNS))
 	struct_fail += _sc(total_ticks > 0, "진행 틱 누적 (평균 %.0f틱/판)" % (float(total_ticks) / RUNS))
 	struct_fail += _sc(total_applied > 0, "명령 적용 (평균 %.1f회/판)" % (float(total_applied) / RUNS))
+	struct_fail += _sc(pass_count == checks, "잠금 밸런스 기준 %d/%d" % [pass_count, checks])
 	print("")
 	if struct_fail == 0:
-		print("구조 검증 통과 — 밸런스 판정(합격 %d/%d)은 exit 코드와 무관 (V-61 ③)"
+		print("구조·잠금 밸런스 기준 통과 — 합격 %d/%d"
 			% [pass_count, checks])
 	else:
 		print("구조 검증 실패 %d건 — 시뮬레이터가 조용히 멈췄다" % struct_fail)
