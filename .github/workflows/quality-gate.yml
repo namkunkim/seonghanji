@@ -1,0 +1,71 @@
+name: Godot quality gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# The gate only reads the repository.  Its generated user data and logs stay
+# in the runner workspace and are uploaded as a CI artifact, never committed.
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-gate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Godot 4.7.2 quality gate
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      GODOT_VERSION: 4.7.2
+      GODOT_USER_DATA_DIR: ${{ github.workspace }}\out\ci-user-data
+      QUALITY_GATE_LOG_DIR: ${{ github.workspace }}\out\quality-gate-logs
+
+    steps:
+      # v4.2.2, pinned to the published commit rather than a movable tag.
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Install pinned Godot console binary
+        id: godot
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = Join-Path $env:RUNNER_TEMP "Godot_v$env:GODOT_VERSION-stable_win64_console.exe.zip"
+          $unpack = Join-Path $env:RUNNER_TEMP "godot-$env:GODOT_VERSION"
+          $url = "https://github.com/godotengine/godot/releases/download/$env:GODOT_VERSION-stable/Godot_v$env:GODOT_VERSION-stable_win64_console.exe.zip"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          Expand-Archive -LiteralPath $archive -DestinationPath $unpack -Force
+          $binary = Get-ChildItem -LiteralPath $unpack -Filter 'Godot_v*-stable_win64_console.exe' -Recurse | Select-Object -First 1
+          if ($null -eq $binary) { throw 'Godot 4.7.2 console executable was not found after extraction.' }
+          "path=$($binary.FullName)" >> $env:GITHUB_OUTPUT
+          & $binary.FullName --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run unified quality gate
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path $env:GODOT_USER_DATA_DIR, $env:QUALITY_GATE_LOG_DIR | Out-Null
+          & .\tools\ci\run_quality_gate.ps1 -GodotBin '${{ steps.godot.outputs.path }}' -LogDirectory $env:QUALITY_GATE_LOG_DIR
+          exit $LASTEXITCODE
+
+      # v4.6.2, pinned to the published commit.  Preserve partial logs even
+      # when the aggregate runner returns 1 after completing remaining tests.
+      - name: Upload quality-gate logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: quality-gate-${{ github.sha }}
+          path: |
+            out/quality-gate-logs/
+            out/ci-user-data/
+          if-no-files-found: warn
+          retention-days: 14
