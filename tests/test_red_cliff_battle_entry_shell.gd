@@ -118,7 +118,12 @@ func _run() -> void:
     _eq(main.battle_screen, shell, "home return re-entry creates no duplicate shell")
     _eq(main.campaign.to_save_dict(), save_before_return, "return and re-entry do not alter save contract")
 
-    battle.resolve_red_cliff("sun_liu_side", main.campaign.world.clock.tick + 2)
+    # DEMO-RC-02 removed the old UI-facing winner injection. Resolve through
+    # the canonical phase command reducer instead.
+    while battle.status == ActiveBattle.STATUS_ACTIVE:
+        _ok(not main.campaign.issue_red_cliff_player_command(canonical, "advance_phase").is_empty(),
+            "resolved 전 phase command 발행")
+        main.campaign.step()
     _ok(not main._open_red_cliff_battle_entry_shell(canonical), "resolved battle is rejected")
     main.free()
     print("RedCliffBattleEntryShell: %d 통과 / %d 실패" % [_pass, _fail])

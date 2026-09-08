@@ -102,17 +102,23 @@ func _test_phase_result_replay_and_tamper() -> void:
 	_eq(phase_two_restored["status"], Save.STATUS_OK, "phase 2 save replay")
 	_eq(phase_two_restored["campaign"].active_battles[0].combat_phase, 2,
 		"phase 2 replay 유지")
-	_ok(not campaign.issue_scn03_red_cliff_result("sun_liu_side").is_empty(),
-		"phase 2 result player 명령 발행")
-	campaign.step()
+	for expected_phase in [2, 3, 4, 5]:
+		_ok(not campaign.issue_red_cliff_player_command(battle.battle_id, "advance_phase").is_empty(),
+			"phase %d 계산 명령 발행" % expected_phase)
+		campaign.step()
 	_eq(battle.status, ActiveBattle.STATUS_RESOLVED, "result가 resolved 전이")
-	_eq(battle.result.get("winner_faction_id", ""), "sun_liu_side", "result 정본 값")
+	_ok(["cao_side", "sun_liu_side"].has(battle.result.get("winner_faction_id", "")), "result는 코어 계산값")
 	_ok(battle.result_applied, "result 적용 기록")
+	_eq(battle.phase_results.size(), 5, "접적부터 결착까지 phase 결과 다섯 개")
+	_ok(battle.phase_results.all(func(record): return record.has("attacker_loss") \
+		and record.has("defender_loss") and record.has("attacker_morale_after") \
+		and record.has("defender_morale_after")), "phase별 손실·사기 기록")
+	_ok(battle.campaign_result_applied, "함대 결과는 정확히 한 번 투영")
 	_eq(campaign.scn03_red_cliff_transition_news.size(), 3, "resolved news 한 번")
 	_eq(campaign.scn03_red_cliff_transition_news[2]["news_id"],
 		"%s:%s" % [Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID,
 		Campaign.SCN03_RED_CLIFF_TRANSITION_RESOLVED], "resolved news 안정 ID")
-	_ok(campaign.issue_scn03_red_cliff_result("cao_side").is_empty(), "resolved 뒤 reapply 거부")
+	_ok(campaign.issue_red_cliff_player_command(battle.battle_id, "advance_phase").is_empty(), "resolved 뒤 reapply 거부")
 	campaign.step()
 	_eq(campaign.scn03_red_cliff_transition_news.size(), 3, "후속 tick도 news 중복 없음")
 	var save := campaign.to_save_dict()
@@ -135,13 +141,13 @@ func _test_phase_result_replay_and_tamper() -> void:
 	_eq(Campaign.from_save_result(manifest_tamper, _data)["status"], Save.STATUS_VERIFICATION_FAILED,
 		"manifest 변조 검출")
 	var phase_tamper: Dictionary = save.duplicate(true)
-	phase_tamper["world"]["commands"][-1]["payload"]["phase"] = 1
+	phase_tamper["world"]["commands"][-1]["payload"]["kind"] = "unknown"
 	_eq(Campaign.from_save_result(phase_tamper, _data)["status"], Save.STATUS_PARTIAL_RECOVERY,
 		"phase 변조 구조 거부")
 	var result_tamper: Dictionary = save.duplicate(true)
-	result_tamper["world"]["commands"][-1]["payload"]["winner_faction_id"] = "cao_side"
-	_eq(Campaign.from_save_result(result_tamper, _data)["status"], Save.STATUS_VERIFICATION_FAILED,
-		"result 변조 지문 검출")
+	result_tamper["world"]["commands"][-1]["payload"]["payload"] = {"target_formation_id": "invalid"}
+	_eq(Campaign.from_save_result(result_tamper, _data)["status"], Save.STATUS_PARTIAL_RECOVERY,
+		"command 변조 구조 거부")
 	var reapply_tamper: Dictionary = save.duplicate(true)
 	var duplicate: Dictionary = reapply_tamper["world"]["commands"][-1].duplicate(true)
 	duplicate["seq"] = int(duplicate["seq"]) + 1

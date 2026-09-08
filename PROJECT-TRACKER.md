@@ -1,5 +1,7 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
+> **2026-09-08 DEMO-RC-LT-01 — 적벽대전 5페이즈 전투 및 플레이어블 데모 완성 — PARTIAL:** 현재 플레이 가능 구간은 **상단 `적벽` 데모 시작 → canonical 개전/뉴스 → 5페이즈(접적·포화·교전·강습·결착) → 코어 결과/뉴스 → 홈 복귀 → 명령 로그 재생**이다. DEMO-RC-01/02/03/04/05 자동 수용은 PASS: `test_demo_rc_01_playable_entry` 9/9, 적벽 phase/result 44/44, DEMO-RC-03/04 0 failures, DEMO-RC-QA E2E 0 failures, core 701/701이다. 우측 전투 뷰는 primitive 상자가 아닌 procedural 함선·추진광·tracer·debris·phase 카메라를 쓰며 2/3 궤도 지도와 동기화한다. 그러나 이 환경의 `user://` 파일 쓰기와 네이티브 1600×900 창 캡처/입력 표면 부재로 **DEMO-RC-QA-01 Windows 실기 수용은 PARTIAL**이며, 전체 데모 완료/커밋·push 완료로 승격하지 않는다.
+
 > **2026-09-08 Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화 — PASS:** 필수 폰트·P0-04 PNG는 모두 Git 추적이며 fresh checkout 단위시험 실패는 Godot import race였다. 두 pass import/cache 준비 뒤 35/35·701/0으로 정상화했다. `run_campaign.gd`는 HB 비교까지 총 400회를 실행하므로 110초 무출력은 hang이 아니다; isolated 4회 probe는 1.221초에 완주했다. campaign stage timeout을 900초로 맞췄다.
 
 > **2026-09-08 Q-05-LT-01 — 테스트·검산기 CI 기준화 및 자동 실패 게이트 구축 — PARTIAL:** 하위 `Q-05-01`~`Q-05-QA-01`의 종료 코드 감사, 검산기 실패 게이트, 11단계 로컬 실행기, SHA 고정 GitHub Actions workflow를 구현·커밋했다. 그러나 깨끗한 worktree에서 추적되지 않은 필수 폰트·승인 PNG 때문에 단위시험이 23건/690<701로 실패하고, 잠금 100회 캠페인도 유휴 hang을 재현했다. CI가 실패를 정확히 노출하는 것은 확인했지만 aggregate 0 및 원격 green은 미수용이다. 후속 **Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화**가 필요하다.

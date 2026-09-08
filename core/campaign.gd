@@ -41,6 +41,9 @@ const CMD_SCN03_RED_CLIFF_MANIFEST: String = "scn03_red_cliff_manifest"
 ## after the deterministic Contact → Barrage transition, then replayed from the
 ## normal player command log.
 const CMD_SCN03_RED_CLIFF_RESULT: String = "scn03_red_cliff_result"
+## DEMO-RC-02/03: the sole public battle-control command.  Its payload never
+## contains losses, morale, schemes, or a winner.
+const CMD_RED_CLIFF_PLAYER_COMMAND: String = "red_cliff_player_command"
 const CMD_BATTLE_FORMATION_CHANGE: String = "battle_formation_change"
 ## Transition-news IDs are derived from this canonical battle ID plus one fixed
 ## transition token; they never use UI order, text, or an incrementing counter.
@@ -593,22 +596,45 @@ func issue_scn03_red_cliff_manifest(cao_fleet_ids: Array, sun_liu_fleet_ids: Arr
 
 
 func issue_scn03_red_cliff_result(winner_faction_id: String, delay_ticks: int = 0) -> Dictionary:
+	# Deprecated DEMO-RC-01 boundary: a player may not provide a winner.
+	return {}
+
+
+## Public, log-backed controls for the playable Red-Cliffs battle.  The result
+## dictionary returned by World.issue is only an accepted command receipt; use
+## red_cliff_command_state() for renderable state and rejection reason.
+func issue_red_cliff_player_command(battle_id: String, kind: String,
+		payload: Dictionary = {}, delay_ticks: int = 0) -> Dictionary:
 	if world == null or world.scenario != "SCN-03" or not _uses_scn03_red_cliff_phase_rules() \
-			or delay_ticks < 0:
+			or delay_ticks < 0 or not _is_valid_red_cliff_player_command_payload(battle_id, kind, payload):
 		return {}
 	var battle := _scn03_red_cliff_battle()
-	if battle == null or battle.status != ActiveBattle.STATUS_ACTIVE or battle.combat_phase != 2 \
-			or battle.result_applied:
+	if battle == null or battle.battle_id != battle_id or battle.status != ActiveBattle.STATUS_ACTIVE:
 		return {}
-	var payload := {
-		"battle_id": battle.battle_id,
-		"phase": battle.combat_phase,
-		"winner_faction_id": winner_faction_id,
-	}
-	if not _is_valid_scn03_red_cliff_result_payload(payload) \
-			or _has_pending_scn03_red_cliff_result():
-		return {}
-	return world.issue(CMD_SCN03_RED_CLIFF_RESULT, payload, delay_ticks, "player")
+	return world.issue(CMD_RED_CLIFF_PLAYER_COMMAND, {"battle_id": battle_id,
+		"kind": kind, "payload": payload.duplicate(true)}, delay_ticks, "player")
+
+
+func red_cliff_command_state(battle_id: String) -> Dictionary:
+	var battle := _scn03_red_cliff_battle()
+	if battle == null or battle.battle_id != battle_id:
+		return {"accepted": false, "reason": "unknown_battle"}
+	return {"accepted": battle.status == ActiveBattle.STATUS_ACTIVE,
+		"reason": "resolved" if battle.status == ActiveBattle.STATUS_RESOLVED else "",
+		"phase": battle.combat_phase, "status": battle.status,
+		"can_advance": battle.status == ActiveBattle.STATUS_ACTIVE and not battle.ai_delegated,
+		"can_change_formation": battle.status == ActiveBattle.STATUS_ACTIVE and not battle.ai_delegated,
+		"ai_delegated": battle.ai_delegated, "player_commands": battle.player_commands.duplicate(true)}
+
+
+static func _is_valid_red_cliff_player_command_payload(battle_id: String, kind: String,
+		payload: Dictionary) -> bool:
+	if battle_id != SCN03_RED_CLIFF_PENDING_BATTLE_ID or not ["hold_formation", "change_formation", "advance_phase", "delegate_ai"].has(kind):
+		return false
+	if kind == "change_formation":
+		return payload.size() == 1 and payload.get("target_formation_id", null) is String \
+			and Formations.exists_id(String(payload["target_formation_id"]))
+	return payload.is_empty()
 
 
 func issue_battle_formation_change(battle_id: String, next_phase: int, fleet_id: int,
@@ -793,9 +819,15 @@ func _advance_scn03_red_cliff_pending_battle() -> void:
 			continue
 		if battle.status == ActiveBattle.STATUS_ACTIVE:
 			if _uses_scn03_red_cliff_phase_rules():
-				if battle.advance_red_cliff_phase(world.clock.tick):
+				if battle.combat_phase == 1 and world.clock.tick > battle.started_tick \
+						and _apply_red_cliff_phase_calculation(battle, 1, world.clock.tick):
+					_apply_red_cliff_result_once(battle)
 					_record_scn03_red_cliff_transition_news(battle,
 						SCN03_RED_CLIFF_TRANSITION_PHASE_2, world.clock.tick)
+				elif battle.ai_delegated and battle.combat_phase >= 2:
+					battle.record_ai_decision(battle.combat_phase, "advance_phase", world.clock.tick)
+					_apply_red_cliff_phase_calculation(battle, battle.combat_phase, world.clock.tick)
+					_apply_red_cliff_result_once(battle)
 			return
 		if battle.status != ActiveBattle.STATUS_PENDING:
 			return
@@ -819,9 +851,106 @@ func _advance_scn03_red_cliff_pending_battle() -> void:
 		battle.activate_red_cliff(attacker_ids, defender_ids,
 			scn03_red_cliff_manifest["fleet_roles"],
 			String(scn03_red_cliff_manifest["liu_contingent_id"]), world.clock.tick)
+		var attacker := _fleet_by_id(int(attacker_ids[0]))
+		var defender := _fleet_by_id(int(defender_ids[0]))
+		var attacker_ships := 0
+		var defender_ships := 0
+		for fleet_id in attacker_ids:
+			var fleet := _fleet_by_id(int(fleet_id))
+			attacker_ships += fleet.ships if fleet != null else 0
+		for fleet_id in defender_ids:
+			var fleet := _fleet_by_id(int(fleet_id))
+			defender_ships += fleet.ships if fleet != null else 0
+		battle.initialize_red_cliff_state(attacker_ships, defender_ships,
+			attacker.morale if attacker != null else 100, defender.morale if defender != null else 100,
+			Formations.id_for_name(attacker.formation) if attacker != null else Formations.PALJIN_ID,
+			Formations.id_for_name(defender.formation) if defender != null else Formations.PALJIN_ID)
 		_record_scn03_red_cliff_transition_news(battle,
 			SCN03_RED_CLIFF_TRANSITION_ACTIVE_PHASE_1, world.clock.tick)
 		return
+
+
+func _apply_red_cliff_phase_calculation(battle: ActiveBattle, phase: int, at_tick: int) -> bool:
+	if battle == null or battle.status != ActiveBattle.STATUS_ACTIVE or battle.combat_phase != phase:
+		return false
+	var attacker := _fleet_by_id(int(battle.attacker_fleet_ids[0])) if not battle.attacker_fleet_ids.is_empty() else null
+	var defender := _fleet_by_id(int(battle.defender_fleet_ids[0])) if not battle.defender_fleet_ids.is_empty() else null
+	if attacker == null or defender == null:
+		return false
+	var index := phase - 1
+	var attacker_stat := attacker.wits if index < 2 else attacker.command
+	var defender_stat := defender.wits if index < 2 else defender.command
+	var attacker_coeff := Battle.formation_adjusted_ship_coefficient_milli(1000,
+		battle.attacker_formation_id, battle.defender_formation_id, index, attacker.command,
+		attacker.staff_traits, "개활")
+	var defender_coeff := Battle.formation_adjusted_ship_coefficient_milli(1000,
+		battle.defender_formation_id, battle.attacker_formation_id, index, defender.command,
+		defender.staff_traits, "개활")
+	var attacker_power := Battle.combat_power_milli(battle.attacker_ships, attacker_coeff,
+		attacker_stat, index, battle.attacker_morale)
+	var defender_power := Battle.combat_power_milli(battle.defender_ships, defender_coeff,
+		defender_stat, index, battle.defender_morale)
+	var attacker_rate := Battle.loss_rate_milli(index, attacker_power, defender_power)
+	var defender_rate := Battle.loss_rate_milli(index, defender_power, attacker_power)
+	var schemes: Array[Dictionary] = []
+	# One fixed candidate per phase keeps the result independent of UI ordering.
+	var scheme_kinds: Array[int] = [Scheme.Kind.AMBUSH, Scheme.Kind.FIRE, Scheme.Kind.DISCORD,
+		Scheme.Kind.DECAPITATE, Scheme.Kind.LURE]
+	var scheme_kind: int = scheme_kinds[index]
+	var caster_is_attacker := index != 1
+	var chance := Scheme.success_chance_milli(scheme_kind, index,
+		attacker.wits if caster_is_attacker else defender.wits,
+		defender.wits if caster_is_attacker else attacker.wits,
+		battle.defender_morale if caster_is_attacker else battle.attacker_morale)
+	var roll := Rng.roll_for(world.rng_seed, Rng.DOMAIN_COMBAT, at_tick,
+		"%s|phase|%d|scheme" % [battle.battle_id, phase]) % 100000
+	if roll < chance:
+		var target_loss := (battle.defender_ships if caster_is_attacker else battle.attacker_ships) \
+			* Scheme.EFFECT_LOSS_MILLI[scheme_kind] / 100000
+		if caster_is_attacker:
+			defender_rate += Scheme.EFFECT_LOSS_MILLI[scheme_kind]
+		else:
+			attacker_rate += Scheme.EFFECT_LOSS_MILLI[scheme_kind]
+		schemes.append({"phase": phase, "kind": scheme_kind, "name": Scheme.NAMES[scheme_kind],
+			"caster": "cao_side" if caster_is_attacker else "sun_liu_side", "loss": target_loss})
+	var attacker_loss := mini(battle.attacker_ships, battle.attacker_ships * attacker_rate / 100000)
+	var defender_loss := mini(battle.defender_ships, battle.defender_ships * defender_rate / 100000)
+	return battle.apply_red_cliff_phase_outcome(at_tick, {"attacker_loss": attacker_loss,
+		"defender_loss": defender_loss,
+		"attacker_morale_delta": Battle.morale_delta(index, attacker_power, defender_power),
+		"defender_morale_delta": Battle.morale_delta(index, defender_power, attacker_power),
+		"schemes": schemes})
+
+
+## DEMO-RC-05 core-side result projection.  The phase engine is the only writer
+## of totals; this projection distributes those totals to existing fleets once,
+## without inventing territory effects.
+func _apply_red_cliff_result_once(battle: ActiveBattle) -> bool:
+	if battle == null or battle.status != ActiveBattle.STATUS_RESOLVED or battle.campaign_result_applied:
+		return false
+	_apply_red_cliff_side_result(battle.attacker_fleet_ids, battle.attacker_ships, battle.attacker_morale)
+	_apply_red_cliff_side_result(battle.defender_fleet_ids, battle.defender_ships, battle.defender_morale)
+	battle.campaign_result_applied = true
+	_record_scn03_red_cliff_transition_news(battle, SCN03_RED_CLIFF_TRANSITION_RESOLVED, battle.resolved_tick)
+	return true
+
+
+func _apply_red_cliff_side_result(fleet_ids: Array[String], total_ships: int, morale: int) -> void:
+	var eligible: Array[Fleet] = []
+	var baseline := 0
+	for raw_id in fleet_ids:
+		var fleet := _fleet_by_id(int(raw_id))
+		if fleet != null:
+			eligible.append(fleet)
+			baseline += maxi(0, fleet.ships)
+	var remaining := maxi(0, total_ships)
+	for i in eligible.size():
+		var fleet := eligible[i]
+		var assigned := remaining if i == eligible.size() - 1 else \
+			(mini(remaining, fleet.ships * maxi(0, total_ships) / maxi(1, baseline)))
+		fleet.ships = assigned
+		fleet.morale = clampi(morale, 0, Battle.MORALE_MAX)
+		remaining -= assigned
 
 
 func _scn03_red_cliff_manifest_arrival_status(manifest: Dictionary) -> Dictionary:
@@ -1038,6 +1167,38 @@ func _apply_arrived() -> void:
 			if String(c.get("origin", "player")) == "player" \
 					and _record_scn03_red_cliff_manifest(manifest_payload):
 				cmds_applied += 1
+			else:
+				cmds_rejected += 1
+			continue
+		if String(c.get("kind", "")) == CMD_RED_CLIFF_PLAYER_COMMAND:
+			var control: Dictionary = c.get("payload", {})
+			var control_kind := String(control.get("kind", ""))
+			var control_payload: Dictionary = control.get("payload", {})
+			var control_battle := _scn03_red_cliff_battle()
+			if String(c.get("origin", "player")) != "player" or control_battle == null \
+					or control_battle.status != ActiveBattle.STATUS_ACTIVE \
+					or not _is_valid_red_cliff_player_command_payload(String(control.get("battle_id", "")), control_kind, control_payload):
+				cmds_rejected += 1
+				continue
+			var accepted := false
+			if control_kind == "hold_formation":
+				accepted = not control_battle.ai_delegated
+			elif control_kind == "change_formation":
+				var target := String(control_payload["target_formation_id"])
+				if not control_battle.ai_delegated and Formations.exists_id(target):
+					control_battle.attacker_formation_id = target
+					accepted = true
+			elif control_kind == "advance_phase":
+				if not control_battle.ai_delegated and control_battle.combat_phase >= 2:
+					accepted = _apply_red_cliff_phase_calculation(control_battle, control_battle.combat_phase, world.clock.tick)
+			elif control_kind == "delegate_ai":
+				if not control_battle.ai_delegated:
+					control_battle.ai_delegated = true
+					accepted = true
+			if accepted:
+				control_battle.record_player_command(control_kind, int(c.get("seq", -1)), world.clock.tick)
+				cmds_applied += 1
+				_apply_red_cliff_result_once(control_battle)
 			else:
 				cmds_rejected += 1
 			continue
@@ -2381,6 +2542,12 @@ func digest() -> int:
 				h = Save._fold(h, Rng._hash_string(String(result_payload.get("battle_id", ""))))
 				h = Save._fold(h, int(result_payload.get("phase", -1)))
 				h = Save._fold(h, Rng._hash_string(String(result_payload.get("winner_faction_id", ""))))
+			elif String(c["kind"]) == CMD_RED_CLIFF_PLAYER_COMMAND:
+				var control_payload: Dictionary = c.get("payload", {})
+				h = Save._fold(h, Rng._hash_string(String(control_payload.get("battle_id", ""))))
+				h = Save._fold(h, Rng._hash_string(String(control_payload.get("kind", ""))))
+				var nested: Dictionary = control_payload.get("payload", {})
+				h = Save._fold(h, Rng._hash_string(String(nested.get("target_formation_id", ""))))
 			elif String(c["kind"]) == CMD_BATTLE_FORMATION_CHANGE:
 				var formation_payload: Dictionary = c.get("payload", {})
 				h = Save._fold(h, Rng._hash_string(String(formation_payload.get("battle_id", ""))))

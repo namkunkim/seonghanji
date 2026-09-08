@@ -26,7 +26,7 @@ extends RefCounted
 const SAVE_VERSION := 1
 ## RS-0.4 adds replay-derived Red-Cliffs transition news. Older minor
 ## generations remain loadable on their original digest path.
-const CURRENT_RULESET := "RS-0.4.0"
+const CURRENT_RULESET := "RS-0.5.0"
 
 const STATUS_OK := "ok"
 const STATUS_OLD_MINOR := "old_minor"
@@ -246,6 +246,13 @@ static func _command_error(value, index: int) -> String:
 		var result_payload: Dictionary = c.get("payload", {})
 		if not Campaign._is_valid_scn03_red_cliff_result_payload(result_payload):
 			return "world.commands[%d].payload: 허용되지 않은 적벽 active result" % index
+	if String(c["kind"]) == Campaign.CMD_RED_CLIFF_PLAYER_COMMAND:
+		var control: Dictionary = c.get("payload", {})
+		if control.size() != 3 or not control.get("battle_id", null) is String \
+				or not control.get("kind", null) is String or not control.get("payload", null) is Dictionary \
+				or not Campaign._is_valid_red_cliff_player_command_payload(String(control["battle_id"]),
+					String(control["kind"]), control["payload"]):
+			return "world.commands[%d].payload: 허용되지 않은 적벽 플레이어 명령" % index
 	return ""
 
 

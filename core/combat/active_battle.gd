@@ -48,6 +48,23 @@ var cancellation_reason: String = ""
 ## Reserved deterministic anchor for a later phase engine. It consumes no Rng stream.
 var rng_anchor: String = ""
 
+## DEMO-RC-02 persistent state. It is replay-derived from commands, never a save
+## snapshot authority.
+var phase_started_tick: int = -1
+var phase_ended_ticks: Dictionary = {}
+var attacker_ships: int = 0
+var defender_ships: int = 0
+var attacker_morale: int = 100
+var defender_morale: int = 100
+var attacker_formation_id: String = ""
+var defender_formation_id: String = ""
+var applied_schemes: Array[Dictionary] = []
+var phase_results: Array[Dictionary] = []
+var player_commands: Array[Dictionary] = []
+var ai_decisions: Array[Dictionary] = []
+var ai_delegated: bool = false
+var campaign_result_applied: bool = false
+
 ## Pending does not select forces or assign roles. Keep every participant surface
 ## explicitly empty until activation owns that decision.
 var attacker_faction_id: String = ""
@@ -91,6 +108,20 @@ func _normalize_pending_identity() -> void:
 	cancelled_tick = -1
 	cancellation_reason = ""
 	liu_contingent_id = ""
+	phase_started_tick = -1
+	phase_ended_ticks.clear()
+	attacker_ships = 0
+	defender_ships = 0
+	attacker_morale = 100
+	defender_morale = 100
+	attacker_formation_id = ""
+	defender_formation_id = ""
+	applied_schemes.clear()
+	phase_results.clear()
+	player_commands.clear()
+	ai_decisions.clear()
+	ai_delegated = false
+	campaign_result_applied = false
 
 
 func activate_red_cliff(attacker_ids: Array[String], defender_ids: Array[String],
@@ -116,6 +147,20 @@ func activate_red_cliff(attacker_ids: Array[String], defender_ids: Array[String]
 	cancellation_reason = ""
 	entry_available = true
 	status = STATUS_ACTIVE
+	phase_started_tick = at_tick
+
+
+func initialize_red_cliff_state(attacker_ship_count: int, defender_ship_count: int,
+		attacker_initial_morale: int, defender_initial_morale: int,
+		attacker_initial_formation: String, defender_initial_formation: String) -> void:
+	if status != STATUS_ACTIVE or combat_phase != 1 or not phase_results.is_empty():
+		return
+	attacker_ships = maxi(0, attacker_ship_count)
+	defender_ships = maxi(0, defender_ship_count)
+	attacker_morale = clampi(attacker_initial_morale, 0, Battle.MORALE_MAX)
+	defender_morale = clampi(defender_initial_morale, 0, Battle.MORALE_MAX)
+	attacker_formation_id = attacker_initial_formation
+	defender_formation_id = defender_initial_formation
 
 
 func cancel_pending(at_tick: int, reason: String) -> void:
@@ -134,20 +179,73 @@ func advance_red_cliff_phase(at_tick: int) -> bool:
 		return false
 	combat_phase = 2
 	phase_advanced_tick = at_tick
+	phase_ended_ticks[1] = at_tick
+	phase_started_tick = at_tick
 	return true
 
 
-func resolve_red_cliff(winner_faction_id: String, at_tick: int) -> bool:
-	if status != STATUS_ACTIVE or combat_phase != 2 or result_applied:
+## Apply exactly the current phase and expose only the next sequential phase.
+## Campaign owns arithmetic; ActiveBattle owns state-machine invariants.
+func apply_red_cliff_phase_outcome(at_tick: int, outcome: Dictionary) -> bool:
+	if status != STATUS_ACTIVE or combat_phase < 1 or combat_phase > 5:
 		return false
-	if winner_faction_id != "cao_side" and winner_faction_id != "sun_liu_side":
+	if phase_results.size() >= combat_phase or at_tick < phase_started_tick:
 		return false
-	result = {"winner_faction_id": winner_faction_id}
+	for key in ["attacker_loss", "defender_loss", "attacker_morale_delta", "defender_morale_delta", "schemes"]:
+		if not outcome.has(key):
+			return false
+	var record := outcome.duplicate(true)
+	record["phase"] = combat_phase
+	record["started_tick"] = phase_started_tick
+	record["ended_tick"] = at_tick
+	attacker_ships = maxi(0, attacker_ships - maxi(0, int(record["attacker_loss"])))
+	defender_ships = maxi(0, defender_ships - maxi(0, int(record["defender_loss"])))
+	attacker_morale = clampi(attacker_morale + int(record["attacker_morale_delta"]), 0, Battle.MORALE_MAX)
+	defender_morale = clampi(defender_morale + int(record["defender_morale_delta"]), 0, Battle.MORALE_MAX)
+	record["attacker_ships_after"] = attacker_ships
+	record["defender_ships_after"] = defender_ships
+	record["attacker_morale_after"] = attacker_morale
+	record["defender_morale_after"] = defender_morale
+	phase_results.append(record)
+	phase_ended_ticks[combat_phase] = at_tick
+	for scheme in record["schemes"]:
+		applied_schemes.append(scheme.duplicate(true))
+	# A destroyed or broken side is recorded in this phase, but DEMO-RC keeps the
+	# fixed five-phase presentation: resolution occurs only in phase five.
+	record["attacker_collapsed"] = attacker_ships <= 0 or attacker_morale <= 0
+	record["defender_collapsed"] = defender_ships <= 0 or defender_morale <= 0
+	if combat_phase == 5:
+		var attacker_score := attacker_ships * 1000 + attacker_morale * 10
+		var defender_score := defender_ships * 1000 + defender_morale * 10
+		_resolve_calculated("cao_side" if attacker_score >= defender_score else "sun_liu_side", at_tick, "phase_five_complete")
+		return true
+	combat_phase += 1
+	phase_advanced_tick = at_tick
+	phase_started_tick = at_tick
+	return true
+
+
+func record_player_command(kind: String, seq: int, at_tick: int) -> void:
+	player_commands.append({"kind": kind, "seq": seq, "tick": at_tick})
+
+
+func record_ai_decision(phase: int, decision: String, at_tick: int) -> void:
+	ai_decisions.append({"phase": phase, "decision": decision, "tick": at_tick})
+
+
+func _resolve_calculated(winner_faction_id: String, at_tick: int, reason: String) -> void:
+	result = {"winner_faction_id": winner_faction_id, "reason": reason,
+		"attacker_ships": attacker_ships, "defender_ships": defender_ships,
+		"attacker_morale": attacker_morale, "defender_morale": defender_morale}
 	result_applied = true
 	resolved_tick = at_tick
 	entry_available = false
 	status = STATUS_RESOLVED
-	return true
+
+
+func resolve_red_cliff(winner_faction_id: String, at_tick: int) -> bool:
+	# Kept only for source compatibility: winner selection is no longer an input.
+	return false
 
 
 ## Ordered scalar values only: Campaign.digest owns the hash and avoids Dictionary order.
@@ -178,7 +276,31 @@ func digest_values() -> Array:
 		participant_roles.size(),
 		Rng._hash_string(liu_contingent_id),
 		1 if entry_available else 0,
+		phase_started_tick,
+		attacker_ships,
+		defender_ships,
+		attacker_morale,
+		defender_morale,
+		Rng._hash_string(attacker_formation_id),
+		Rng._hash_string(defender_formation_id),
+		phase_results.size(),
+		applied_schemes.size(),
+		player_commands.size(),
+		ai_decisions.size(),
+		1 if ai_delegated else 0,
+		1 if campaign_result_applied else 0,
 	]
+	for phase in range(1, 6):
+		values.append(int(phase_ended_ticks.get(phase, -1)))
+	for record in phase_results:
+		for key in ["phase", "started_tick", "ended_tick", "attacker_loss", "defender_loss",
+			"attacker_morale_delta", "defender_morale_delta", "attacker_ships_after",
+			"defender_ships_after", "attacker_morale_after", "defender_morale_after"]:
+			values.append(int(record.get(key, -1)))
+	for scheme in applied_schemes:
+		values.append(int(scheme.get("phase", -1)))
+		values.append(int(scheme.get("kind", -1)))
+		values.append(Rng._hash_string(String(scheme.get("caster", ""))))
 	for fleet_id in attacker_fleet_ids:
 		values.append(Rng._hash_string(fleet_id))
 	for fleet_id in defender_fleet_ids:

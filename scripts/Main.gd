@@ -20,9 +20,12 @@ var top_route_buttons: Dictionary = {}
 var red_cliff_banner: PanelContainer
 var red_cliff_banner_action: Button
 var red_cliff_banner_headline: Label
+var red_cliff_demo_button: Button
+var red_cliff_demo_mode := false
 var battle_screen: PanelContainer
 var battle_screen_state: Label
 var battle_screen_battle_id := ""
+var red_cliff_battle_view: RedCliffBattleView
 var active_menu_id := "overview"
 var map_context_menu_id := "overview"
 var submenu: Control
@@ -440,6 +443,7 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     battle_screen = null
     battle_screen_state = null
     battle_screen_battle_id = ""
+    red_cliff_battle_view = null
     if map != null:
         map.visible = true
     ui_layer = CanvasLayer.new()
@@ -537,6 +541,7 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
         top_h.add_child(b)
 
     for utility_data in [
+        ["red_cliff_demo", "적벽", "결정론적 SCN-03 적벽대전 데모를 시작합니다.", "데모"],
         ["pause", "II", "시간 진행을 일시정지하거나 재개합니다.", "시간"],
         ["speed", "1x", "시간 배속을 1배·2배·4배로 전환합니다.", "배속"],
         ["mail", "✉", "도착한 우편과 소식을 엽니다.", "우편"],
@@ -558,6 +563,8 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
         utility.set_meta("route_id", String(utility_data[0]))
         utility.pressed.connect(_route_home_action.bind(String(utility_data[0]), String(utility_data[3]), String(utility_data[1]), {}))
         top_route_buttons[String(utility_data[0])] = utility
+        if String(utility_data[0]) == "red_cliff_demo":
+            red_cliff_demo_button = utility
         if String(utility_data[0]) == "pause":
             pause_button = utility
         elif String(utility_data[0]) == "speed":
@@ -941,6 +948,8 @@ func _open_red_cliff_battle_entry_shell(battle_id: String) -> bool:
     map.visible = false
     battle_screen.visible = true
     _render_red_cliff_battle_state(battle)
+    if is_instance_valid(red_cliff_battle_view):
+        red_cliff_battle_view.configure(campaign, battle_id)
     return true
 
 
@@ -1010,6 +1019,13 @@ func _ensure_red_cliff_battle_entry_shell() -> void:
     close.pressed.connect(_close_red_cliff_battle_entry_shell)
     content.add_child(close)
 
+    # The retained labels preserve the existing canonical-observation contract;
+    # the full-rect child below is the DEMO-RC-03/04 interactive presentation.
+    red_cliff_battle_view = RedCliffBattleView.new()
+    red_cliff_battle_view.name = "RedCliffBattleView"
+    red_cliff_battle_view.return_requested.connect(_close_red_cliff_battle_entry_shell)
+    battle_screen.add_child(red_cliff_battle_view)
+
 
 func _render_red_cliff_battle_state(battle) -> void:
     if battle_screen_state == null:
@@ -1043,6 +1059,8 @@ func _refresh_battle_entry_shell() -> void:
         battle_screen_state.text = "상태: 현재 활성 전투가 아닙니다."
         return
     _render_red_cliff_battle_state(battle)
+    if is_instance_valid(red_cliff_battle_view):
+        red_cliff_battle_view.configure(campaign, battle_screen_battle_id)
 
 
 func _set_home_ui_visible(visible: bool) -> void:
@@ -1219,6 +1237,9 @@ func _open_resource_route(route_id: String, title: String, icon: String) -> void
 
 func _route_home_action(route_id: String, title: String = "", icon: String = "", payload: Dictionary = {}) -> void:
     match route_id:
+        "red_cliff_demo":
+            _start_red_cliff_demo()
+            return
         "pause":
             campaign.world.clock.paused = not campaign.world.clock.paused
             if pause_button:
@@ -1260,6 +1281,57 @@ func _route_home_action(route_id: String, title: String = "", icon: String = "",
             _open_home_submenu(route_id, title, icon, payload)
         _:
             _open_home_submenu(route_id, title, icon, payload)
+
+
+## DEMO-RC-01 product entry. It uses only Campaign's public command surface;
+## no fixture, private ledger mutation, or injected battle snapshot is involved.
+func _start_red_cliff_demo() -> bool:
+    if data == null:
+        return false
+    var demo := CampaignScript.scenario_03(data, 20803)
+    demo.ai_domestic_enabled = false
+    for event in [
+        [Campaign.SCN03_EVENT03, {"cao_southward_complete": true}],
+        [Campaign.SCN03_EVENT04, {"sun_quan_independent": true}],
+        [Campaign.SCN03_EVENT06, {"liu_bei_hostile_to_cao": true}],
+        [Campaign.SCN03_EVENT07, {"sun_liu_military_pact": true, "yangtze_defense_line": true}],
+    ]:
+        if demo.issue_scn03_event_outcome(String(event[0]), event[1]).is_empty():
+            return false
+        demo.step()
+    var cao_id := -1
+    var sun_id := -1
+    for fleet in demo.fleets:
+        if String(fleet.owner) == Campaign.SCN03_CAO_OWNER and cao_id < 0:
+            cao_id = int(fleet.id)
+        elif String(fleet.owner) == Campaign.SCN03_SUN_OWNER and sun_id < 0:
+            sun_id = int(fleet.id)
+    if cao_id < 0 or sun_id < 0:
+        return false
+    if demo.issue_scn03_red_cliff_manifest([cao_id], [sun_id], {
+        str(cao_id): "attack", str(sun_id): "defense",
+    }).is_empty():
+        return false
+    demo.step()
+    for entry in [[Campaign.SCN03_CAO_OWNER, cao_id], [Campaign.SCN03_SUN_OWNER, sun_id]]:
+        demo.world.issue(Domestic.CMD_FLEET_MOVE, {
+            "faction": String(entry[0]), "fleet": int(entry[1]), "region": "RGN-04",
+        }, 0, "player")
+    for _tick in 800:
+        if demo.active_battles.size() == 1 \
+                and demo.active_battles[0].status == ActiveBattle.STATUS_ACTIVE:
+            campaign = demo
+            red_cliff_demo_mode = true
+            if red_cliff_demo_button != null:
+                red_cliff_demo_button.text = "DEMO"
+                red_cliff_demo_button.tooltip_text = "적벽대전 데모 모드 · phase 1에서 대기 중"
+            campaign.world.clock.paused = true
+            playback_speed_index = 0
+            _refresh_home_snapshot()
+            return true
+        demo.step()
+    return false
+
 
 func _open_home_submenu(route_id: String, title: String, icon: String, route_payload: Dictionary = {}) -> void:
     _ensure_submenu()
