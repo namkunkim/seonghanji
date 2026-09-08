@@ -31,6 +31,16 @@ func _run() -> void:
 		"evidence owns exactly one static battle image")
 	_ok(evidence.find_children("*", "SubViewport", true, false).is_empty(),
 		"static evidence creates no realtime 3D viewport")
+	map.set_battle(1, "접적", 140, 120, 113, 120)
+	var contact_anchor: Vector2 = map.fleet_anchor_points()["allied_primary"]
+	var hub := Vector2(map.size.x * .52, map.size.y * .55)
+	map.set_battle(4, "강습", 140, 120, 113, 120)
+	var assault_anchor: Vector2 = map.fleet_anchor_points()["allied_primary"]
+	_ok(assault_anchor.distance_to(hub) < contact_anchor.distance_to(hub),
+		"fleet advances along its route as combat phases progress")
+	var clock_before: float = map.clock
+	map._process(.5)
+	_ok(map.clock > clock_before, "tactical route animation advances continuously")
 	# The image remains static while authoritative figures continue to update.
 	evidence.set_battle(4, "강습", 140, 0, 113, 0)
 	map.set_battle(4, "강습", 140, 0, 113, 0)

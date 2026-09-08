@@ -96,9 +96,21 @@ class CommandDeck extends Control:
 
 class TacticalMap extends Control:
 	var phase:=0; var phase_name:="대기"; var a:=0; var d:=0; var am:=0; var dm:=0
-	func _ready() -> void: custom_minimum_size=Vector2(650,400); queue_redraw()
+	var clock := 0.0
+	func _ready() -> void: custom_minimum_size=Vector2(650,400); set_process(true); queue_redraw()
+	func _process(delta: float) -> void: clock = fmod(clock + delta, 120.0); queue_redraw()
 	func set_battle(p:int,n:String,aa:int,dd:int,aam:int,ddm:int)->void: phase=p;phase_name=n;a=aa;d=dd;am=aam;dm=ddm;queue_redraw()
 	func fleet_icon_counts()->Vector2i: return Vector2i(mini(d,20),mini(a,20))
+	func route_progress() -> float: return clampf(.10 + float(maxi(phase, 1) - 1) * .17, .10, .82)
+	func fleet_anchor_points() -> Dictionary:
+		var hub := Vector2(size.x*.52,size.y*.55)
+		var progress := route_progress()
+		return {
+			"allied_primary": _route_point(Vector2(size.x*.18,size.y*.37),Vector2(size.x*.39,size.y*.30),hub,progress),
+			"allied_secondary": _route_point(Vector2(size.x*.21,size.y*.72),Vector2(size.x*.36,size.y*.70),hub,progress),
+			"wei_primary": _route_point(Vector2(size.x*.82,size.y*.31),Vector2(size.x*.70,size.y*.31),hub,progress),
+			"wei_secondary": _route_point(Vector2(size.x*.78,size.y*.70),Vector2(size.x*.67,size.y*.69),hub,progress),
+		}
 	func _draw() -> void:
 		var font:=get_theme_default_font(); var hub:=Vector2(size.x*.52,size.y*.55)
 		# A painted, layered board gives the battlefield depth before tactical marks land on it.
@@ -123,18 +135,27 @@ class TacticalMap extends Control:
 		# canonical live count. A zero-ship faction leaves no current route or fleet.
 		if d > 0:
 			var allied_icons := fleet_icon_counts().x; var allied_first := ceili(float(allied_icons)*.55); var allied_second := allied_icons-allied_first
-			_route_curve(Vector2(size.x*.18,size.y*.37),Vector2(size.x*.39,size.y*.30),hub,Color("e66b5f"),true)
-			_fleet_wedge(Vector2(size.x*.22,size.y*.39),Color("eb685c"),"우비 돌격단",allied_first,0.0,true)
+			var allied_from := Vector2(size.x*.18,size.y*.37); var allied_control := Vector2(size.x*.39,size.y*.30)
+			_route_curve(allied_from,allied_control,hub,Color("e66b5f"),true)
+			var allied_t := clampf(route_progress()+sin(clock*.9)*.008,.0,.9)
+			_fleet_wedge(_route_point(allied_from,allied_control,hub,allied_t),Color("eb685c"),"우비 돌격단",allied_first,_route_tangent(allied_from,allied_control,hub,allied_t).angle(),true)
 			if allied_second > 0:
-				_route_curve(Vector2(size.x*.21,size.y*.72),Vector2(size.x*.36,size.y*.70),hub,Color("e66b5f"),true)
-				_fleet_wedge(Vector2(size.x*.23,size.y*.70),Color("d94f50"),"손권 주력",allied_second,-.28,true)
+				var allied_two_from := Vector2(size.x*.21,size.y*.72); var allied_two_control := Vector2(size.x*.36,size.y*.70)
+				_route_curve(allied_two_from,allied_two_control,hub,Color("e66b5f"),true)
+				var allied_two_t := clampf(route_progress()*.92+sin(clock*.82+1.4)*.007,.0,.9)
+				_fleet_wedge(_route_point(allied_two_from,allied_two_control,hub,allied_two_t),Color("d94f50"),"손권 주력",allied_second,_route_tangent(allied_two_from,allied_two_control,hub,allied_two_t).angle(),true)
 		if a > 0:
 			var wei_icons := fleet_icon_counts().y; var wei_first := ceili(float(wei_icons)*.55); var wei_second := wei_icons-wei_first
-			_route_curve(Vector2(size.x*.82,size.y*.31),Vector2(size.x*.70,size.y*.31),hub,Color("63bef1"),false)
-			_fleet_wedge(Vector2(size.x*.79,size.y*.34),Color("6bcafa"),"위군 본대",wei_first,PI,true)
+			var wei_from := Vector2(size.x*.82,size.y*.31); var wei_control := Vector2(size.x*.70,size.y*.31)
+			_route_curve(wei_from,wei_control,hub,Color("63bef1"),false)
+			var wei_t := clampf(route_progress()*.96+sin(clock*.88+.7)*.008,.0,.9)
+			_fleet_wedge(_route_point(wei_from,wei_control,hub,wei_t),Color("6bcafa"),"위군 본대",wei_first,_route_tangent(wei_from,wei_control,hub,wei_t).angle(),true)
 			if wei_second > 0:
-				_route_curve(Vector2(size.x*.78,size.y*.70),Vector2(size.x*.67,size.y*.69),hub,Color("63bef1"),false)
-				_fleet_wedge(Vector2(size.x*.76,size.y*.69),Color("53aee1"),"장료 기동대",wei_second,2.72,true)
+				var wei_two_from := Vector2(size.x*.78,size.y*.70); var wei_two_control := Vector2(size.x*.67,size.y*.69)
+				_route_curve(wei_two_from,wei_two_control,hub,Color("63bef1"),false)
+				var wei_two_t := clampf(route_progress()*.88+sin(clock*.78+2.1)*.007,.0,.9)
+				_fleet_wedge(_route_point(wei_two_from,wei_two_control,hub,wei_two_t),Color("53aee1"),"장료 기동대",wei_second,_route_tangent(wei_two_from,wei_two_control,hub,wei_two_t).angle(),true)
+		_engagement_fx(hub)
 		_card(Rect2(14,54,160,54),"연합 전력", "%d척  ·  사기 %d" % [d,dm],Color("df6158"))
 		_card(Rect2(size.x-174,54,160,54),"위군 전력", "%d척  ·  사기 %d" % [a,am],Color("62bdf1"))
 		draw_rect(Rect2(0,size.y-30,size.x,30),Color("07111a",.94)); draw_string(font,Vector2(14,size.y-10),"◆ 주요 합선   ─ ─ 이동 경로   ◌ 교전 구역   △ 함대 전열",HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("a7bac4"))
@@ -143,9 +164,30 @@ class TacticalMap extends Control:
 		for angle in [0.0,PI*.5,PI,PI*1.5]: draw_line(pos+Vector2(12,0).rotated(angle),pos+Vector2(23,0).rotated(angle),Color("d9b464"),3)
 		draw_string(font,pos+Vector2(-56,80),"구지 거점\n점령 목표",HORIZONTAL_ALIGNMENT_CENTER,112,13,Color("f3e2b7"))
 	func _route_curve(from:Vector2,control:Vector2,to:Vector2,color:Color,_red:bool)->void:
-		var points:=PackedVector2Array(); for i in 17: var t:=float(i)/16.0; points.append(from.lerp(control,t).lerp(control.lerp(to,t),t))
+		var points:=PackedVector2Array(); for i in 17: var t:=float(i)/16.0; points.append(_route_point(from,control,to,t))
 		for i in points.size()-1: draw_dashed_line(points[i],points[i+1],color,1.8,7.0)
 		var tip:=points[points.size()-1]; var direction:=(tip-points[points.size()-2]).normalized(); var side:=Vector2(-direction.y,direction.x); draw_colored_polygon(PackedVector2Array([tip,tip-direction*10+side*5,tip-direction*10-side*5]),color)
+		for marker in 4:
+			var marker_t := fposmod(clock*.075+float(marker)*.25,1.0)
+			draw_circle(_route_point(from,control,to,marker_t),2.2,color.lightened(.35))
+	func _route_point(from:Vector2,control:Vector2,to:Vector2,t:float)->Vector2:
+		return from.lerp(control,t).lerp(control.lerp(to,t),t)
+	func _route_tangent(from:Vector2,control:Vector2,to:Vector2,t:float)->Vector2:
+		return ((control-from)*(2.0*(1.0-t))+(to-control)*(2.0*t)).normalized()
+	func _engagement_fx(hub:Vector2)->void:
+		if phase < 2 or a <= 0 or d <= 0: return
+		var pulse := .5+.5*sin(clock*3.2)
+		draw_arc(hub,58.0+pulse*9.0,0,TAU,48,Color(1.0,.62,.25,.22+.28*pulse),2.0)
+		var salvo_count := mini(phase+1,6)
+		for i in salvo_count:
+			var angle := clock*.38+float(i)*TAU/float(salvo_count)
+			var outer := hub+Vector2(36.0+float(i%2)*16.0,0).rotated(angle)
+			var inner := hub+Vector2(9,0).rotated(angle+PI)
+			draw_line(outer,inner,Color("ffbd68",.42+.35*abs(sin(clock*4.0+i))),1.4)
+		if phase >= 3:
+			for i in phase-1:
+				var burst := hub+Vector2(18.0+float(i)*11.0,0).rotated(float(i)*2.1+clock*.12)
+				draw_circle(burst,3.0+2.2*abs(sin(clock*3.8+i)),Color("ff7a49",.72))
 	func _fleet_wedge(pos:Vector2,color:Color,label:String,count:int,angle:float,_active:bool)->void:
 		var font:=get_theme_default_font(); draw_circle(pos,33,Color(color,.055)); draw_arc(pos,33,0,TAU,32,Color(color,.55),1)
 		for i in count:
