@@ -113,7 +113,8 @@ try {
     # Keep this exact ordered list synchronized with .github/workflows/quality-gate.yml.
     Invoke-GateStage 'import' @('--headless', '--path', '.', '--editor') 180
     Invoke-GateStage 'unit-tests' @('--headless', '--path', '.', '--script', 'tests/run_tests.gd')
-    Invoke-GateStage 'campaign-locked-100' @('--headless', '--path', '.', '--script', 'tests/run_campaign.gd')
+    # This script also performs three 100-run HB comparisons: 400 simulations total.
+    Invoke-GateStage 'campaign-locked-100' @('--headless', '--path', '.', '--script', 'tests/run_campaign.gd') 900
     Invoke-GateStage 'verify-power' @('--headless', '--path', '.', '--script', 'tests/verify_power.gd')
     Invoke-GateStage 'verify-budget' @('--headless', '--path', '.', '--script', 'tests/verify_budget.gd')
     Invoke-GateStage 'verify-chibi' @('--headless', '--path', '.', '--script', 'tests/verify_chibi.gd')

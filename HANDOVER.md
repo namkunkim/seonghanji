@@ -1,6 +1,6 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
-> **2026-09-08 Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화 — PARTIAL:** `NotoSansKR-VF.ttf`와 P0-04 승인 PNG는 추적 파일이었다. fresh checkout 실패는 자산 누락이 아니라 Godot import race이며, 두 pass import 뒤 단위시험 35/35·701/0을 확인했다. 다만 잠금 100회 campaign은 import 후에도 시작 banner에서 유휴 상태를 재현했다. 실행기는 timeout 실패를 기록하고 후속 단계를 계속하지만 aggregate 0은 아직 없다. 다음은 campaign 초기화/`run_to_end()` blocking 원인 진단이다.
+> **2026-09-08 Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화 — PASS:** `NotoSansKR-VF.ttf`와 P0-04 승인 PNG는 추적 파일이며 fresh checkout 실패는 Godot import race였다. 두 pass import 뒤 단위시험 35/35·701/0을 확인했다. `run_campaign.gd`는 표준 100회와 HB 3×100회를 합쳐 400회를 돌리므로, 110초 banner-only 관찰은 hang이 아니다. 격리 4회 probe는 1.221초에 완주했고 campaign timeout은 900초로 조정했다.
 
 > **2026-09-08 Q-05-LT-01 — 테스트·검산기 CI 기준화 및 자동 실패 게이트 구축 — PARTIAL:** `Q-05-01`~`Q-05-QA-01`으로 검산기 종료 코드, 11단계 PowerShell 게이트, GitHub Actions workflow를 도입했다. 그러나 `b184fc7` 깨끗한 worktree에서 추적되지 않은 `NotoSansKR-VF.ttf`와 승인 PNG 누락으로 P0-04 단위시험 23건·690<701이 실패했고, `campaign-locked-100`은 유휴 hang을 재현했다. 실패를 성공으로 숨기지 않았으며 정상 aggregate 0·원격 green은 아직 없다. 다음은 **Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화**다.
 

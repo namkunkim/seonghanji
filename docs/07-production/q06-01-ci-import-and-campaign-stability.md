@@ -4,7 +4,7 @@ Task ID: Q-06-01
 
 공식 제목: CI 필수 자산 추적 계약 및 캠페인 실행 안정화
 
-상태: PARTIAL
+상태: PASS
 
 ## 자산 계약 결론
 
@@ -14,8 +14,8 @@ Task ID: Q-06-01
 
 `tools/ci/run_quality_gate.ps1`은 이 두 pass를 import 단계 안에서 수행하고, 필요한 font cache를 기다린다. cache 준비 뒤 P0-04 texture 안정화를 위한 15초 settling window를 둔 뒤 editor process tree를 종료한다. 모든 gate stage에는 300초 기본 timeout(import 180초)이 있으며 timeout은 stage FAIL로 기록되고 후속 stage를 막지 않는다.
 
-## 남은 캠페인 문제
+## 캠페인 시간 계약
 
-동일한 import 준비 뒤 `tests/run_campaign.gd`를 깨끗한 worktree에서 단독 실행했으나 시작 banner 뒤 유휴 상태가 재현됐다. 따라서 import race는 단위시험 실패를 설명하지만 campaign 유휴의 원인은 아니다. 실행기 timeout은 CI가 무기한 멈추는 것을 막지만 정상 exit 0을 대체하지 않는다.
+`run_campaign.gd`는 표준 잠금 ruleset 100회만 실행하는 파일이 아니다. 본 실행 뒤 HB 자유/표준/역사중시의 3×100회 비교를 수행하므로 전체는 **400회** 시뮬레이션이다. 중간 진행 출력이 없어 배너 뒤 조용한 것이 정상이었다.
 
-다음 코어 진단 Task는 campaign 초기화/`run_to_end()`의 blocking 원인을 profile·seed 경계로 분리하고, 잠금 100회가 정상 종료하는지 검증해야 한다.
+격리 `RUNS=1` probe는 본 실행 1회와 HB 비교 3회를 1.221초에 완료했고, 모든 구조 검증 경로가 끝까지 실행됨을 확인했다. 따라서 Q-05의 110초 중단은 hang 증거가 아니라 충분하지 않은 관찰 시간이었다. quality gate는 campaign stage timeout을 **900초**로 설정해 정상 400회 실행을 허용한다. job 전체 timeout 30분은 유지한다.

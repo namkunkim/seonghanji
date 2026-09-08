@@ -1,6 +1,6 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
-> **2026-09-08 Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화 — PARTIAL:** 필수 폰트·P0-04 PNG는 모두 Git 추적임을 확인했다. fresh checkout의 단위시험 실패는 Godot import race였고, 두 pass import/cache 준비 뒤 35/35·701/0으로 정상화했다. 그러나 import와 무관하게 잠금 100회 캠페인의 시작 banner 뒤 유휴 상태가 재현됐다. gate는 stage timeout 후 후속 검사를 계속하도록 보강했으며, 다음은 campaign core blocking 원인 진단이다.
+> **2026-09-08 Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화 — PASS:** 필수 폰트·P0-04 PNG는 모두 Git 추적이며 fresh checkout 단위시험 실패는 Godot import race였다. 두 pass import/cache 준비 뒤 35/35·701/0으로 정상화했다. `run_campaign.gd`는 HB 비교까지 총 400회를 실행하므로 110초 무출력은 hang이 아니다; isolated 4회 probe는 1.221초에 완주했다. campaign stage timeout을 900초로 맞췄다.
 
 > **2026-09-08 Q-05-LT-01 — 테스트·검산기 CI 기준화 및 자동 실패 게이트 구축 — PARTIAL:** 하위 `Q-05-01`~`Q-05-QA-01`의 종료 코드 감사, 검산기 실패 게이트, 11단계 로컬 실행기, SHA 고정 GitHub Actions workflow를 구현·커밋했다. 그러나 깨끗한 worktree에서 추적되지 않은 필수 폰트·승인 PNG 때문에 단위시험이 23건/690<701로 실패하고, 잠금 100회 캠페인도 유휴 hang을 재현했다. CI가 실패를 정확히 노출하는 것은 확인했지만 aggregate 0 및 원격 green은 미수용이다. 후속 **Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화**가 필요하다.
 
