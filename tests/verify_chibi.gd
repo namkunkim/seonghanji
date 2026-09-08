@@ -1,10 +1,11 @@
 extends SceneTree
+const Harness := preload("res://tests/harness.gd")
 
 ## 적벽 재현 검산 — 코드 재계산 대 문서값 (combat.md §5.7)
 ##
 ## 실행: godot --headless --path . --script tests/verify_chibi.gd
 ##
-## **이것은 합격/불합격 시험이 아니라 대조표다.** 어긋남 자체가 산출물이다.
+## 문서 정본과 코드 재계산을 대조하는 CI 검산기다. 모든 불일치를 출력한 뒤 1로 끝난다.
 ##
 ## §5.7 은 J6 이 **손으로** 굴린 검산이고, 그 뒤 전제가 세 번 움직였다 —
 ## V-29(74 대 48) · V-37(101 대 46) · V-38(전대 28척).
@@ -42,9 +43,21 @@ const JEONGUK_WITS: int = 89
 ## 표준 편성의 전자전함 비율(%p) — §5.3 의 「전자전함 5」가 여기서 나온다
 const EW_PCT: int = 10
 
-## 문서값 (1.54배 시절 손 계산)
-const DOC_B: Array[int] = [108, 104, 94, 89, 88]      # 조조 · 분기 B
-const DOC_B_ALLY: Array[int] = [110, 84, 58, 39, 32]  # 손유 · 분기 B
+## 2.20배 잠금 기준선의 재현값. 수치는 임의 fixture가 아니라 현행 Battle/Scheme
+## 정본을 2026-09-08에 재실행해 고정한 값이며, 이 검산기는 그 경로의 이탈을 잡는다.
+const EXPECTED_PLAN_COEFF: Array[int] = [860, 1060, 1070, 910, 875]
+const EXPECTED_SCHEMES := {
+	"간파 (정욱 89)": 17600, "위장 항복 (황개)": 37000, "화공 (주유 · 밀집)": 90000,
+	"A. 화공 성공": 27400, "B. 정욱이 간파": 17600,
+	"C. 위장 항복 실패": 51900, "D. 화공만 실패": 3000,
+}
+const EXPECTED_BRANCHES := {
+	"B": {"cao": [109, 106, 98, 94, 93], "ally": [109, 81, 51, 28, 12], "ships": [2093, 767], "collapse": 100},
+	"C": {"cao": [109, 106, 97, 93, 92], "ally": [109, 96, 67, 45, 30], "ships": [2085, 775], "collapse": 16},
+	"A": {"cao": [109, 18, 5, 0, 0], "ally": [109, 96, 81, 73, 70], "ships": [1365, 855], "collapse": 0},
+}
+
+var _fail := 0
 
 
 ## 표준 편성의 페이즈 계수 (1/1000)
@@ -65,7 +78,9 @@ func _init() -> void:
 	print("표준 편성 페이즈 계수")
 	var line := "  "
 	for p in 5:
-		line += "%s %.3f  " % [Battle.PHASE_NAMES[p], plan_coeff(p) / 1000.0]
+		var coeff := plan_coeff(p)
+		line += "%s %.3f  " % [Battle.PHASE_NAMES[p], coeff / 1000.0]
+		_expect("페이즈 계수 %s" % Battle.PHASE_NAMES[p], EXPECTED_PLAN_COEFF[p], coeff)
 	print(line)
 	print("")
 
@@ -73,23 +88,23 @@ func _init() -> void:
 
 	# **E 는 양수로 넣는다** — §1.3 이 Δ사기 = −[L×k + D + E] 이므로
 	# 양수 E 가 사기를 깎는다. 2026-08-25: 처음에 음수로 넣어 사기가 올랐다.
-	_branch("분기 B — 정욱이 간파 (계략 무효 · 손유 사기 −15)", 15000, 0, 0)
-	_branch("분기 C — 위장 항복 실패 (계략 불발 · 보정 없음)", 0, 0, 0)
+	_branch("B", "분기 B — 정욱이 간파 (계략 무효 · 손유 사기 −15)", 15000, 0, 0)
+	_branch("C", "분기 C — 위장 항복 실패 (계략 불발 · 보정 없음)", 0, 0, 0)
 	# **화공은 사기만 깎지 않는다.** §5.7 이 「L 33.1%(화공 30 + 통상 3.1)」라 적었다 —
 	# 손실률에 30%p 가 얹히고, 그 손실이 다시 사기를 깎는다 (§1.3 Δ = −[L×k + D + E]).
-	_branch("분기 A — 화공 성공 (조조 ② 손실 +30%p · 사기 E 52.5)", 0, 52500, 30000)
+	_branch("A", "분기 A — 화공 성공 (조조 ② 손실 +30%p · 사기 E 52.5)", 0, 52500, 30000)
 
 	print("")
 	print("문서값 (1.54배 시절 손 계산 · combat.md §5.7)")
 	print("  분기 B  조조 108 → 88.1 · 손유 110 → 32.0 · 붕괴 판정 10.2%")
 	print("  분기 C  조조 108 → 87.7 · 손유 110 → 44.0")
 	print("")
-	print("⚠ 대조표다. 어긋남이 곧 산출물이며 합격/불합격을 매기지 않는다.")
-	quit(0)
+	print("결과 : 실패 %d" % _fail)
+	quit(Harness.EXIT_FAIL if _fail > 0 else Harness.EXIT_PASS)
 
 
 ## 5페이즈를 굴린다. ally_event 는 손유에게, cao_event 는 조조에게 걸리는 Δ사기(밀리).
-func _branch(title: String, ally_event: int, cao_event: int,
+func _branch(key: String, title: String, ally_event: int, cao_event: int,
 		cao_loss_bonus: int) -> void:
 	print(title)
 	print("  %-6s %8s %8s %8s   %s" % ["페이즈", "조조", "손유", "전력비", "손유 붕괴"])
@@ -98,6 +113,7 @@ func _branch(title: String, ally_event: int, cao_event: int,
 	var cao_n := CAO_SHIPS
 	var ally_n := ALLY_SHIPS
 	var collapse_worst := 0
+	var expected: Dictionary = EXPECTED_BRANCHES[key]
 	for p in 5:
 		var c := plan_coeff(p)
 		var pc := Battle.combat_power_milli(cao_n, c, CAO_STAT[p], p, cao)
@@ -130,10 +146,15 @@ func _branch(title: String, ally_event: int, cao_event: int,
 			mark = "  %d%%" % col
 		print("  %-6s %8d %8d %8.2f   %s" % [
 			Battle.PHASE_NAMES[p], cao, ally, ratio, mark])
+		_expect("%s %s 조조 사기" % [key, Battle.PHASE_NAMES[p]], expected["cao"][p], cao)
+		_expect("%s %s 손유 사기" % [key, Battle.PHASE_NAMES[p]], expected["ally"][p], ally)
 		if ally <= Battle.MORALE_COLLAPSE_FLOOR:
 			break
 	print("  잔존   조조 %d척 · 손유 %d척 · 손유 최대 붕괴 확률 %d%%" % [
 		cao_n, ally_n, collapse_worst])
+	_expect("%s 조조 잔존 함선" % key, expected["ships"][0], cao_n)
+	_expect("%s 손유 잔존 함선" % key, expected["ships"][1], ally_n)
+	_expect("%s 손유 최대 붕괴 확률" % key, expected["collapse"], collapse_worst)
 	print("")
 
 
@@ -162,18 +183,18 @@ func _schemes() -> void:
 
 	print("② 포화 — 계략 판정 (§5.3 · §5.4)")
 	print("  %-22s %10s %10s" % ["판정", "문서값", "코드"])
-	_line("간파 (정욱 89)", 17600, detect)
-	_line("위장 항복 (황개)", 37000, fs)
-	_line("화공 (주유 · 밀집)", 90000, fire)
+	_line("간파 (정욱 89)", EXPECTED_SCHEMES["간파 (정욱 89)"], detect)
+	_line("위장 항복 (황개)", EXPECTED_SCHEMES["위장 항복 (황개)"], fs)
+	_line("화공 (주유 · 밀집)", EXPECTED_SCHEMES["화공 (주유 · 밀집)"], fire)
 	print("")
 
 	var passed := Scheme.trigger_chance_milli(detect, fs)
 	print("네 갈래 (§5.7)")
 	print("  %-22s %10s %10s" % ["경로", "문서값", "코드"])
-	_line("A. 화공 성공", 27400, passed * fire / 100000)
-	_line("B. 정욱이 간파", 17600, detect)
-	_line("C. 위장 항복 실패", 51900, Scheme.trigger_chance_milli(detect, 100000 - fs))
-	_line("D. 화공만 실패", 3000, passed * (100000 - fire) / 100000)
+	_line("A. 화공 성공", EXPECTED_SCHEMES["A. 화공 성공"], passed * fire / 100000)
+	_line("B. 정욱이 간파", EXPECTED_SCHEMES["B. 정욱이 간파"], detect)
+	_line("C. 위장 항복 실패", EXPECTED_SCHEMES["C. 위장 항복 실패"], Scheme.trigger_chance_milli(detect, 100000 - fs))
+	_line("D. 화공만 실패", EXPECTED_SCHEMES["D. 화공만 실패"], passed * (100000 - fire) / 100000)
 	print("")
 	print("  ⚠ 고양이 아니었다면 위장 항복은 %.1f%% 였다 — **잘 이끌린 함대는 속지 않는다**"
 		% [Scheme.success_chance_milli(Scheme.Kind.FALSE_SURRENDER, 1,
@@ -190,3 +211,10 @@ func _line(label: String, doc_milli: int, code_milli: int) -> void:
 	var mark := "" if doc_milli == rounded else "   ← 어긋남"
 	print("  %-22s %9.1f%% %9.1f%%%s" % [
 		label, doc_milli / 1000.0, code_milli / 1000.0, mark])
+	_expect(label, doc_milli, rounded)
+
+
+func _expect(label: String, expected, actual) -> void:
+	if expected != actual:
+		_fail += 1
+		print("  ✗ %s — 기대 %s, 실제 %s" % [label, str(expected), str(actual)])

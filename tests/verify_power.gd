@@ -1,10 +1,11 @@
 extends SceneTree
+const Harness := preload("res://tests/harness.gd")
 
 ## 국력 검산 — 데이터 재계산 대 문서값 (region-power.md §3.2 · scenario-setup.md §4.2)
 ##
 ## 실행: godot --headless --path . --script tests/verify_power.gd
 ##
-## **이것은 합격/불합격 시험이 아니라 대조표다.** 어긋남 자체가 산출물이다.
+## 문서 정본과 코드 재계산을 대조하는 CI 검산기다. 하나라도 어긋나면 1로 끝난다.
 ##
 ## ⚠ 시나리오 3 배치를 여기 적어 두었다. 원래는 `data/` 에 있어야 한다 —
 ## `world-states.json`(시작 배치 21) 추출이 아직이라 임시로 둔다.
@@ -51,6 +52,7 @@ func _init() -> void:
 			var sid = sys_by_name.get(sname)
 			if sid == null:
 				print("  ! 성계를 찾을 수 없다: ", sname)
+				mismatch.append("%s 성계 누락 %s" % [name, sname])
 				continue
 			for rid in data.regions_of[sid]:
 				rids.append(rid)
@@ -58,6 +60,7 @@ func _init() -> void:
 			var rid = by_name.get(rname)
 			if rid == null:
 				print("  ! 권역을 찾을 수 없다: ", rname)
+				mismatch.append("%s 권역 누락 %s" % [name, rname])
 				continue
 			rids.append(rid)
 
@@ -97,11 +100,13 @@ func _init() -> void:
 	print("  문서값: 조조 101 대 손유 동맹 46 = 2.20배  (2026-08-25 재산출, V-37)")
 	print("  이력  : 65 대 37 = 1.76배 → 74 대 48 = 1.54배 → **101 대 46 = 2.20배**")
 	print("")
+	if total_regions != 45:
+		mismatch.append("권역 합계 %d/45" % total_regions)
 	if mismatch.is_empty():
 		print("문서와 어긋나는 세력 없음")
 	else:
 		print("문서와 어긋나는 세력 %d: %s" % [mismatch.size(), ", ".join(mismatch)])
-	quit(0)
+	quit(Harness.EXIT_FAIL if not mismatch.is_empty() else Harness.EXIT_PASS)
 
 
 func _milli(data: GameData, by_name: Dictionary, sys_by_name: Dictionary, name: String) -> int:

@@ -1,4 +1,5 @@
 extends SceneTree
+const Harness := preload("res://tests/harness.gd")
 
 ## 예산 검산 — 코드 재계산 대 문서값 (domestic.md §4.4)
 ##
@@ -131,4 +132,4 @@ func _init() -> void:
 		print("문서와 어긋나는 세력 없음")
 	else:
 		print("★ 어긋나는 세력 %d" % bad)
-	quit(1 if bad > 0 else 0)
+	quit(Harness.EXIT_FAIL if bad > 0 else Harness.EXIT_PASS)

@@ -1,4 +1,5 @@
 extends SceneTree
+const Harness := preload("res://tests/harness.gd")
 
 ## 글리프 검산 — 화면이 그리는 모든 문자를 서체가 담는가 (FNT-001·002)
 ##
@@ -105,7 +106,7 @@ func _init() -> void:
 	print("결과 : 실패 %d · 경고 %d" % [fail, warn])
 	if fail == 0:
 		print("한글 전수 임베드 · app/ 코퍼스 전부 렌더 가능")
-	quit(1 if fail > 0 else 0)
+	quit(Harness.EXIT_FAIL if fail > 0 else Harness.EXIT_PASS)
 
 
 ## FontVariation 이면 base_font(임베드 .ttf)를, 아니면 자신을 돌려준다.
