@@ -1,6 +1,6 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
-> **2026-09-08 DEMO-RC-LT-01 — 적벽대전 5페이즈 전투 및 플레이어블 데모 완성 — PARTIAL:** 현재 플레이 가능 구간은 **상단 `적벽` 데모 시작 → canonical 개전/뉴스 → 5페이즈(접적·포화·교전·강습·결착) → 코어 결과/뉴스 → 홈 복귀 → 명령 로그 재생**이다. DEMO-RC-01/02/03/04/05 자동 수용은 PASS: `test_demo_rc_01_playable_entry` 9/9, 적벽 phase/result 44/44, DEMO-RC-03/04 0 failures, DEMO-RC-QA E2E 0 failures, core 701/701이다. 우측 전투 뷰는 primitive 상자가 아닌 procedural 함선·추진광·tracer·debris·phase 카메라를 쓰며 2/3 궤도 지도와 동기화한다. 그러나 이 환경의 `user://` 파일 쓰기와 네이티브 1600×900 창 캡처/입력 표면 부재로 **DEMO-RC-QA-01 Windows 실기 수용은 PARTIAL**이며, 전체 데모 완료/커밋·push 완료로 승격하지 않는다.
+> **2026-09-08 DEMO-RC-LT-01 — 적벽대전 5페이즈 전투 및 플레이어블 데모 완성 — PARTIAL:** 현재 플레이 가능 구간은 **상단 `적벽` 데모 시작 → canonical 개전/뉴스 → 5페이즈(접적·포화·교전·강습·결착) → 코어 결과/뉴스 → 홈 복귀 → 명령 로그 재생**이다. DEMO-RC-01/02/03/04/05 자동 수용은 PASS: entry 9/9, phase/result 44/44, UI 0 failures, product E2E 0 failures, core 701/701이다. non-console Godot GUI renderer는 1600×900 제품 viewport 캡처 6개와 SHA-256을 `out/demo-rc-qa01-playable-e2e/`에 생성했고, writable user-data acceptance에서는 파일 저장·복원 73/0도 PASS했다. 우측 전투 뷰는 primitive 상자가 아닌 procedural 함선·추진광·tracer·debris·phase 카메라를 쓰며 2/3 궤도 지도와 동기화한다. 그러나 이 환경은 네이티브 Godot 창의 **OS 물리 마우스/키보드** 표면만 제공하지 않아 DEMO-RC-QA-01은 PARTIAL을 유지한다.
 
 > **2026-09-08 Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화 — PASS:** 필수 폰트·P0-04 PNG는 모두 Git 추적이며 fresh checkout 단위시험 실패는 Godot import race였다. 두 pass import/cache 준비 뒤 35/35·701/0으로 정상화했다. `run_campaign.gd`는 HB 비교까지 총 400회를 실행하므로 110초 무출력은 hang이 아니다; isolated 4회 probe는 1.221초에 완주했다. campaign stage timeout을 900초로 맞췄다.
 
