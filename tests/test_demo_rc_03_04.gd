@@ -31,6 +31,15 @@ func _run() -> void:
 		"evidence owns exactly one static battle image")
 	_ok(evidence.find_children("*", "SubViewport", true, false).is_empty(),
 		"static evidence creates no realtime 3D viewport")
+	var report = view.find_child("PhaseBattleReport", true, false)
+	_ok(report != null, "phase battle report is mounted")
+	var report_fixture: Array[Dictionary] = [{"phase":2, "attacker_loss":7, "defender_loss":11,
+		"attacker_morale_delta":-4, "defender_morale_delta":-6, "schemes":[{"id":"fire"}]}]
+	report.set_results(report_fixture)
+	_ok("2단계 포화" in report.summary and report.wei_loss == 7 and report.allied_loss == 11,
+		"phase report exposes canonical losses and phase name")
+	_ok(report.wei_morale_delta == -4 and report.allied_morale_delta == -6,
+		"phase report exposes both morale deltas")
 	map.set_battle(1, "접적", 140, 120, 113, 120)
 	var contact_anchor: Vector2 = map.fleet_anchor_points()["allied_primary"]
 	var hub := Vector2(map.size.x * .52, map.size.y * .55)

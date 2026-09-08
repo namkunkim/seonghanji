@@ -21,6 +21,11 @@ func _run() -> void:
 	_ok(battle.combat_phase == 1, "phase 1 접적")
 	main.campaign.step()
 	_ok(battle.combat_phase == 2, "phase 2 포화")
+	await process_frame
+	_ok("1단계 접적" in main.red_cliff_battle_view._report.summary,
+		"phase report reflects the latest canonical outcome")
+	_ok(main.red_cliff_battle_view._report.allied_loss >= 0 and main.red_cliff_battle_view._report.wei_loss >= 0,
+		"phase report exposes non-negative canonical losses")
 	_ok(main.campaign.issue_red_cliff_player_command(id, "change_formation", {"target_formation_id": "INVALID"}).is_empty(), "invalid formation rejected")
 	_ok(not main.campaign.issue_red_cliff_player_command(id, "hold_formation").is_empty(), "hold formation command")
 	main.campaign.step()

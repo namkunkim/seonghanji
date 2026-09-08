@@ -10,6 +10,7 @@ var _feedback: Label
 var _map: TacticalMap
 var _feed: BattleStillImage
 var _deck: CommandDeck
+var _report: BattleReport
 var _formation: OptionButton
 var _buttons: Array[Button] = []
 
@@ -38,6 +39,7 @@ func _build_once() -> void:
 	var split := HBoxContainer.new(); split.custom_minimum_size = Vector2(0, 480); split.size_flags_vertical = Control.SIZE_EXPAND_FILL; split.add_theme_constant_override("separation", 10); stack.add_child(split)
 	_map = TacticalMap.new(); _map.name = "TacticalMapTwoThirds"; _map.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map.size_flags_stretch_ratio = 2.0; split.add_child(_map)
 	_feed = BattleStillImage.new(); _feed.name = "BattleStillImageOneThird"; _feed.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _feed.size_flags_stretch_ratio = 1.0; split.add_child(_feed)
+	_report = BattleReport.new(); _report.name = "PhaseBattleReport"; _report.custom_minimum_size = Vector2(0, 42); stack.add_child(_report)
 	var controls := HBoxContainer.new(); controls.custom_minimum_size = Vector2(0, 60); controls.add_theme_constant_override("separation", 8); stack.add_child(controls)
 	controls.add_child(_button("진형 유지", "hold_formation"))
 	_formation = OptionButton.new(); _formation.custom_minimum_size = Vector2(144, 46)
@@ -63,7 +65,11 @@ func _issue(action: String) -> void:
 	var payload := {}
 	if action == "change_formation": payload["target_formation_id"] = Formations.id_for_name(_formation.get_item_text(_formation.selected))
 	var issued = campaign.call("issue_red_cliff_player_command", battle_id, action, payload)
-	_feedback.text = "명령 접수 · %s" % action if issued is Dictionary and not issued.is_empty() else "명령 거부 · 현재 조건 또는 중복 입력을 확인하세요."
+	if issued is Dictionary and not issued.is_empty():
+		var action_labels := {"hold_formation":"현재 진형 유지", "change_formation":"%s 적용" % _formation.get_item_text(_formation.selected), "advance_phase":"다음 페이즈 진행", "delegate_ai":"AI 전술 위임"}
+		_feedback.text = "◆ 명령 전송 · %s · 다음 전역 틱에 판정됩니다." % String(action_labels.get(action, action))
+	else:
+		_feedback.text = "명령 거부 · 현재 페이즈, 위임 상태 또는 중복 입력을 확인하세요."
 
 func _refresh() -> void:
 	if _state == null: return
@@ -76,7 +82,7 @@ func _refresh() -> void:
 	if String(battle.status) == ActiveBattle.STATUS_RESOLVED:
 		var winner := String(battle.result.get("winner_faction_id", ""))
 		_state.text = "전투 결과 · 승자: %s · " % ("손권·유비 연합" if winner == "sun_liu_side" else "조조측") + _state.text
-	_deck.set_battle(phase, phase_name, a, d, am, dm); _map.set_battle(phase, phase_name, a, d, am, dm); _feed.set_battle(phase, phase_name, a, d, am, dm)
+	_deck.set_battle(phase, phase_name, a, d, am, dm); _map.set_battle(phase, phase_name, a, d, am, dm); _feed.set_battle(phase, phase_name, a, d, am, dm); _report.set_results(battle.phase_results)
 	var active := String(battle.status) == ActiveBattle.STATUS_ACTIVE
 	for b in _buttons: b.disabled = not active
 	if not active: _feedback.text = "전투 종료 · 이후 명령은 코어가 거부합니다."
@@ -93,6 +99,33 @@ class CommandDeck extends Control:
 			var x:=start+width*i/4.0; var live:=i+1==phase; draw_circle(Vector2(x,20),14 if live else 11,Color("b58b3b") if live else Color("172633")); draw_arc(Vector2(x,20),14 if live else 11,0,TAU,20,Color("f2d37e") if live else Color("8d9ba4"),1.2); draw_string(font,Vector2(x-4,25),str(i+1),HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff4d5")); draw_string(font,Vector2(x-18,51),words[i],HORIZONTAL_ALIGNMENT_CENTER,36,13,Color("f3d27c") if live else Color("aebbc3"))
 	func _force(box: Rect2, name: String, ships: String, morale: int, tint: Color, right: bool) -> void:
 		var font:=get_theme_default_font(); var align:=HORIZONTAL_ALIGNMENT_RIGHT if right else HORIZONTAL_ALIGNMENT_LEFT; draw_rect(box,Color("0b1924")); draw_rect(box,tint.darkened(.35),false,1); draw_string(font,box.position+Vector2(12,24),name,align,box.size.x-24,17,Color("e8eef0")); draw_string(font,box.position+Vector2(12,44),ships,align,box.size.x-24,13,Color("9fb1bb")); var bar:=Rect2(box.position+Vector2(12,53),Vector2(box.size.x-24,6)); draw_rect(bar,Color("111e29")); draw_rect(Rect2(bar.position,Vector2(bar.size.x*clamp(morale,0,100)/100.0,6)),tint)
+
+class BattleReport extends Control:
+	var summary := "전투 판정 대기 · 명령을 선택하면 다음 전역 틱에 결과가 반영됩니다."
+	var allied_loss := 0
+	var wei_loss := 0
+	var allied_morale_delta := 0
+	var wei_morale_delta := 0
+	func set_results(results: Array[Dictionary]) -> void:
+		if results.is_empty():
+			summary = "전투 판정 대기 · 명령을 선택하면 다음 전역 틱에 결과가 반영됩니다."
+			allied_loss = 0; wei_loss = 0; allied_morale_delta = 0; wei_morale_delta = 0
+		else:
+			var latest: Dictionary = results.back()
+			var resolved_phase := clampi(int(latest.get("phase", 1)), 1, Battle.PHASE_NAMES.size())
+			wei_loss = int(latest.get("attacker_loss", 0)); allied_loss = int(latest.get("defender_loss", 0))
+			wei_morale_delta = int(latest.get("attacker_morale_delta", 0)); allied_morale_delta = int(latest.get("defender_morale_delta", 0))
+			var schemes: Array = latest.get("schemes", [])
+			summary = "직전 전과 · %d단계 %s · 계략 %d건" % [resolved_phase, Battle.PHASE_NAMES[resolved_phase-1], schemes.size()]
+		queue_redraw()
+	func _draw() -> void:
+		var font := get_theme_default_font()
+		draw_rect(Rect2(Vector2.ZERO,size),Color("08131c",.96)); draw_rect(Rect2(Vector2.ZERO,size),Color("314958"),false,1)
+		draw_string(font,Vector2(14,26),summary,HORIZONTAL_ALIGNMENT_LEFT,size.x*.48,13,Color("c6d3d8"))
+		var allied := "연합 손실 %d척  ·  사기 %+d" % [allied_loss,allied_morale_delta]
+		var wei := "위군 손실 %d척  ·  사기 %+d" % [wei_loss,wei_morale_delta]
+		draw_string(font,Vector2(size.x*.51,26),allied,HORIZONTAL_ALIGNMENT_LEFT,size.x*.23,13,Color("ee7b72"))
+		draw_string(font,Vector2(size.x*.76,26),wei,HORIZONTAL_ALIGNMENT_LEFT,size.x*.22,13,Color("69c4f4"))
 
 class TacticalMap extends Control:
 	var phase:=0; var phase_name:="대기"; var a:=0; var d:=0; var am:=0; var dm:=0

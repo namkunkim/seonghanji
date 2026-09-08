@@ -102,6 +102,8 @@ func _run() -> void:
 
 	if not await _click(_button("진형 유지"), "hold formation"):
 		_write_report(); quit(1); return
+	_ok("명령 전송" in main.red_cliff_battle_view._feedback.text,
+		"command feedback explains accepted UI submission")
 	await _capture("03-hold-formation-1600x900.png")
 	# The mouse activation leaves the hold button focused. Traverse the shipped
 	# control order and activate delegation with the keyboard, proving both input
