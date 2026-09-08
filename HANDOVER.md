@@ -1,5 +1,7 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
+> **2026-09-09 적벽 전투 표현 정책 변경 — 적용:** 별도 발주자 지시 전까지 우측 실시간 3D는 `red-cliffs-live-battle-v1.png` 정지 이미지 한 장으로 대체한다. 현재 전력·사기·페이즈만 이미지 위 HUD에서 canonical 상태로 갱신하고, 후속 구현은 전술 지도·상태 전달·명령 UX·가독성을 우선한다.
+>
 > **2026-09-09 DEMO-RC-LT-01 — 적벽대전 5페이즈 전투 및 플레이어블 데모 — PASS:** `Main`의 `적벽` 버튼은 seed 20803의 실제 `Campaign.scenario_03` 명령 경로로 canonical active battle을 만든다. `ActiveBattle`/Campaign은 5페이즈·손실·사기·계략·player command·AI 위임·결과 함대 투영·stable result news·log replay를 담당한다. `RedCliffBattleView`는 5단계 timeline, 궤도·교전권·곡선 항로·쐐기 전열의 2/3 전략 지도, 실제 `SubViewport` 3D 함대·엔진·사격·피격·phase 카메라의 1/3 전장을 같은 코어 상태로 갱신한다. 비콘솔 Godot Vulkan Forward+ / Intel Arc 130V에서 1600×900 캡처 6개와 마우스·Tab/Enter 입력 흐름 40/40, writable user-data에서 save 73/0·replay 29/29, 장기 회귀 400/400·500/500을 확인했다. Computer Use의 네이티브 앱 미노출 때문에 Windows 하드웨어 SendInput 자체만 출시 전 사람 스모크 제한으로 남는다.
 
 > **2026-09-08 Q-06-01 — CI 필수 자산 추적 계약 및 캠페인 실행 안정화 — PASS:** `NotoSansKR-VF.ttf`와 P0-04 승인 PNG는 추적 파일이며 fresh checkout 실패는 Godot import race였다. 두 pass import 뒤 단위시험 35/35·701/0을 확인했다. `run_campaign.gd`는 표준 100회와 HB 3×100회를 합쳐 400회를 돌리므로, 110초 banner-only 관찰은 hang이 아니다. 격리 4회 probe는 1.221초에 완주했고 campaign timeout은 900초로 조정했다.

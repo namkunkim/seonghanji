@@ -97,7 +97,7 @@ func _run() -> void:
 	if not await _click(_button("전투 진입"), "battle banner entry"):
 		_write_report(); quit(1); return
 	_ok(root.find_child("TacticalMapTwoThirds", true, false) != null, "battle tactical map is mounted")
-	_ok(root.find_child("Primitive3DEvidenceOneThird", true, false) != null, "battle live view is mounted")
+	_ok(root.find_child("BattleStillImageOneThird", true, false) != null, "battle still image is mounted")
 	await _capture("02-battle-entry-1600x900.png")
 
 	if not await _click(_button("진형 유지"), "hold formation"):

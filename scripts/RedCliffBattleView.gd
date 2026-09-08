@@ -8,7 +8,7 @@ var battle_id := ""
 var _state: Label
 var _feedback: Label
 var _map: TacticalMap
-var _feed: Evidence3D
+var _feed: BattleStillImage
 var _deck: CommandDeck
 var _formation: OptionButton
 var _buttons: Array[Button] = []
@@ -37,7 +37,7 @@ func _build_once() -> void:
 	_state = Label.new(); _state.visible = false; stack.add_child(_state)
 	var split := HBoxContainer.new(); split.custom_minimum_size = Vector2(0, 480); split.size_flags_vertical = Control.SIZE_EXPAND_FILL; split.add_theme_constant_override("separation", 10); stack.add_child(split)
 	_map = TacticalMap.new(); _map.name = "TacticalMapTwoThirds"; _map.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map.size_flags_stretch_ratio = 2.0; split.add_child(_map)
-	_feed = Evidence3D.new(); _feed.name = "Primitive3DEvidenceOneThird"; _feed.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _feed.size_flags_stretch_ratio = 1.0; split.add_child(_feed)
+	_feed = BattleStillImage.new(); _feed.name = "BattleStillImageOneThird"; _feed.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _feed.size_flags_stretch_ratio = 1.0; split.add_child(_feed)
 	var controls := HBoxContainer.new(); controls.custom_minimum_size = Vector2(0, 60); controls.add_theme_constant_override("separation", 8); stack.add_child(controls)
 	controls.add_child(_button("진형 유지", "hold_formation"))
 	_formation = OptionButton.new(); _formation.custom_minimum_size = Vector2(144, 46)
@@ -155,6 +155,90 @@ class TacticalMap extends Control:
 		draw_circle(pos,4,Color("f4e3ba")); draw_string(font,pos+Vector2(-57,-43),label,HORIZONTAL_ALIGNMENT_CENTER,114,13,Color("edf4f5"))
 	func _card(rect:Rect2,title:String,value:String,tint:Color)->void:
 		var font:=get_theme_default_font(); draw_rect(rect,Color("08151f",.93)); draw_rect(rect,tint.darkened(.28),false,1); draw_rect(Rect2(rect.position,Vector2(3,rect.size.y)),tint); draw_string(font,rect.position+Vector2(12,20),title,HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("aebfc8")); draw_string(font,rect.position+Vector2(12,41),value,HORIZONTAL_ALIGNMENT_LEFT,-1,15,Color("eff6f7"))
+
+class BattleStillImage extends Control:
+	var phase_label: Label
+	var allied_label: Label
+	var wei_label: Label
+	var allied_bar: ProgressBar
+	var wei_bar: ProgressBar
+
+	func _ready() -> void:
+		custom_minimum_size = Vector2(320, 400)
+		clip_contents = true
+		var image := TextureRect.new()
+		image.name = "BattleConceptStill"
+		image.texture = load("res://assets/ui-mockups/red-cliffs-live-battle-v1.png")
+		image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		image.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		image.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(image)
+
+		var top_scrim := ColorRect.new()
+		top_scrim.color = Color("06101a", .82)
+		top_scrim.set_anchors_preset(Control.PRESET_TOP_WIDE)
+		top_scrim.offset_bottom = 64
+		top_scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(top_scrim)
+		var bottom_scrim := ColorRect.new()
+		bottom_scrim.color = Color("06101a", .88)
+		bottom_scrim.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+		bottom_scrim.offset_top = -74
+		bottom_scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(bottom_scrim)
+
+		phase_label = Label.new()
+		phase_label.position = Vector2(14, 12)
+		phase_label.add_theme_font_size_override("font_size", 16)
+		phase_label.add_theme_color_override("font_color", Color("edf6f4"))
+		add_child(phase_label)
+		allied_label = Label.new()
+		allied_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+		allied_label.position = Vector2(14, -60)
+		allied_label.add_theme_font_size_override("font_size", 13)
+		allied_label.add_theme_color_override("font_color", Color("f08d82"))
+		add_child(allied_label)
+		allied_bar = ProgressBar.new()
+		allied_bar.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+		allied_bar.position = Vector2(14, -32)
+		allied_bar.size = Vector2(132, 6)
+		allied_bar.max_value = 100
+		allied_bar.show_percentage = false
+		_style_bar(allied_bar, Color("d85e55"))
+		add_child(allied_bar)
+		wei_label = Label.new()
+		wei_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+		wei_label.position = Vector2(-146, -60)
+		wei_label.add_theme_font_size_override("font_size", 13)
+		wei_label.add_theme_color_override("font_color", Color("80d4ff"))
+		add_child(wei_label)
+		wei_bar = ProgressBar.new()
+		wei_bar.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+		wei_bar.position = Vector2(-146, -32)
+		wei_bar.size = Vector2(132, 6)
+		wei_bar.max_value = 100
+		wei_bar.show_percentage = false
+		_style_bar(wei_bar, Color("4db9ef"))
+		add_child(wei_bar)
+
+	func set_battle(p: int, phase_name: String, a: int, d: int, am: int, dm: int) -> void:
+		if phase_label == null:
+			return
+		phase_label.text = "전장 기록 이미지\nPHASE %d · %s" % [p, phase_name]
+		allied_label.text = "연합군  %d척 · 사기 %d" % [d, dm]
+		allied_bar.value = clamp(dm, 0, 100)
+		wei_label.text = "위군  %d척 · 사기 %d" % [a, am]
+		wei_bar.value = clamp(am, 0, 100)
+
+	func _style_bar(bar: ProgressBar, tint: Color) -> void:
+		var background := StyleBoxFlat.new()
+		background.bg_color = Color("142633")
+		var fill := StyleBoxFlat.new()
+		fill.bg_color = tint
+		bar.add_theme_stylebox_override("background", background)
+		bar.add_theme_stylebox_override("fill", fill)
+
 
 class Evidence3D extends SubViewportContainer:
 	## Legacy node identity/one-viewport contract, now backed by a genuine 3D scene.

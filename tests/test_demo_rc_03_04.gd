@@ -22,33 +22,32 @@ func _run() -> void:
 	root.add_child(view)
 	await process_frame
 	_ok(view.find_child("TacticalMapTwoThirds", true, false) != null, "two-third tactical map exists")
-	_ok(view.find_child("Primitive3DEvidenceOneThird", true, false) != null, "one-third primitive 3D evidence exists")
+	_ok(view.find_child("BattleStillImageOneThird", true, false) != null, "one-third battle still exists")
 	var map = view.find_child("TacticalMapTwoThirds", true, false)
-	var evidence = view.find_child("Primitive3DEvidenceOneThird", true, false)
+	var evidence = view.find_child("BattleStillImageOneThird", true, false)
 	_ok(map != null and evidence != null and map.size_flags_stretch_ratio > evidence.size_flags_stretch_ratio,
 		"split ratio favors tactical map")
-	_ok(view.find_child("Primitive3DEvidenceOneThird", true, false).get_child_count() == 1,
-		"evidence owns a single SubViewport")
-	# A faction with zero canonical ships must have no residual 3D hulls. This
-	# guards the evidence layer against visually contradicting the combat core.
+	_ok(evidence.find_children("BattleConceptStill", "TextureRect", true, false).size() == 1,
+		"evidence owns exactly one static battle image")
+	_ok(evidence.find_children("*", "SubViewport", true, false).is_empty(),
+		"static evidence creates no realtime 3D viewport")
+	# The image remains static while authoritative figures continue to update.
 	evidence.set_battle(4, "강습", 140, 0, 113, 0)
 	map.set_battle(4, "강습", 140, 0, 113, 0)
 	await process_frame
 	await process_frame
 	_ok(map.fleet_icon_counts() == Vector2i(0,20),
 		"zero allied ships clears allied tactical icons and caps live Wei icons")
-	_ok(evidence.find_children("CombatShip*", "Node3D", true, false).size() == 10,
-		"zero allied ships leaves only the proportional Wei formation")
-	_ok(evidence.find_children("CombatBeam*", "MeshInstance3D", true, false).is_empty(),
-		"zero allied ships cannot leave phantom weapons fire")
+	_ok("연합군  0척" in evidence.allied_label.text,
+		"static evidence overlay reports zero allied ships")
 	evidence.set_battle(5, "결착", 0, 0, 0, 0)
 	map.set_battle(5, "결착", 0, 0, 0, 0)
 	await process_frame
 	await process_frame
 	_ok(map.fleet_icon_counts() == Vector2i.ZERO,
 		"zero ships on both sides clears every tactical fleet icon")
-	_ok(evidence.find_children("CombatShip*", "Node3D", true, false).is_empty(),
-		"zero ships on both sides clears every 3D hull")
+	_ok("위군  0척" in evidence.wei_label.text and "연합군  0척" in evidence.allied_label.text,
+		"static evidence overlay reports both fleets at zero")
 	view.free()
 	print("DEMO-RC-03/04 battle view: %d failures" % _fail)
 	quit(0 if _fail == 0 else 1)
