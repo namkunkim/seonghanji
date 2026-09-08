@@ -99,46 +99,97 @@ class TacticalMap extends Control:
 	func _ready() -> void: custom_minimum_size=Vector2(650,400); queue_redraw()
 	func set_battle(p:int,n:String,aa:int,dd:int,aam:int,ddm:int)->void: phase=p;phase_name=n;a=aa;d=dd;am=aam;dm=ddm;queue_redraw()
 	func _draw() -> void:
-		var font:=get_theme_default_font(); var c:=Vector2(size.x*.55,size.y*.54); draw_rect(Rect2(Vector2.ZERO,size),Color("08131e")); draw_rect(Rect2(Vector2.ZERO,size),Color("415968"),false,1.5)
-		for i in 55: draw_circle(Vector2(fposmod(i*73.0,size.x-20)+10,fposmod(i*41.0,size.y-46)+42),.6+float(i%3)*.25,Color("6a8797",.55))
-		for radius in [70.0,135.0,205.0,285.0]: draw_arc(c,radius,0,TAU,96,Color("315064",.48),1)
-		for x in range(0,int(size.x),55): draw_line(Vector2(x,42),Vector2(x,size.y),Color("1e3544",.35),.6)
-		for y in range(42,int(size.y),55): draw_line(Vector2(0,y),Vector2(size.x,y),Color("1e3544",.35),.6)
-		draw_circle(Vector2(-45,size.y*.46),size.y*.67,Color("0e2433")); draw_arc(Vector2(-45,size.y*.46),size.y*.67,-1.1,1.1,64,Color("52839d",.8),2)
-		draw_rect(Rect2(0,0,size.x,40),Color("0b1924",.94)); draw_line(Vector2(0,40),Vector2(size.x,40),Color("3d596a")); draw_string(font,Vector2(16,26),"전술 지휘도",HORIZONTAL_ALIGNMENT_LEFT,-1,19,Color("ebf3f4")); draw_string(font,Vector2(size.x-155,26),"PHASE %d · %s" % [phase,phase_name],HORIZONTAL_ALIGNMENT_RIGHT,140,13,Color("e6c271"))
-		_route(PackedVector2Array([Vector2(size.x*.18,size.y*.37),Vector2(size.x*.34,size.y*.40),c]),Color("dc5b52")); _route(PackedVector2Array([Vector2(size.x*.83,size.y*.34),Vector2(size.x*.71,size.y*.40),c]),Color("55baf0")); _route(PackedVector2Array([Vector2(size.x*.79,size.y*.72),Vector2(size.x*.67,size.y*.66),c]),Color("55baf0"))
-		draw_circle(c,23,Color("d5ad57",.14)); draw_arc(c,23,0,TAU,24,Color("f3d380"),1.4); draw_circle(c,7,Color("f3d380")); draw_string(font,c+Vector2(-48,45),"구지 궤도 거점",HORIZONTAL_ALIGNMENT_CENTER,96,14,Color("f4ead2"))
-		_fleet(Vector2(size.x*.25,size.y*.42),Color("e75f55"),12,"우비군",phase%2); _fleet(Vector2(size.x*.23,size.y*.69),Color("e75f55"),9,"손권 본대",1); _fleet(Vector2(size.x*.76,size.y*.36),Color("67c4fa"),13,"위군 본대",2); _fleet(Vector2(size.x*.73,size.y*.68),Color("67c4fa"),10,"장료 기동대",3)
-		draw_string(font,Vector2(18,size.y-17),"적군(오·유)  %d척 · 사기 %d" % [d,dm],HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("ee9389")); draw_string(font,Vector2(size.x-258,size.y-17),"위군  %d척 · 사기 %d" % [a,am],HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("88d4fb"))
-	func _route(points:PackedVector2Array,color:Color)->void:
-		for i in points.size()-1: draw_dashed_line(points[i],points[i+1],color,1.8,7); var tip:=points[points.size()-1]; var dir:=(tip-points[points.size()-2]).normalized(); var side:=Vector2(-dir.y,dir.x); draw_colored_polygon(PackedVector2Array([tip,tip-dir*10+side*5,tip-dir*10-side*5]),color)
-	func _fleet(pos:Vector2,color:Color,count:int,label:String,style:int)->void:
-		for i in count: var col:=i%4; var row:=i/4; var off:=Vector2((col-1.5)*13+row*4,(row-1)*13+(col%2)*3); if style==1: off=Vector2((col-1.5)*16,(row-1)*10+abs(col-1.5)*7); draw_colored_polygon(PackedVector2Array([pos+off+Vector2(7,0),pos+off+Vector2(-5,-4),pos+off+Vector2(-3,4)]),color)
-		draw_circle(pos,10,Color(color,.12)); draw_arc(pos,10,0,TAU,16,color,1); draw_string(get_theme_default_font(),pos+Vector2(-48,-26),label,HORIZONTAL_ALIGNMENT_CENTER,96,13,Color("e8f2f6"))
+		var font:=get_theme_default_font(); var hub:=Vector2(size.x*.52,size.y*.55)
+		# A painted, layered board gives the battlefield depth before tactical marks land on it.
+		draw_rect(Rect2(Vector2.ZERO,size),Color("050b12"))
+		for i in 8: draw_circle(Vector2(size.x*.76,size.y*.18),250.0-i*27.0,Color(0.04,0.15,0.23,0.018+i*.004))
+		for i in 96:
+			var star:=Vector2(fposmod(i*97.0+31.0,size.x),42.0+fposmod(i*53.0,size.y-66.0)); draw_circle(star,.35+float(i%4)*.22,Color("9ec8dd",.22+float(i%3)*.14))
+		var planet:=Vector2(-size.y*.16,size.y*.66)
+		for radius in range(int(size.y*.78),20,-14): draw_circle(planet,radius,Color(0.015+radius/30000.0,0.07+radius/9000.0,0.11+radius/7000.0,.12))
+		draw_arc(planet,size.y*.78,-1.22,0.22,100,Color("5b99b5",.8),2.0)
+		for radius in [72.0,138.0,212.0,290.0]: draw_arc(hub,radius,-.22,TAU-.22,100,Color("406579",.43),1.0)
+		for x in range(0,int(size.x),64): draw_line(Vector2(x,41),Vector2(x,size.y-31),Color("254151",.28),.6)
+		for y in range(42,int(size.y-31),64): draw_line(Vector2(0,y),Vector2(size.x,y),Color("254151",.28),.6)
+		# Sector header and compact operational legend.
+		draw_rect(Rect2(0,0,size.x,41),Color("08131e",.96)); draw_line(Vector2(0,41),Vector2(size.x,41),Color("587384",.8),1)
+		draw_string(font,Vector2(16,27),"구지 궤도  ·  전술 지휘도",HORIZONTAL_ALIGNMENT_LEFT,-1,18,Color("e8f1f2"))
+		draw_string(font,Vector2(size.x-194,26),"제 %d 국면  /  %s" % [phase,phase_name],HORIZONTAL_ALIGNMENT_RIGHT,178,13,Color("f0cb76"))
+		# Engagement zone and objective are readable at a glance.
+		draw_circle(hub,52,Color("d7ad57",.055)); draw_arc(hub,52,0,TAU,48,Color("d8b66d",.8),1.4); draw_arc(hub,32,0,TAU,32,Color("a77a35",.5),.8)
+		_station(hub)
+		_route_curve(Vector2(size.x*.18,size.y*.37),Vector2(size.x*.39,size.y*.30),hub,Color("e66b5f"),true)
+		_route_curve(Vector2(size.x*.21,size.y*.72),Vector2(size.x*.36,size.y*.70),hub,Color("e66b5f"),true)
+		_route_curve(Vector2(size.x*.82,size.y*.31),Vector2(size.x*.70,size.y*.31),hub,Color("63bef1"),false)
+		_route_curve(Vector2(size.x*.78,size.y*.70),Vector2(size.x*.67,size.y*.69),hub,Color("63bef1"),false)
+		_fleet_wedge(Vector2(size.x*.22,size.y*.39),Color("eb685c"),"우비 돌격단",12,0.0,true)
+		_fleet_wedge(Vector2(size.x*.23,size.y*.70),Color("d94f50"),"손권 주력",9,-.28,true)
+		_fleet_wedge(Vector2(size.x*.79,size.y*.34),Color("6bcafa"),"위군 본대",13,PI,true)
+		_fleet_wedge(Vector2(size.x*.76,size.y*.69),Color("53aee1"),"장료 기동대",10,2.72,true)
+		_card(Rect2(14,54,160,54),"연합 전력", "%d척  ·  사기 %d" % [d,dm],Color("df6158"))
+		_card(Rect2(size.x-174,54,160,54),"위군 전력", "%d척  ·  사기 %d" % [a,am],Color("62bdf1"))
+		draw_rect(Rect2(0,size.y-30,size.x,30),Color("07111a",.94)); draw_string(font,Vector2(14,size.y-10),"◆ 주요 합선   ─ ─ 이동 경로   ◌ 교전 구역   △ 함대 전열",HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("a7bac4"))
+	func _station(pos:Vector2)->void:
+		var font:=get_theme_default_font(); draw_circle(pos,11,Color("f2d280",.85)); draw_circle(pos,6,Color("09131d"));
+		for angle in [0.0,PI*.5,PI,PI*1.5]: draw_line(pos+Vector2(12,0).rotated(angle),pos+Vector2(23,0).rotated(angle),Color("d9b464"),3)
+		draw_string(font,pos+Vector2(-56,80),"구지 거점\n점령 목표",HORIZONTAL_ALIGNMENT_CENTER,112,13,Color("f3e2b7"))
+	func _route_curve(from:Vector2,control:Vector2,to:Vector2,color:Color,_red:bool)->void:
+		var points:=PackedVector2Array(); for i in 17: var t:=float(i)/16.0; points.append(from.lerp(control,t).lerp(control.lerp(to,t),t))
+		for i in points.size()-1: draw_dashed_line(points[i],points[i+1],color,1.8,7.0)
+		var tip:=points[points.size()-1]; var direction:=(tip-points[points.size()-2]).normalized(); var side:=Vector2(-direction.y,direction.x); draw_colored_polygon(PackedVector2Array([tip,tip-direction*10+side*5,tip-direction*10-side*5]),color)
+	func _fleet_wedge(pos:Vector2,color:Color,label:String,count:int,angle:float,_active:bool)->void:
+		var font:=get_theme_default_font(); draw_circle(pos,33,Color(color,.055)); draw_arc(pos,33,0,TAU,32,Color(color,.55),1)
+		for i in count:
+			var row:=int(sqrt(float(i))); var within:=i-row*row; var off:=Vector2(13.0+row*11.0,(within-row*.5)*12.0).rotated(angle)
+			var tip:=pos+off; var forward:=Vector2(6,0).rotated(angle); var side:=Vector2(0,4).rotated(angle)
+			draw_colored_polygon(PackedVector2Array([tip+forward,tip-forward*.65+side,tip-forward*.65-side]),color)
+		draw_circle(pos,4,Color("f4e3ba")); draw_string(font,pos+Vector2(-57,-43),label,HORIZONTAL_ALIGNMENT_CENTER,114,13,Color("edf4f5"))
+	func _card(rect:Rect2,title:String,value:String,tint:Color)->void:
+		var font:=get_theme_default_font(); draw_rect(rect,Color("08151f",.93)); draw_rect(rect,tint.darkened(.28),false,1); draw_rect(Rect2(rect.position,Vector2(3,rect.size.y)),tint); draw_string(font,rect.position+Vector2(12,20),title,HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("aebfc8")); draw_string(font,rect.position+Vector2(12,41),value,HORIZONTAL_ALIGNMENT_LEFT,-1,15,Color("eff6f7"))
 
 class Evidence3D extends SubViewportContainer:
-	var world:Node3D; var camera:Camera3D; var phase:=-1; var clock:=0.0; var label:Label
-	func _ready()->void:
-		custom_minimum_size=Vector2(320,400); var view:=SubViewport.new();view.size=Vector2i(640,620);view.render_target_update_mode=SubViewport.UPDATE_ALWAYS;add_child(view);world=Node3D.new();view.add_child(world)
-		var env:=Environment.new();env.background_mode=Environment.BG_COLOR;env.background_color=Color("030811");env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;env.ambient_light_color=Color("29465b");env.ambient_light_energy=.7;var we:=WorldEnvironment.new();we.environment=env;world.add_child(we)
-		var key:=DirectionalLight3D.new();key.light_color=Color("a9d8ff");key.light_energy=1.2;key.rotation_degrees=Vector3(-35,-30,0);world.add_child(key);var fire:=OmniLight3D.new();fire.light_color=Color("ff6a32");fire.light_energy=4.2;fire.omni_range=12;fire.position=Vector3(-1,1,-1);world.add_child(fire);camera=Camera3D.new();world.add_child(camera)
-		for i in 70: _star(i)
-		_build(3);var overlay:=CanvasLayer.new();view.add_child(overlay);label=Label.new();label.mouse_filter=Control.MOUSE_FILTER_IGNORE;label.position=Vector2(12,10);label.add_theme_font_size_override("font_size",15);label.add_theme_color_override("font_color",Color("e7f1f3"));overlay.add_child(label);set_process(true)
-	func set_battle(p:int,name:String,a:int,d:int,_am:int,_dm:int)->void:
-		if p!=phase:phase=p;_build(p)
-		if label!=null:label.text="● LIVE   실시간 전장 상황\n%s  ·  위 %d / 연합 %d" % [name,a,d]
-	func _process(delta:float)->void: clock+=delta;if camera!=null:camera.look_at_from_position(Vector3(sin(clock*.17)*2.4,3.0+sin(clock*.31)*.45,12.5-max(phase,1)*.45),Vector3.ZERO)
-	func _build(p:int)->void:
-		if world==null:return
-		for child in world.get_children():if child.name.begins_with("Combat"):child.queue_free()
-		for i in 9:_ship(Vector3(-4.5+(i%3)*1.15,(i%2)*.42-.3,-2.5+(i/3)*1.2),Color("d65348"),i,"CombatRed")
-		for i in 10:_ship(Vector3(2.0+(i%3)*1.1,(i%2)*.4-.25,-2.0+(i/3)*1.15),Color("3d9ed9"),i+4,"CombatBlue")
-		for i in 12+p*3:_beam(i)
-		for i in 4+p:_debris(i)
-	func _ship(pos:Vector3,color:Color,index:int,prefix:String)->void:
-		var n:=Node3D.new();n.name=prefix+str(index);n.position=pos;n.rotation_degrees=Vector3((index%3)*6,22 if color.r>color.b else -22,0);world.add_child(n);var hull:=MeshInstance3D.new();var hm:=CylinderMesh.new();hm.top_radius=.16;hm.bottom_radius=.42;hm.height=1.8;hm.radial_segments=8;hull.mesh=hm;hull.rotation_degrees=Vector3(0,0,90);hull.material_override=_mat(Color("152633"),.65);n.add_child(hull);var engine:=MeshInstance3D.new();var em:=SphereMesh.new();em.radius=.22;em.height=.42;engine.mesh=em;engine.position=Vector3(-.92,0,0);engine.material_override=_mat(color,1.8);n.add_child(engine)
-		for side in [-1.0,1.0]:var wing:=MeshInstance3D.new();var wm:=CylinderMesh.new();wm.top_radius=.045;wm.bottom_radius=.12;wm.height=1.05;wm.radial_segments=4;wing.mesh=wm;wing.position=Vector3(0,.05,side*.38);wing.rotation_degrees=Vector3(0,0,90);wing.material_override=_mat(Color("263d4b"),.35);n.add_child(wing)
-	func _beam(i:int)->void:var b:=MeshInstance3D.new();b.name="CombatTrace"+str(i);var m:=CylinderMesh.new();m.top_radius=.018;m.bottom_radius=.018;m.height=2.0+float(i%3);m.radial_segments=6;b.mesh=m;b.position=Vector3(-3.5+(i%5)*1.5,-.5+(i%4)*.55,-1+(i%3));b.rotation_degrees=Vector3(0,90-(i%3)*9,55+(i%4)*8);b.material_override=_mat(Color("ff7545") if i%3 else Color("5cc8ff"),3);world.add_child(b)
-	func _debris(i:int)->void:var rock:=MeshInstance3D.new();rock.name="CombatDebris"+str(i);var m:=SphereMesh.new();m.radius=.08+i*.018;m.height=.16+i*.036;rock.mesh=m;rock.position=Vector3(-2+(i%4)*1.2,-1.5+(i%3)*.8,-1+(i%2)*2);rock.material_override=_mat(Color("35414a"),0);world.add_child(rock)
-	func _star(i:int)->void:var star:=MeshInstance3D.new();star.name="Star"+str(i);var m:=SphereMesh.new();m.radius=.012;m.height=.024;star.mesh=m;star.position=Vector3(-10+fposmod(i*2.37,20),-5+fposmod(i*1.61,10),-8-fposmod(i*3.17,12));star.material_override=_mat(Color("b8d8ee"),1);world.add_child(star)
-	func _mat(c:Color,e:float)->StandardMaterial3D:var m:=StandardMaterial3D.new();m.albedo_color=c;m.metallic=.8;m.roughness=.32;m.emission_enabled=e>0;m.emission=c;m.emission_energy_multiplier=e;return m
+	## Keeps the legacy node identity and one-viewport contract while presenting authored combat art.
+	var phase := 0
+	var canvas: CinematicBattleCanvas
+	func _ready() -> void:
+		custom_minimum_size = Vector2(320,400)
+		stretch = true
+		# Keep the render surface below the panel's minimum height. A 700px child
+		# forced the whole VBox past 900px and clipped the command deck.
+		var view := SubViewport.new(); view.size = Vector2i(512,400); view.render_target_update_mode = SubViewport.UPDATE_ALWAYS; add_child(view)
+		canvas = CinematicBattleCanvas.new(); canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); view.add_child(canvas)
+	func set_battle(p:int,name:String,a:int,d:int,am:int,dm:int)->void:
+		phase=p
+		if canvas != null: canvas.set_battle(p,name,a,d,am,dm)
+
+class CinematicBattleCanvas extends Control:
+	var phase:=0; var phase_name:="접적"; var wei:=0; var allied:=0; var wei_morale:=0; var allied_morale:=0; var time:=0.0
+	var artwork:Texture2D = preload("res://assets/ui-mockups/red-cliffs-live-battle-v1.png")
+	func _ready()->void: set_process(true); queue_redraw()
+	func set_battle(p:int,n:String,a:int,d:int,am:int,dm:int)->void: phase=p;phase_name=n;wei=a;allied=d;wei_morale=am;allied_morale=dm;queue_redraw()
+	func _process(delta:float)->void: time+=delta; queue_redraw()
+	func _draw()->void:
+		var font:=get_theme_default_font(); var full:=Rect2(Vector2.ZERO,size)
+		# Authored battle plate is cropped like a live tactical camera, never stretched into a UI texture.
+		var source := Rect2(Vector2.ZERO,artwork.get_size())
+		var target_ratio: float = size.x / max(size.y, 1.0); var source_ratio: float = source.size.x / source.size.y
+		if source_ratio > target_ratio:
+			var crop_width: float = source.size.y * target_ratio; source.position.x += (source.size.x-crop_width)*.5; source.size.x = crop_width
+		else:
+			var crop_height: float = source.size.x / target_ratio; source.position.y += (source.size.y-crop_height)*.5; source.size.y = crop_height
+		draw_texture_rect_region(artwork,full,source,Color.WHITE)
+		draw_rect(full,Color("06101a",.14))
+		draw_rect(Rect2(0,0,size.x,45),Color("07121c",.88)); draw_line(Vector2(0,45),Vector2(size.x,45),Color("79a4b5",.62),1)
+		draw_circle(Vector2(21,22),4+sin(time*4.0)*1.2,Color("ff6545")); draw_string(font,Vector2(33,28),"LIVE  ·  실시간 전장 상황",HORIZONTAL_ALIGNMENT_LEFT,-1,17,Color("f0f6f5"))
+		draw_string(font,Vector2(size.x-155,28),"구지 궤도 · 교전 영상",HORIZONTAL_ALIGNMENT_RIGHT,140,12,Color("a9c2cc"))
+		# Signal tags sit on the image instead of covering its cinematic center.
+		_tag(Rect2(14,size.y*.16,128,35),"위군 기함",Color("61c5fb"),false)
+		_tag(Rect2(size.x-145,size.y*.40,132,35),"연합 화공대",Color("f06a55"),true)
+		var ticker:=Rect2(0,size.y-94,size.x,35); draw_rect(ticker,Color("06121c",.9)); draw_line(ticker.position, ticker.position+Vector2(size.x,0),Color("537686",.7),1)
+		draw_string(font,ticker.position+Vector2(13,23),"전황 보고  ·  %s / 연합군이 위군 전열에 압박을 가하고 있습니다." % phase_name,HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("d7e3e5"))
+		var stats:=Rect2(0,size.y-59,size.x,59); draw_rect(stats,Color("08141e",.96)); draw_line(stats.position,stats.position+Vector2(size.x,0),Color("678795",.65),1)
+		_stat(Vector2(14,size.y-37),"연합",allied,allied_morale,Color("e46a5e")); _stat(Vector2(size.x*.52,size.y-37),"위군",wei,wei_morale,Color("65c7fa"))
+	func _tag(rect:Rect2,text:String,tint:Color,right:bool)->void:
+		var font:=get_theme_default_font(); draw_rect(rect,Color("07131d",.86)); draw_rect(rect,tint.darkened(.28),false,1); draw_rect(Rect2(rect.position,Vector2(3,rect.size.y)),tint); draw_string(font,rect.position+Vector2(10,23),text,HORIZONTAL_ALIGNMENT_LEFT,rect.size.x-16,13,Color("edf5f5")); var anchor:=Vector2(rect.end.x if right else rect.position.x,rect.get_center().y); draw_line(anchor,anchor+Vector2(-22 if right else 22,18),tint,1)
+	func _stat(pos:Vector2,title:String,ships:int,morale:int,tint:Color)->void:
+		var font:=get_theme_default_font(); draw_string(font,pos,title+"  %d척" % ships,HORIZONTAL_ALIGNMENT_LEFT,-1,14,Color("eaf2f4")); draw_string(font,pos+Vector2(93,0),"사기 %d" % morale,HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("a9c0c9")); draw_rect(Rect2(pos+Vector2(0,9),Vector2(170,5)),Color("142633")); draw_rect(Rect2(pos+Vector2(0,9),Vector2(170*clamp(morale,0,100)/100.0,5)),tint)
