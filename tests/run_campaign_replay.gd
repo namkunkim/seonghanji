@@ -92,8 +92,17 @@ func _test_file_round_trip(data: GameData) -> void:
 		c.replay_to(180)
 	var before := c.digest()
 	var path := "user://test_campaign_save.json"
-	_ok(c.write_save(path), "파일 저장")
+	var wrote := c.write_save(path)
+	_ok(wrote, "파일 저장")
+	if not wrote:
+		print("")
+		return
 	var r := Campaign.read_save(path, data)
+	if r == null:
+		_ok(false, "파일 복원")
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+		print("")
+		return
 	_eq(r.digest(), before, "파일에서 복원한 지문 일치")
 	_eq(int(r.hb_milli), int(c.hb_milli), "hb_milli 복원")
 	_eq(r.ai_domestic_enabled, c.ai_domestic_enabled, "ai_domestic_enabled 복원")
