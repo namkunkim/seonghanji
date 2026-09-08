@@ -25,21 +25,78 @@ $env:LOCALAPPDATA = $userDataRoot
 
 $results = [System.Collections.Generic.List[object]]::new()
 function Invoke-GateStage {
-    param([string]$Name, [string[]]$Arguments)
+    param(
+        [string]$Name,
+        [string[]]$Arguments,
+        [int]$TimeoutSeconds = 300
+    )
     $started = Get-Date
     $safeName = $Name -replace '[^A-Za-z0-9_-]', '_'
     $logPath = Join-Path $LogDirectory ("{0:yyyyMMdd-HHmmss}-{1}.log" -f $started, $safeName)
+    $stdoutPath = "$logPath.stdout"
+    $stderrPath = "$logPath.stderr"
     Write-Host "`n=== $Name ==="
-    $previousPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    & $GodotBin @Arguments 2>&1 | Tee-Object -FilePath $logPath
-    $exitCode = $LASTEXITCODE
-    $ErrorActionPreference = $previousPreference
+    if ($Name -eq 'import') {
+        # First editor pass builds the fresh-checkout filesystem metadata.
+        # Only the following editor pass schedules the actual resource import.
+        $previousPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        & $GodotBin --headless --path . --editor --quit 2>&1 | Tee-Object -FilePath $logPath
+        $metadataExitCode = $LASTEXITCODE
+        $ErrorActionPreference = $previousPreference
+        if ($metadataExitCode -ne 0) {
+            $ended = Get-Date
+            $results.Add([PSCustomObject]@{
+                Name = $Name; Started = $started; Ended = $ended
+                Duration = [math]::Round(($ended - $started).TotalSeconds, 2)
+                ExitCode = $metadataExitCode; TimedOut = $false; Status = 'FAIL'; Log = $logPath
+            })
+            return
+        }
+    }
+    $process = Start-Process -FilePath $GodotBin -ArgumentList $Arguments -NoNewWindow -PassThru `
+        -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+    $completed = $false
+    $timedOut = $false
+    $exitCode = 1
+    if ($Name -eq 'import') {
+        # A fresh Windows checkout needs the editor's asynchronous importer.
+        # `--import` returns after its scan, before a font can be loaded.
+        # Wait for the required cache, then leave a short settling window for
+        # the P0-04 textures that the unit suite loads.
+        $fontCache = Join-Path $projectRoot '.godot\imported\NotoSansKR-VF.ttf-4f7fc1ace034007b61b1012dacf92f7c.fontdata'
+        $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+        while ((Get-Date) -lt $deadline -and -not (Test-Path $fontCache)) {
+            Start-Sleep -Milliseconds 500
+        }
+        if (Test-Path $fontCache) {
+            Start-Sleep -Seconds 15
+            & taskkill.exe /PID $process.Id /T /F | Out-Null
+            $process.WaitForExit()
+            $completed = $true
+            $exitCode = 0
+        } else {
+            $timedOut = $true
+        }
+    } else {
+        $completed = $process.WaitForExit($TimeoutSeconds * 1000)
+        if ($completed) { $exitCode = $process.ExitCode } else { $timedOut = $true }
+    }
+    if ($timedOut) {
+        Write-Warning "$Name exceeded ${TimeoutSeconds}s; terminating it and continuing the gate."
+        & taskkill.exe /PID $process.Id /T /F | Out-Null
+        $process.WaitForExit()
+        $exitCode = 1
+    }
+    if (Test-Path $stdoutPath) { Get-Content $stdoutPath | Tee-Object -FilePath $logPath }
+    if (Test-Path $stderrPath) { Get-Content $stderrPath | Tee-Object -FilePath $logPath -Append }
+    Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
     $ended = Get-Date
     $results.Add([PSCustomObject]@{
         Name = $Name; Started = $started; Ended = $ended
         Duration = [math]::Round(($ended - $started).TotalSeconds, 2)
-        ExitCode = $exitCode; Status = if ($exitCode -eq 0) { 'PASS' } else { 'FAIL' }
+        ExitCode = $exitCode; TimedOut = $timedOut
+        Status = if ($exitCode -eq 0) { 'PASS' } else { 'FAIL' }
         Log = $logPath
     })
 }
@@ -54,7 +111,7 @@ Write-Host "Isolated user data root: $userDataRoot"
 Push-Location $projectRoot
 try {
     # Keep this exact ordered list synchronized with .github/workflows/quality-gate.yml.
-    Invoke-GateStage 'import' @('--headless', '--path', '.', '--import')
+    Invoke-GateStage 'import' @('--headless', '--path', '.', '--editor') 180
     Invoke-GateStage 'unit-tests' @('--headless', '--path', '.', '--script', 'tests/run_tests.gd')
     Invoke-GateStage 'campaign-locked-100' @('--headless', '--path', '.', '--script', 'tests/run_campaign.gd')
     Invoke-GateStage 'verify-power' @('--headless', '--path', '.', '--script', 'tests/verify_power.gd')
