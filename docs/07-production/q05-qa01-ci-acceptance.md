@@ -52,3 +52,7 @@
 `b184fc7`에서 `out/q05-clean` detached worktree를 만든 뒤 동일 실행기를 단독 실행했다. import는 exit 0이었지만, 새 clone에 없는 `assets/fonts/NotoSansKR-VF.ttf`와 `assets/preproduction/p0-04/production-v1/final/flux/ART-C901`~`911.png` 때문에 단위시험의 P0-04 초상 섹션이 23건 실패했다. 결과는 35/35 섹션, 690 단언(하한 701), exit 1이다. 이는 기존 dirty worktree의 미추적 자산이 현 로컬 PASS를 가린다는 증거다.
 
 같은 깨끗한 실행의 `campaign-locked-100`도 배너 뒤 진행하지 않고 유휴 상태가 되어, 자원 누수를 막기 위해 PID 27184를 종료했다. 따라서 현재 판정은 **PARTIAL/미수용**이다. (1) 필수 폰트·승인 PNG의 추적/배포 계약을 별도 Task로 해결하고, (2) campaign hang 원인을 고치고, (3) 격리된 깨끗한 환경에서 aggregate 0과 나머지 음성 항목, 원격 workflow 결과를 실제 값으로 채워야 PASS로 변경한다.
+
+## 원격 상태
+
+Workflow를 포함한 commit `d947d2ed23abf1d418a7660f4033290d848763eb`은 `origin/main`에 push했다. 이 환경에서는 GitHub Actions 실행 목록을 조회할 인증/네트워크 경로를 확인하지 못했으므로 run URL·job 결과는 **미확인**이다. 원격 PASS를 추정하지 않으며, 새 clone 실패가 이미 확인되어 원격 수용도 PARTIAL이다.
