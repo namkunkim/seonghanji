@@ -20,8 +20,6 @@ New-Item -ItemType Directory -Force -Path $LogDirectory | Out-Null
 $userDataRoot = if ($env:GODOT_USER_DATA_DIR) { $env:GODOT_USER_DATA_DIR } else { Join-Path $LogDirectory 'user-data' }
 $userDataRoot = [IO.Path]::GetFullPath($userDataRoot)
 New-Item -ItemType Directory -Force -Path $userDataRoot | Out-Null
-$env:APPDATA = $userDataRoot
-$env:LOCALAPPDATA = $userDataRoot
 
 $results = [System.Collections.Generic.List[object]]::new()
 function Invoke-GateStage {
@@ -106,12 +104,16 @@ if ($LASTEXITCODE -ne 0 -or $version -notmatch '^4\.7\.2') {
     throw "Godot 4.7.2 stable is required; received '$version'."
 }
 Write-Host "Godot: $version"
-Write-Host "Isolated user data root: $userDataRoot"
 
 Push-Location $projectRoot
 try {
     # Keep this exact ordered list synchronized with .github/workflows/quality-gate.yml.
     Invoke-GateStage 'import' @('--headless', '--path', '.', '--editor') 180
+    # Editor import needs its normal settings context.  Tests start only after
+    # the cache is ready, then receive an isolated writable user:// root.
+    $env:APPDATA = $userDataRoot
+    $env:LOCALAPPDATA = $userDataRoot
+    Write-Host "Isolated user data root: $userDataRoot"
     Invoke-GateStage 'unit-tests' @('--headless', '--path', '.', '--script', 'tests/run_tests.gd')
     # This script also performs three 100-run HB comparisons: 400 simulations total.
     Invoke-GateStage 'campaign-locked-100' @('--headless', '--path', '.', '--script', 'tests/run_campaign.gd') 900
