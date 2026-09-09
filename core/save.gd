@@ -238,6 +238,10 @@ static func _command_error(value, index: int) -> String:
 		if not Campaign._is_valid_scn03_event_outcome(String(payload["event_id"]),
 				payload["outcome"]):
 			return "world.commands[%d].payload: 허용되지 않은 scenario outcome" % index
+	if String(c["kind"]) == Campaign.CMD_SCN03_DEMO_BEGIN:
+		var briefing_payload: Dictionary = c.get("payload", {})
+		if not briefing_payload.is_empty():
+			return "world.commands[%d].payload: scenario briefing begin은 빈 payload여야 한다" % index
 	if String(c["kind"]) == Campaign.CMD_SCN03_RED_CLIFF_MANIFEST:
 		var manifest_payload: Dictionary = c.get("payload", {})
 		if not Campaign._is_valid_scn03_red_cliff_manifest_payload(manifest_payload):

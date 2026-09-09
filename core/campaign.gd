@@ -37,6 +37,9 @@ const CMD_SCN03_EVENT_OUTCOME: String = "scenario_event_outcome"
 ## DEMO-RC-LT-02 stores a player's canonical wording choice through the existing
 ## scenario-outcome command.  It is intentionally not a second save ledger.
 const CMD_SCN03_DEMO_CHOICE: String = "scn03_demo_choice"
+## The briefing acknowledgement is a player command, rather than UI-local state.
+## Its arrival makes the Event 03 choice screen observable after save/replay.
+const CMD_SCN03_DEMO_BEGIN: String = "scn03_demo_begin"
 ## Event 07's approved Red-Cliffs participant ledger is an external player command.
 ## It is replayed like the event outcomes; no campaign snapshot owns it.
 const CMD_SCN03_RED_CLIFF_MANIFEST: String = "scn03_red_cliff_manifest"
@@ -106,6 +109,9 @@ var events_fired: Dictionary = {}
 ## 외부 사건/명령 계층은 `issue_scn03_event_outcome`으로 player 입력을 로그화하고,
 ## 이 원장은 도달한 명령을 `record_scn03_event_outcome` reducer로 적용한 파생값이다.
 var scn03_progress: Dictionary = {}
+## Replay-derived acknowledgement of the scenario briefing.  It is deliberately
+## not serialized: the player command log is the sole authority.
+var _scn03_demo_started: bool = false
 var _scn03_event09_evaluated: bool = false
 ## 기능 이벤트 계측(`events_fired`)과 분리된, 208 서사 사건의 one-shot 기록.
 var scenario_event_records: Dictionary = {}
@@ -590,7 +596,7 @@ func scn03_demo_progression() -> Dictionary:
 			"state": "met" if bool(scn03_progress.get(key, false)) else ("unmet" if scn03_progress.has(key) else "pending")})
 	var next_event := _scn03_demo_next_event()
 	var battle := _scn03_red_cliff_battle()
-	var stage := "briefing" if scn03_progress.is_empty() else ("choice" if next_event != "" else ("early_ending" if ended else "red_cliff_pending"))
+	var stage := "briefing" if scn03_progress.is_empty() and not _scn03_demo_started else ("choice" if next_event != "" else ("early_ending" if ended else "red_cliff_pending"))
 	if battle != null:
 		stage = "resolved" if battle.status == ActiveBattle.STATUS_RESOLVED else ("active" if battle.status == ActiveBattle.STATUS_ACTIVE else "red_cliff_pending")
 	return {
@@ -600,11 +606,36 @@ func scn03_demo_progression() -> Dictionary:
 		"objective": "손유 동맹으로 조조의 남하를 저지한다",
 		"current_event": next_event,
 		"current_event_title": _scn03_demo_event_title(next_event),
+		"can_begin": _scn03_demo_can_begin(),
+		"briefing_started": _scn03_demo_started,
 		"choices": choices,
 		"conditions": conditions,
 		"red_cliff_state": "not_occurred" if ended else (String(battle.status) if battle != null else ("pending" if next_event == "" else "undecided")),
 		"ending_reason": end_reason if ended else "",
 	}
+
+
+## Acknowledge the scenario briefing through the normal player-command log.
+## The reducer is one-shot, so duplicate button presses and replay re-entry do
+## not advance or alter the Event 03 choice state.
+func issue_scn03_demo_begin(delay_ticks: int = 0) -> Dictionary:
+	if world == null or world.scenario != "SCN-03" or not _uses_scn03_progress_rules() \
+			or delay_ticks < 0 or not _scn03_demo_can_begin() or _scn03_has_queued_demo_begin():
+		return {}
+	return world.issue(CMD_SCN03_DEMO_BEGIN, {}, delay_ticks, "player")
+
+
+func _scn03_demo_can_begin() -> bool:
+	return not _scn03_demo_started and scn03_progress.is_empty() and not ended
+
+
+func _scn03_has_queued_demo_begin() -> bool:
+	if world == null:
+		return false
+	for command in world.pending_commands:
+		if String(command.get("kind", "")) == CMD_SCN03_DEMO_BEGIN:
+			return true
+	return false
 
 
 ## The sole playable scenario-choice entry.  Choice IDs are the documented
@@ -1363,6 +1394,14 @@ func run_to_end(max_ticks: int = SCN03_END_TICK) -> void:
 ## 여기서 **효과가 붙는다.**
 func _apply_arrived() -> void:
 	for c in world.last_arrived:
+		if String(c.get("kind", "")) == CMD_SCN03_DEMO_BEGIN:
+			if String(c.get("origin", "player")) == "player" and c.get("payload", {}).is_empty() \
+					and _scn03_demo_can_begin():
+				_scn03_demo_started = true
+				cmds_applied += 1
+			else:
+				cmds_rejected += 1
+			continue
 		if String(c.get("kind", "")) == CMD_BATTLE_FORMATION_CHANGE:
 			var p: Dictionary = c.get("payload", {})
 			if String(c.get("origin", "player")) == "player" and p.size() == 4 \
