@@ -96,11 +96,17 @@ func _test_product_overlay_loop() -> void:
 	var title: Label = main.find_child("ScenarioTitle", true, false)
 	_ok(title != null and title.text == "적벽 전야",
 		"product briefing does not expose an internal event ID")
+	var continue_button: Button = main.find_child("ScenarioContinue", true, false)
+	_ok(continue_button != null and continue_button.visible, "briefing start is visible and focusable")
+	continue_button.pressed.emit()
+	await process_frame
+	_ok(main.campaign.scn03_demo_progression().get("stage", "") == "choice",
+		"briefing start enters the canonical Event 03 choice state")
 	for label in ["직접 병합", "유비 연합", "손권 동맹", "공동 방어"]:
 		_ok(await _press_product_choice(main, label), "mouse-equivalent product choice %s" % label)
 	_ok(main.campaign.scn03_demo_progression().get("stage", "") == "red_cliff_pending",
 		"product choices reach occurrence condition screen")
-	var continue_button: Button = main.find_child("ScenarioContinue", true, false)
+	continue_button = main.find_child("ScenarioContinue", true, false)
 	_ok(continue_button != null and continue_button.visible, "product continue is focusable at deployment")
 	continue_button.pressed.emit()
 	await process_frame
@@ -110,6 +116,9 @@ func _test_product_overlay_loop() -> void:
 	# A new demo owns a fresh Campaign.  The alternative Event 04 is selected
 	# through the same visible product buttons and must never leak old battle/news.
 	_ok(main._start_red_cliff_demo(), "new product demo restarts cleanly")
+	await process_frame
+	continue_button = main.find_child("ScenarioContinue", true, false)
+	continue_button.pressed.emit()
 	await process_frame
 	for label in ["직접 병합", "조조 항복", "손권 동맹", "공동 방어"]:
 		_ok(await _press_product_choice(main, label), "alternate product choice %s" % label)

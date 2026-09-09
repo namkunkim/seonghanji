@@ -957,16 +957,19 @@ func _refresh_red_cliff_scenario_overlay() -> void:
     elif stage == "red_cliff_pending": red_cliff_scenario_prompt.text = "적벽 발생 조건 충족\n구지 궤도로 참가 함대를 집결합니다."
     elif stage == "resolved": red_cliff_scenario_prompt.text = "적벽 전투 결착\n전투 결과는 전투 기록에서 확인할 수 있습니다."
     for child in red_cliff_scenario_choices.get_children(): child.queue_free()
-    for choice in state.get("choices", []):
-        var button := Button.new()
-        button.text = String(choice.get("label", "선택")) + (" · 역사 진행 권장" if bool(choice.get("recommended", false)) else "")
-        button.tooltip_text = "이 선택은 바로 확정되지 않고 다음 전역 틱에 기록됩니다."
-        button.custom_minimum_size = Vector2(0, 42)
-        button.add_theme_stylebox_override("normal", HudStyle.resource_style())
-        button.add_theme_stylebox_override("hover", HudStyle.resource_hover_style())
-        button.add_theme_stylebox_override("focus", HudStyle.resource_focus_style())
-        button.pressed.connect(_on_red_cliff_scenario_choice.bind(String(state.get("current_event", "")), String(choice.get("choice_id", ""))))
-        red_cliff_scenario_choices.add_child(button)
+    # The briefing is intentionally a real first state.  Choices appear only
+    # after the public Campaign begin command is accepted and replayed.
+    if stage != "briefing":
+        for choice in state.get("choices", []):
+            var button := Button.new()
+            button.text = String(choice.get("label", "선택")) + (" · 역사 진행 권장" if bool(choice.get("recommended", false)) else "")
+            button.tooltip_text = "이 선택은 바로 확정되지 않고 다음 전역 틱에 기록됩니다."
+            button.custom_minimum_size = Vector2(0, 42)
+            button.add_theme_stylebox_override("normal", HudStyle.resource_style())
+            button.add_theme_stylebox_override("hover", HudStyle.resource_hover_style())
+            button.add_theme_stylebox_override("focus", HudStyle.resource_focus_style())
+            button.pressed.connect(_on_red_cliff_scenario_choice.bind(String(state.get("current_event", "")), String(choice.get("choice_id", ""))))
+            red_cliff_scenario_choices.add_child(button)
     var condition_lines: Array[String] = []
     for condition in state.get("conditions", []):
         var mark := "✓" if String(condition.get("state", "")) == "met" else ("✕" if String(condition.get("state", "")) == "unmet" else "…")
@@ -987,9 +990,8 @@ func _on_red_cliff_scenario_continue() -> void:
     if campaign == null: return
     var stage := String(campaign.scn03_demo_progression().get("stage", ""))
     if stage == "briefing":
-        # The event choices are already visible below; this merely preserves the
-        # briefing as a non-mutating first screen.
-        pass
+        if not campaign.issue_scn03_demo_begin().is_empty():
+            campaign.step()
     elif stage == "red_cliff_pending":
         if not campaign.continue_red_cliff_scenario_demo().is_empty():
             # Manifest arrival is a separate canonical command boundary from
