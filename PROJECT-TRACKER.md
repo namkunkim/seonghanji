@@ -1,5 +1,7 @@
 # PROJECT TRACKER — SEONGHANJI: MANDATE
 
+> **2026-09-09 DEMO-RC 페이즈 작전 지침 — PASS:** 전과 패널 두 번째 줄에 접적·포화·교전·강습·결착별 현재 판단 목표를 표시하고 AI 위임 상태를 함께 알린다. 새로운 판정·승률 예측 없이 설명만 제공한다. 집중·제품 E2E 실패 0, 1600×900 GPU 잘림 없음.
+>
 > **2026-09-09 DEMO-RC 진형 가독성 — PASS:** 위군 전력 카드와 진형 선택기가 canonical `attacker_formation_id`를 표시한다. 선택 중 후보는 보존하고 코어 진형이 실제 변경될 때만 재동기화한다. 제품 E2E 실패 0 및 1600×900 GPU 화면에서 잘림 없음.
 >
 > **2026-09-09 DEMO-RC 명령 가용성 일치 — PASS:** 공개 `red_cliff_command_state`가 자동 접적 phase 1의 진행 불가와 phase 2 이후 진행 가능을 정확히 투영한다. 전투 UI는 코어 capability에 따라 진행·진형·유지·AI 위임 버튼과 진형 선택을 잠그며, AI 위임 상태를 설명한다. 코어 집중 46/0, 제품 E2E 실패 0, native 입력 41/0.

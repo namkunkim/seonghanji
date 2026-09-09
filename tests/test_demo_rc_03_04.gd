@@ -36,10 +36,13 @@ func _run() -> void:
 	var report_fixture: Array[Dictionary] = [{"phase":2, "attacker_loss":7, "defender_loss":11,
 		"attacker_morale_delta":-4, "defender_morale_delta":-6, "schemes":[{"id":"fire"}]}]
 	report.set_results(report_fixture)
+	report.set_phase(3, "교전", false)
 	_ok("2단계 포화" in report.summary and report.wei_loss == 7 and report.allied_loss == 11,
 		"phase report exposes canonical losses and phase name")
 	_ok(report.wei_morale_delta == -4 and report.allied_morale_delta == -6,
 		"phase report exposes both morale deltas")
+	_ok("진형 상성" in report.current_directive and "3단계 교전" in report.current_directive,
+		"phase report exposes an actionable current directive")
 	map.set_battle(1, "접적", 140, 120, 113, 120)
 	var contact_anchor: Vector2 = map.fleet_anchor_points()["allied_primary"]
 	var hub := Vector2(map.size.x * .52, map.size.y * .55)

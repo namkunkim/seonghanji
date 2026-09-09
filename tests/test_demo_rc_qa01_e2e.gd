@@ -19,6 +19,8 @@ func _run() -> void:
 	_ok(main._open_red_cliff_battle_entry_shell(id), "banner/canonical battle entry")
 	var battle: ActiveBattle = main.campaign.active_battles[0]
 	_ok(battle.combat_phase == 1, "phase 1 접적")
+	_ok("접적 좌표 확인" in main.red_cliff_battle_view._report.current_directive,
+		"phase 1 directive is visible")
 	_ok(main.red_cliff_battle_view._formation.get_item_text(main.red_cliff_battle_view._formation.selected)
 		== Formations.name_for_id(battle.attacker_formation_id),
 		"formation selector reflects canonical attacker formation")

@@ -40,7 +40,7 @@ func _build_once() -> void:
 	var split := HBoxContainer.new(); split.custom_minimum_size = Vector2(0, 480); split.size_flags_vertical = Control.SIZE_EXPAND_FILL; split.add_theme_constant_override("separation", 10); stack.add_child(split)
 	_map = TacticalMap.new(); _map.name = "TacticalMapTwoThirds"; _map.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map.size_flags_stretch_ratio = 2.0; split.add_child(_map)
 	_feed = BattleStillImage.new(); _feed.name = "BattleStillImageOneThird"; _feed.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _feed.size_flags_stretch_ratio = 1.0; split.add_child(_feed)
-	_report = BattleReport.new(); _report.name = "PhaseBattleReport"; _report.custom_minimum_size = Vector2(0, 42); stack.add_child(_report)
+	_report = BattleReport.new(); _report.name = "PhaseBattleReport"; _report.custom_minimum_size = Vector2(0, 56); stack.add_child(_report)
 	var controls := HBoxContainer.new(); controls.custom_minimum_size = Vector2(0, 60); controls.add_theme_constant_override("separation", 8); stack.add_child(controls)
 	controls.add_child(_button("진형 유지", "hold_formation"))
 	_formation = OptionButton.new(); _formation.custom_minimum_size = Vector2(144, 46)
@@ -96,6 +96,7 @@ func _refresh() -> void:
 	var active := String(battle.status) == ActiveBattle.STATUS_ACTIVE
 	var command_state: Dictionary = campaign.call("red_cliff_command_state", battle_id) if campaign != null and campaign.has_method("red_cliff_command_state") else {}
 	var delegated := bool(command_state.get("ai_delegated", false))
+	_report.set_phase(phase, phase_name, delegated)
 	for b in _buttons:
 		var action := String(b.get_meta("action", ""))
 		if action == "advance_phase": b.disabled = not bool(command_state.get("can_advance", false))
@@ -121,6 +122,7 @@ class CommandDeck extends Control:
 
 class BattleReport extends Control:
 	var summary := "전투 판정 대기 · 명령을 선택하면 다음 전역 틱에 결과가 반영됩니다."
+	var current_directive := "접적 좌표 확인 · 전열과 교전권 진입 경로를 점검하십시오."
 	var allied_loss := 0
 	var wei_loss := 0
 	var allied_morale_delta := 0
@@ -137,14 +139,28 @@ class BattleReport extends Control:
 			var schemes: Array = latest.get("schemes", [])
 			summary = "직전 전과 · %d단계 %s · 계략 %d건" % [resolved_phase, Battle.PHASE_NAMES[resolved_phase-1], schemes.size()]
 		queue_redraw()
+	func set_phase(current_phase: int, current_name: String, delegated: bool) -> void:
+		var directives := [
+			"접적 좌표 확인 · 전열과 교전권 진입 경로를 점검하십시오.",
+			"장거리 포화 · 적 사기와 전열을 먼저 흔드십시오.",
+			"주력 교전 · 진형 상성과 잔존 전력을 확인하십시오.",
+			"거점 강습 · 붕괴한 측면과 지휘선을 압박하십시오.",
+			"결착 · 잔존 전력을 집중해 승패를 확정하십시오.",
+		]
+		var index := clampi(current_phase-1,0,directives.size()-1)
+		current_directive = "%d단계 %s · %s" % [current_phase,current_name,directives[index]]
+		if delegated: current_directive += "  [AI 지휘 중]"
+		queue_redraw()
 	func _draw() -> void:
 		var font := get_theme_default_font()
 		draw_rect(Rect2(Vector2.ZERO,size),Color("08131c",.96)); draw_rect(Rect2(Vector2.ZERO,size),Color("314958"),false,1)
-		draw_string(font,Vector2(14,26),summary,HORIZONTAL_ALIGNMENT_LEFT,size.x*.48,13,Color("c6d3d8"))
+		draw_string(font,Vector2(14,22),summary,HORIZONTAL_ALIGNMENT_LEFT,size.x*.48,13,Color("c6d3d8"))
 		var allied := "연합 손실 %d척  ·  사기 %+d" % [allied_loss,allied_morale_delta]
 		var wei := "위군 손실 %d척  ·  사기 %+d" % [wei_loss,wei_morale_delta]
-		draw_string(font,Vector2(size.x*.51,26),allied,HORIZONTAL_ALIGNMENT_LEFT,size.x*.23,13,Color("ee7b72"))
-		draw_string(font,Vector2(size.x*.76,26),wei,HORIZONTAL_ALIGNMENT_LEFT,size.x*.22,13,Color("69c4f4"))
+		draw_string(font,Vector2(size.x*.51,22),allied,HORIZONTAL_ALIGNMENT_LEFT,size.x*.23,13,Color("ee7b72"))
+		draw_string(font,Vector2(size.x*.76,22),wei,HORIZONTAL_ALIGNMENT_LEFT,size.x*.22,13,Color("69c4f4"))
+		draw_line(Vector2(12,31),Vector2(size.x-12,31),Color("263b49"),1)
+		draw_string(font,Vector2(14,49),"현재 지침 · "+current_directive,HORIZONTAL_ALIGNMENT_LEFT,size.x-28,12,Color("e4bd6b"))
 
 class TacticalMap extends Control:
 	var phase:=0; var phase_name:="대기"; var a:=0; var d:=0; var am:=0; var dm:=0
