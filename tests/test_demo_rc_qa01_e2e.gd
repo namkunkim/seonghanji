@@ -45,6 +45,12 @@ func _run() -> void:
 	main.red_cliff_battle_view._toggle_history()
 	_ok(main.red_cliff_battle_view._report.allied_loss >= 0 and main.red_cliff_battle_view._report.wei_loss >= 0,
 		"phase report exposes non-negative canonical losses")
+	main.red_cliff_battle_view._map.select_fleet("wei_primary")
+	var fleet_detail: Dictionary=main.red_cliff_battle_view._map.selection_snapshot()
+	_ok(fleet_detail.get("formation","")==Formations.name_for_id(battle.attacker_formation_id)
+		and int(fleet_detail.get("ships",-1))==battle.attacker_ships
+		and fleet_detail.get("objective","")=="적 전열 압박",
+		"selected fleet detail follows canonical battle and formation state")
 	_ok(main.campaign.issue_red_cliff_player_command(id, "change_formation", {"target_formation_id": "INVALID"}).is_empty(), "invalid formation rejected")
 	_ok(not main.campaign.issue_red_cliff_player_command(id, "hold_formation").is_empty(), "hold formation command")
 	main.campaign.step()

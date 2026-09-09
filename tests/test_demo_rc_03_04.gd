@@ -69,13 +69,25 @@ func _run() -> void:
 		"phase transition alert exposes the current battle cue")
 	view._process(2.0)
 	_ok(not view._phase_alert.visible,"phase transition alert expires without blocking play")
-	map.set_battle(1, "접적", 140, 120, 113, 120)
+	map.set_battle(1, "접적", 140, 120, 113, 120, "어린진", "선봉형")
 	var contact_anchor: Vector2 = map.fleet_anchor_points()["allied_primary"]
+	var select_event:=InputEventMouseButton.new(); select_event.button_index=MOUSE_BUTTON_LEFT; select_event.pressed=true; select_event.position=contact_anchor
+	map._gui_input(select_event)
+	var selected: Dictionary=map.selection_snapshot()
+	_ok(selected.get("name","")=="우비 돌격단" and selected.get("faction","")=="손권·유비 연합"
+		and int(selected.get("ships",0))==120 and int(selected.get("morale",0))==120,
+		"clicking a fleet exposes canonical faction strength and morale")
+	_ok(selected.get("formation","")=="선봉형" and selected.get("objective","")=="교전권 진입"
+		and selected.get("engagement","")=="접근 중",
+		"selected fleet detail exposes formation, objective, and engagement state")
 	var hub := Vector2(map.size.x * .52, map.size.y * .55)
-	map.set_battle(4, "강습", 140, 120, 113, 120)
+	map.set_battle(4, "강습", 140, 120, 113, 120, "어린진", "선봉형")
 	var assault_anchor: Vector2 = map.fleet_anchor_points()["allied_primary"]
 	_ok(assault_anchor.distance_to(hub) < contact_anchor.distance_to(hub),
 		"fleet advances along its route as combat phases progress")
+	_ok(map.selection_snapshot().get("objective","")=="구지 거점 돌파"
+		and map.selection_snapshot().get("engagement","")=="강습 중",
+		"fleet detail follows the current phase without inventing combat state")
 	var clock_before: float = map.clock
 	map._process(.5)
 	_ok(map.clock > clock_before, "tactical route animation advances continuously")
@@ -86,6 +98,7 @@ func _run() -> void:
 	await process_frame
 	_ok(map.fleet_icon_counts() == Vector2i(0,20),
 		"zero allied ships clears allied tactical icons and caps live Wei icons")
+	_ok(map.selection_snapshot().is_empty(), "destroyed selected fleet clears its detail panel")
 	_ok("연합군  0척" in evidence.allied_label.text,
 		"static evidence overlay reports zero allied ships")
 	evidence.set_battle(5, "결착", 0, 0, 0, 0)

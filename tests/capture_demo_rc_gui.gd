@@ -25,6 +25,8 @@ func _run() -> void:
 	await _capture("02-phase-1-contact-1600x900.png")
 	main.campaign.step()
 	await _capture("03-phase-2-barrage-1600x900.png")
+	main.red_cliff_battle_view._map.select_fleet("wei_primary")
+	await _capture("03a-selected-fleet-1600x900.png")
 	main.red_cliff_battle_view._toggle_history()
 	await _capture("03b-battle-history-1600x900.png")
 	main.red_cliff_battle_view._toggle_history()

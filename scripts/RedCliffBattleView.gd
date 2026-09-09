@@ -180,6 +180,7 @@ func _refresh() -> void:
 		_state.visible = true
 	var attacker_formation_id := String(battle.attacker_formation_id)
 	var attacker_formation_name := Formations.name_for_id(attacker_formation_id)
+	var defender_formation_name := Formations.name_for_id(String(battle.defender_formation_id))
 	if attacker_formation_id != _synced_formation_id:
 		_synced_formation_id = attacker_formation_id
 		for index in _formation.item_count:
@@ -188,7 +189,7 @@ func _refresh() -> void:
 				break
 	_formation.tooltip_text = "현재 위군 진형: %s" % attacker_formation_name
 	if _feedback.text.is_empty(): _feedback.text = _formation_brief(attacker_formation_name)
-	_deck.set_battle(phase, phase_name, a, d, am, dm, attacker_formation_name); _map.set_battle(phase, phase_name, a, d, am, dm); _feed.set_battle(phase, phase_name, a, d, am, dm); _report.set_results(battle.phase_results)
+	_deck.set_battle(phase, phase_name, a, d, am, dm, attacker_formation_name); _map.set_battle(phase, phase_name, a, d, am, dm, attacker_formation_name, defender_formation_name); _feed.set_battle(phase, phase_name, a, d, am, dm); _report.set_results(battle.phase_results)
 	var active := String(battle.status) == ActiveBattle.STATUS_ACTIVE
 	var command_state: Dictionary = campaign.call("red_cliff_command_state", battle_id) if campaign != null and campaign.has_method("red_cliff_command_state") else {}
 	var delegated := bool(command_state.get("ai_delegated", false))
@@ -274,10 +275,15 @@ class BattleReport extends Control:
 
 class TacticalMap extends Control:
 	var phase:=0; var phase_name:="대기"; var a:=0; var d:=0; var am:=0; var dm:=0
+	var attacker_formation_name:="미확인"; var defender_formation_name:="미확인"
+	var selected_fleet := ""
 	var clock := 0.0
-	func _ready() -> void: custom_minimum_size=Vector2(650,400); set_process(true); queue_redraw()
+	func _ready() -> void: custom_minimum_size=Vector2(650,400); mouse_default_cursor_shape=Control.CURSOR_POINTING_HAND; set_process(true); queue_redraw()
 	func _process(delta: float) -> void: clock = fmod(clock + delta, 120.0); queue_redraw()
-	func set_battle(p:int,n:String,aa:int,dd:int,aam:int,ddm:int)->void: phase=p;phase_name=n;a=aa;d=dd;am=aam;dm=ddm;queue_redraw()
+	func set_battle(p:int,n:String,aa:int,dd:int,aam:int,ddm:int,attacker_formation:="미확인",defender_formation:="미확인")->void:
+		phase=p; phase_name=n; a=aa; d=dd; am=aam; dm=ddm; attacker_formation_name=attacker_formation; defender_formation_name=defender_formation
+		if (selected_fleet.begins_with("allied") and d<=0) or (selected_fleet.begins_with("wei") and a<=0): selected_fleet=""
+		queue_redraw()
 	func fleet_icon_counts()->Vector2i: return Vector2i(mini(d,20),mini(a,20))
 	func route_progress() -> float: return clampf(.10 + float(maxi(phase, 1) - 1) * .17, .10, .82)
 	func fleet_anchor_points() -> Dictionary:
@@ -289,6 +295,30 @@ class TacticalMap extends Control:
 			"wei_primary": _route_point(Vector2(size.x*.82,size.y*.31),Vector2(size.x*.70,size.y*.31),hub,progress),
 			"wei_secondary": _route_point(Vector2(size.x*.78,size.y*.70),Vector2(size.x*.67,size.y*.69),hub,progress),
 		}
+	func select_fleet(fleet_id:String)->void:
+		if fleet_id in ["allied_primary","allied_secondary"] and d <= 0: selected_fleet=""
+		elif fleet_id in ["wei_primary","wei_secondary"] and a <= 0: selected_fleet=""
+		elif fleet_id in fleet_anchor_points(): selected_fleet=fleet_id
+		else: selected_fleet=""
+		queue_redraw()
+	func selection_snapshot()->Dictionary:
+		if selected_fleet.is_empty(): return {}
+		var allied:=selected_fleet.begins_with("allied")
+		var names:={"allied_primary":"우비 돌격단","allied_secondary":"손권 주력","wei_primary":"위군 본대","wei_secondary":"장료 기동대"}
+		return {"id":selected_fleet,"name":String(names[selected_fleet]),"faction":"손권·유비 연합" if allied else "위군","ships":d if allied else a,"morale":dm if allied else am,"formation":defender_formation_name if allied else attacker_formation_name,"objective":_phase_objective(),"engagement":_engagement_state()}
+	func _gui_input(event:InputEvent)->void:
+		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed: _select_at(event.position)
+		elif event is InputEventScreenTouch and event.pressed: _select_at(event.position)
+	func _select_at(point:Vector2)->void:
+		var nearest:=""; var nearest_distance:=48.0
+		for fleet_id in fleet_anchor_points():
+			var distance:=point.distance_to(fleet_anchor_points()[fleet_id])
+			if distance < nearest_distance: nearest=fleet_id; nearest_distance=distance
+		select_fleet(nearest)
+	func _phase_objective()->String:
+		return ["교전권 진입","적 전열 압박","주력 전열 충돌","구지 거점 돌파","잔존 전력 격멸"][clampi(phase-1,0,4)]
+	func _engagement_state()->String:
+		return ["접근 중","장거리 교전","근접 교전","강습 중","결착 진행"][clampi(phase-1,0,4)]
 	func _draw() -> void:
 		var font:=get_theme_default_font(); var hub:=Vector2(size.x*.52,size.y*.55)
 		# A painted, layered board gives the battlefield depth before tactical marks land on it.
@@ -316,27 +346,28 @@ class TacticalMap extends Control:
 			var allied_from := Vector2(size.x*.18,size.y*.37); var allied_control := Vector2(size.x*.39,size.y*.30)
 			_route_curve(allied_from,allied_control,hub,Color("e66b5f"),true)
 			var allied_t := clampf(route_progress()+sin(clock*.9)*.008,.0,.9)
-			_fleet_wedge(_route_point(allied_from,allied_control,hub,allied_t),Color("eb685c"),"우비 돌격단",allied_first,_route_tangent(allied_from,allied_control,hub,allied_t).angle(),true)
+			_fleet_wedge(_route_point(allied_from,allied_control,hub,allied_t),Color("eb685c"),"우비 돌격단",allied_first,_route_tangent(allied_from,allied_control,hub,allied_t).angle(),"allied_primary")
 			if allied_second > 0:
 				var allied_two_from := Vector2(size.x*.21,size.y*.72); var allied_two_control := Vector2(size.x*.36,size.y*.70)
 				_route_curve(allied_two_from,allied_two_control,hub,Color("e66b5f"),true)
 				var allied_two_t := clampf(route_progress()*.92+sin(clock*.82+1.4)*.007,.0,.9)
-				_fleet_wedge(_route_point(allied_two_from,allied_two_control,hub,allied_two_t),Color("d94f50"),"손권 주력",allied_second,_route_tangent(allied_two_from,allied_two_control,hub,allied_two_t).angle(),true)
+				_fleet_wedge(_route_point(allied_two_from,allied_two_control,hub,allied_two_t),Color("d94f50"),"손권 주력",allied_second,_route_tangent(allied_two_from,allied_two_control,hub,allied_two_t).angle(),"allied_secondary")
 		if a > 0:
 			var wei_icons := fleet_icon_counts().y; var wei_first := ceili(float(wei_icons)*.55); var wei_second := wei_icons-wei_first
 			var wei_from := Vector2(size.x*.82,size.y*.31); var wei_control := Vector2(size.x*.70,size.y*.31)
 			_route_curve(wei_from,wei_control,hub,Color("63bef1"),false)
 			var wei_t := clampf(route_progress()*.96+sin(clock*.88+.7)*.008,.0,.9)
-			_fleet_wedge(_route_point(wei_from,wei_control,hub,wei_t),Color("6bcafa"),"위군 본대",wei_first,_route_tangent(wei_from,wei_control,hub,wei_t).angle(),true)
+			_fleet_wedge(_route_point(wei_from,wei_control,hub,wei_t),Color("6bcafa"),"위군 본대",wei_first,_route_tangent(wei_from,wei_control,hub,wei_t).angle(),"wei_primary")
 			if wei_second > 0:
 				var wei_two_from := Vector2(size.x*.78,size.y*.70); var wei_two_control := Vector2(size.x*.67,size.y*.69)
 				_route_curve(wei_two_from,wei_two_control,hub,Color("63bef1"),false)
 				var wei_two_t := clampf(route_progress()*.88+sin(clock*.78+2.1)*.007,.0,.9)
-				_fleet_wedge(_route_point(wei_two_from,wei_two_control,hub,wei_two_t),Color("53aee1"),"장료 기동대",wei_second,_route_tangent(wei_two_from,wei_two_control,hub,wei_two_t).angle(),true)
+				_fleet_wedge(_route_point(wei_two_from,wei_two_control,hub,wei_two_t),Color("53aee1"),"장료 기동대",wei_second,_route_tangent(wei_two_from,wei_two_control,hub,wei_two_t).angle(),"wei_secondary")
 		_engagement_fx(hub)
 		_card(Rect2(14,54,160,54),"연합 전력", "%d척  ·  사기 %d" % [d,dm],Color("df6158"))
 		_card(Rect2(size.x-174,54,160,54),"위군 전력", "%d척  ·  사기 %d" % [a,am],Color("62bdf1"))
-		draw_rect(Rect2(0,size.y-30,size.x,30),Color("07111a",.94)); draw_string(font,Vector2(14,size.y-10),"◆ 주요 합선   ─ ─ 이동 경로   ◌ 교전 구역   △ 함대 전열",HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("a7bac4"))
+		if not selected_fleet.is_empty(): _selection_card()
+		draw_rect(Rect2(0,size.y-30,size.x,30),Color("07111a",.94)); draw_string(font,Vector2(14,size.y-10),"◆ 주요 합선   ─ ─ 이동 경로   ◌ 교전 구역   △ 함대 전열   ·   함대 표식 클릭: 상세",HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("a7bac4"))
 	func _station(pos:Vector2)->void:
 		var font:=get_theme_default_font(); draw_circle(pos,11,Color("f2d280",.85)); draw_circle(pos,6,Color("09131d"));
 		for angle in [0.0,PI*.5,PI,PI*1.5]: draw_line(pos+Vector2(12,0).rotated(angle),pos+Vector2(23,0).rotated(angle),Color("d9b464"),3)
@@ -366,13 +397,26 @@ class TacticalMap extends Control:
 			for i in phase-1:
 				var burst := hub+Vector2(18.0+float(i)*11.0,0).rotated(float(i)*2.1+clock*.12)
 				draw_circle(burst,3.0+2.2*abs(sin(clock*3.8+i)),Color("ff7a49",.72))
-	func _fleet_wedge(pos:Vector2,color:Color,label:String,count:int,angle:float,_active:bool)->void:
+	func _fleet_wedge(pos:Vector2,color:Color,label:String,count:int,angle:float,fleet_id:String)->void:
 		var font:=get_theme_default_font(); draw_circle(pos,33,Color(color,.055)); draw_arc(pos,33,0,TAU,32,Color(color,.55),1)
+		if selected_fleet==fleet_id:
+			var pulse:=2.0+1.2*(.5+.5*sin(clock*4.0)); draw_arc(pos,39,0,TAU,40,Color("ffe39a"),pulse); draw_circle(pos,45,Color("e9bd58",.045))
 		for i in count:
 			var row:=int(sqrt(float(i))); var within:=i-row*row; var off:=Vector2(13.0+row*11.0,(within-row*.5)*12.0).rotated(angle)
 			var tip:=pos+off; var forward:=Vector2(6,0).rotated(angle); var side:=Vector2(0,4).rotated(angle)
 			draw_colored_polygon(PackedVector2Array([tip+forward,tip-forward*.65+side,tip-forward*.65-side]),color)
 		draw_circle(pos,4,Color("f4e3ba")); draw_string(font,pos+Vector2(-57,-43),label,HORIZONTAL_ALIGNMENT_CENTER,114,13,Color("edf4f5"))
+	func _selection_card()->void:
+		var data:=selection_snapshot(); if data.is_empty(): return
+		var allied:=String(data.faction)=="손권·유비 연합"; var tint:=Color("e96c61") if allied else Color("65c5f4"); var faction_short:="연합" if allied else "위군"
+		var rect:=Rect2(14,118,240,142); var font:=get_theme_default_font()
+		draw_rect(rect,Color("07131d",.97)); draw_rect(rect,tint,false,1.5); draw_rect(Rect2(rect.position,Vector2(4,rect.size.y)),tint)
+		draw_string(font,rect.position+Vector2(16,25),"선택 함대  ◆  %s" % data.name,HORIZONTAL_ALIGNMENT_LEFT,208,16,Color("f5e4b4"))
+		draw_line(rect.position+Vector2(14,34),rect.position+Vector2(rect.size.x-14,34),Color("39515e"),1)
+		draw_string(font,rect.position+Vector2(16,57),"%s  ·  전체 %d척  ·  사기 %d" % [faction_short,data.ships,data.morale],HORIZONTAL_ALIGNMENT_LEFT,208,13,Color("dce8eb"))
+		draw_string(font,rect.position+Vector2(16,79),"현재 진형  %s" % data.formation,HORIZONTAL_ALIGNMENT_LEFT,208,13,Color("bcd0d7"))
+		draw_string(font,rect.position+Vector2(16,101),"작전 목표  %s" % data.objective,HORIZONTAL_ALIGNMENT_LEFT,208,13,Color("e4bd6b"))
+		draw_string(font,rect.position+Vector2(16,123),"교전 상태  %s" % data.engagement,HORIZONTAL_ALIGNMENT_LEFT,208,13,tint.lightened(.18))
 	func _card(rect:Rect2,title:String,value:String,tint:Color)->void:
 		var font:=get_theme_default_font(); draw_rect(rect,Color("08151f",.93)); draw_rect(rect,tint.darkened(.28),false,1); draw_rect(Rect2(rect.position,Vector2(3,rect.size.y)),tint); draw_string(font,rect.position+Vector2(12,20),title,HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("aebfc8")); draw_string(font,rect.position+Vector2(12,41),value,HORIZONTAL_ALIGNMENT_LEFT,-1,15,Color("eff6f7"))
 

@@ -49,6 +49,17 @@ func _click(button: Button, label: String) -> bool:
 	_ok(true, "%s mouse press/release injected at %s" % [label, str(point)])
 	return true
 
+func _click_point(point: Vector2, label: String) -> void:
+	var press := InputEventMouseButton.new()
+	press.position = point; press.global_position = point; press.button_index = MOUSE_BUTTON_LEFT; press.pressed = true
+	Input.parse_input_event(press)
+	await process_frame
+	var release := InputEventMouseButton.new()
+	release.position = point; release.global_position = point; release.button_index = MOUSE_BUTTON_LEFT; release.pressed = false
+	Input.parse_input_event(release)
+	await process_frame
+	_ok(true, "%s mouse press/release injected at %s" % [label, str(point)])
+
 func _key(keycode: Key, label: String) -> void:
 	var press := InputEventKey.new()
 	press.keycode = keycode
@@ -96,8 +107,13 @@ func _run() -> void:
 	await _capture("01-demo-active-banner-1600x900.png")
 	if not await _click(_button("전투 진입"), "battle banner entry"):
 		_write_report(); quit(1); return
-	_ok(root.find_child("TacticalMapTwoThirds", true, false) != null, "battle tactical map is mounted")
+	var tactical_map: Control=root.find_child("TacticalMapTwoThirds", true, false)
+	_ok(tactical_map != null, "battle tactical map is mounted")
 	_ok(root.find_child("BattleStillImageOneThird", true, false) != null, "battle still image is mounted")
+	var fleet_point: Vector2=tactical_map.get_global_transform()*tactical_map.fleet_anchor_points()["wei_primary"]
+	await _click_point(fleet_point,"select Wei fleet marker")
+	_ok(tactical_map.selection_snapshot().get("id","")=="wei_primary",
+		"native pointer opens the selected fleet detail")
 	await _capture("02-battle-entry-1600x900.png")
 
 	if not await _click(_button("진형 유지"), "hold formation"):
