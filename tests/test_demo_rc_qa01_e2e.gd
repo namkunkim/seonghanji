@@ -9,12 +9,27 @@ func _ok(value: bool, label: String) -> void:
 		_fail += 1
 		print("  x %s" % label)
 
+func _start_active_demo(main) -> bool:
+	if not main._start_red_cliff_demo():
+		return false
+	var choices := [
+		[Campaign.SCN03_EVENT03, {"cao_southward_complete": true}],
+		[Campaign.SCN03_EVENT04, {"sun_quan_independent": true}],
+		[Campaign.SCN03_EVENT06, {"liu_bei_hostile_to_cao": true}],
+		[Campaign.SCN03_EVENT07, {"sun_liu_military_pact": true, "yangtze_defense_line": true}],
+	]
+	for choice in choices:
+		if main.campaign.issue_scn03_event_outcome(String(choice[0]), choice[1]).is_empty():
+			return false
+		main.campaign.step()
+	return not main.campaign.activate_scn03_red_cliff_demo().is_empty()
+
 func _run() -> void:
 	get_root().size = Vector2i(1600, 900)
 	var main = load("res://scenes/main.tscn").instantiate()
 	root.add_child(main)
 	await process_frame
-	_ok(main._start_red_cliff_demo(), "데모 시작")
+	_ok(_start_active_demo(main), "선택 4건 뒤 정본 적벽 데모 시작")
 	var id := Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID
 	_ok(main._open_red_cliff_battle_entry_shell(id), "banner/canonical battle entry")
 	var battle: ActiveBattle = main.campaign.active_battles[0]
@@ -114,8 +129,14 @@ func _run() -> void:
 	_ok(restored.get("status", "") == Save.STATUS_OK, "save restore")
 	_ok(restored.get("campaign").digest() == main.campaign.digest(), "same resolved state after replay")
 	main._close_red_cliff_battle_entry_shell()
-	_ok(main.map.visible, "return home")
+	_ok(main.red_cliff_scenario_panel.visible and not main.map.visible
+		and main.red_cliff_scenario_title.text == "적벽대전 결과", "결착 결과 canonical 브리핑 exactly-once")
+	main._return_from_red_cliff_scenario()
+	_ok(main.map.visible, "결과 브리핑 뒤 홈 복귀")
 	_ok(not main._open_red_cliff_battle_entry_shell(id), "resolved re-entry refused")
+	_ok(main._start_red_cliff_demo(), "새 데모 재시작")
+	_ok(main.campaign.active_battles.is_empty() and main.campaign.scn03_progress.is_empty(),
+		"새 데모에는 이전 선택·전투 상태가 누출되지 않음")
 	main.free()
 	print("DEMO-RC-QA-01: %d failures" % _fail)
 	quit(0 if _fail == 0 else 1)

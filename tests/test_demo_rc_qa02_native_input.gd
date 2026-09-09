@@ -104,6 +104,13 @@ func _run() -> void:
 
 	if not await _click(_button("적벽"), "demo start"):
 		_write_report(); quit(1); return
+	_ok(root.find_child("RedCliffScenarioBriefing", true, false) != null,
+		"scenario briefing is mounted")
+	for label in ["남하를 완수한다", "강동의 독립을 지킨다", "조조에 맞선다", "군사 협정과 장강 방어선을 세운다"]:
+		if not await _click(_button(label), "scenario choice " + label):
+			_write_report(); quit(1); return
+	if not await _click(_button("적벽 전투 준비"), "activate canonical Red Cliffs battle"):
+		_write_report(); quit(1); return
 	await _capture("01-demo-active-banner-1600x900.png")
 	if not await _click(_button("전투 진입"), "battle banner entry"):
 		_write_report(); quit(1); return
