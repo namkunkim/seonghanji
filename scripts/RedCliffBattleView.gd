@@ -12,8 +12,11 @@ var _feed: BattleStillImage
 var _deck: CommandDeck
 var _report: BattleReport
 var _formation: OptionButton
+var _phase_alert: Label
 var _buttons: Array[Button] = []
 var _synced_formation_id := ""
+var _last_phase := -1
+var _phase_alert_time := 0.0
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -23,7 +26,12 @@ func _ready() -> void:
 func configure(campaign_ref, canonical_battle_id: String) -> void:
 	campaign = campaign_ref; battle_id = canonical_battle_id; _refresh()
 
-func _process(_delta: float) -> void: _refresh()
+func _process(delta: float) -> void:
+	_refresh()
+	if _phase_alert_time > 0.0:
+		_phase_alert_time = maxf(0.0,_phase_alert_time-delta)
+		_phase_alert.modulate.a = clampf(_phase_alert_time/.45,0.0,1.0) if _phase_alert_time < .45 else 1.0
+		if _phase_alert_time <= 0.0: _phase_alert.visible = false
 
 func _build_once() -> void:
 	if _state != null: return
@@ -31,6 +39,8 @@ func _build_once() -> void:
 	var margins := MarginContainer.new(); margins.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["margin_left", "margin_right"]: margins.add_theme_constant_override(side, 18)
 	margins.add_theme_constant_override("margin_top", 13); margins.add_theme_constant_override("margin_bottom", 12); add_child(margins)
+	_phase_alert = Label.new(); _phase_alert.name="PhaseTransitionAlert"; _phase_alert.visible=false; _phase_alert.z_index=20; _phase_alert.mouse_filter=Control.MOUSE_FILTER_IGNORE; _phase_alert.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; _phase_alert.vertical_alignment=VERTICAL_ALIGNMENT_CENTER; _phase_alert.add_theme_font_size_override("font_size",17); _phase_alert.add_theme_color_override("font_color",Color("fff0bd")); _phase_alert.set_anchors_preset(Control.PRESET_CENTER_TOP); _phase_alert.position=Vector2(-210,166); _phase_alert.size=Vector2(420,42)
+	var alert_box:=StyleBoxFlat.new(); alert_box.bg_color=Color("332813",.94); alert_box.border_color=Color("e3b956"); alert_box.set_border_width_all(1); alert_box.set_corner_radius_all(2); _phase_alert.add_theme_stylebox_override("normal",alert_box); add_child(_phase_alert)
 	var stack := VBoxContainer.new(); stack.add_theme_constant_override("separation", 8); margins.add_child(stack)
 	var title_row := HBoxContainer.new(); title_row.custom_minimum_size = Vector2(0, 48); stack.add_child(title_row)
 	var title := Label.new(); title.text = "적 벽 대 전"; title.add_theme_font_size_override("font_size", 31); title.add_theme_color_override("font_color", Color("e8d5a2")); title.size_flags_horizontal = Control.SIZE_EXPAND_FILL; title_row.add_child(title)
@@ -114,6 +124,9 @@ func _refresh() -> void:
 	if battle == null: _state.text = "정본 전투를 찾을 수 없습니다."; return
 	var phase := int(battle.combat_phase)
 	var phase_name := Battle.PHASE_NAMES[phase - 1] if phase >= 1 and phase <= Battle.PHASE_NAMES.size() else "대기"
+	if phase != _last_phase:
+		_last_phase = phase
+		_show_phase_alert(phase,phase_name)
 	var a := int(battle.attacker_ships); var d := int(battle.defender_ships); var am := int(battle.attacker_morale); var dm := int(battle.defender_morale)
 	_state.visible = false
 	_state.text = "%d / 5 페이즈 %s · 조조측 %d척 / %d · 연합 %d척 / %d" % [phase, phase_name, a, am, d, dm]
@@ -147,6 +160,13 @@ func _refresh() -> void:
 	if delegated and active: _feedback.text = "AI 전술 위임 중 · 플레이어 명령은 잠겼으며 페이즈는 자동 진행됩니다."
 	if not active: _feedback.text = "전투 종료 · 이후 명령은 코어가 거부합니다."
 
+func _show_phase_alert(phase: int, phase_name: String) -> void:
+	if _phase_alert == null: return
+	var cues := ["교전권 진입","장거리 포화 개시","주력 전열 충돌","거점 강습 개시","최종 결착 판정"]
+	var index:=clampi(phase-1,0,cues.size()-1)
+	_phase_alert.text="PHASE %d · %s  ◆  %s" % [phase,phase_name,cues[index]]
+	_phase_alert.modulate.a=1.0; _phase_alert.visible=true; _phase_alert_time=1.8
+
 class CommandDeck extends Control:
 	var phase := 0; var phase_name := "대기"; var a := 0; var d := 0; var am := 0; var dm := 0
 	var attacker_formation_name := ""
@@ -168,17 +188,23 @@ class BattleReport extends Control:
 	var wei_loss := 0
 	var allied_morale_delta := 0
 	var wei_morale_delta := 0
+	var scheme_summary := "계략 없음"
 	func set_results(results: Array[Dictionary]) -> void:
 		if results.is_empty():
 			summary = "전투 판정 대기 · 명령을 선택하면 다음 전역 틱에 결과가 반영됩니다."
-			allied_loss = 0; wei_loss = 0; allied_morale_delta = 0; wei_morale_delta = 0
+			allied_loss = 0; wei_loss = 0; allied_morale_delta = 0; wei_morale_delta = 0; scheme_summary = "계략 없음"
 		else:
 			var latest: Dictionary = results.back()
 			var resolved_phase := clampi(int(latest.get("phase", 1)), 1, Battle.PHASE_NAMES.size())
 			wei_loss = int(latest.get("attacker_loss", 0)); allied_loss = int(latest.get("defender_loss", 0))
 			wei_morale_delta = int(latest.get("attacker_morale_delta", 0)); allied_morale_delta = int(latest.get("defender_morale_delta", 0))
 			var schemes: Array = latest.get("schemes", [])
-			summary = "직전 전과 · %d단계 %s · 계략 %d건" % [resolved_phase, Battle.PHASE_NAMES[resolved_phase-1], schemes.size()]
+			var scheme_names: Array[String] = []
+			for scheme in schemes:
+				var scheme_name:=String((scheme as Dictionary).get("name",""))
+				if not scheme_name.is_empty(): scheme_names.append(scheme_name)
+			scheme_summary = "계략 없음" if scheme_names.is_empty() else "계략 발동: %s" % "·".join(scheme_names)
+			summary = "직전 전과 · %d단계 %s · %s" % [resolved_phase, Battle.PHASE_NAMES[resolved_phase-1], scheme_summary]
 		queue_redraw()
 	func set_phase(current_phase: int, current_name: String, delegated: bool) -> void:
 		var directives := [

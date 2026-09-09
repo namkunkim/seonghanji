@@ -33,6 +33,9 @@ func _run() -> void:
 	_ok(battle.combat_phase == 2, "phase 2 포화")
 	await process_frame
 	_ok(not advance_button.disabled, "phase 2 advance control becomes available")
+	_ok(main.red_cliff_battle_view._phase_alert.visible
+		and "PHASE 2 · 포화" in main.red_cliff_battle_view._phase_alert.text,
+		"phase transition alert follows canonical phase change")
 	_ok("1단계 접적" in main.red_cliff_battle_view._report.summary,
 		"phase report reflects the latest canonical outcome")
 	_ok(main.red_cliff_battle_view._report.allied_loss >= 0 and main.red_cliff_battle_view._report.wei_loss >= 0,

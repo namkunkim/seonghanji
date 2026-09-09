@@ -34,13 +34,15 @@ func _run() -> void:
 	var report = view.find_child("PhaseBattleReport", true, false)
 	_ok(report != null, "phase battle report is mounted")
 	var report_fixture: Array[Dictionary] = [{"phase":2, "attacker_loss":7, "defender_loss":11,
-		"attacker_morale_delta":-4, "defender_morale_delta":-6, "schemes":[{"id":"fire"}]}]
+		"attacker_morale_delta":-4, "defender_morale_delta":-6, "schemes":[{"id":"fire","name":"화공"}]}]
 	report.set_results(report_fixture)
 	report.set_phase(3, "교전", false)
 	_ok("2단계 포화" in report.summary and report.wei_loss == 7 and report.allied_loss == 11,
 		"phase report exposes canonical losses and phase name")
 	_ok(report.wei_morale_delta == -4 and report.allied_morale_delta == -6,
 		"phase report exposes both morale deltas")
+	_ok("계략 발동: 화공" in report.summary and report.scheme_summary == "계략 발동: 화공",
+		"phase report identifies the canonical scheme by name")
 	_ok("진형 상성" in report.current_directive and "3단계 교전" in report.current_directive,
 		"phase report exposes an actionable current directive")
 	var advance_button: Button = view._buttons.filter(
@@ -53,6 +55,11 @@ func _run() -> void:
 	_ok("안행진" in view._feedback.text and "강점 포화 ×1.4" in view._feedback.text
 		and "필요 통솔 65" in view._feedback.text,
 		"formation selection previews canonical strengths and requirements")
+	view._show_phase_alert(3,"교전")
+	_ok(view._phase_alert.visible and "주력 전열 충돌" in view._phase_alert.text,
+		"phase transition alert exposes the current battle cue")
+	view._process(2.0)
+	_ok(not view._phase_alert.visible,"phase transition alert expires without blocking play")
 	map.set_battle(1, "접적", 140, 120, 113, 120)
 	var contact_anchor: Vector2 = map.fleet_anchor_points()["allied_primary"]
 	var hub := Vector2(map.size.x * .52, map.size.y * .55)
