@@ -625,3 +625,8 @@ GUI 실행 파일은 `C:\Tools\Godot\Godot_v4.7.2-stable_win64.exe` 다.
 >
 > **여전히 미착수:** 명장 초상 120 대량 생성(별도 승인) · Runway 가입/결제/영상 생성
 > (S6.1 약관 선행) · L2 3D 실착수(L1 완성 S4 후) · G-08·G-09 설계(L1 완성 후).
+# DEMO-RC-LT-02 — 적벽대전 단편 시나리오 시작·분기·엔딩 플레이 루프
+
+- 완료 범위: Event 03·04·06·07 선택 기반 적벽 데모, 조건 분기, DEC-01 조기 종료, canonical manifest/active 전투 연결, 새 데모 경계 및 QA-03 자동 수용.
+- 미완료 범위: Windows 1600×900 GPU 및 물리 Tab/Shift+Tab/Enter/Space/Esc 실기 검수, 그 뒤 최종 PASS/push.
+- 다음 추천 작업: 전용 Windows GUI 수용을 마친 뒤 이 Task를 경로 지정 커밋·push로 마감한다. C-01/C-02/전체 G-07로 확대하지 않는다.
