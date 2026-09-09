@@ -13,6 +13,7 @@ var _deck: CommandDeck
 var _report: BattleReport
 var _formation: OptionButton
 var _buttons: Array[Button] = []
+var _synced_formation_id := ""
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -82,7 +83,16 @@ func _refresh() -> void:
 	if String(battle.status) == ActiveBattle.STATUS_RESOLVED:
 		var winner := String(battle.result.get("winner_faction_id", ""))
 		_state.text = "전투 결과 · 승자: %s · " % ("손권·유비 연합" if winner == "sun_liu_side" else "조조측") + _state.text
-	_deck.set_battle(phase, phase_name, a, d, am, dm); _map.set_battle(phase, phase_name, a, d, am, dm); _feed.set_battle(phase, phase_name, a, d, am, dm); _report.set_results(battle.phase_results)
+	var attacker_formation_id := String(battle.attacker_formation_id)
+	var attacker_formation_name := Formations.name_for_id(attacker_formation_id)
+	if attacker_formation_id != _synced_formation_id:
+		_synced_formation_id = attacker_formation_id
+		for index in _formation.item_count:
+			if _formation.get_item_text(index) == attacker_formation_name:
+				_formation.select(index)
+				break
+	_formation.tooltip_text = "현재 위군 진형: %s" % attacker_formation_name
+	_deck.set_battle(phase, phase_name, a, d, am, dm, attacker_formation_name); _map.set_battle(phase, phase_name, a, d, am, dm); _feed.set_battle(phase, phase_name, a, d, am, dm); _report.set_results(battle.phase_results)
 	var active := String(battle.status) == ActiveBattle.STATUS_ACTIVE
 	var command_state: Dictionary = campaign.call("red_cliff_command_state", battle_id) if campaign != null and campaign.has_method("red_cliff_command_state") else {}
 	var delegated := bool(command_state.get("ai_delegated", false))
@@ -97,11 +107,12 @@ func _refresh() -> void:
 
 class CommandDeck extends Control:
 	var phase := 0; var phase_name := "대기"; var a := 0; var d := 0; var am := 0; var dm := 0
-	func set_battle(p: int, n: String, aa: int, dd: int, aam: int, ddm: int) -> void: phase=p; phase_name=n; a=aa; d=dd; am=aam; dm=ddm; queue_redraw()
+	var attacker_formation_name := ""
+	func set_battle(p: int, n: String, aa: int, dd: int, aam: int, ddm: int, formation_name: String) -> void: phase=p; phase_name=n; a=aa; d=dd; am=aam; dm=ddm; attacker_formation_name=formation_name; queue_redraw()
 	func _draw() -> void:
 		var font := get_theme_default_font(); draw_rect(Rect2(Vector2.ZERO,size),Color("09131d")); draw_rect(Rect2(Vector2.ZERO,size),Color("344958"),false,1)
 		_force(Rect2(8,8,size.x*.23,67),"오 · 유 연합군","합선 %d척" % d,dm,Color("c75a52"),false)
-		_force(Rect2(size.x*.70,8,size.x*.29-8,67),"위군","함선 %d척" % a,am,Color("4f9fce"),true)
+		_force(Rect2(size.x*.70,8,size.x*.29-8,67),"위군 · %s" % attacker_formation_name,"함선 %d척" % a,am,Color("4f9fce"),true)
 		var words := ["접적","포화","교전","강습","결착"]; var start:=size.x*.30; var width:=size.x*.38; draw_line(Vector2(start,20),Vector2(start+width,20),Color("64727a"),2)
 		for i in 5:
 			var x:=start+width*i/4.0; var live:=i+1==phase; draw_circle(Vector2(x,20),14 if live else 11,Color("b58b3b") if live else Color("172633")); draw_arc(Vector2(x,20),14 if live else 11,0,TAU,20,Color("f2d37e") if live else Color("8d9ba4"),1.2); draw_string(font,Vector2(x-4,25),str(i+1),HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff4d5")); draw_string(font,Vector2(x-18,51),words[i],HORIZONTAL_ALIGNMENT_CENTER,36,13,Color("f3d27c") if live else Color("aebbc3"))
