@@ -1,10 +1,10 @@
-# DEMO-RC-QA-02 — 적벽대전 Windows 1600×900 네이티브 입력 수용
+# DEMO-RC-QA-02 — 적벽대전 Windows 1600×900 GPU 공개 입력 경로 수용
 
 검수일: 2026-09-09
 
 ## 판정
 
-**PASS — 실제 Windows 비콘솔 Godot, 1600×900, Vulkan Forward+ / Intel Arc 130V 8GB에서 40/40.**
+**PASS — 실제 Windows 비콘솔 Godot, 1600×900, Vulkan Forward+ / Intel Arc 130V 8GB에서 47/47.**
 
 `tests/test_demo_rc_qa02_native_input.gd`는 제품 `Main`을 그대로 만들고 내부 캠페인 상태를 주입하거나 제품 메서드·signal을 직접 호출하지 않는다. 화면에 보이는 버튼의 실제 전역 좌표로 `Input.parse_input_event` 마우스 press/release를 보내고, 전투 화면에서는 `Tab` 포커스 이동과 `Enter`로 AI 위임을 실행한다.
 
@@ -12,17 +12,17 @@
 
 ## 입력 경계
 
-이 판정은 Windows 실제 GPU 네이티브 렌더러의 Godot 공개 입력 이벤트 경로를 수용한다. 현재 Computer Use 런타임은 네이티브 앱을 `apps: []`로 반환하므로 Windows 하드웨어 계층의 SendInput 자체는 자동화하지 못했다. 이는 제품 E2E PASS를 막지 않는 환경 제한으로 기록하며, 출시 전 사람의 물리 장치 스모크 항목은 별도 유지한다.
+이 판정은 Windows 실제 GPU 렌더러에서 Godot 공개 입력 이벤트 경로를 수용한다. Win32 `SendInput`이나 물리 마우스·키보드를 시험한 것은 아니다. 현재 Computer Use 런타임은 네이티브 앱을 노출하지 않으므로 하드웨어 계층은 자동화하지 못했고, 출시 전 사람의 물리 장치 스모크 항목을 별도 유지한다.
 
 ## 증거 파일
 
 | 파일 | 바이트 | SHA-256 |
 |---|---:|---|
-| `01-demo-active-banner-1600x900.png` | 1,071,030 | `5CA77EFDB2D922B03506ACD6E4F4E93D16801D0B6B52BF8AAD374765AE7764D3` |
-| `02-battle-entry-1600x900.png` | 536,990 | `C01506F58A5854D9C7570B22A67A7F22050C74501D480EE7A9816E9A58D352FE` |
-| `03-hold-formation-1600x900.png` | 538,788 | `0E68B9568AB068AC961865BEAB31032C5A8EC47A490EFF09786AEBD759B13BB1` |
-| `04-ai-delegated-1600x900.png` | 539,215 | `975208CC22B22F6518E3891565DA920D8D1FDC59AE2D6BA9DA44203A2035C239` |
-| `05-five-phase-result-1600x900.png` | 1,065,729 | `9441CF090FCC64C98E9C964462CC4EE61A68D3A4A0EDC13751941966B582EA8F` |
-| `06-home-after-result-1600x900.png` | 1,065,734 | `DC481A09458AF3A429BD48867D6F1DAB33BFC1F73DBC3084E996FCB899A2073C` |
+| `01-demo-active-banner-1600x900.png` | 1,070,828 | `AFF137B8DBC0090609A9700F3531301C64DB498B0AC4F1EA5D039F5BEE8EB7FD` |
+| `02-battle-entry-1600x900.png` | 578,714 | `5EF74CE13B92007686AFD91E7473D93E437B917A89112C36AAF761F1899E78A5` |
+| `03-hold-formation-1600x900.png` | 579,429 | `EF448000EE6480D9D36902A3375A4CAEE2F50020200D2E26708FA80A28967A2D` |
+| `04-ai-delegated-1600x900.png` | 579,113 | `E0EBD732B9056C9EE19E6E7F748C022BF7013759247A1C5045EC04E7515581E8` |
+| `05-five-phase-result-1600x900.png` | 1,065,544 | `4F62C4E4E0CF2C7FCB39AC6F6504571568313E63A4B16A9E305AFDC4581D5D5F` |
+| `06-home-after-result-1600x900.png` | 1,065,719 | `FCDEC4FDC3288B28B92205E5FB579837D09EFC531AE93084F7168C22A3254562` |
 
-기계 판정 원문은 `qa02-native-input-report.txt`이며 최종 결과는 **40 passed / 0 failed**다.
+기계 판정 원문은 `qa02-native-input-report.txt`이며 최종 결과는 **47 passed / 0 failed**다.

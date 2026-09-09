@@ -25,6 +25,10 @@ var _current_formation_name := ""
 var _comparison_signature := ""
 var _last_phase := -1
 var _phase_alert_time := 0.0
+var _modal_opener: Control
+var _pending_command_kind := ""
+var _pending_command_label := ""
+var _applied_command_count := 0
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -69,9 +73,9 @@ func _build_once() -> void:
 	_formation.item_selected.connect(_on_formation_preview)
 	_style_control_button(_formation, Color("c89f4d"), false)
 	controls.add_child(_formation)
-	var compare:=Button.new(); compare.name="FormationComparisonButton"; compare.text="진형 비교"; compare.custom_minimum_size=Vector2(106,46); _style_control_button(compare,Color("7896a5"),false); compare.pressed.connect(_toggle_comparison); controls.add_child(compare)
+	var compare:=Button.new(); compare.name="FormationComparisonButton"; compare.text="진형 비교"; compare.custom_minimum_size=Vector2(106,46); _style_control_button(compare,Color("7896a5"),false); compare.pressed.connect(func(): _toggle_comparison(compare)); controls.add_child(compare)
 	controls.add_child(_button("다음 진형 적용", "change_formation")); controls.add_child(_button("다음 페이즈  ›", "advance_phase")); controls.add_child(_button("AI에 위임", "delegate_ai"))
-	var history := Button.new(); history.name="BattleHistoryButton"; history.text="전투 기록"; history.custom_minimum_size=Vector2(106,46); _style_control_button(history,Color("7896a5"),false); history.pressed.connect(_toggle_history); controls.add_child(history)
+	var history := Button.new(); history.name="BattleHistoryButton"; history.text="전투 기록"; history.custom_minimum_size=Vector2(106,46); _style_control_button(history,Color("7896a5"),false); history.pressed.connect(func(): _toggle_history(history)); controls.add_child(history)
 	var spacer := Control.new(); spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL; controls.add_child(spacer)
 	var home := Button.new(); home.text = "홈으로"; home.custom_minimum_size = Vector2(92, 46); _style_control_button(home,Color("607684"),false); home.pressed.connect(func(): return_requested.emit()); controls.add_child(home)
 	_feedback = Label.new(); _feedback.custom_minimum_size = Vector2(0, 18); _feedback.add_theme_font_size_override("font_size", 13); _feedback.add_theme_color_override("font_color", Color("e3bd70")); stack.add_child(_feedback)
@@ -83,22 +87,22 @@ func _button(label: String, action: String) -> Button:
 	b.pressed.connect(func(): _issue(String(b.get_meta("action")))); _buttons.append(b); return b
 
 func _build_history_panel() -> void:
-	_history_backdrop=ColorRect.new(); _history_backdrop.name="BattleHistoryBackdrop"; _history_backdrop.visible=false; _history_backdrop.z_index=39; _history_backdrop.color=Color(0,0,0,.52); _history_backdrop.mouse_filter=Control.MOUSE_FILTER_STOP; _history_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); add_child(_history_backdrop)
+	_history_backdrop=ColorRect.new(); _history_backdrop.name="BattleHistoryBackdrop"; _history_backdrop.visible=false; _history_backdrop.z_index=39; _history_backdrop.color=Color(0,0,0,.52); _history_backdrop.mouse_filter=Control.MOUSE_FILTER_STOP; _history_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); _history_backdrop.gui_input.connect(_on_modal_backdrop_input); add_child(_history_backdrop)
 	_history_panel=PanelContainer.new(); _history_panel.name="BattleHistoryPanel"; _history_panel.visible=false; _history_panel.z_index=40; _history_panel.focus_mode=Control.FOCUS_ALL; _history_panel.set_anchors_preset(Control.PRESET_CENTER); _history_panel.position=Vector2(-370,-210); _history_panel.size=Vector2(740,420)
 	var panel_style:=StyleBoxFlat.new(); panel_style.bg_color=Color("07121b",.985); panel_style.border_color=Color("b9954d"); panel_style.set_border_width_all(2); panel_style.set_corner_radius_all(3); panel_style.content_margin_left=22; panel_style.content_margin_right=22; panel_style.content_margin_top=18; panel_style.content_margin_bottom=18; _history_panel.add_theme_stylebox_override("panel",panel_style); add_child(_history_panel)
 	var stack:=VBoxContainer.new(); stack.add_theme_constant_override("separation",10); _history_panel.add_child(stack)
 	var heading:=HBoxContainer.new(); stack.add_child(heading)
 	var title:=Label.new(); title.text="적벽대전 전투 기록"; title.add_theme_font_size_override("font_size",22); title.add_theme_color_override("font_color",Color("ebd59e")); title.size_flags_horizontal=Control.SIZE_EXPAND_FILL; heading.add_child(title)
-	var close:=Button.new(); close.text="닫기"; close.custom_minimum_size=Vector2(76,38); _style_control_button(close,Color("7896a5"),false); close.pressed.connect(_toggle_history); heading.add_child(close)
+	var close:=Button.new(); close.text="닫기"; close.custom_minimum_size=Vector2(76,38); _style_control_button(close,Color("7896a5"),false); close.pressed.connect(_close_modal); heading.add_child(close)
 	var rule:=HSeparator.new(); stack.add_child(rule)
 	_history_text=Label.new(); _history_text.name="BattleHistoryText"; _history_text.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; _history_text.vertical_alignment=VERTICAL_ALIGNMENT_TOP; _history_text.size_flags_vertical=Control.SIZE_EXPAND_FILL; _history_text.add_theme_font_size_override("font_size",16); _history_text.add_theme_color_override("font_color",Color("dce7e9")); stack.add_child(_history_text)
 
-func _toggle_history() -> void:
+func _toggle_history(opener: Control = null) -> void:
 	if _history_panel == null: return
+	if _history_panel.visible: _close_modal(); return
+	if opener != null: _modal_opener=opener
 	if _comparison_panel != null: _comparison_panel.visible=false
-	_history_panel.visible=not _history_panel.visible
-	_history_backdrop.visible=_history_panel.visible
-	if _history_panel.visible: _history_panel.grab_focus()
+	_history_panel.visible=true; _history_backdrop.visible=true; _history_panel.grab_focus()
 
 func _build_comparison_panel() -> void:
 	_comparison_panel=PanelContainer.new(); _comparison_panel.name="FormationComparisonPanel"; _comparison_panel.visible=false; _comparison_panel.z_index=40; _comparison_panel.focus_mode=Control.FOCUS_ALL; _comparison_panel.set_anchors_preset(Control.PRESET_CENTER); _comparison_panel.position=Vector2(-410,-210); _comparison_panel.size=Vector2(820,420)
@@ -106,20 +110,36 @@ func _build_comparison_panel() -> void:
 	var stack:=VBoxContainer.new(); stack.add_theme_constant_override("separation",10); _comparison_panel.add_child(stack)
 	var heading:=HBoxContainer.new(); stack.add_child(heading)
 	var title:=Label.new(); title.text="진형 전술 비교"; title.add_theme_font_size_override("font_size",22); title.add_theme_color_override("font_color",Color("ebd59e")); title.size_flags_horizontal=Control.SIZE_EXPAND_FILL; heading.add_child(title)
-	var close:=Button.new(); close.text="닫기"; close.custom_minimum_size=Vector2(76,38); _style_control_button(close,Color("7896a5"),false); close.pressed.connect(_toggle_comparison); heading.add_child(close)
+	var close:=Button.new(); close.text="닫기"; close.custom_minimum_size=Vector2(76,38); _style_control_button(close,Color("7896a5"),false); close.pressed.connect(_close_modal); heading.add_child(close)
 	stack.add_child(HSeparator.new())
 	_comparison_summary=Label.new(); _comparison_summary.name="FormationComparisonSummary"; _comparison_summary.add_theme_font_size_override("font_size",15); _comparison_summary.add_theme_color_override("font_color",Color("c9d8dc")); stack.add_child(_comparison_summary)
 	_comparison_grid=GridContainer.new(); _comparison_grid.name="FormationComparisonGrid"; _comparison_grid.columns=4; _comparison_grid.size_flags_vertical=Control.SIZE_EXPAND_FILL; _comparison_grid.add_theme_constant_override("h_separation",22); _comparison_grid.add_theme_constant_override("v_separation",8); stack.add_child(_comparison_grid)
 	var note:=Label.new(); note.text="※ 계수는 코어 진형 데이터의 페이즈 보정값입니다. 승률 예측이 아니며 적용 전 전투 상태는 변하지 않습니다."; note.add_theme_font_size_override("font_size",12); note.add_theme_color_override("font_color",Color("879ba5")); stack.add_child(note)
 
-func _toggle_comparison() -> void:
+func _toggle_comparison(opener: Control = null) -> void:
 	if _comparison_panel == null: return
+	if _comparison_panel.visible: _close_modal(); return
+	if opener != null: _modal_opener=opener
 	if _history_panel != null: _history_panel.visible=false
-	_comparison_panel.visible=not _comparison_panel.visible
-	_history_backdrop.visible=_comparison_panel.visible
-	if _comparison_panel.visible:
-		_refresh_comparison(_current_formation_name,_formation.get_item_text(_formation.selected),_last_phase)
-		_comparison_panel.grab_focus()
+	_comparison_panel.visible=true; _history_backdrop.visible=true
+	_refresh_comparison(_current_formation_name,_formation.get_item_text(_formation.selected),_last_phase)
+	_comparison_panel.grab_focus()
+
+func _close_modal() -> void:
+	if _history_panel != null: _history_panel.visible=false
+	if _comparison_panel != null: _comparison_panel.visible=false
+	if _history_backdrop != null: _history_backdrop.visible=false
+	if is_instance_valid(_modal_opener): _modal_opener.call_deferred("grab_focus")
+	_modal_opener=null
+
+func _on_modal_backdrop_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed:
+		_close_modal(); get_viewport().set_input_as_handled()
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_ESCAPE \
+			and ((_history_panel != null and _history_panel.visible) or (_comparison_panel != null and _comparison_panel.visible)):
+		_close_modal(); get_viewport().set_input_as_handled()
 
 func _formation_comparison(current_name:String,candidate_name:String,current_phase:int)->Dictionary:
 	var current_coefficients:=Formations.coefficients(current_name); var candidate_coefficients:=Formations.coefficients(candidate_name)
@@ -165,7 +185,9 @@ func _refresh_history(results: Array[Dictionary], battle) -> void:
 		lines.append("%d단계  %s\n  연합  -%d척 / 사기 %+d     위군  -%d척 / 사기 %+d     계략  %s" % [phase_index,Battle.PHASE_NAMES[phase_index-1],int(record.get("defender_loss",0)),int(record.get("defender_morale_delta",0)),int(record.get("attacker_loss",0)),int(record.get("attacker_morale_delta",0)),scheme_text])
 	if battle != null and String(battle.status)==ActiveBattle.STATUS_RESOLVED:
 		var winner_name:="손권·유비 연합" if String(battle.result.get("winner_faction_id",""))=="sun_liu_side" else "위군"
-		lines.append("────────────────────────────────\n결착 결과  ◆  %s 승전" % winner_name)
+		var decision:Dictionary=battle.result.get("decision",{}); var attacker:Dictionary=decision.get("attacker",{}); var defender:Dictionary=decision.get("defender",{})
+		var score_line:="" if decision.is_empty() else "\n판정 근거  잔존 함선×1,000 + 사기×10  ·  위군 %d / 연합 %d" % [int(attacker.get("score",0)),int(defender.get("score",0))]
+		lines.append("────────────────────────────────\n결착 결과  ◆  %s 승전%s" % [winner_name,score_line])
 	_history_text.text="\n\n".join(lines)
 
 func _on_formation_preview(index: int) -> void:
@@ -214,9 +236,16 @@ func _issue(action: String) -> void:
 	var issued = campaign.call("issue_red_cliff_player_command", battle_id, action, payload)
 	if issued is Dictionary and not issued.is_empty():
 		var action_labels := {"hold_formation":"현재 진형 유지", "change_formation":"%s 적용" % _formation.get_item_text(_formation.selected), "advance_phase":"다음 페이즈 진행", "delegate_ai":"AI 전술 위임"}
-		_feedback.text = "◆ 명령 전송 · %s · 다음 전역 틱에 판정됩니다." % String(action_labels.get(action, action))
+		_pending_command_kind=action; _pending_command_label=String(action_labels.get(action, action))
+		_feedback.text = "◆ 명령 접수 · %s · 대기 중 · 다음 전역 틱에 적용됩니다." % _pending_command_label
 	else:
-		_feedback.text = "명령 거부 · 현재 페이즈, 위임 상태 또는 중복 입력을 확인하세요."
+		var state:Dictionary=campaign.call("red_cliff_command_state",battle_id,action,payload)
+		var requested:Dictionary=state.get("requested_command",{})
+		_feedback.text = "명령 거부 · %s" % _command_reason_text(String(requested.get("reason_code","rejected_by_reducer")))
+
+func _command_reason_text(reason_code:String)->String:
+	var reasons:={"unknown_battle":"전투 식별자를 찾을 수 없습니다.","resolved":"이미 결착된 전투입니다.","battle_not_active":"현재 활성 전투가 아닙니다.","invalid_payload":"진형 또는 명령 정보가 유효하지 않습니다.","ai_delegated":"AI 위임 중에는 플레이어 명령을 내릴 수 없습니다.","phase_not_ready":"자동 접적 판정이 끝난 뒤 다음 페이즈를 진행할 수 있습니다.","duplicate_command":"같은 페이즈에 이미 동일 명령을 접수했습니다.","insufficient_command":"함대 통솔 수치가 명령 요구치를 충족하지 못합니다.","invalid_origin":"플레이어 명령 경로가 아닙니다.","rejected_by_reducer":"현재 전투 상태에서 적용할 수 없는 명령입니다."}
+	return String(reasons.get(reason_code,"명령을 적용할 수 없습니다. (%s)" % reason_code))
 
 func _refresh() -> void:
 	if _state == null: return
@@ -236,6 +265,7 @@ func _refresh() -> void:
 		_state.text = "결착 완료  ◆  %s 승전  ·  위군 %d척 / 사기 %d  ·  연합 %d척 / 사기 %d" % [winner_name,a,am,d,dm]
 		_state.add_theme_color_override("font_color",Color("ef8478") if winner == "sun_liu_side" else Color("7bcdf5"))
 		_state.visible = true
+		_phase_alert_time=0.0; _phase_alert.visible=false
 	var attacker_formation_id := String(battle.attacker_formation_id)
 	var attacker_formation_name := Formations.name_for_id(attacker_formation_id)
 	_current_formation_name=attacker_formation_name
@@ -248,10 +278,29 @@ func _refresh() -> void:
 				break
 	_formation.tooltip_text = "현재 위군 진형: %s" % attacker_formation_name
 	if _feedback.text.is_empty(): _feedback.text = _formation_brief(attacker_formation_name)
-	_deck.set_battle(phase, phase_name, a, d, am, dm, attacker_formation_name); _map.set_battle(phase, phase_name, a, d, am, dm, attacker_formation_name, defender_formation_name); _feed.set_battle(phase, phase_name, a, d, am, dm); _report.set_results(battle.phase_results)
+	_deck.set_battle(phase, phase_name, a, d, am, dm, attacker_formation_name); _map.set_battle(phase, phase_name, a, d, am, dm, attacker_formation_name, defender_formation_name); _map.set_results(battle.phase_results); _feed.set_battle(phase, phase_name, a, d, am, dm); _report.set_results(battle.phase_results)
 	var active := String(battle.status) == ActiveBattle.STATUS_ACTIVE
 	var command_state: Dictionary = campaign.call("red_cliff_command_state", battle_id) if campaign != null and campaign.has_method("red_cliff_command_state") else {}
 	var delegated := bool(command_state.get("ai_delegated", false))
+	var player_commands: Array = command_state.get("player_commands", [])
+	var reducer_feedback:Dictionary=command_state.get("last_command_feedback",{})
+	if not _pending_command_kind.is_empty() and not reducer_feedback.is_empty() \
+			and String(reducer_feedback.get("kind",""))==_pending_command_kind \
+			and not bool(reducer_feedback.get("accepted",false)):
+		_feedback.text="명령 거부 · %s" % _command_reason_text(String(reducer_feedback.get("reason_code","rejected_by_reducer")))
+		_pending_command_kind=""; _pending_command_label=""
+	if player_commands.size() != _applied_command_count:
+		_applied_command_count=player_commands.size()
+		if not _pending_command_kind.is_empty():
+			var applied := false
+			for row in player_commands:
+				if String((row as Dictionary).get("kind", "")) == _pending_command_kind: applied=true
+			if applied:
+				_feedback.text="✓ 명령 적용 · %s · 현재 %d단계 %s" % [_pending_command_label,phase,phase_name]
+				_pending_command_kind=""; _pending_command_label=""
+	if not _pending_command_kind.is_empty(): _report.set_command_status("명령 접수 · %s · 대기 중" % _pending_command_label)
+	elif _applied_command_count>0: _report.set_command_status("마지막 명령 적용 · %d건 기록" % _applied_command_count)
+	else: _report.set_command_status("명령 대기 · 다음 전역 틱에 정본 판정")
 	_report.set_phase(phase, phase_name, delegated)
 	_refresh_history(battle.phase_results,battle)
 	if _comparison_panel.visible: _refresh_comparison(attacker_formation_name,_formation.get_item_text(_formation.selected),phase)
@@ -262,7 +311,9 @@ func _refresh() -> void:
 		else: b.disabled = not active or delegated
 	_formation.disabled = not bool(command_state.get("can_change_formation", false))
 	if delegated and active: _feedback.text = "AI 전술 위임 중 · 플레이어 명령은 잠겼으며 페이즈는 자동 진행됩니다."
-	if not active: _feedback.text = "전투 종료 · 이후 명령은 코어가 거부합니다."
+	if not active:
+		var decision:Dictionary=battle.result.get("decision",{}); var attacker_evidence:Dictionary=decision.get("attacker",{}); var defender_evidence:Dictionary=decision.get("defender",{})
+		_feedback.text = "판정 근거 · 잔존 함선×1,000 + 사기×10 · 위군 %d / 연합 %d" % [int(attacker_evidence.get("score",0)),int(defender_evidence.get("score",0))] if not decision.is_empty() else "전투 종료 · 이후 명령은 코어가 거부합니다."
 
 func _show_phase_alert(phase: int, phase_name: String) -> void:
 	if _phase_alert == null: return
@@ -287,6 +338,7 @@ class CommandDeck extends Control:
 
 class BattleReport extends Control:
 	var summary := "전투 판정 대기 · 명령을 선택하면 다음 전역 틱에 결과가 반영됩니다."
+	var command_status := "명령 대기 · 다음 전역 틱에 정본 판정"
 	var current_directive := "접적 좌표 확인 · 전열과 교전권 진입 경로를 점검하십시오."
 	var allied_loss := 0
 	var wei_loss := 0
@@ -322,6 +374,8 @@ class BattleReport extends Control:
 		current_directive = "%d단계 %s · %s" % [current_phase,current_name,directives[index]]
 		if delegated: current_directive += "  [AI 지휘 중]"
 		queue_redraw()
+	func set_command_status(status: String) -> void:
+		if command_status != status: command_status=status; queue_redraw()
 	func _draw() -> void:
 		var font := get_theme_default_font()
 		draw_rect(Rect2(Vector2.ZERO,size),Color("08131c",.96)); draw_rect(Rect2(Vector2.ZERO,size),Color("314958"),false,1)
@@ -331,19 +385,33 @@ class BattleReport extends Control:
 		draw_string(font,Vector2(size.x*.51,22),allied,HORIZONTAL_ALIGNMENT_LEFT,size.x*.23,13,Color("ee7b72"))
 		draw_string(font,Vector2(size.x*.76,22),wei,HORIZONTAL_ALIGNMENT_LEFT,size.x*.22,13,Color("69c4f4"))
 		draw_line(Vector2(12,31),Vector2(size.x-12,31),Color("263b49"),1)
-		draw_string(font,Vector2(14,49),"현재 지침 · "+current_directive,HORIZONTAL_ALIGNMENT_LEFT,size.x-28,12,Color("e4bd6b"))
+		draw_string(font,Vector2(14,49),"현재 지침 · "+current_directive,HORIZONTAL_ALIGNMENT_LEFT,size.x*.67,12,Color("e4bd6b"))
+		draw_string(font,Vector2(size.x*.70,49),command_status,HORIZONTAL_ALIGNMENT_LEFT,size.x*.29,12,Color("9fd0da"))
 
 class TacticalMap extends Control:
 	var phase:=0; var phase_name:="대기"; var a:=0; var d:=0; var am:=0; var dm:=0
 	var attacker_formation_name:="미확인"; var defender_formation_name:="미확인"
 	var selected_fleet := ""
+	var hover_fleet := ""
+	var keyboard_fleet_index := -1
+	var latest_result: Dictionary = {}
+	var latest_result_signature := ""
+	var result_flash := 0.0
 	var clock := 0.0
-	func _ready() -> void: custom_minimum_size=Vector2(650,400); mouse_default_cursor_shape=Control.CURSOR_POINTING_HAND; set_process(true); queue_redraw()
-	func _process(delta: float) -> void: clock = fmod(clock + delta, 120.0); queue_redraw()
+	func _ready() -> void: custom_minimum_size=Vector2(650,400); mouse_default_cursor_shape=Control.CURSOR_POINTING_HAND; focus_mode=Control.FOCUS_ALL; tooltip_text="전술 지도. 화살표 키로 함대를 순회하고 Enter 또는 Space로 선택합니다."; set_process(true); set_process_unhandled_key_input(true); queue_redraw()
+	func _process(delta: float) -> void: clock = fmod(clock + delta, 120.0); result_flash=maxf(0.0,result_flash-delta); queue_redraw()
 	func set_battle(p:int,n:String,aa:int,dd:int,aam:int,ddm:int,attacker_formation:="미확인",defender_formation:="미확인")->void:
 		phase=p; phase_name=n; a=aa; d=dd; am=aam; dm=ddm; attacker_formation_name=attacker_formation; defender_formation_name=defender_formation
 		if (selected_fleet.begins_with("allied") and d<=0) or (selected_fleet.begins_with("wei") and a<=0): selected_fleet=""
 		queue_redraw()
+	func set_results(results: Array[Dictionary]) -> void:
+		if results.is_empty(): latest_result={}; latest_result_signature=""; return
+		var record: Dictionary=results.back(); var schemes: Array=record.get("schemes",[]); var names:Array[String]=[]
+		for scheme in schemes:
+			var scheme_name:=String((scheme as Dictionary).get("name","")); if not scheme_name.is_empty(): names.append(scheme_name)
+		var signature:="%d|%d|%d|%d|%d|%d|%s" % [int(record.get("phase",0)),int(record.get("attacker_loss",0)),int(record.get("defender_loss",0)),int(record.get("attacker_morale_delta",0)),int(record.get("defender_morale_delta",0)),results.size(),"·".join(names)]
+		if signature != latest_result_signature: latest_result_signature=signature; result_flash=1.65
+		latest_result=record.duplicate(true); latest_result["scheme_names"]=names
 	func fleet_icon_counts()->Vector2i: return Vector2i(mini(d,20),mini(a,20))
 	func route_progress() -> float: return clampf(.10 + float(maxi(phase, 1) - 1) * .17, .10, .82)
 	func fleet_anchor_points() -> Dictionary:
@@ -362,13 +430,33 @@ class TacticalMap extends Control:
 		else: selected_fleet=""
 		queue_redraw()
 	func selection_snapshot()->Dictionary:
-		if selected_fleet.is_empty(): return {}
-		var allied:=selected_fleet.begins_with("allied")
+		return selection_snapshot_for(selected_fleet)
+	func selection_snapshot_for(fleet_id:String)->Dictionary:
+		if fleet_id.is_empty(): return {}
+		var allied:=fleet_id.begins_with("allied")
 		var names:={"allied_primary":"우비 돌격단","allied_secondary":"손권 주력","wei_primary":"위군 본대","wei_secondary":"장료 기동대"}
-		return {"id":selected_fleet,"name":String(names[selected_fleet]),"faction":"손권·유비 연합" if allied else "위군","ships":d if allied else a,"morale":dm if allied else am,"formation":defender_formation_name if allied else attacker_formation_name,"objective":_phase_objective(),"engagement":_engagement_state()}
+		return {"id":fleet_id,"name":String(names.get(fleet_id,"미확인 함대")),"faction":"손권·유비 연합" if allied else "위군","ships":d if allied else a,"morale":dm if allied else am,"formation":defender_formation_name if allied else attacker_formation_name,"objective":_phase_objective(),"engagement":_engagement_state()}
 	func _gui_input(event:InputEvent)->void:
-		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed: _select_at(event.position)
+		if event is InputEventMouseMotion: _hover_at(event.position)
+		elif event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed: grab_focus(); _select_at(event.position)
 		elif event is InputEventScreenTouch and event.pressed: _select_at(event.position)
+	func _unhandled_key_input(event: InputEvent) -> void:
+		if not has_focus() or not event.pressed or event.echo: return
+		if event.keycode in [KEY_LEFT,KEY_UP,KEY_RIGHT,KEY_DOWN]:
+			var ids:=_available_fleet_ids(); if ids.is_empty(): return
+			var step:=-1 if event.keycode in [KEY_LEFT,KEY_UP] else 1
+			keyboard_fleet_index=posmod(keyboard_fleet_index+step,ids.size()); hover_fleet=String(ids[keyboard_fleet_index]); tooltip_text="전술 지도 · %s. Enter 또는 Space로 선택" % String(selection_snapshot_for(hover_fleet).get("name","함대")); get_viewport().set_input_as_handled()
+		elif event.keycode in [KEY_ENTER,KEY_SPACE] and not hover_fleet.is_empty(): select_fleet(hover_fleet); get_viewport().set_input_as_handled()
+	func _available_fleet_ids()->Array[String]:
+		var ids:Array[String]=[]
+		if d>0: ids.append_array(["allied_primary","allied_secondary"])
+		if a>0: ids.append_array(["wei_primary","wei_secondary"])
+		return ids
+	func _hover_at(point:Vector2)->void:
+		var nearest:=""; var nearest_distance:=48.0
+		for fleet_id in fleet_anchor_points():
+			var distance:=point.distance_to(fleet_anchor_points()[fleet_id]); if distance<nearest_distance: nearest=fleet_id; nearest_distance=distance
+		if hover_fleet!=nearest: hover_fleet=nearest; tooltip_text="전술 지도" if nearest.is_empty() else "함대 %s · 클릭하여 상세 표시" % String(selection_snapshot_for(nearest).get("name","")); queue_redraw()
 	func _select_at(point:Vector2)->void:
 		var nearest:=""; var nearest_distance:=48.0
 		for fleet_id in fleet_anchor_points():
@@ -424,9 +512,10 @@ class TacticalMap extends Control:
 				var wei_two_t := clampf(route_progress()*.88+sin(clock*.78+2.1)*.007,.0,.9)
 				_fleet_wedge(_route_point(wei_two_from,wei_two_control,hub,wei_two_t),Color("53aee1"),"장료 기동대",wei_second,_route_tangent(wei_two_from,wei_two_control,hub,wei_two_t).angle(),"wei_secondary")
 		_engagement_fx(hub)
-		_card(Rect2(14,54,160,54),"연합 전력", "%d척  ·  사기 %d" % [d,dm],Color("df6158"))
-		_card(Rect2(size.x-174,54,160,54),"위군 전력", "%d척  ·  사기 %d" % [a,am],Color("62bdf1"))
+		_force_card(Rect2(14,54,180,62),"연합 전력",d,dm,int(d+int(latest_result.get("defender_loss",0))),int(dm-int(latest_result.get("defender_morale_delta",0))),Color("df6158"))
+		_force_card(Rect2(size.x-194,54,180,62),"위군 전력",a,am,int(a+int(latest_result.get("attacker_loss",0))),int(am-int(latest_result.get("attacker_morale_delta",0))),Color("62bdf1"))
 		if not selected_fleet.is_empty(): _selection_card()
+		_result_overlay(hub)
 		draw_rect(Rect2(0,size.y-30,size.x,30),Color("07111a",.94)); draw_string(font,Vector2(14,size.y-10),"◆ 주요 합선   ─ ─ 이동 경로   ◌ 교전 구역   △ 함대 전열   ·   함대 표식 클릭: 상세",HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("a7bac4"))
 	func _station(pos:Vector2)->void:
 		var font:=get_theme_default_font(); draw_circle(pos,11,Color("f2d280",.85)); draw_circle(pos,6,Color("09131d"));
@@ -459,7 +548,7 @@ class TacticalMap extends Control:
 				draw_circle(burst,3.0+2.2*abs(sin(clock*3.8+i)),Color("ff7a49",.72))
 	func _fleet_wedge(pos:Vector2,color:Color,label:String,count:int,angle:float,fleet_id:String)->void:
 		var font:=get_theme_default_font(); draw_circle(pos,33,Color(color,.055)); draw_arc(pos,33,0,TAU,32,Color(color,.55),1)
-		if selected_fleet==fleet_id:
+		if selected_fleet==fleet_id or hover_fleet==fleet_id:
 			var pulse:=2.0+1.2*(.5+.5*sin(clock*4.0)); draw_arc(pos,39,0,TAU,40,Color("ffe39a"),pulse); draw_circle(pos,45,Color("e9bd58",.045))
 		for i in count:
 			var row:=int(sqrt(float(i))); var within:=i-row*row; var off:=Vector2(13.0+row*11.0,(within-row*.5)*12.0).rotated(angle)
@@ -477,8 +566,15 @@ class TacticalMap extends Control:
 		draw_string(font,rect.position+Vector2(16,79),"현재 진형  %s" % data.formation,HORIZONTAL_ALIGNMENT_LEFT,208,13,Color("bcd0d7"))
 		draw_string(font,rect.position+Vector2(16,101),"작전 목표  %s" % data.objective,HORIZONTAL_ALIGNMENT_LEFT,208,13,Color("e4bd6b"))
 		draw_string(font,rect.position+Vector2(16,123),"교전 상태  %s" % data.engagement,HORIZONTAL_ALIGNMENT_LEFT,208,13,tint.lightened(.18))
-	func _card(rect:Rect2,title:String,value:String,tint:Color)->void:
-		var font:=get_theme_default_font(); draw_rect(rect,Color("08151f",.93)); draw_rect(rect,tint.darkened(.28),false,1); draw_rect(Rect2(rect.position,Vector2(3,rect.size.y)),tint); draw_string(font,rect.position+Vector2(12,20),title,HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("aebfc8")); draw_string(font,rect.position+Vector2(12,41),value,HORIZONTAL_ALIGNMENT_LEFT,-1,15,Color("eff6f7"))
+	func _force_card(rect:Rect2,title:String,ships:int,morale:int,previous_ships:int,previous_morale:int,tint:Color)->void:
+		var font:=get_theme_default_font(); draw_rect(rect,Color("08151f",.93)); draw_rect(rect,tint.darkened(.28),false,1); draw_rect(Rect2(rect.position,Vector2(3,rect.size.y)),tint); draw_string(font,rect.position+Vector2(12,19),title,HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("aebfc8")); draw_string(font,rect.position+Vector2(12,39),"현재  %d척 · 사기 %d" % [ships,morale],HORIZONTAL_ALIGNMENT_LEFT,-1,14,Color("eff6f7")); var prior:="직전  %d척 · 사기 %d" % [previous_ships,previous_morale] if not latest_result.is_empty() else "직전 전과 없음"; draw_string(font,rect.position+Vector2(12,55),prior,HORIZONTAL_ALIGNMENT_LEFT,-1,11,Color("9fb7c0"))
+	func _result_overlay(hub:Vector2)->void:
+		if latest_result.is_empty(): return
+		var font:=get_theme_default_font(); var phase_done:=int(latest_result.get("phase",0)); var allied_loss:=int(latest_result.get("defender_loss",0)); var wei_loss:=int(latest_result.get("attacker_loss",0)); var allied_morale:=int(latest_result.get("defender_morale_delta",0)); var wei_morale:=int(latest_result.get("attacker_morale_delta",0)); var names:Array=latest_result.get("scheme_names",[]); var scheme_text:="계략 없음" if names.is_empty() else "계략 발동 · "+" · ".join(names)
+		var rect:=Rect2(size.x*.31,size.y-112,size.x*.38,70); draw_rect(rect,Color("07131d",.92)); draw_rect(rect,Color("d6ac5a",.9),false,1)
+		draw_string(font,rect.position+Vector2(12,19),"PHASE %d 결과 적용  ·  %s" % [phase_done,scheme_text],HORIZONTAL_ALIGNMENT_LEFT,rect.size.x-24,13,Color("f0d18a")); draw_string(font,rect.position+Vector2(12,40),"연합  -%d척 / 사기 %+d     위군  -%d척 / 사기 %+d" % [allied_loss,allied_morale,wei_loss,wei_morale],HORIZONTAL_ALIGNMENT_LEFT,rect.size.x-24,13,Color("dde8ea")); draw_string(font,rect.position+Vector2(12,58),"현재 전력은 상단 카드, 직전 전력은 이 결과 전 상태입니다.",HORIZONTAL_ALIGNMENT_LEFT,rect.size.x-24,11,Color("9eb6be"))
+		if result_flash>0.0:
+			var alpha:=clampf(result_flash/1.65,0.0,1.0); draw_arc(hub,65+(1.0-alpha)*32,0,TAU,48,Color("ffe09a",alpha*.75),2.4); draw_string(font,hub+Vector2(-80,-78),"전과 반영",HORIZONTAL_ALIGNMENT_CENTER,160,15,Color(1,0.88,.62,alpha))
 
 class BattleStillImage extends Control:
 	var phase_label: Label

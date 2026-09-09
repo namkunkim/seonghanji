@@ -48,11 +48,17 @@ func _run() -> void:
 		"phase transition alert follows canonical phase change")
 	_ok("1단계 접적" in main.red_cliff_battle_view._report.summary,
 		"phase report reflects the latest canonical outcome")
+	_ok(not main.red_cliff_battle_view._map.latest_result.is_empty()
+		and main.red_cliff_battle_view._map.result_flash > 0.0,
+		"map receives the latest canonical phase result as a non-blocking result cue")
 	main.red_cliff_battle_view._toggle_history()
 	_ok(main.red_cliff_battle_view._history_panel.visible
 		and "1단계  접적" in main.red_cliff_battle_view._history_text.text,
 		"cumulative history opens from the live battle")
 	main.red_cliff_battle_view._toggle_history()
+	_ok(not main.red_cliff_battle_view._history_panel.visible
+		and not main.red_cliff_battle_view._history_backdrop.visible,
+		"history modal closes without changing battle state")
 	_ok(main.red_cliff_battle_view._report.allied_loss >= 0 and main.red_cliff_battle_view._report.wei_loss >= 0,
 		"phase report exposes non-negative canonical losses")
 	main.red_cliff_battle_view._map.select_fleet("wei_primary")
@@ -61,6 +67,17 @@ func _run() -> void:
 		and int(fleet_detail.get("ships",-1))==battle.attacker_ships
 		and fleet_detail.get("objective","")=="적 전열 압박",
 		"selected fleet detail follows canonical battle and formation state")
+	main.red_cliff_battle_view._map.grab_focus()
+	var key := InputEventKey.new(); key.keycode=KEY_RIGHT; key.pressed=true
+	main.red_cliff_battle_view._map._unhandled_key_input(key)
+	await process_frame
+	_ok(not main.red_cliff_battle_view._map.hover_fleet.is_empty(),
+		"keyboard traversal exposes a fleet hover target")
+	key = InputEventKey.new(); key.keycode=KEY_ENTER; key.pressed=true
+	main.red_cliff_battle_view._map._unhandled_key_input(key)
+	await process_frame
+	_ok(not main.red_cliff_battle_view._map.selected_fleet.is_empty(),
+		"keyboard Enter selects the traversed fleet")
 	_ok(main.campaign.issue_red_cliff_player_command(id, "change_formation", {"target_formation_id": "INVALID"}).is_empty(), "invalid formation rejected")
 	_ok(not main.campaign.issue_red_cliff_player_command(id, "hold_formation").is_empty(), "hold formation command")
 	main.campaign.step()
@@ -80,6 +97,11 @@ func _run() -> void:
 	_ok(main.red_cliff_battle_view._state.visible and "결착 완료" in main.red_cliff_battle_view._state.text
 		and "승전" in main.red_cliff_battle_view._state.text,
 		"visible result banner identifies the winner")
+	_ok(not main.red_cliff_battle_view._phase_alert.visible,
+		"resolved result banner replaces the transient phase alert without overlap")
+	_ok("판정 근거" in main.red_cliff_battle_view._feedback.text
+		and not (battle.result.get("decision",{}) as Dictionary).is_empty(),
+		"resolved view explains the canonical fleet-and-morale decision evidence")
 	main.red_cliff_battle_view._toggle_history()
 	_ok(main.red_cliff_battle_view._history_panel.visible
 		and "결착 결과" in main.red_cliff_battle_view._history_text.text
