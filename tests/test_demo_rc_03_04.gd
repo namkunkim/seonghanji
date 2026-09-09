@@ -48,6 +48,11 @@ func _run() -> void:
 	_ok(advance_button.has_theme_stylebox_override("normal")
 		and advance_button.has_theme_stylebox_override("disabled"),
 		"primary phase action has explicit active and disabled visual states")
+	view._formation.select(3)
+	view._formation.item_selected.emit(3)
+	_ok("안행진" in view._feedback.text and "강점 포화 ×1.4" in view._feedback.text
+		and "필요 통솔 65" in view._feedback.text,
+		"formation selection previews canonical strengths and requirements")
 	map.set_battle(1, "접적", 140, 120, 113, 120)
 	var contact_anchor: Vector2 = map.fleet_anchor_points()["allied_primary"]
 	var hub := Vector2(map.size.x * .52, map.size.y * .55)

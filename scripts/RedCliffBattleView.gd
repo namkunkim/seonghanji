@@ -45,6 +45,7 @@ func _build_once() -> void:
 	controls.add_child(_button("진형 유지", "hold_formation"))
 	_formation = OptionButton.new(); _formation.custom_minimum_size = Vector2(144, 46)
 	for row in Formations.rows(): _formation.add_item(String(row.get("name", "")))
+	_formation.item_selected.connect(_on_formation_preview)
 	_style_control_button(_formation, Color("c89f4d"), false)
 	controls.add_child(_formation); controls.add_child(_button("다음 진형 적용", "change_formation")); controls.add_child(_button("다음 페이즈  ›", "advance_phase")); controls.add_child(_button("AI에 위임", "delegate_ai"))
 	var spacer := Control.new(); spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL; controls.add_child(spacer)
@@ -56,6 +57,22 @@ func _button(label: String, action: String) -> Button:
 	var accents := {"hold_formation":Color("607b8a"),"change_formation":Color("c89f4d"),"advance_phase":Color("e1b64f"),"delegate_ai":Color("708b9a")}
 	_style_control_button(b,accents.get(action,Color("607684")),action=="advance_phase")
 	b.pressed.connect(func(): _issue(String(b.get_meta("action")))); _buttons.append(b); return b
+
+func _on_formation_preview(index: int) -> void:
+	if _formation == null or index < 0 or index >= _formation.item_count: return
+	_feedback.text = _formation_brief(_formation.get_item_text(index))
+
+func _formation_brief(formation_name: String) -> String:
+	var coefficients := Formations.coefficients(formation_name)
+	var phase_labels := {"contact":"접적","barrage":"포화","engagement":"교전","assault":"강습","resolution":"결착"}
+	var strongest := 0.0
+	for key in Formations.PHASE_KEYS: strongest = maxf(strongest,float(coefficients.get(key,1.0)))
+	var strong_phases: Array[String] = []
+	for key in Formations.PHASE_KEYS:
+		if is_equal_approx(float(coefficients.get(key,1.0)),strongest): strong_phases.append(String(phase_labels[key]))
+	var required_trait := Formations.requires_trait(formation_name)
+	var trait_note := " · 특성 %s" % required_trait if not required_trait.is_empty() else ""
+	return "진형 검토 · %s · 강점 %s ×%.1f · 전개폭 %s · 필요 통솔 %d%s" % [formation_name,"·".join(strong_phases),strongest,Formations.width_class(formation_name),Formations.required_command(formation_name),trait_note]
 
 func _style_control_button(control: Control, accent: Color, primary: bool) -> void:
 	var normal := _button_box(Color("3d321d") if primary else Color("101d27"),accent,.82,1 if not primary else 2)
@@ -110,6 +127,7 @@ func _refresh() -> void:
 				_formation.select(index)
 				break
 	_formation.tooltip_text = "현재 위군 진형: %s" % attacker_formation_name
+	if _feedback.text.is_empty(): _feedback.text = _formation_brief(attacker_formation_name)
 	_deck.set_battle(phase, phase_name, a, d, am, dm, attacker_formation_name); _map.set_battle(phase, phase_name, a, d, am, dm); _feed.set_battle(phase, phase_name, a, d, am, dm); _report.set_results(battle.phase_results)
 	var active := String(battle.status) == ActiveBattle.STATUS_ACTIVE
 	var command_state: Dictionary = campaign.call("red_cliff_command_state", battle_id) if campaign != null and campaign.has_method("red_cliff_command_state") else {}
