@@ -25,6 +25,9 @@ func _run() -> void:
 	await _capture("02-phase-1-contact-1600x900.png")
 	main.campaign.step()
 	await _capture("03-phase-2-barrage-1600x900.png")
+	main.red_cliff_battle_view._toggle_history()
+	await _capture("03b-battle-history-1600x900.png")
+	main.red_cliff_battle_view._toggle_history()
 	var id := Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID
 	for _turn in 4:
 		if main.campaign.active_battles[0].status != ActiveBattle.STATUS_ACTIVE:

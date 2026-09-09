@@ -13,6 +13,9 @@ var _deck: CommandDeck
 var _report: BattleReport
 var _formation: OptionButton
 var _phase_alert: Label
+var _history_backdrop: ColorRect
+var _history_panel: PanelContainer
+var _history_text: Label
 var _buttons: Array[Button] = []
 var _synced_formation_id := ""
 var _last_phase := -1
@@ -41,6 +44,7 @@ func _build_once() -> void:
 	margins.add_theme_constant_override("margin_top", 13); margins.add_theme_constant_override("margin_bottom", 12); add_child(margins)
 	_phase_alert = Label.new(); _phase_alert.name="PhaseTransitionAlert"; _phase_alert.visible=false; _phase_alert.z_index=20; _phase_alert.mouse_filter=Control.MOUSE_FILTER_IGNORE; _phase_alert.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; _phase_alert.vertical_alignment=VERTICAL_ALIGNMENT_CENTER; _phase_alert.add_theme_font_size_override("font_size",17); _phase_alert.add_theme_color_override("font_color",Color("fff0bd")); _phase_alert.set_anchors_preset(Control.PRESET_CENTER_TOP); _phase_alert.position=Vector2(-210,166); _phase_alert.size=Vector2(420,42)
 	var alert_box:=StyleBoxFlat.new(); alert_box.bg_color=Color("332813",.94); alert_box.border_color=Color("e3b956"); alert_box.set_border_width_all(1); alert_box.set_corner_radius_all(2); _phase_alert.add_theme_stylebox_override("normal",alert_box); add_child(_phase_alert)
+	_build_history_panel()
 	var stack := VBoxContainer.new(); stack.add_theme_constant_override("separation", 8); margins.add_child(stack)
 	var title_row := HBoxContainer.new(); title_row.custom_minimum_size = Vector2(0, 48); stack.add_child(title_row)
 	var title := Label.new(); title.text = "적 벽 대 전"; title.add_theme_font_size_override("font_size", 31); title.add_theme_color_override("font_color", Color("e8d5a2")); title.size_flags_horizontal = Control.SIZE_EXPAND_FILL; title_row.add_child(title)
@@ -59,6 +63,7 @@ func _build_once() -> void:
 	_formation.item_selected.connect(_on_formation_preview)
 	_style_control_button(_formation, Color("c89f4d"), false)
 	controls.add_child(_formation); controls.add_child(_button("다음 진형 적용", "change_formation")); controls.add_child(_button("다음 페이즈  ›", "advance_phase")); controls.add_child(_button("AI에 위임", "delegate_ai"))
+	var history := Button.new(); history.name="BattleHistoryButton"; history.text="전투 기록"; history.custom_minimum_size=Vector2(106,46); _style_control_button(history,Color("7896a5"),false); history.pressed.connect(_toggle_history); controls.add_child(history)
 	var spacer := Control.new(); spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL; controls.add_child(spacer)
 	var home := Button.new(); home.text = "홈으로"; home.custom_minimum_size = Vector2(92, 46); _style_control_button(home,Color("607684"),false); home.pressed.connect(func(): return_requested.emit()); controls.add_child(home)
 	_feedback = Label.new(); _feedback.custom_minimum_size = Vector2(0, 18); _feedback.add_theme_font_size_override("font_size", 13); _feedback.add_theme_color_override("font_color", Color("e3bd70")); stack.add_child(_feedback)
@@ -68,6 +73,43 @@ func _button(label: String, action: String) -> Button:
 	var accents := {"hold_formation":Color("607b8a"),"change_formation":Color("c89f4d"),"advance_phase":Color("e1b64f"),"delegate_ai":Color("708b9a")}
 	_style_control_button(b,accents.get(action,Color("607684")),action=="advance_phase")
 	b.pressed.connect(func(): _issue(String(b.get_meta("action")))); _buttons.append(b); return b
+
+func _build_history_panel() -> void:
+	_history_backdrop=ColorRect.new(); _history_backdrop.name="BattleHistoryBackdrop"; _history_backdrop.visible=false; _history_backdrop.z_index=39; _history_backdrop.color=Color(0,0,0,.52); _history_backdrop.mouse_filter=Control.MOUSE_FILTER_STOP; _history_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); add_child(_history_backdrop)
+	_history_panel=PanelContainer.new(); _history_panel.name="BattleHistoryPanel"; _history_panel.visible=false; _history_panel.z_index=40; _history_panel.focus_mode=Control.FOCUS_ALL; _history_panel.set_anchors_preset(Control.PRESET_CENTER); _history_panel.position=Vector2(-370,-210); _history_panel.size=Vector2(740,420)
+	var panel_style:=StyleBoxFlat.new(); panel_style.bg_color=Color("07121b",.985); panel_style.border_color=Color("b9954d"); panel_style.set_border_width_all(2); panel_style.set_corner_radius_all(3); panel_style.content_margin_left=22; panel_style.content_margin_right=22; panel_style.content_margin_top=18; panel_style.content_margin_bottom=18; _history_panel.add_theme_stylebox_override("panel",panel_style); add_child(_history_panel)
+	var stack:=VBoxContainer.new(); stack.add_theme_constant_override("separation",10); _history_panel.add_child(stack)
+	var heading:=HBoxContainer.new(); stack.add_child(heading)
+	var title:=Label.new(); title.text="적벽대전 전투 기록"; title.add_theme_font_size_override("font_size",22); title.add_theme_color_override("font_color",Color("ebd59e")); title.size_flags_horizontal=Control.SIZE_EXPAND_FILL; heading.add_child(title)
+	var close:=Button.new(); close.text="닫기"; close.custom_minimum_size=Vector2(76,38); _style_control_button(close,Color("7896a5"),false); close.pressed.connect(_toggle_history); heading.add_child(close)
+	var rule:=HSeparator.new(); stack.add_child(rule)
+	_history_text=Label.new(); _history_text.name="BattleHistoryText"; _history_text.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; _history_text.vertical_alignment=VERTICAL_ALIGNMENT_TOP; _history_text.size_flags_vertical=Control.SIZE_EXPAND_FILL; _history_text.add_theme_font_size_override("font_size",16); _history_text.add_theme_color_override("font_color",Color("dce7e9")); stack.add_child(_history_text)
+
+func _toggle_history() -> void:
+	if _history_panel == null: return
+	_history_panel.visible=not _history_panel.visible
+	_history_backdrop.visible=_history_panel.visible
+	if _history_panel.visible: _history_panel.grab_focus()
+
+func _refresh_history(results: Array[Dictionary], battle) -> void:
+	if _history_text == null: return
+	var lines: Array[String] = []
+	var allied_total_loss:=0; var wei_total_loss:=0
+	for record in results:
+		allied_total_loss+=int(record.get("defender_loss",0)); wei_total_loss+=int(record.get("attacker_loss",0))
+	lines.append("완료 %d / 5     연합 누적 손실 %d척     위군 누적 손실 %d척\n────────────────────────────────" % [results.size(),allied_total_loss,wei_total_loss])
+	if results.is_empty(): lines.append("아직 완료된 페이즈가 없습니다. 접적 판정을 기다리는 중입니다.")
+	for record in results:
+		var phase_index:=clampi(int(record.get("phase",1)),1,Battle.PHASE_NAMES.size())
+		var schemes: Array=record.get("schemes",[]); var scheme_names: Array[String]=[]
+		for scheme in schemes:
+			var scheme_name:=String((scheme as Dictionary).get("name","")); if not scheme_name.is_empty(): scheme_names.append(scheme_name)
+		var scheme_text:="없음" if scheme_names.is_empty() else "·".join(scheme_names)
+		lines.append("%d단계  %s\n  연합  -%d척 / 사기 %+d     위군  -%d척 / 사기 %+d     계략  %s" % [phase_index,Battle.PHASE_NAMES[phase_index-1],int(record.get("defender_loss",0)),int(record.get("defender_morale_delta",0)),int(record.get("attacker_loss",0)),int(record.get("attacker_morale_delta",0)),scheme_text])
+	if battle != null and String(battle.status)==ActiveBattle.STATUS_RESOLVED:
+		var winner_name:="손권·유비 연합" if String(battle.result.get("winner_faction_id",""))=="sun_liu_side" else "위군"
+		lines.append("────────────────────────────────\n결착 결과  ◆  %s 승전" % winner_name)
+	_history_text.text="\n\n".join(lines)
 
 func _on_formation_preview(index: int) -> void:
 	if _formation == null or index < 0 or index >= _formation.item_count: return
@@ -151,6 +193,7 @@ func _refresh() -> void:
 	var command_state: Dictionary = campaign.call("red_cliff_command_state", battle_id) if campaign != null and campaign.has_method("red_cliff_command_state") else {}
 	var delegated := bool(command_state.get("ai_delegated", false))
 	_report.set_phase(phase, phase_name, delegated)
+	_refresh_history(battle.phase_results,battle)
 	for b in _buttons:
 		var action := String(b.get_meta("action", ""))
 		if action == "advance_phase": b.disabled = not bool(command_state.get("can_advance", false))

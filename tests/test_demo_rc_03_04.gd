@@ -43,6 +43,15 @@ func _run() -> void:
 		"phase report exposes both morale deltas")
 	_ok("계략 발동: 화공" in report.summary and report.scheme_summary == "계략 발동: 화공",
 		"phase report identifies the canonical scheme by name")
+	view._refresh_history(report_fixture, null)
+	_ok("2단계  포화" in view._history_text.text and "연합  -11척 / 사기 -6" in view._history_text.text
+		and "위군  -7척 / 사기 -4" in view._history_text.text and "계략  화공" in view._history_text.text,
+		"battle history expands the canonical outcome without changing it")
+	_ok(not view._history_panel.visible, "battle history starts closed")
+	view._toggle_history()
+	_ok(view._history_panel.visible, "battle history can be opened during combat")
+	view._toggle_history()
+	_ok(not view._history_panel.visible, "battle history close returns to combat")
 	_ok("진형 상성" in report.current_directive and "3단계 교전" in report.current_directive,
 		"phase report exposes an actionable current directive")
 	var advance_button: Button = view._buttons.filter(

@@ -38,6 +38,11 @@ func _run() -> void:
 		"phase transition alert follows canonical phase change")
 	_ok("1단계 접적" in main.red_cliff_battle_view._report.summary,
 		"phase report reflects the latest canonical outcome")
+	main.red_cliff_battle_view._toggle_history()
+	_ok(main.red_cliff_battle_view._history_panel.visible
+		and "1단계  접적" in main.red_cliff_battle_view._history_text.text,
+		"cumulative history opens from the live battle")
+	main.red_cliff_battle_view._toggle_history()
 	_ok(main.red_cliff_battle_view._report.allied_loss >= 0 and main.red_cliff_battle_view._report.wei_loss >= 0,
 		"phase report exposes non-negative canonical losses")
 	_ok(main.campaign.issue_red_cliff_player_command(id, "change_formation", {"target_formation_id": "INVALID"}).is_empty(), "invalid formation rejected")
@@ -59,6 +64,12 @@ func _run() -> void:
 	_ok(main.red_cliff_battle_view._state.visible and "결착 완료" in main.red_cliff_battle_view._state.text
 		and "승전" in main.red_cliff_battle_view._state.text,
 		"visible result banner identifies the winner")
+	main.red_cliff_battle_view._toggle_history()
+	_ok(main.red_cliff_battle_view._history_panel.visible
+		and "결착 결과" in main.red_cliff_battle_view._history_text.text
+		and "승전" in main.red_cliff_battle_view._history_text.text,
+		"cumulative history remains available after resolution")
+	main.red_cliff_battle_view._toggle_history()
 	_ok(main.campaign.issue_red_cliff_player_command(id, "advance_phase").is_empty(), "resolved battle rejects input")
 	var saved: Dictionary = main.campaign.to_save_dict()
 	var restored: Dictionary = Campaign.from_save_result(saved, GameData.load_all())
