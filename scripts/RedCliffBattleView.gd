@@ -16,8 +16,13 @@ var _phase_alert: Label
 var _history_backdrop: ColorRect
 var _history_panel: PanelContainer
 var _history_text: Label
+var _comparison_panel: PanelContainer
+var _comparison_grid: GridContainer
+var _comparison_summary: Label
 var _buttons: Array[Button] = []
 var _synced_formation_id := ""
+var _current_formation_name := ""
+var _comparison_signature := ""
 var _last_phase := -1
 var _phase_alert_time := 0.0
 
@@ -45,6 +50,7 @@ func _build_once() -> void:
 	_phase_alert = Label.new(); _phase_alert.name="PhaseTransitionAlert"; _phase_alert.visible=false; _phase_alert.z_index=20; _phase_alert.mouse_filter=Control.MOUSE_FILTER_IGNORE; _phase_alert.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; _phase_alert.vertical_alignment=VERTICAL_ALIGNMENT_CENTER; _phase_alert.add_theme_font_size_override("font_size",17); _phase_alert.add_theme_color_override("font_color",Color("fff0bd")); _phase_alert.set_anchors_preset(Control.PRESET_CENTER_TOP); _phase_alert.position=Vector2(-210,166); _phase_alert.size=Vector2(420,42)
 	var alert_box:=StyleBoxFlat.new(); alert_box.bg_color=Color("332813",.94); alert_box.border_color=Color("e3b956"); alert_box.set_border_width_all(1); alert_box.set_corner_radius_all(2); _phase_alert.add_theme_stylebox_override("normal",alert_box); add_child(_phase_alert)
 	_build_history_panel()
+	_build_comparison_panel()
 	var stack := VBoxContainer.new(); stack.add_theme_constant_override("separation", 8); margins.add_child(stack)
 	var title_row := HBoxContainer.new(); title_row.custom_minimum_size = Vector2(0, 48); stack.add_child(title_row)
 	var title := Label.new(); title.text = "적 벽 대 전"; title.add_theme_font_size_override("font_size", 31); title.add_theme_color_override("font_color", Color("e8d5a2")); title.size_flags_horizontal = Control.SIZE_EXPAND_FILL; title_row.add_child(title)
@@ -62,7 +68,9 @@ func _build_once() -> void:
 	for row in Formations.rows(): _formation.add_item(String(row.get("name", "")))
 	_formation.item_selected.connect(_on_formation_preview)
 	_style_control_button(_formation, Color("c89f4d"), false)
-	controls.add_child(_formation); controls.add_child(_button("다음 진형 적용", "change_formation")); controls.add_child(_button("다음 페이즈  ›", "advance_phase")); controls.add_child(_button("AI에 위임", "delegate_ai"))
+	controls.add_child(_formation)
+	var compare:=Button.new(); compare.name="FormationComparisonButton"; compare.text="진형 비교"; compare.custom_minimum_size=Vector2(106,46); _style_control_button(compare,Color("7896a5"),false); compare.pressed.connect(_toggle_comparison); controls.add_child(compare)
+	controls.add_child(_button("다음 진형 적용", "change_formation")); controls.add_child(_button("다음 페이즈  ›", "advance_phase")); controls.add_child(_button("AI에 위임", "delegate_ai"))
 	var history := Button.new(); history.name="BattleHistoryButton"; history.text="전투 기록"; history.custom_minimum_size=Vector2(106,46); _style_control_button(history,Color("7896a5"),false); history.pressed.connect(_toggle_history); controls.add_child(history)
 	var spacer := Control.new(); spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL; controls.add_child(spacer)
 	var home := Button.new(); home.text = "홈으로"; home.custom_minimum_size = Vector2(92, 46); _style_control_button(home,Color("607684"),false); home.pressed.connect(func(): return_requested.emit()); controls.add_child(home)
@@ -87,9 +95,58 @@ func _build_history_panel() -> void:
 
 func _toggle_history() -> void:
 	if _history_panel == null: return
+	if _comparison_panel != null: _comparison_panel.visible=false
 	_history_panel.visible=not _history_panel.visible
 	_history_backdrop.visible=_history_panel.visible
 	if _history_panel.visible: _history_panel.grab_focus()
+
+func _build_comparison_panel() -> void:
+	_comparison_panel=PanelContainer.new(); _comparison_panel.name="FormationComparisonPanel"; _comparison_panel.visible=false; _comparison_panel.z_index=40; _comparison_panel.focus_mode=Control.FOCUS_ALL; _comparison_panel.set_anchors_preset(Control.PRESET_CENTER); _comparison_panel.position=Vector2(-410,-210); _comparison_panel.size=Vector2(820,420)
+	var panel_style:=StyleBoxFlat.new(); panel_style.bg_color=Color("07121b",.985); panel_style.border_color=Color("b9954d"); panel_style.set_border_width_all(2); panel_style.set_corner_radius_all(3); panel_style.content_margin_left=24; panel_style.content_margin_right=24; panel_style.content_margin_top=18; panel_style.content_margin_bottom=18; _comparison_panel.add_theme_stylebox_override("panel",panel_style); add_child(_comparison_panel)
+	var stack:=VBoxContainer.new(); stack.add_theme_constant_override("separation",10); _comparison_panel.add_child(stack)
+	var heading:=HBoxContainer.new(); stack.add_child(heading)
+	var title:=Label.new(); title.text="진형 전술 비교"; title.add_theme_font_size_override("font_size",22); title.add_theme_color_override("font_color",Color("ebd59e")); title.size_flags_horizontal=Control.SIZE_EXPAND_FILL; heading.add_child(title)
+	var close:=Button.new(); close.text="닫기"; close.custom_minimum_size=Vector2(76,38); _style_control_button(close,Color("7896a5"),false); close.pressed.connect(_toggle_comparison); heading.add_child(close)
+	stack.add_child(HSeparator.new())
+	_comparison_summary=Label.new(); _comparison_summary.name="FormationComparisonSummary"; _comparison_summary.add_theme_font_size_override("font_size",15); _comparison_summary.add_theme_color_override("font_color",Color("c9d8dc")); stack.add_child(_comparison_summary)
+	_comparison_grid=GridContainer.new(); _comparison_grid.name="FormationComparisonGrid"; _comparison_grid.columns=4; _comparison_grid.size_flags_vertical=Control.SIZE_EXPAND_FILL; _comparison_grid.add_theme_constant_override("h_separation",22); _comparison_grid.add_theme_constant_override("v_separation",8); stack.add_child(_comparison_grid)
+	var note:=Label.new(); note.text="※ 계수는 코어 진형 데이터의 페이즈 보정값입니다. 승률 예측이 아니며 적용 전 전투 상태는 변하지 않습니다."; note.add_theme_font_size_override("font_size",12); note.add_theme_color_override("font_color",Color("879ba5")); stack.add_child(note)
+
+func _toggle_comparison() -> void:
+	if _comparison_panel == null: return
+	if _history_panel != null: _history_panel.visible=false
+	_comparison_panel.visible=not _comparison_panel.visible
+	_history_backdrop.visible=_comparison_panel.visible
+	if _comparison_panel.visible:
+		_refresh_comparison(_current_formation_name,_formation.get_item_text(_formation.selected),_last_phase)
+		_comparison_panel.grab_focus()
+
+func _formation_comparison(current_name:String,candidate_name:String,current_phase:int)->Dictionary:
+	var current_coefficients:=Formations.coefficients(current_name); var candidate_coefficients:=Formations.coefficients(candidate_name)
+	var phase_labels:=["접적","포화","교전","강습","결착"]; var rows:Array[Dictionary]=[]
+	for index in Formations.PHASE_KEYS.size():
+		var key:String=Formations.PHASE_KEYS[index]; var current_value:=float(current_coefficients.get(key,1.0)); var candidate_value:=float(candidate_coefficients.get(key,1.0))
+		rows.append({"phase":index+1,"name":phase_labels[index],"current":current_value,"candidate":candidate_value,"delta":candidate_value-current_value,"active":index+1==current_phase})
+	return {"current_name":current_name,"candidate_name":candidate_name,"current_width":Formations.width_class(current_name),"candidate_width":Formations.width_class(candidate_name),"current_command":Formations.required_command(current_name),"candidate_command":Formations.required_command(candidate_name),"rows":rows}
+
+func _refresh_comparison(current_name:String,candidate_name:String,current_phase:int)->void:
+	if _comparison_grid == null or current_name.is_empty() or candidate_name.is_empty(): return
+	var signature:="%s|%s|%d" % [current_name,candidate_name,current_phase]
+	if signature==_comparison_signature: return
+	_comparison_signature=signature
+	var data:=_formation_comparison(current_name,candidate_name,current_phase)
+	_comparison_summary.text="현재  %s · 전개폭 %s · 통솔 %d      후보  %s · 전개폭 %s · 통솔 %d" % [data.current_name,data.current_width,data.current_command,data.candidate_name,data.candidate_width,data.candidate_command]
+	for child in _comparison_grid.get_children(): _comparison_grid.remove_child(child); child.queue_free()
+	for heading in ["페이즈","현재 · %s" % current_name,"후보 · %s" % candidate_name,"변화"]: _comparison_grid.add_child(_comparison_cell(heading,Color("e6cf91"),true))
+	for row:Dictionary in data.rows:
+		var delta:=float(row.delta); var delta_text:="유지" if is_zero_approx(delta) else ("▲  +%.1f" % delta if delta>0.0 else "▼  %.1f" % delta); var delta_color:=Color("75d7a0") if delta>0.0 else (Color("ef8177") if delta<0.0 else Color("9eb0b8"))
+		_comparison_grid.add_child(_comparison_cell(("◆ " if bool(row.active) else "   ")+"%d · %s" % [row.phase,row.name],Color("f0ca73") if bool(row.active) else Color("c5d2d6")))
+		_comparison_grid.add_child(_comparison_cell("×%.1f" % float(row.current),Color("b9cbd1")))
+		_comparison_grid.add_child(_comparison_cell("×%.1f" % float(row.candidate),Color("e8f0f2")))
+		_comparison_grid.add_child(_comparison_cell(delta_text,delta_color))
+
+func _comparison_cell(text:String,color:Color,heading:=false)->Label:
+	var label:=Label.new(); label.text=text; label.custom_minimum_size=Vector2(155 if heading else 150,27); label.add_theme_font_size_override("font_size",14 if heading else 15); label.add_theme_color_override("font_color",color); return label
 
 func _refresh_history(results: Array[Dictionary], battle) -> void:
 	if _history_text == null: return
@@ -114,6 +171,7 @@ func _refresh_history(results: Array[Dictionary], battle) -> void:
 func _on_formation_preview(index: int) -> void:
 	if _formation == null or index < 0 or index >= _formation.item_count: return
 	_feedback.text = _formation_brief(_formation.get_item_text(index))
+	_refresh_comparison(_current_formation_name,_formation.get_item_text(index),_last_phase)
 
 func _formation_brief(formation_name: String) -> String:
 	var coefficients := Formations.coefficients(formation_name)
@@ -180,6 +238,7 @@ func _refresh() -> void:
 		_state.visible = true
 	var attacker_formation_id := String(battle.attacker_formation_id)
 	var attacker_formation_name := Formations.name_for_id(attacker_formation_id)
+	_current_formation_name=attacker_formation_name
 	var defender_formation_name := Formations.name_for_id(String(battle.defender_formation_id))
 	if attacker_formation_id != _synced_formation_id:
 		_synced_formation_id = attacker_formation_id
@@ -195,6 +254,7 @@ func _refresh() -> void:
 	var delegated := bool(command_state.get("ai_delegated", false))
 	_report.set_phase(phase, phase_name, delegated)
 	_refresh_history(battle.phase_results,battle)
+	if _comparison_panel.visible: _refresh_comparison(attacker_formation_name,_formation.get_item_text(_formation.selected),phase)
 	for b in _buttons:
 		var action := String(b.get_meta("action", ""))
 		if action == "advance_phase": b.disabled = not bool(command_state.get("can_advance", false))

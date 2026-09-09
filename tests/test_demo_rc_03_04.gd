@@ -64,6 +64,21 @@ func _run() -> void:
 	_ok("안행진" in view._feedback.text and "강점 포화 ×1.4" in view._feedback.text
 		and "필요 통솔 65" in view._feedback.text,
 		"formation selection previews canonical strengths and requirements")
+	var comparison: Dictionary=view._formation_comparison("어린진","안행진",2)
+	var barrage: Dictionary=comparison.rows[1]
+	_ok(comparison.current_width=="중" and comparison.candidate_width=="광"
+		and comparison.current_command==60 and comparison.candidate_command==65,
+		"formation comparison reads canonical width and command requirements")
+	_ok(is_equal_approx(float(barrage.current),0.9) and is_equal_approx(float(barrage.candidate),1.4)
+		and is_equal_approx(float(barrage.delta),0.5) and bool(barrage.active),
+		"formation comparison exposes the active phase coefficient delta")
+	view._current_formation_name="어린진"; view._last_phase=2
+	view._toggle_comparison()
+	_ok(view._comparison_panel.visible and "현재  어린진" in view._comparison_summary.text
+		and "후보  안행진" in view._comparison_summary.text,
+		"formation comparison panel opens for the selected candidate")
+	view._toggle_comparison()
+	_ok(not view._comparison_panel.visible, "formation comparison closes without applying the candidate")
 	view._show_phase_alert(3,"교전")
 	_ok(view._phase_alert.visible and "주력 전열 충돌" in view._phase_alert.text,
 		"phase transition alert exposes the current battle cue")

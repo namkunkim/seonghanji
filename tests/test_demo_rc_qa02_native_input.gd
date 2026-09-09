@@ -115,6 +115,12 @@ func _run() -> void:
 	_ok(tactical_map.selection_snapshot().get("id","")=="wei_primary",
 		"native pointer opens the selected fleet detail")
 	await _capture("02-battle-entry-1600x900.png")
+	if not await _click(_button("진형 비교"), "open formation comparison"):
+		_write_report(); quit(1); return
+	_ok(main.red_cliff_battle_view._comparison_panel.visible,
+		"formation comparison is visible through native pointer path")
+	if not await _click(_button("닫기"), "close formation comparison"):
+		_write_report(); quit(1); return
 
 	if not await _click(_button("진형 유지"), "hold formation"):
 		_write_report(); quit(1); return
@@ -125,7 +131,7 @@ func _run() -> void:
 	# control order and activate delegation with the keyboard, proving both input
 	# families reach the same public Control path.
 	# Godot preserves the control-tree traversal slot for the disabled phase button.
-	for _focus_step in 4:
+	for _focus_step in 5:
 		await _key(KEY_TAB, "move combat focus")
 	var delegate_button := _button("AI에 위임")
 	_ok(delegate_button != null and delegate_button.has_focus(), "keyboard focus reached AI delegation")

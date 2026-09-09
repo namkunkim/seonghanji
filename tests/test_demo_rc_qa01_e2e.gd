@@ -26,6 +26,16 @@ func _run() -> void:
 		"formation selector reflects canonical attacker formation")
 	_ok(Formations.name_for_id(battle.attacker_formation_id) == main.red_cliff_battle_view._deck.attacker_formation_name,
 		"command deck identifies the active formation")
+	var formation_before_preview:=battle.attacker_formation_id
+	main.red_cliff_battle_view._formation.select(3)
+	main.red_cliff_battle_view._formation.item_selected.emit(3)
+	main.red_cliff_battle_view._toggle_comparison()
+	_ok(main.red_cliff_battle_view._comparison_panel.visible
+		and "후보  안행진" in main.red_cliff_battle_view._comparison_summary.text,
+		"formation comparison opens from the product battle screen")
+	_ok(battle.attacker_formation_id==formation_before_preview,
+		"formation comparison never applies or mutates the canonical formation")
+	main.red_cliff_battle_view._toggle_comparison()
 	var advance_button: Button = main.red_cliff_battle_view._buttons.filter(
 		func(button: Button): return String(button.get_meta("action", "")) == "advance_phase")[0]
 	_ok(advance_button.disabled, "phase 1 advance control is visibly disabled")

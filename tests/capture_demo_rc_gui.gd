@@ -27,8 +27,13 @@ func _run() -> void:
 	await _capture("03-phase-2-barrage-1600x900.png")
 	main.red_cliff_battle_view._map.select_fleet("wei_primary")
 	await _capture("03a-selected-fleet-1600x900.png")
+	main.red_cliff_battle_view._formation.select(3)
+	main.red_cliff_battle_view._formation.item_selected.emit(3)
+	main.red_cliff_battle_view._toggle_comparison()
+	await _capture("03b-formation-comparison-1600x900.png")
+	main.red_cliff_battle_view._toggle_comparison()
 	main.red_cliff_battle_view._toggle_history()
-	await _capture("03b-battle-history-1600x900.png")
+	await _capture("03c-battle-history-1600x900.png")
 	main.red_cliff_battle_view._toggle_history()
 	var id := Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID
 	for _turn in 4:
