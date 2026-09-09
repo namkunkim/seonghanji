@@ -26,6 +26,12 @@ var battle_screen: PanelContainer
 var battle_screen_state: Label
 var battle_screen_battle_id := ""
 var red_cliff_battle_view: RedCliffBattleView
+var red_cliff_scenario_panel: PanelContainer
+var red_cliff_scenario_title: Label
+var red_cliff_scenario_body: Label
+var red_cliff_scenario_choices: VBoxContainer
+var red_cliff_scenario_feedback: Label
+var red_cliff_result_briefed_battle_id := ""
 var active_menu_id := "overview"
 var map_context_menu_id := "overview"
 var submenu: Control
@@ -1078,6 +1084,8 @@ func _close_red_cliff_battle_entry_shell() -> void:
     # persistence and cannot resurrect a resolved record.
     map.visible = true
     _set_home_ui_visible(true)
+    _refresh_home_snapshot()
+    _open_canonical_red_cliff_result_briefing()
     _refresh_red_cliff_banner()
     if map_input_blocker != null:
         map_input_blocker.visible = submenu != null and submenu.visible
@@ -1290,47 +1298,204 @@ func _start_red_cliff_demo() -> bool:
         return false
     var demo := CampaignScript.scenario_03(data, 20803)
     demo.ai_domestic_enabled = false
-    for event in [
-        [Campaign.SCN03_EVENT03, {"cao_southward_complete": true}],
-        [Campaign.SCN03_EVENT04, {"sun_quan_independent": true}],
-        [Campaign.SCN03_EVENT06, {"liu_bei_hostile_to_cao": true}],
-        [Campaign.SCN03_EVENT07, {"sun_liu_military_pact": true, "yangtze_defense_line": true}],
-    ]:
-        if demo.issue_scn03_event_outcome(String(event[0]), event[1]).is_empty():
-            return false
-        demo.step()
-    var cao_id := -1
-    var sun_id := -1
-    for fleet in demo.fleets:
-        if String(fleet.owner) == Campaign.SCN03_CAO_OWNER and cao_id < 0:
-            cao_id = int(fleet.id)
-        elif String(fleet.owner) == Campaign.SCN03_SUN_OWNER and sun_id < 0:
-            sun_id = int(fleet.id)
-    if cao_id < 0 or sun_id < 0:
-        return false
-    if demo.issue_scn03_red_cliff_manifest([cao_id], [sun_id], {
-        str(cao_id): "attack", str(sun_id): "defense",
-    }).is_empty():
-        return false
-    demo.step()
-    for entry in [[Campaign.SCN03_CAO_OWNER, cao_id], [Campaign.SCN03_SUN_OWNER, sun_id]]:
-        demo.world.issue(Domestic.CMD_FLEET_MOVE, {
-            "faction": String(entry[0]), "fleet": int(entry[1]), "region": "RGN-04",
-        }, 0, "player")
-    for _tick in 800:
-        if demo.active_battles.size() == 1 \
-                and demo.active_battles[0].status == ActiveBattle.STATUS_ACTIVE:
-            campaign = demo
-            red_cliff_demo_mode = true
-            if red_cliff_demo_button != null:
-                red_cliff_demo_button.text = "DEMO"
-                red_cliff_demo_button.tooltip_text = "적벽대전 데모 모드 · phase 1에서 대기 중"
-            campaign.world.clock.paused = true
-            playback_speed_index = 0
-            _refresh_home_snapshot()
-            return true
-        demo.step()
-    return false
+    campaign = demo
+    red_cliff_demo_mode = true
+    red_cliff_result_briefed_battle_id = ""
+    campaign.world.clock.paused = true
+    playback_speed_index = 0
+    if red_cliff_demo_button != null:
+        red_cliff_demo_button.text = "DEMO"
+        red_cliff_demo_button.tooltip_text = "적벽대전 시나리오 선택을 시작합니다."
+    _refresh_home_snapshot()
+    _open_red_cliff_scenario_briefing()
+    return true
+
+
+## DEMO-RC-LT-02 scenario UI is deliberately a thin client of Campaign's
+## one-shot event command.  It never writes the derived progress ledger.
+func _open_red_cliff_scenario_briefing() -> void:
+    _ensure_red_cliff_scenario_panel()
+    if red_cliff_scenario_panel == null:
+        return
+    _set_home_ui_visible(false)
+    map.visible = false
+    red_cliff_scenario_panel.visible = true
+    _refresh_red_cliff_scenario_panel()
+
+
+func _ensure_red_cliff_scenario_panel() -> void:
+    if is_instance_valid(red_cliff_scenario_panel) or ui_root == null:
+        return
+    red_cliff_scenario_panel = PanelContainer.new()
+    red_cliff_scenario_panel.name = "RedCliffScenarioBriefing"
+    red_cliff_scenario_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    red_cliff_scenario_panel.add_theme_stylebox_override("panel", HudStyle.panel_style(0.98))
+    red_cliff_scenario_panel.visible = false
+    ui_root.add_child(red_cliff_scenario_panel)
+    var content := VBoxContainer.new()
+    content.set_anchors_preset(Control.PRESET_CENTER)
+    content.position = Vector2(-360, -255)
+    content.size = Vector2(720, 510)
+    content.add_theme_constant_override("separation", 14)
+    red_cliff_scenario_panel.add_child(content)
+    red_cliff_scenario_title = Label.new()
+    red_cliff_scenario_title.name = "ScenarioTitle"
+    red_cliff_scenario_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    red_cliff_scenario_title.add_theme_font_size_override("font_size", 30)
+    red_cliff_scenario_title.add_theme_color_override("font_color", Color("f1d49b"))
+    content.add_child(red_cliff_scenario_title)
+    red_cliff_scenario_body = Label.new()
+    red_cliff_scenario_body.name = "ScenarioBriefingText"
+    red_cliff_scenario_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    red_cliff_scenario_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    red_cliff_scenario_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    red_cliff_scenario_body.add_theme_font_size_override("font_size", 17)
+    red_cliff_scenario_body.add_theme_color_override("font_color", Color("d4e3e7"))
+    content.add_child(red_cliff_scenario_body)
+    red_cliff_scenario_choices = VBoxContainer.new()
+    red_cliff_scenario_choices.name = "ScenarioChoices"
+    red_cliff_scenario_choices.add_theme_constant_override("separation", 8)
+    content.add_child(red_cliff_scenario_choices)
+    red_cliff_scenario_feedback = Label.new()
+    red_cliff_scenario_feedback.name = "ScenarioFeedback"
+    red_cliff_scenario_feedback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    red_cliff_scenario_feedback.add_theme_font_size_override("font_size", 14)
+    red_cliff_scenario_feedback.add_theme_color_override("font_color", Color("e8c46b"))
+    content.add_child(red_cliff_scenario_feedback)
+
+
+func _scenario_next_choice() -> Dictionary:
+    if campaign == null or campaign.ended:
+        return {}
+    var progress: Dictionary = campaign.scn03_progress
+    var choices := [
+        {"event_id": Campaign.SCN03_EVENT03, "key": "cao_southward_complete", "title": "조조의 남하", "body": "형주로 향한 조조의 진군이 장강 방어선에 닿습니다.", "yes": "남하를 완수한다", "no": "남하를 멈춘다"},
+        {"event_id": Campaign.SCN03_EVENT04, "key": "sun_quan_independent", "title": "손권의 독립", "body": "강동은 항전과 귀부 사이에서 결단을 요구받습니다.", "yes": "강동의 독립을 지킨다", "no": "조조에게 귀부한다"},
+        {"event_id": Campaign.SCN03_EVENT06, "key": "liu_bei_hostile_to_cao", "title": "유비의 행로", "body": "유비가 조조에 맞설 뜻을 유지할지 정합니다.", "yes": "조조에 맞선다", "no": "대조조 적대를 거둔다"},
+        {"event_id": Campaign.SCN03_EVENT07, "key": "sun_liu_military_pact", "title": "손·유 회담", "body": "손권과 유비의 군사 협정과 장강 방어선을 결정합니다.", "yes": "군사 협정과 장강 방어선을 세운다", "no": "협정을 맺지 않는다"},
+    ]
+    for choice in choices:
+        if not progress.has(String(choice["key"])):
+            return choice
+    return {}
+
+
+func _refresh_red_cliff_scenario_panel() -> void:
+    if red_cliff_scenario_panel == null:
+        return
+    for child in red_cliff_scenario_choices.get_children():
+        red_cliff_scenario_choices.remove_child(child)
+        child.queue_free()
+    var resolved_news := _canonical_red_cliff_resolved_news()
+    if not resolved_news.is_empty():
+        red_cliff_scenario_title.text = "적벽대전 결과"
+        red_cliff_scenario_body.text = "%s\n\n전투 결과와 종료 사실은 Campaign이 파생한 canonical 전환 기록입니다. 이 브리핑은 결과 기록을 바꾸지 않습니다." % String(resolved_news.get("headline", "적벽 전투 결착"))
+        _add_scenario_action("ReturnHome", "홈으로 돌아가기", _return_from_red_cliff_scenario)
+        _add_scenario_action("NewDemo", "새 데모 시작", _start_red_cliff_demo)
+        red_cliff_scenario_feedback.text = "결과 브리핑 · 홈에서는 현재 Campaign을 이어할 수 있습니다."
+        return
+    var next := _scenario_next_choice()
+    if campaign != null and campaign.ended:
+        red_cliff_scenario_title.text = "시나리오 결과"
+        red_cliff_scenario_body.text = "적벽은 발생하지 않았습니다.\n%s\n\nDEC-01에 따라 이 단편은 여기서 종료되고, Campaign의 정본 종료 결과만 홈으로 가져갑니다." % String(campaign.end_reason)
+        _add_scenario_action("ReturnHome", "홈으로 돌아가기", _return_from_red_cliff_scenario)
+        _add_scenario_action("NewDemo", "새 데모 시작", _start_red_cliff_demo)
+        red_cliff_scenario_feedback.text = "조기 종료 · 새 데모는 새 Campaign에서 시작합니다."
+        return
+    if next.is_empty():
+        red_cliff_scenario_title.text = "적벽 발생 조건"
+        red_cliff_scenario_body.text = "다섯 정본 조건이 기록되었습니다. 참가 함대의 정본 도착 확인 뒤에만 적벽 전투가 열립니다."
+        if campaign != null and campaign.has_method("activate_scn03_red_cliff_demo"):
+            _add_scenario_action("ActivateRedCliff", "적벽 전투 준비", _activate_red_cliff_scenario)
+            red_cliff_scenario_feedback.text = "참가 원장과 구지 도착은 Campaign 공개 명령으로만 준비합니다."
+        else:
+            _add_scenario_action("ContinueScenario", "홈에서 계속하기", _return_from_red_cliff_scenario)
+            red_cliff_scenario_feedback.text = "조건 확인 대기"
+        return
+    red_cliff_scenario_title.text = String(next["title"])
+    red_cliff_scenario_body.text = String(next["body"])
+    _add_scenario_action("ChooseYes", String(next["yes"]), func(): _select_red_cliff_scenario_choice(next, true))
+    _add_scenario_action("ChooseNo", String(next["no"]), func(): _select_red_cliff_scenario_choice(next, false))
+    red_cliff_scenario_feedback.text = "선택은 Campaign 명령 로그에 한 번만 기록됩니다."
+
+
+func _add_scenario_action(node_name: String, label: String, callback: Callable) -> void:
+    var action := Button.new()
+    action.name = node_name
+    action.text = label
+    action.custom_minimum_size = Vector2(0, 42)
+    action.add_theme_stylebox_override("normal", HudStyle.resource_style())
+    action.add_theme_stylebox_override("hover", HudStyle.resource_hover_style())
+    action.add_theme_stylebox_override("pressed", HudStyle.resource_pressed_style())
+    action.pressed.connect(callback)
+    red_cliff_scenario_choices.add_child(action)
+
+
+func _select_red_cliff_scenario_choice(choice: Dictionary, selected: bool) -> void:
+    if campaign == null:
+        return
+    var outcome := {}
+    if String(choice["event_id"]) == Campaign.SCN03_EVENT07:
+        outcome = {"sun_liu_military_pact": selected, "yangtze_defense_line": selected}
+    else:
+        outcome[String(choice["key"])] = selected
+    if campaign.issue_scn03_event_outcome(String(choice["event_id"]), outcome).is_empty():
+        red_cliff_scenario_feedback.text = "이 선택은 이미 기록되었거나 현재 상태에서 허용되지 않습니다."
+        return
+    campaign.step()
+    _refresh_home_snapshot()
+    _refresh_red_cliff_scenario_panel()
+
+
+func _activate_red_cliff_scenario() -> void:
+    if campaign == null or not campaign.has_method("activate_scn03_red_cliff_demo"):
+        return
+    var receipt = campaign.call("activate_scn03_red_cliff_demo")
+    if receipt is Dictionary and receipt.is_empty():
+        red_cliff_scenario_feedback.text = "적벽 전투 준비가 현재 Campaign 상태에서 거부되었습니다."
+        return
+    _refresh_home_snapshot()
+    red_cliff_scenario_panel.visible = false
+    # The home interrupt is Campaign-projected.  Route through the same
+    # canonical entry boundary as a player pressing its action button.
+    var item := _red_cliff_interrupt_banner_item()
+    if not item.is_empty():
+        _request_red_cliff_battle_entry(String(item.get("action_battle_id", "")))
+    else:
+        _return_from_red_cliff_scenario()
+
+
+func _return_from_red_cliff_scenario() -> void:
+    if red_cliff_scenario_panel != null:
+        red_cliff_scenario_panel.visible = false
+    map.visible = true
+    _set_home_ui_visible(true)
+    _refresh_home_snapshot()
+
+
+## News is the public home projection of a canonical transition.  The UI reads
+## it rather than an ActiveBattle result/snapshot, so it cannot manufacture a
+## winner or a resolved state.
+func _canonical_red_cliff_resolved_news() -> Dictionary:
+    for item in home_state.get("news", []):
+        if not item is Dictionary:
+            continue
+        var row: Dictionary = item
+        if String(row.get("battle_id", "")) == Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID \
+                and String(row.get("transition", "")) == Campaign.SCN03_RED_CLIFF_TRANSITION_RESOLVED:
+            return row.duplicate(true)
+    return {}
+
+
+func _open_canonical_red_cliff_result_briefing() -> void:
+    var resolved_news := _canonical_red_cliff_resolved_news()
+    if resolved_news.is_empty():
+        return
+    var battle_id := String(resolved_news.get("battle_id", ""))
+    if battle_id.is_empty() or red_cliff_result_briefed_battle_id == battle_id:
+        return
+    red_cliff_result_briefed_battle_id = battle_id
+    _open_red_cliff_scenario_briefing()
 
 
 func _open_home_submenu(route_id: String, title: String, icon: String, route_payload: Dictionary = {}) -> void:
