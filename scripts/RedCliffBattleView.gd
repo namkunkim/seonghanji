@@ -36,7 +36,8 @@ func _build_once() -> void:
 	var title := Label.new(); title.text = "적 벽 대 전"; title.add_theme_font_size_override("font_size", 31); title.add_theme_color_override("font_color", Color("e8d5a2")); title.size_flags_horizontal = Control.SIZE_EXPAND_FILL; title_row.add_child(title)
 	var loc := Label.new(); loc.text = "구지 궤도 전역  ·  208년 10월 23일"; loc.vertical_alignment = VERTICAL_ALIGNMENT_CENTER; loc.add_theme_font_size_override("font_size", 15); loc.add_theme_color_override("font_color", Color("9fb0bc")); title_row.add_child(loc)
 	_deck = CommandDeck.new(); _deck.custom_minimum_size = Vector2(0, 86); stack.add_child(_deck)
-	_state = Label.new(); _state.visible = false; stack.add_child(_state)
+	_state = Label.new(); _state.visible = false; _state.custom_minimum_size = Vector2(0,42); _state.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; _state.vertical_alignment=VERTICAL_ALIGNMENT_CENTER; _state.add_theme_font_size_override("font_size",18)
+	var result_box := StyleBoxFlat.new(); result_box.bg_color=Color("111b22"); result_box.border_color=Color("c8a451"); result_box.set_border_width_all(1); result_box.set_corner_radius_all(2); _state.add_theme_stylebox_override("normal",result_box); stack.add_child(_state)
 	var split := HBoxContainer.new(); split.custom_minimum_size = Vector2(0, 480); split.size_flags_vertical = Control.SIZE_EXPAND_FILL; split.add_theme_constant_override("separation", 10); stack.add_child(split)
 	_map = TacticalMap.new(); _map.name = "TacticalMapTwoThirds"; _map.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map.size_flags_stretch_ratio = 2.0; split.add_child(_map)
 	_feed = BattleStillImage.new(); _feed.name = "BattleStillImageOneThird"; _feed.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _feed.size_flags_stretch_ratio = 1.0; split.add_child(_feed)
@@ -114,10 +115,14 @@ func _refresh() -> void:
 	var phase := int(battle.combat_phase)
 	var phase_name := Battle.PHASE_NAMES[phase - 1] if phase >= 1 and phase <= Battle.PHASE_NAMES.size() else "대기"
 	var a := int(battle.attacker_ships); var d := int(battle.defender_ships); var am := int(battle.attacker_morale); var dm := int(battle.defender_morale)
+	_state.visible = false
 	_state.text = "%d / 5 페이즈 %s · 조조측 %d척 / %d · 연합 %d척 / %d" % [phase, phase_name, a, am, d, dm]
 	if String(battle.status) == ActiveBattle.STATUS_RESOLVED:
 		var winner := String(battle.result.get("winner_faction_id", ""))
-		_state.text = "전투 결과 · 승자: %s · " % ("손권·유비 연합" if winner == "sun_liu_side" else "조조측") + _state.text
+		var winner_name := "손권·유비 연합" if winner == "sun_liu_side" else "위군"
+		_state.text = "결착 완료  ◆  %s 승전  ·  위군 %d척 / 사기 %d  ·  연합 %d척 / 사기 %d" % [winner_name,a,am,d,dm]
+		_state.add_theme_color_override("font_color",Color("ef8478") if winner == "sun_liu_side" else Color("7bcdf5"))
+		_state.visible = true
 	var attacker_formation_id := String(battle.attacker_formation_id)
 	var attacker_formation_name := Formations.name_for_id(attacker_formation_id)
 	if attacker_formation_id != _synced_formation_id:

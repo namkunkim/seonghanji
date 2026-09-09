@@ -53,7 +53,9 @@ func _run() -> void:
 	_ok(battle.campaign_result_applied, "campaign result exactly-once applied")
 	_ok(main.campaign.scn03_red_cliff_transition_news.filter(func(row): return String(row.get("transition", "")) == Campaign.SCN03_RED_CLIFF_TRANSITION_RESOLVED).size() == 1, "result news exactly-once")
 	await process_frame
-	_ok("전투 결과" in main.red_cliff_battle_view._state.text, "result screen shown")
+	_ok(main.red_cliff_battle_view._state.visible and "결착 완료" in main.red_cliff_battle_view._state.text
+		and "승전" in main.red_cliff_battle_view._state.text,
+		"visible result banner identifies the winner")
 	_ok(main.campaign.issue_red_cliff_player_command(id, "advance_phase").is_empty(), "resolved battle rejects input")
 	var saved: Dictionary = main.campaign.to_save_dict()
 	var restored: Dictionary = Campaign.from_save_result(saved, GameData.load_all())
