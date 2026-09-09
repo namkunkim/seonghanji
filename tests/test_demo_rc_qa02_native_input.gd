@@ -22,7 +22,11 @@ func _ok(condition: bool, label: String) -> void:
 
 func _button(text: String) -> Button:
 	for node in root.find_children("*", "Button", true, false):
-		if node is Button and node.is_visible_in_tree() and (node as Button).text == text:
+		# Scenario's recommended choice deliberately gets a presentation suffix.
+		# The native test identifies the product action by its stable visible stem,
+		# rather than requiring the decorative recommendation copy.
+		if node is Button and node.is_visible_in_tree() and ((node as Button).text == text \
+				or (node as Button).text.begins_with(text + " ·")):
 			return node as Button
 	return null
 
