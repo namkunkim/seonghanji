@@ -56,6 +56,9 @@ const SCN03_LIU_CONTINGENT_ID: String = "SCN-03-LIU-BEI-CONTINGENT"
 ## 홈의 3D 항행 관측용 제3함대는 대형 편대가 아니라 독립 전열함 해무급 한 척이다.
 ## 이 값은 뷰 연출용 대체가 아니라 시나리오 초기 Fleet 정본에 반영한다.
 const SCN03_HAEMU_SOLO_FLEET_ID: int = 3
+## Negative command is the canonical unusable-command sentinel.  Scenario fleets
+## may legitimately use zero while their officer roster provides the capability.
+const RED_CLIFF_MIN_COMMAND_FOR_PLAYER_ORDER: int = 0
 
 ## Event 09 (scenario-200-208.md §ACT 7)의 순서는 지문에도 고정한다.
 const SCN03_RED_CLIFF_CONDITIONS: Array[String] = [
@@ -609,22 +612,63 @@ func issue_red_cliff_player_command(battle_id: String, kind: String,
 			or delay_ticks < 0 or not _is_valid_red_cliff_player_command_payload(battle_id, kind, payload):
 		return {}
 	var battle := _scn03_red_cliff_battle()
-	if battle == null or battle.battle_id != battle_id or battle.status != ActiveBattle.STATUS_ACTIVE:
+	var reason := _red_cliff_player_command_reason(battle, battle_id, kind, payload)
+	if reason != "":
 		return {}
-	return world.issue(CMD_RED_CLIFF_PLAYER_COMMAND, {"battle_id": battle_id,
+	var receipt := world.issue(CMD_RED_CLIFF_PLAYER_COMMAND, {"battle_id": battle_id,
 		"kind": kind, "payload": payload.duplicate(true)}, delay_ticks, "player")
+	if not receipt.is_empty():
+		receipt["accepted"] = true
+		receipt["reason_code"] = "queued"
+		receipt["command_kind"] = kind
+	return receipt
 
 
-func red_cliff_command_state(battle_id: String) -> Dictionary:
+func red_cliff_command_state(battle_id: String, requested_kind: String = "",
+		requested_payload: Dictionary = {}) -> Dictionary:
 	var battle := _scn03_red_cliff_battle()
 	if battle == null or battle.battle_id != battle_id:
-		return {"accepted": false, "reason": "unknown_battle"}
-	return {"accepted": battle.status == ActiveBattle.STATUS_ACTIVE,
+		return {"accepted": false, "reason": "unknown_battle", "reason_code": "unknown_battle"}
+	var state := {"accepted": battle.status == ActiveBattle.STATUS_ACTIVE,
 		"reason": "resolved" if battle.status == ActiveBattle.STATUS_RESOLVED else "",
+		"reason_code": "resolved" if battle.status == ActiveBattle.STATUS_RESOLVED else "",
 		"phase": battle.combat_phase, "status": battle.status,
 		"can_advance": battle.status == ActiveBattle.STATUS_ACTIVE and battle.combat_phase >= 2 and not battle.ai_delegated,
 		"can_change_formation": battle.status == ActiveBattle.STATUS_ACTIVE and not battle.ai_delegated,
-		"ai_delegated": battle.ai_delegated, "player_commands": battle.player_commands.duplicate(true)}
+		"ai_delegated": battle.ai_delegated, "player_commands": battle.player_commands.duplicate(true),
+		"last_command_feedback": battle.last_command_feedback.duplicate(true)}
+	if requested_kind != "":
+		state["requested_command"] = {
+			"accepted": _red_cliff_player_command_reason(battle, battle_id, requested_kind, requested_payload) == "",
+			"reason_code": _red_cliff_player_command_reason(battle, battle_id, requested_kind, requested_payload),
+			"kind": requested_kind,
+		}
+	return state
+
+
+func _red_cliff_player_command_reason(battle: ActiveBattle, battle_id: String,
+		kind: String, payload: Dictionary) -> String:
+	if battle == null or battle.battle_id != battle_id:
+		return "unknown_battle"
+	if battle.status == ActiveBattle.STATUS_RESOLVED:
+		return "resolved"
+	if battle.status != ActiveBattle.STATUS_ACTIVE:
+		return "battle_not_active"
+	if not _is_valid_red_cliff_player_command_payload(battle_id, kind, payload):
+		return "invalid_payload"
+	if battle.ai_delegated:
+		return "ai_delegated"
+	if kind == "advance_phase" and battle.combat_phase < 2:
+		return "phase_not_ready"
+	if battle.has_player_command_for_phase(kind, battle.combat_phase):
+		return "duplicate_command"
+	if kind == "change_formation" and String(payload.get("target_formation_id", "")) == battle.attacker_formation_id:
+		return "duplicate_command"
+	if kind != "delegate_ai":
+		var attacker := _fleet_by_id(int(battle.attacker_fleet_ids[0])) if not battle.attacker_fleet_ids.is_empty() else null
+		if attacker == null or attacker.command < RED_CLIFF_MIN_COMMAND_FOR_PLAYER_ORDER:
+			return "insufficient_command"
+	return ""
 
 
 static func _is_valid_red_cliff_player_command_payload(battle_id: String, kind: String,
@@ -1175,12 +1219,18 @@ func _apply_arrived() -> void:
 			var control_kind := String(control.get("kind", ""))
 			var control_payload: Dictionary = control.get("payload", {})
 			var control_battle := _scn03_red_cliff_battle()
-			if String(c.get("origin", "player")) != "player" or control_battle == null \
-					or control_battle.status != ActiveBattle.STATUS_ACTIVE \
-					or not _is_valid_red_cliff_player_command_payload(String(control.get("battle_id", "")), control_kind, control_payload):
+			var control_reason := "invalid_origin" if String(c.get("origin", "player")) != "player" else _red_cliff_player_command_reason(control_battle,
+				String(control.get("battle_id", "")), control_kind, control_payload)
+			if control_reason == "" and control_battle.has_player_command_at_tick(control_kind, world.clock.tick):
+				control_reason = "duplicate_command"
+			if control_reason != "":
+				if control_battle != null:
+					control_battle.record_command_feedback(false, control_reason, control_kind,
+						world.clock.tick, int(c.get("seq", -1)))
 				cmds_rejected += 1
 				continue
 			var accepted := false
+			var command_phase := control_battle.combat_phase
 			if control_kind == "hold_formation":
 				accepted = not control_battle.ai_delegated
 			elif control_kind == "change_formation":
@@ -1196,10 +1246,14 @@ func _apply_arrived() -> void:
 					control_battle.ai_delegated = true
 					accepted = true
 			if accepted:
-				control_battle.record_player_command(control_kind, int(c.get("seq", -1)), world.clock.tick)
+				control_battle.record_player_command(control_kind, int(c.get("seq", -1)), world.clock.tick, command_phase)
+				control_battle.record_command_feedback(true, "applied", control_kind,
+					world.clock.tick, int(c.get("seq", -1)))
 				cmds_applied += 1
 				_apply_red_cliff_result_once(control_battle)
 			else:
+				control_battle.record_command_feedback(false, "rejected_by_reducer", control_kind,
+					world.clock.tick, int(c.get("seq", -1)))
 				cmds_rejected += 1
 			continue
 		if String(c.get("kind", "")) == CMD_SCN03_RED_CLIFF_RESULT:

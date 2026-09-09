@@ -64,6 +64,8 @@ var player_commands: Array[Dictionary] = []
 var ai_decisions: Array[Dictionary] = []
 var ai_delegated: bool = false
 var campaign_result_applied: bool = false
+## Last reducer verdict for the command surface.  It is replay-derived, not UI state.
+var last_command_feedback: Dictionary = {}
 
 ## Pending does not select forces or assign roles. Keep every participant surface
 ## explicitly empty until activation owns that decision.
@@ -122,6 +124,7 @@ func _normalize_pending_identity() -> void:
 	ai_decisions.clear()
 	ai_delegated = false
 	campaign_result_applied = false
+	last_command_feedback.clear()
 
 
 func activate_red_cliff(attacker_ids: Array[String], defender_ids: Array[String],
@@ -215,9 +218,9 @@ func apply_red_cliff_phase_outcome(at_tick: int, outcome: Dictionary) -> bool:
 	record["attacker_collapsed"] = attacker_ships <= 0 or attacker_morale <= 0
 	record["defender_collapsed"] = defender_ships <= 0 or defender_morale <= 0
 	if combat_phase == 5:
-		var attacker_score := attacker_ships * 1000 + attacker_morale * 10
-		var defender_score := defender_ships * 1000 + defender_morale * 10
-		_resolve_calculated("cao_side" if attacker_score >= defender_score else "sun_liu_side", at_tick, "phase_five_complete")
+		var evidence := red_cliff_resolution_evidence()
+		_resolve_calculated(String(evidence["winner_faction_id"]), at_tick,
+			String(evidence["reason_code"]), evidence)
 		return true
 	combat_phase += 1
 	phase_advanced_tick = at_tick
@@ -225,18 +228,66 @@ func apply_red_cliff_phase_outcome(at_tick: int, outcome: Dictionary) -> bool:
 	return true
 
 
-func record_player_command(kind: String, seq: int, at_tick: int) -> void:
-	player_commands.append({"kind": kind, "seq": seq, "tick": at_tick})
+func record_player_command(kind: String, seq: int, at_tick: int, command_phase: int = -1) -> void:
+	player_commands.append({"kind": kind, "phase": combat_phase if command_phase < 0 else command_phase,
+		"seq": seq, "tick": at_tick})
+
+
+func has_player_command_for_phase(kind: String, phase: int) -> bool:
+	for command in player_commands:
+		if String(command.get("kind", "")) == kind and int(command.get("phase", -1)) == phase:
+			return true
+	return false
+
+
+func has_player_command_at_tick(kind: String, at_tick: int) -> bool:
+	for command in player_commands:
+		if String(command.get("kind", "")) == kind and int(command.get("tick", -1)) == at_tick:
+			return true
+	return false
+
+
+func record_command_feedback(accepted: bool, reason_code: String, kind: String,
+		at_tick: int, seq: int = -1) -> void:
+	last_command_feedback = {
+		"accepted": accepted,
+		"reason_code": reason_code,
+		"kind": kind,
+		"phase": combat_phase,
+		"status": status,
+		"tick": at_tick,
+		"seq": seq,
+	}
+
+
+func red_cliff_resolution_evidence() -> Dictionary:
+	var attacker_score := attacker_ships * 1000 + attacker_morale * 10
+	var defender_score := defender_ships * 1000 + defender_morale * 10
+	var winner := "cao_side" if attacker_score >= defender_score else "sun_liu_side"
+	return {
+		"winner_faction_id": winner,
+		"winner_display_name": "위군" if winner == "cao_side" else "오 · 유 연합군",
+		"reason_code": "phase_five_score",
+		"reason_display": "결착 페이즈의 잔존 함선과 사기로 승패를 판정했습니다.",
+		"score_formula_code": "ships_x1000_plus_morale_x10",
+		"tie_breaker": "cao_side",
+		"attacker": {"ships_remaining": attacker_ships, "morale": attacker_morale,
+			"score": attacker_score, "collapsed": attacker_ships <= 0 or attacker_morale <= 0},
+		"defender": {"ships_remaining": defender_ships, "morale": defender_morale,
+			"score": defender_score, "collapsed": defender_ships <= 0 or defender_morale <= 0},
+	}
 
 
 func record_ai_decision(phase: int, decision: String, at_tick: int) -> void:
 	ai_decisions.append({"phase": phase, "decision": decision, "tick": at_tick})
 
 
-func _resolve_calculated(winner_faction_id: String, at_tick: int, reason: String) -> void:
+func _resolve_calculated(winner_faction_id: String, at_tick: int, reason: String,
+		evidence: Dictionary = {}) -> void:
 	result = {"winner_faction_id": winner_faction_id, "reason": reason,
 		"attacker_ships": attacker_ships, "defender_ships": defender_ships,
-		"attacker_morale": attacker_morale, "defender_morale": defender_morale}
+		"attacker_morale": attacker_morale, "defender_morale": defender_morale,
+		"decision": evidence.duplicate(true)}
 	result_applied = true
 	resolved_tick = at_tick
 	entry_available = false
@@ -289,6 +340,11 @@ func digest_values() -> Array:
 		ai_decisions.size(),
 		1 if ai_delegated else 0,
 		1 if campaign_result_applied else 0,
+		1 if bool(last_command_feedback.get("accepted", false)) else 0,
+		Rng._hash_string(String(last_command_feedback.get("reason_code", ""))),
+		Rng._hash_string(String(last_command_feedback.get("kind", ""))),
+		int(last_command_feedback.get("phase", -1)),
+		int(last_command_feedback.get("tick", -1)),
 	]
 	for phase in range(1, 6):
 		values.append(int(phase_ended_ticks.get(phase, -1)))
@@ -297,6 +353,13 @@ func digest_values() -> Array:
 			"attacker_morale_delta", "defender_morale_delta", "attacker_ships_after",
 			"defender_ships_after", "attacker_morale_after", "defender_morale_after"]:
 			values.append(int(record.get(key, -1)))
+	for side in ["attacker", "defender"]:
+		var decision: Dictionary = result.get("decision", {})
+		var side_data: Dictionary = decision.get(side, {})
+		values.append(int(side_data.get("ships_remaining", -1)))
+		values.append(int(side_data.get("morale", -1)))
+		values.append(int(side_data.get("score", -1)))
+		values.append(1 if bool(side_data.get("collapsed", false)) else 0)
 	for scheme in applied_schemes:
 		values.append(int(scheme.get("phase", -1)))
 		values.append(int(scheme.get("kind", -1)))
