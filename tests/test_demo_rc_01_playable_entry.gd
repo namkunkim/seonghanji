@@ -20,6 +20,15 @@ func _run() -> void:
 	root.add_child(main)
 	await process_frame
 	_ok(main._start_red_cliff_demo(), "제품 데모 시작 경로")
+	_ok(main.red_cliff_scenario_panel.visible and main.campaign.active_battles.is_empty(),
+		"브리핑부터 시작하고 고정 전투를 주입하지 않음")
+	for _choice_index in 4:
+		var choice: Dictionary = main._scenario_next_choice()
+		_ok(not choice.is_empty(), "다음 정본 사건 선택 제공")
+		if not choice.is_empty():
+			main._select_red_cliff_scenario_choice(choice, true)
+	_ok(not main.campaign.activate_scn03_red_cliff_demo().is_empty(),
+		"선택 뒤 공개 Campaign 활성화 경계")
 	var battle: ActiveBattle = main.campaign.active_battles[0] if main.campaign.active_battles.size() == 1 else null
 	_ok(battle != null, "pending→active canonical battle 생성")
 	if battle != null:
@@ -30,9 +39,9 @@ func _run() -> void:
 		_ok(restored.get("status", "") == Save.STATUS_OK, "시작 상태 저장·복원")
 		if restored.get("campaign") != null:
 			_ok(restored["campaign"].digest() == main.campaign.digest(), "저장 후 동일 시작 상태")
-	var first_digest: int = main.campaign.digest()
 	_ok(main._start_red_cliff_demo(), "동일 입력 재시작")
-	_ok(main.campaign.digest() == first_digest, "동일 시작 입력은 동일 상태")
+	_ok(main.campaign.active_battles.is_empty() and main.campaign.scn03_progress.is_empty()
+		and main.red_cliff_scenario_panel.visible, "새 시작은 선택 브리핑과 깨끗한 Campaign 상태")
 	main.free()
 	print("DEMO-RC-01: %d 통과 / %d 실패" % [_pass, _fail])
 	quit(0 if _fail == 0 else 1)

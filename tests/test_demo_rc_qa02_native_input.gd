@@ -104,6 +104,12 @@ func _run() -> void:
 
 	if not await _click(_button("적벽"), "demo start"):
 		_write_report(); quit(1); return
+	# The real renderer may need a few frames to mount the full-rect briefing
+	# after a top-bar click; this is observation time, not a state injection.
+	for _mount_frame in 12:
+		if root.find_child("RedCliffScenarioBriefing", true, false) != null:
+			break
+		await process_frame
 	_ok(root.find_child("RedCliffScenarioBriefing", true, false) != null,
 		"scenario briefing is mounted")
 	for label in ["남하를 완수한다", "강동의 독립을 지킨다", "조조에 맞선다", "군사 협정과 장강 방어선을 세운다"]:
@@ -112,8 +118,16 @@ func _run() -> void:
 	if not await _click(_button("적벽 전투 준비"), "activate canonical Red Cliffs battle"):
 		_write_report(); quit(1); return
 	await _capture("01-demo-active-banner-1600x900.png")
-	if not await _click(_button("전투 진입"), "battle banner entry"):
-		_write_report(); quit(1); return
+	# LT-02 immediately routes the accepted public activation through the same
+	# canonical entry boundary as the home banner.  Retain the banner click when
+	# it is visible, but do not require a second UI action after an auto-entry.
+	var entry_button := _button("전투 진입")
+	if entry_button != null:
+		if not await _click(entry_button, "battle banner entry"):
+			_write_report(); quit(1); return
+	else:
+		_ok(root.find_child("RedCliffBattleView", true, false) != null,
+			"activation auto-entered through the canonical battle boundary")
 	var tactical_map: Control=root.find_child("TacticalMapTwoThirds", true, false)
 	_ok(tactical_map != null, "battle tactical map is mounted")
 	_ok(root.find_child("BattleStillImageOneThird", true, false) != null, "battle still image is mounted")

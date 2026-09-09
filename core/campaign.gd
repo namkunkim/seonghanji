@@ -565,14 +565,36 @@ func record_scn03_event_outcome(event_id: String, outcome: Dictionary) -> bool:
 ## 시험 호환용이다. UI/시나리오 호출자는 반드시 이 함수를 사용한다.
 func issue_scn03_event_outcome(event_id: String, outcome: Dictionary,
 		delay_ticks: int = 0) -> Dictionary:
-	if world == null or world.scenario != "SCN-03" or not _uses_scn03_progress_rules():
+	if world == null or world.scenario != "SCN-03" or not _uses_scn03_progress_rules() \
+			or ended:
 		return {}
-	if delay_ticks < 0 or not _is_valid_scn03_event_outcome(event_id, outcome):
+	if delay_ticks < 0 or not _is_valid_scn03_event_outcome(event_id, outcome) \
+			or _scn03_event_outcome_already_selected(event_id):
 		return {}
 	return world.issue(CMD_SCN03_EVENT_OUTCOME, {
 		"event_id": event_id,
 		"outcome": outcome.duplicate(true),
 	}, delay_ticks, "player")
+
+
+## A scenario choice is a one-shot player fact, even before its command reaches
+## the reducer.  Looking at both the derived ledger and pending player input
+## closes the double-click/race window without making UI state authoritative.
+## A conflicting second choice is rejected by the same guard; the first accepted
+## command remains the sole replay input and therefore the sole deterministic
+## outcome for that event.
+func _scn03_event_outcome_already_selected(event_id: String) -> bool:
+	for key in _scn03_expected_outcome_keys(event_id):
+		if scn03_progress.has(key):
+			return true
+	for command in world.pending_commands:
+		if String(command.get("kind", "")) != CMD_SCN03_EVENT_OUTCOME \
+				or String(command.get("origin", "player")) != "player":
+			continue
+		var payload: Dictionary = command.get("payload", {})
+		if String(payload.get("event_id", "")) == event_id:
+			return true
+	return false
 
 
 ## The Event 07 participant manifest's only player-facing entry point.  Fleet IDs
@@ -596,6 +618,64 @@ func issue_scn03_red_cliff_manifest(cao_fleet_ids: Array, sun_liu_fleet_ids: Arr
 			or not _manifest_fleets_valid_now(_canonical_scn03_red_cliff_manifest(payload)):
 		return {}
 	return world.issue(CMD_SCN03_RED_CLIFF_MANIFEST, payload, delay_ticks, "player")
+
+
+## Product-demo activation boundary.  The scenario owns the approved minimal
+## participant manifest and the arrival commands; a UI may request activation,
+## but cannot select fleet IDs, mutate their positions, or write a battle state.
+## This is intentionally separate from the general manifest API: authored
+## scenario play can still provide its explicit Event 07 manifest, while the
+## deterministic short-demo uses this fixed, replayable setup only once.
+func activate_scn03_red_cliff_demo() -> Dictionary:
+	if world == null or world.scenario != "SCN-03" or ended \
+			or not _uses_scn03_red_cliff_phase_rules() or not scn03_red_cliff_manifest.is_empty():
+		return {}
+	var battle := _scn03_red_cliff_battle()
+	if battle == null or battle.status != ActiveBattle.STATUS_PENDING:
+		return {}
+	var manifest := _scn03_default_red_cliff_demo_manifest()
+	if manifest.is_empty() or issue_scn03_red_cliff_manifest(manifest["cao_fleet_ids"],
+			manifest["sun_liu_fleet_ids"], manifest["fleet_roles"]).is_empty():
+		return {}
+	step()
+	# The manifest command has to arrive before the player movement commands are
+	# issued.  This preserves the normal pending → active reducer transition.
+	battle = _scn03_red_cliff_battle()
+	if battle == null or battle.status != ActiveBattle.STATUS_PENDING:
+		return {}
+	for entry in [[SCN03_CAO_OWNER, manifest["cao_fleet_ids"]],
+			[SCN03_SUN_OWNER, manifest["sun_liu_fleet_ids"]]]:
+		for fleet_id in entry[1]:
+			world.issue(Domestic.CMD_FLEET_MOVE, {
+				"faction": String(entry[0]), "fleet": int(fleet_id), "region": "RGN-04",
+			}, 0, "player")
+	for _tick in 800:
+		battle = _scn03_red_cliff_battle()
+		if battle == null or battle.status == ActiveBattle.STATUS_CANCELLED or ended:
+			return {}
+		if battle.status == ActiveBattle.STATUS_ACTIVE:
+			return {"accepted": true, "battle_id": battle.battle_id,
+				"status": battle.status, "phase": battle.combat_phase}
+		step()
+	return {}
+
+
+func _scn03_default_red_cliff_demo_manifest() -> Dictionary:
+	var selected: Dictionary = {}
+	for fleet in fleets:
+		if not fleet.is_alive() or not [SCN03_CAO_OWNER, SCN03_SUN_OWNER].has(fleet.owner):
+			continue
+		if not selected.has(fleet.owner) or int(fleet.id) < int(selected[fleet.owner]):
+			selected[fleet.owner] = int(fleet.id)
+	if not selected.has(SCN03_CAO_OWNER) or not selected.has(SCN03_SUN_OWNER):
+		return {}
+	var cao_id: int = selected[SCN03_CAO_OWNER]
+	var sun_id: int = selected[SCN03_SUN_OWNER]
+	return {
+		"cao_fleet_ids": [cao_id],
+		"sun_liu_fleet_ids": [sun_id],
+		"fleet_roles": {str(cao_id): "attack", str(sun_id): "defense"},
+	}
 
 
 func issue_scn03_red_cliff_result(winner_faction_id: String, delay_ticks: int = 0) -> Dictionary:
