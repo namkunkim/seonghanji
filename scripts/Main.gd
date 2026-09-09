@@ -26,6 +26,12 @@ var battle_screen: PanelContainer
 var battle_screen_state: Label
 var battle_screen_battle_id := ""
 var red_cliff_battle_view: RedCliffBattleView
+var red_cliff_scenario_overlay: PanelContainer
+var red_cliff_scenario_title: Label
+var red_cliff_scenario_prompt: Label
+var red_cliff_scenario_conditions: Label
+var red_cliff_scenario_choices: VBoxContainer
+var red_cliff_scenario_continue: Button
 var active_menu_id := "overview"
 var map_context_menu_id := "overview"
 var submenu: Control
@@ -290,6 +296,7 @@ func _refresh_home_snapshot() -> void:
     _refresh_resource_labels()
     _refresh_status_rows()
     _refresh_red_cliff_banner()
+    _refresh_red_cliff_scenario_overlay()
     _refresh_battle_entry_shell()
     _refresh_stage_five()
     if submenu != null and submenu_was_visible:
@@ -875,6 +882,130 @@ func _build_red_cliff_banner() -> void:
     row.add_child(red_cliff_banner_action)
 
 
+func _ensure_red_cliff_scenario_overlay() -> void:
+    if is_instance_valid(red_cliff_scenario_overlay) or ui_root == null:
+        return
+    red_cliff_scenario_overlay = PanelContainer.new()
+    red_cliff_scenario_overlay.name = "RedCliffScenarioOverlay"
+    red_cliff_scenario_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    red_cliff_scenario_overlay.add_theme_stylebox_override("panel", HudStyle.panel_style(0.98))
+    red_cliff_scenario_overlay.visible = false
+    ui_root.add_child(red_cliff_scenario_overlay)
+    var content := VBoxContainer.new()
+    content.set_anchors_preset(Control.PRESET_CENTER)
+    content.position = Vector2(-390, -300)
+    content.size = Vector2(780, 600)
+    content.add_theme_constant_override("separation", 14)
+    red_cliff_scenario_overlay.add_child(content)
+    red_cliff_scenario_title = Label.new()
+    red_cliff_scenario_title.name = "ScenarioTitle"
+    red_cliff_scenario_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    red_cliff_scenario_title.add_theme_font_size_override("font_size", 32)
+    red_cliff_scenario_title.add_theme_color_override("font_color", Color("f5fbff"))
+    content.add_child(red_cliff_scenario_title)
+    var briefing := Label.new()
+    briefing.name = "ScenarioBriefing"
+    briefing.text = "건안 13년 · 손권 세력\n목표: 손유 동맹으로 조조의 남하를 저지한다"
+    briefing.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    briefing.add_theme_font_size_override("font_size", 17)
+    briefing.add_theme_color_override("font_color", Color("9fc6dc"))
+    content.add_child(briefing)
+    red_cliff_scenario_prompt = Label.new()
+    red_cliff_scenario_prompt.name = "ScenarioPrompt"
+    red_cliff_scenario_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    red_cliff_scenario_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    red_cliff_scenario_prompt.add_theme_font_size_override("font_size", 22)
+    red_cliff_scenario_prompt.add_theme_color_override("font_color", Color("ffe1a0"))
+    content.add_child(red_cliff_scenario_prompt)
+    red_cliff_scenario_choices = VBoxContainer.new()
+    red_cliff_scenario_choices.name = "ScenarioChoiceList"
+    red_cliff_scenario_choices.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    red_cliff_scenario_choices.add_theme_constant_override("separation", 8)
+    content.add_child(red_cliff_scenario_choices)
+    red_cliff_scenario_conditions = Label.new()
+    red_cliff_scenario_conditions.name = "ScenarioConditionSummary"
+    red_cliff_scenario_conditions.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    red_cliff_scenario_conditions.add_theme_font_size_override("font_size", 15)
+    red_cliff_scenario_conditions.add_theme_color_override("font_color", Color("b8d6e6"))
+    content.add_child(red_cliff_scenario_conditions)
+    red_cliff_scenario_continue = Button.new()
+    red_cliff_scenario_continue.name = "ScenarioContinue"
+    red_cliff_scenario_continue.text = "계속"
+    red_cliff_scenario_continue.custom_minimum_size = Vector2(220, 42)
+    red_cliff_scenario_continue.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+    red_cliff_scenario_continue.add_theme_stylebox_override("normal", HudStyle.resource_style())
+    red_cliff_scenario_continue.add_theme_stylebox_override("hover", HudStyle.resource_hover_style())
+    red_cliff_scenario_continue.add_theme_stylebox_override("focus", HudStyle.resource_focus_style())
+    red_cliff_scenario_continue.pressed.connect(_on_red_cliff_scenario_continue)
+    content.add_child(red_cliff_scenario_continue)
+
+
+func _refresh_red_cliff_scenario_overlay() -> void:
+    if not red_cliff_demo_mode or campaign == null:
+        if is_instance_valid(red_cliff_scenario_overlay): red_cliff_scenario_overlay.visible = false
+        return
+    _ensure_red_cliff_scenario_overlay()
+    if not is_instance_valid(red_cliff_scenario_overlay): return
+    var state: Dictionary = campaign.scn03_demo_progression()
+    var stage := String(state.get("stage", "briefing"))
+    red_cliff_scenario_overlay.visible = stage != "active"
+    if not red_cliff_scenario_overlay.visible: return
+    red_cliff_scenario_title.text = String(state.get("title", "적벽 전야"))
+    red_cliff_scenario_prompt.text = String(state.get("current_event_title", "시나리오 브리핑"))
+    if stage == "briefing": red_cliff_scenario_prompt.text = "시나리오 브리핑\n손권의 선택으로 적벽의 향방이 갈립니다."
+    elif stage == "early_ending": red_cliff_scenario_prompt.text = "적벽 미발생\n%s" % String(state.get("ending_reason", "DEC-01 조기 종료"))
+    elif stage == "red_cliff_pending": red_cliff_scenario_prompt.text = "적벽 발생 조건 충족\n구지 궤도로 참가 함대를 집결합니다."
+    elif stage == "resolved": red_cliff_scenario_prompt.text = "적벽 전투 결착\n전투 결과는 전투 기록에서 확인할 수 있습니다."
+    for child in red_cliff_scenario_choices.get_children(): child.queue_free()
+    for choice in state.get("choices", []):
+        var button := Button.new()
+        button.text = String(choice.get("label", "선택")) + (" · 역사 진행 권장" if bool(choice.get("recommended", false)) else "")
+        button.tooltip_text = "이 선택은 바로 확정되지 않고 다음 전역 틱에 기록됩니다."
+        button.custom_minimum_size = Vector2(0, 42)
+        button.add_theme_stylebox_override("normal", HudStyle.resource_style())
+        button.add_theme_stylebox_override("hover", HudStyle.resource_hover_style())
+        button.add_theme_stylebox_override("focus", HudStyle.resource_focus_style())
+        button.pressed.connect(_on_red_cliff_scenario_choice.bind(String(state.get("current_event", "")), String(choice.get("choice_id", ""))))
+        red_cliff_scenario_choices.add_child(button)
+    var condition_lines: Array[String] = []
+    for condition in state.get("conditions", []):
+        var mark := "✓" if String(condition.get("state", "")) == "met" else ("✕" if String(condition.get("state", "")) == "unmet" else "…")
+        condition_lines.append("%s %s" % [mark, String(condition.get("label", ""))])
+    red_cliff_scenario_conditions.text = "적벽 조건: " + "  ".join(condition_lines)
+    red_cliff_scenario_continue.visible = stage == "briefing" or stage == "red_cliff_pending" or stage == "early_ending" or stage == "resolved"
+    red_cliff_scenario_continue.text = "선택 시작" if stage == "briefing" else ("전투 준비" if stage == "red_cliff_pending" else "천하도로 돌아가기")
+
+
+func _on_red_cliff_scenario_choice(event_id: String, choice_id: String) -> void:
+    if campaign == null or campaign.issue_scn03_demo_choice(event_id, choice_id).is_empty(): return
+    campaign.step()
+    _refresh_home_snapshot()
+    _refresh_red_cliff_scenario_overlay()
+
+
+func _on_red_cliff_scenario_continue() -> void:
+    if campaign == null: return
+    var stage := String(campaign.scn03_demo_progression().get("stage", ""))
+    if stage == "briefing":
+        # The event choices are already visible below; this merely preserves the
+        # briefing as a non-mutating first screen.
+        pass
+    elif stage == "red_cliff_pending":
+        if not campaign.continue_red_cliff_scenario_demo().is_empty():
+            # Manifest arrival is a separate canonical command boundary from
+            # the participant voyage; mirror normal player ticks before the
+            # core emits the fixed movement orders.
+            campaign.step()
+            campaign.continue_red_cliff_scenario_demo()
+            for _tick in 800:
+                campaign.step()
+                if String(campaign.scn03_demo_progression().get("stage", "")) == "active": break
+    else:
+        red_cliff_demo_mode = false
+    _refresh_home_snapshot()
+    _refresh_red_cliff_scenario_overlay()
+
+
 func _refresh_red_cliff_banner() -> void:
     if red_cliff_banner == null:
         return
@@ -944,6 +1075,8 @@ func _open_red_cliff_battle_entry_shell(battle_id: String) -> bool:
     if not is_instance_valid(battle_screen):
         return false
     battle_screen_battle_id = battle_id
+    if is_instance_valid(red_cliff_scenario_overlay):
+        red_cliff_scenario_overlay.visible = false
     _set_home_ui_visible(false)
     map.visible = false
     battle_screen.visible = true
@@ -1079,6 +1212,7 @@ func _close_red_cliff_battle_entry_shell() -> void:
     map.visible = true
     _set_home_ui_visible(true)
     _refresh_red_cliff_banner()
+    _refresh_red_cliff_scenario_overlay()
     if map_input_blocker != null:
         map_input_blocker.visible = submenu != null and submenu.visible
 
@@ -1290,47 +1424,16 @@ func _start_red_cliff_demo() -> bool:
         return false
     var demo := CampaignScript.scenario_03(data, 20803)
     demo.ai_domestic_enabled = false
-    for event in [
-        [Campaign.SCN03_EVENT03, {"cao_southward_complete": true}],
-        [Campaign.SCN03_EVENT04, {"sun_quan_independent": true}],
-        [Campaign.SCN03_EVENT06, {"liu_bei_hostile_to_cao": true}],
-        [Campaign.SCN03_EVENT07, {"sun_liu_military_pact": true, "yangtze_defense_line": true}],
-    ]:
-        if demo.issue_scn03_event_outcome(String(event[0]), event[1]).is_empty():
-            return false
-        demo.step()
-    var cao_id := -1
-    var sun_id := -1
-    for fleet in demo.fleets:
-        if String(fleet.owner) == Campaign.SCN03_CAO_OWNER and cao_id < 0:
-            cao_id = int(fleet.id)
-        elif String(fleet.owner) == Campaign.SCN03_SUN_OWNER and sun_id < 0:
-            sun_id = int(fleet.id)
-    if cao_id < 0 or sun_id < 0:
-        return false
-    if demo.issue_scn03_red_cliff_manifest([cao_id], [sun_id], {
-        str(cao_id): "attack", str(sun_id): "defense",
-    }).is_empty():
-        return false
-    demo.step()
-    for entry in [[Campaign.SCN03_CAO_OWNER, cao_id], [Campaign.SCN03_SUN_OWNER, sun_id]]:
-        demo.world.issue(Domestic.CMD_FLEET_MOVE, {
-            "faction": String(entry[0]), "fleet": int(entry[1]), "region": "RGN-04",
-        }, 0, "player")
-    for _tick in 800:
-        if demo.active_battles.size() == 1 \
-                and demo.active_battles[0].status == ActiveBattle.STATUS_ACTIVE:
-            campaign = demo
-            red_cliff_demo_mode = true
-            if red_cliff_demo_button != null:
-                red_cliff_demo_button.text = "DEMO"
-                red_cliff_demo_button.tooltip_text = "적벽대전 데모 모드 · phase 1에서 대기 중"
-            campaign.world.clock.paused = true
-            playback_speed_index = 0
-            _refresh_home_snapshot()
-            return true
-        demo.step()
-    return false
+    campaign = demo
+    red_cliff_demo_mode = true
+    if red_cliff_demo_button != null:
+        red_cliff_demo_button.text = "DEMO"
+        red_cliff_demo_button.tooltip_text = "적벽대전 단편 시나리오를 진행합니다."
+    campaign.world.clock.paused = true
+    playback_speed_index = 0
+    _refresh_home_snapshot()
+    _refresh_red_cliff_scenario_overlay()
+    return true
 
 
 func _open_home_submenu(route_id: String, title: String, icon: String, route_payload: Dictionary = {}) -> void:

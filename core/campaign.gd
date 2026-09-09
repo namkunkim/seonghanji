@@ -34,6 +34,9 @@ const SCN03_EVENT09: String = "SCN-03-E09"
 const SCN03_RED_CLIFF_PENDING_BATTLE_ID: String = "SCN-03-E09-RED-CLIFF-01"
 ## 외생 시나리오 결과 입력. World 명령 로그에만 남고, 진행 원장은 재생 파생값이다.
 const CMD_SCN03_EVENT_OUTCOME: String = "scenario_event_outcome"
+## DEMO-RC-LT-02 stores a player's canonical wording choice through the existing
+## scenario-outcome command.  It is intentionally not a second save ledger.
+const CMD_SCN03_DEMO_CHOICE: String = "scn03_demo_choice"
 ## Event 07's approved Red-Cliffs participant ledger is an external player command.
 ## It is replayed like the event outcomes; no campaign snapshot owns it.
 const CMD_SCN03_RED_CLIFF_MANIFEST: String = "scn03_red_cliff_manifest"
@@ -573,6 +576,187 @@ func issue_scn03_event_outcome(event_id: String, outcome: Dictionary,
 		"event_id": event_id,
 		"outcome": outcome.duplicate(true),
 	}, delay_ticks, "player")
+
+
+## Display-safe, replay-derived state for the short Red-Cliffs scenario path.
+## UI consumers receive labels and condition status, never fleet IDs, snapshots,
+## or mutable campaign ledgers.  A choice only becomes final when its normal
+## player command arrives on a later step.
+func scn03_demo_progression() -> Dictionary:
+	var choices := _scn03_demo_choices_for_next_event()
+	var conditions: Array[Dictionary] = []
+	for key in SCN03_RED_CLIFF_CONDITIONS:
+		conditions.append({"label": _scn03_condition_label(key),
+			"state": "met" if bool(scn03_progress.get(key, false)) else ("unmet" if scn03_progress.has(key) else "pending")})
+	var next_event := _scn03_demo_next_event()
+	var battle := _scn03_red_cliff_battle()
+	var stage := "briefing" if scn03_progress.is_empty() else ("choice" if next_event != "" else ("early_ending" if ended else "red_cliff_pending"))
+	if battle != null:
+		stage = "resolved" if battle.status == ActiveBattle.STATUS_RESOLVED else ("active" if battle.status == ActiveBattle.STATUS_ACTIVE else "red_cliff_pending")
+	return {
+		"stage": stage,
+		"title": "적벽 전야",
+		"player_faction": "손권",
+		"objective": "손유 동맹으로 조조의 남하를 저지한다",
+		"current_event": next_event,
+		"current_event_title": _scn03_demo_event_title(next_event),
+		"choices": choices,
+		"conditions": conditions,
+		"red_cliff_state": "not_occurred" if ended else (String(battle.status) if battle != null else ("pending" if next_event == "" else "undecided")),
+		"ending_reason": end_reason if ended else "",
+	}
+
+
+## The sole playable scenario-choice entry.  Choice IDs are the documented
+## Event 03/04/06/07 choices; the generated outcome remains the existing public
+## command and consequently stays in the normal command log and save replay.
+func issue_scn03_demo_choice(event_id: String, choice_id: String, delay_ticks: int = 0) -> Dictionary:
+	if delay_ticks < 0 or event_id != _scn03_demo_next_event() or _scn03_has_queued_event_outcome(event_id):
+		return {}
+	var outcome := _scn03_demo_choice_outcome(event_id, choice_id)
+	if outcome.is_empty():
+		return {}
+	return issue_scn03_event_outcome(event_id, outcome, delay_ticks)
+
+
+## Once all four documented choices have arrived, the scenario itself prepares
+## its fixed participant ledger and the documented voyage to 구지.  This keeps
+## fleet identity, roles, and movement out of the UI while retaining ordinary
+## player-origin commands for save/replay.  It is idempotent: rebuilding a UI
+## or pressing continue twice cannot produce another manifest or battle.
+func continue_red_cliff_scenario_demo() -> Dictionary:
+	if world == null or world.scenario != "SCN-03" or ended or _scn03_demo_next_event() != "":
+		return {}
+	var battle := _scn03_red_cliff_battle()
+	if battle != null:
+		if battle.status == ActiveBattle.STATUS_PENDING and not scn03_red_cliff_manifest.is_empty():
+			return _issue_scn03_demo_participant_moves()
+		if battle.status != ActiveBattle.STATUS_PENDING:
+			return {"accepted": battle.status == ActiveBattle.STATUS_ACTIVE, "state": battle.status}
+	if not _scn03_all_red_cliff_conditions_met() or not scn03_red_cliff_manifest.is_empty() \
+			or _scn03_has_queued_manifest():
+		return {}
+	var cao_id := _scn03_demo_participant_id(SCN03_CAO_OWNER)
+	var sun_id := _scn03_demo_participant_id(SCN03_SUN_OWNER)
+	if cao_id < 0 or sun_id < 0:
+		return {}
+	var receipt := issue_scn03_red_cliff_manifest([cao_id], [sun_id], {
+		str(cao_id): "attack", str(sun_id): "defense",
+	})
+	if receipt.is_empty():
+		return {}
+	receipt["accepted"] = true
+	receipt["state"] = "manifest_queued"
+	return receipt
+
+
+func _issue_scn03_demo_participant_moves() -> Dictionary:
+	var issued := false
+	for entry in [["cao_fleet_ids", SCN03_CAO_OWNER], ["sun_liu_fleet_ids", SCN03_SUN_OWNER]]:
+		for raw_id in scn03_red_cliff_manifest.get(String(entry[0]), []):
+			var fleet := _fleet_by_id(int(raw_id))
+			if fleet == null or fleet.is_moving() or fleet.at_system == ActiveBattle.RED_CLIFF_SYSTEM_ID:
+				continue
+			var receipt := world.issue(Domestic.CMD_FLEET_MOVE, {"faction": String(entry[1]),
+				"fleet": int(raw_id), "region": "RGN-04"}, 0, "player")
+			issued = issued or not receipt.is_empty()
+	return {"accepted": issued, "state": "deploying"} if issued else {}
+
+
+func _scn03_all_red_cliff_conditions_met() -> bool:
+	for key in SCN03_RED_CLIFF_CONDITIONS:
+		if not bool(scn03_progress.get(key, false)):
+			return false
+	return true
+
+
+func _scn03_demo_participant_id(owner: String) -> int:
+	# Scenario setup appends fleets by sorted faction ID, so this selects the
+	# stable, documented first participant for each side rather than a spatial or
+	# strength heuristic.
+	for fleet in fleets:
+		if fleet.owner == owner and fleet.is_alive():
+			return fleet.id
+	return -1
+
+
+func _scn03_has_queued_manifest() -> bool:
+	if world == null:
+		return false
+	for command in world.pending_commands:
+		if String(command.get("kind", "")) == CMD_SCN03_RED_CLIFF_MANIFEST:
+			return true
+	return false
+
+
+func _scn03_demo_next_event() -> String:
+	for event_id in [SCN03_EVENT03, SCN03_EVENT04, SCN03_EVENT06, SCN03_EVENT07]:
+		if _scn03_expected_outcome_keys(event_id).any(func(key): return not scn03_progress.has(key)):
+			return event_id
+	return ""
+
+
+func _scn03_has_queued_event_outcome(event_id: String) -> bool:
+	if world == null:
+		return false
+	for command in world.pending_commands:
+		if String(command.get("kind", "")) == CMD_SCN03_EVENT_OUTCOME and String(command.get("payload", {}).get("event_id", "")) == event_id:
+			return true
+	return false
+
+
+func _scn03_demo_choices_for_next_event() -> Array[Dictionary]:
+	var event_id := _scn03_demo_next_event()
+	var choices: Array[Dictionary] = []
+	for choice_id in _scn03_demo_choice_ids(event_id):
+		choices.append({"choice_id": choice_id, "label": _scn03_demo_choice_label(event_id, choice_id),
+			"recommended": _scn03_demo_choice_outcome(event_id, choice_id).values().all(func(value): return bool(value))})
+	return choices
+
+
+static func _scn03_demo_choice_ids(event_id: String) -> Array[String]:
+	match event_id:
+		SCN03_EVENT03: return ["direct_annexation", "induce_submission", "prioritize_sun_quan"]
+		SCN03_EVENT04: return ["surrender_to_cao", "maintain_independence", "ally_with_liu_bei"]
+		SCN03_EVENT06: return ["ally_with_sun_quan", "cooperate_with_cao", "succeed_jingzhou"]
+		SCN03_EVENT07: return ["joint_defense", "military_pact_without_defense", "no_military_pact"]
+	return []
+
+
+static func _scn03_demo_choice_outcome(event_id: String, choice_id: String) -> Dictionary:
+	match event_id:
+		SCN03_EVENT03:
+			if choice_id == "direct_annexation" or choice_id == "induce_submission": return {"cao_southward_complete": true}
+			if choice_id == "prioritize_sun_quan": return {"cao_southward_complete": false}
+		SCN03_EVENT04:
+			if choice_id == "surrender_to_cao": return {"sun_quan_independent": false}
+			if choice_id == "maintain_independence" or choice_id == "ally_with_liu_bei": return {"sun_quan_independent": true}
+		SCN03_EVENT06:
+			if choice_id == "ally_with_sun_quan" or choice_id == "succeed_jingzhou": return {"liu_bei_hostile_to_cao": true}
+			if choice_id == "cooperate_with_cao": return {"liu_bei_hostile_to_cao": false}
+		SCN03_EVENT07:
+			if choice_id == "joint_defense": return {"sun_liu_military_pact": true, "yangtze_defense_line": true}
+			if choice_id == "military_pact_without_defense": return {"sun_liu_military_pact": true, "yangtze_defense_line": false}
+			if choice_id == "no_military_pact": return {"sun_liu_military_pact": false, "yangtze_defense_line": false}
+	return {}
+
+
+static func _scn03_demo_event_title(event_id: String) -> String:
+	return {SCN03_EVENT03: "조조의 남하", SCN03_EVENT04: "항복인가 항전인가",
+		SCN03_EVENT06: "땅 없는 자의 외교", SCN03_EVENT07: "손유 회담"}.get(event_id, "")
+
+
+static func _scn03_demo_choice_label(event_id: String, choice_id: String) -> String:
+	return {"direct_annexation": "직접 병합", "induce_submission": "귀부 유도", "prioritize_sun_quan": "손권 견제 우선",
+		"surrender_to_cao": "조조 항복", "maintain_independence": "독립 유지", "ally_with_liu_bei": "유비 연합",
+		"ally_with_sun_quan": "손권 동맹", "cooperate_with_cao": "조조 협력", "succeed_jingzhou": "유표 세력 계승",
+		"joint_defense": "공동 방어", "military_pact_without_defense": "군사협정만 체결", "no_military_pact": "군사협정 거부"}.get(choice_id, choice_id)
+
+
+static func _scn03_condition_label(key: String) -> String:
+	return {"cao_southward_complete": "조조 남하 완료", "sun_quan_independent": "손권 독립 유지",
+		"liu_bei_hostile_to_cao": "유비의 대조조 적대", "sun_liu_military_pact": "손유 군사협정",
+		"yangtze_defense_line": "장강 방어선"}.get(key, key)
 
 
 ## The Event 07 participant manifest's only player-facing entry point.  Fleet IDs
