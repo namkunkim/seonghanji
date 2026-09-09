@@ -1,5 +1,7 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
+> **2026-09-09 DEMO-RC 명령 가용성 일치 — PASS:** phase 1 자동 접적 중 `can_advance=false`, phase 2 이후 true이며, AI 위임 뒤 플레이어 전술 입력 전체를 UI에서 잠근다. 버튼 상태는 `Campaign.red_cliff_command_state`만 따른다. 코어 46/0·제품 E2E 실패 0·native 입력 41/0.
+>
 > **2026-09-09 DEMO-RC 전과·명령 피드백 — PASS:** `PhaseBattleReport`가 직전 페이즈의 양측 손실·사기 증감·계략 수를 `ActiveBattle.phase_results`에서 읽어 표시한다. UI 명령 접수는 한국어 행동명과 실제 반영 시점을 안내한다. 우측은 계속 정지 이미지다.
 >
 > **2026-09-09 DEMO-RC 전술 지도 동적 연출 — PASS:** 우측 정지 이미지 정책은 유지한다. 좌측 함대는 5페이즈 진행도에 따라 곡선 항로를 따라 목표로 접근하고, 항로 표식·교전 링·사격선·폭발 신호가 2D 표시 시계로 움직인다. 코어 판정은 불변이며 집중 회귀와 제품 E2E 실패 0.

@@ -19,9 +19,13 @@ func _run() -> void:
 	_ok(main._open_red_cliff_battle_entry_shell(id), "banner/canonical battle entry")
 	var battle: ActiveBattle = main.campaign.active_battles[0]
 	_ok(battle.combat_phase == 1, "phase 1 접적")
+	var advance_button: Button = main.red_cliff_battle_view._buttons.filter(
+		func(button: Button): return String(button.get_meta("action", "")) == "advance_phase")[0]
+	_ok(advance_button.disabled, "phase 1 advance control is visibly disabled")
 	main.campaign.step()
 	_ok(battle.combat_phase == 2, "phase 2 포화")
 	await process_frame
+	_ok(not advance_button.disabled, "phase 2 advance control becomes available")
 	_ok("1단계 접적" in main.red_cliff_battle_view._report.summary,
 		"phase report reflects the latest canonical outcome")
 	_ok(main.red_cliff_battle_view._report.allied_loss >= 0 and main.red_cliff_battle_view._report.wei_loss >= 0,

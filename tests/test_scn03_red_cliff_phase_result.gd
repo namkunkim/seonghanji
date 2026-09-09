@@ -75,6 +75,8 @@ func _test_phase_result_replay_and_tamper() -> void:
 	var campaign := _active_campaign()
 	var battle: ActiveBattle = campaign.active_battles[0]
 	_eq(battle.combat_phase, 1, "activation tick은 phase 1")
+	_ok(not bool(campaign.red_cliff_command_state(battle.battle_id)["can_advance"]),
+		"phase 1은 자동 접적 중이므로 수동 진행 비활성")
 	_eq(campaign.scn03_red_cliff_transition_news.size(), 1, "active phase 1 news 한 번")
 	_eq(campaign.scn03_red_cliff_transition_news[0]["news_id"],
 		"%s:%s" % [Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID,
@@ -93,6 +95,8 @@ func _test_phase_result_replay_and_tamper() -> void:
 		campaign.scn03_red_cliff_transition_news, "phase 1 news replay")
 	campaign.step()
 	_eq(battle.combat_phase, 2, "다음 tick에 결정론적으로 phase 2")
+	_ok(bool(campaign.red_cliff_command_state(battle.battle_id)["can_advance"]),
+		"phase 2부터 수동 진행 활성")
 	_eq(battle.phase_advanced_tick, campaign.world.clock.tick, "phase transition tick 기록")
 	_eq(campaign.scn03_red_cliff_transition_news.size(), 2, "phase 2 news 한 번")
 	_eq(campaign.scn03_red_cliff_transition_news[1]["news_id"],

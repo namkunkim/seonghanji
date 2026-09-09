@@ -108,6 +108,7 @@ func _run() -> void:
 	# The mouse activation leaves the hold button focused. Traverse the shipped
 	# control order and activate delegation with the keyboard, proving both input
 	# families reach the same public Control path.
+	# Godot preserves the control-tree traversal slot for the disabled phase button.
 	for _focus_step in 4:
 		await _key(KEY_TAB, "move combat focus")
 	var delegate_button := _button("AI에 위임")

@@ -19,6 +19,8 @@
 손실·사기·계략·승자를 받는 인수는 없다. UI는
 `red_cliff_command_state(battle_id)`의 `accepted`, `reason`, `phase`, `status`,
 `can_advance`, `can_change_formation`, `ai_delegated`를 표시한다.
+`can_advance`는 자동 접적 중인 phase 1에서는 false이고 phase 2부터 true다.
+AI 위임 뒤에는 진행·진형·유지·재위임을 포함한 플레이어 전술 입력을 잠근다.
 
 ## 계산과 상태
 

@@ -622,7 +622,7 @@ func red_cliff_command_state(battle_id: String) -> Dictionary:
 	return {"accepted": battle.status == ActiveBattle.STATUS_ACTIVE,
 		"reason": "resolved" if battle.status == ActiveBattle.STATUS_RESOLVED else "",
 		"phase": battle.combat_phase, "status": battle.status,
-		"can_advance": battle.status == ActiveBattle.STATUS_ACTIVE and not battle.ai_delegated,
+		"can_advance": battle.status == ActiveBattle.STATUS_ACTIVE and battle.combat_phase >= 2 and not battle.ai_delegated,
 		"can_change_formation": battle.status == ActiveBattle.STATUS_ACTIVE and not battle.ai_delegated,
 		"ai_delegated": battle.ai_delegated, "player_commands": battle.player_commands.duplicate(true)}
 

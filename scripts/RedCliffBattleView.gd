@@ -84,7 +84,15 @@ func _refresh() -> void:
 		_state.text = "전투 결과 · 승자: %s · " % ("손권·유비 연합" if winner == "sun_liu_side" else "조조측") + _state.text
 	_deck.set_battle(phase, phase_name, a, d, am, dm); _map.set_battle(phase, phase_name, a, d, am, dm); _feed.set_battle(phase, phase_name, a, d, am, dm); _report.set_results(battle.phase_results)
 	var active := String(battle.status) == ActiveBattle.STATUS_ACTIVE
-	for b in _buttons: b.disabled = not active
+	var command_state: Dictionary = campaign.call("red_cliff_command_state", battle_id) if campaign != null and campaign.has_method("red_cliff_command_state") else {}
+	var delegated := bool(command_state.get("ai_delegated", false))
+	for b in _buttons:
+		var action := String(b.get_meta("action", ""))
+		if action == "advance_phase": b.disabled = not bool(command_state.get("can_advance", false))
+		elif action == "change_formation": b.disabled = not bool(command_state.get("can_change_formation", false))
+		else: b.disabled = not active or delegated
+	_formation.disabled = not bool(command_state.get("can_change_formation", false))
+	if delegated and active: _feedback.text = "AI 전술 위임 중 · 플레이어 명령은 잠겼으며 페이즈는 자동 진행됩니다."
 	if not active: _feedback.text = "전투 종료 · 이후 명령은 코어가 거부합니다."
 
 class CommandDeck extends Control:
