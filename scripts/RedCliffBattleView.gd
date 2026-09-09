@@ -45,13 +45,31 @@ func _build_once() -> void:
 	controls.add_child(_button("진형 유지", "hold_formation"))
 	_formation = OptionButton.new(); _formation.custom_minimum_size = Vector2(144, 46)
 	for row in Formations.rows(): _formation.add_item(String(row.get("name", "")))
+	_style_control_button(_formation, Color("c89f4d"), false)
 	controls.add_child(_formation); controls.add_child(_button("다음 진형 적용", "change_formation")); controls.add_child(_button("다음 페이즈  ›", "advance_phase")); controls.add_child(_button("AI에 위임", "delegate_ai"))
 	var spacer := Control.new(); spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL; controls.add_child(spacer)
-	var home := Button.new(); home.text = "홈으로"; home.custom_minimum_size = Vector2(92, 46); home.pressed.connect(func(): return_requested.emit()); controls.add_child(home)
+	var home := Button.new(); home.text = "홈으로"; home.custom_minimum_size = Vector2(92, 46); _style_control_button(home,Color("607684"),false); home.pressed.connect(func(): return_requested.emit()); controls.add_child(home)
 	_feedback = Label.new(); _feedback.custom_minimum_size = Vector2(0, 18); _feedback.add_theme_font_size_override("font_size", 13); _feedback.add_theme_color_override("font_color", Color("e3bd70")); stack.add_child(_feedback)
 
 func _button(label: String, action: String) -> Button:
-	var b := Button.new(); b.text = label; b.custom_minimum_size = Vector2(126, 46); b.set_meta("action", action); b.pressed.connect(func(): _issue(String(b.get_meta("action")))); _buttons.append(b); return b
+	var b := Button.new(); b.text = label; b.custom_minimum_size = Vector2(126, 46); b.set_meta("action", action)
+	var accents := {"hold_formation":Color("607b8a"),"change_formation":Color("c89f4d"),"advance_phase":Color("e1b64f"),"delegate_ai":Color("708b9a")}
+	_style_control_button(b,accents.get(action,Color("607684")),action=="advance_phase")
+	b.pressed.connect(func(): _issue(String(b.get_meta("action")))); _buttons.append(b); return b
+
+func _style_control_button(control: Control, accent: Color, primary: bool) -> void:
+	var normal := _button_box(Color("3d321d") if primary else Color("101d27"),accent,.82,1 if not primary else 2)
+	var hover := _button_box(Color("5a4724") if primary else Color("182a36"),accent.lightened(.16),1.0,2)
+	var pressed := _button_box(Color("2e2618") if primary else Color("0b151d"),accent.darkened(.08),1.0,2)
+	var focus := _button_box(Color("4a3a20") if primary else Color("142530"),Color("f1d27c"),1.0,2)
+	var disabled := _button_box(Color("0a1117"),Color("273943"),.45,1)
+	control.add_theme_stylebox_override("normal",normal); control.add_theme_stylebox_override("hover",hover); control.add_theme_stylebox_override("pressed",pressed); control.add_theme_stylebox_override("focus",focus); control.add_theme_stylebox_override("disabled",disabled)
+	control.add_theme_color_override("font_color",Color("f5e4b0") if primary else Color("dbe5e8")); control.add_theme_color_override("font_hover_color",Color("fff0c6")); control.add_theme_color_override("font_focus_color",Color("fff0c6")); control.add_theme_color_override("font_disabled_color",Color("53636c"))
+
+func _button_box(background: Color, border: Color, border_alpha: float, width: int) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new(); box.bg_color=background; box.border_color=Color(border,border_alpha)
+	box.set_border_width_all(width); box.set_corner_radius_all(2); box.content_margin_left=12; box.content_margin_right=12
+	return box
 
 func _battle():
 	if campaign == null: return null

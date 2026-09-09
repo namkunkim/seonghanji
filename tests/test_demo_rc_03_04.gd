@@ -43,6 +43,11 @@ func _run() -> void:
 		"phase report exposes both morale deltas")
 	_ok("진형 상성" in report.current_directive and "3단계 교전" in report.current_directive,
 		"phase report exposes an actionable current directive")
+	var advance_button: Button = view._buttons.filter(
+		func(button: Button): return String(button.get_meta("action", "")) == "advance_phase")[0]
+	_ok(advance_button.has_theme_stylebox_override("normal")
+		and advance_button.has_theme_stylebox_override("disabled"),
+		"primary phase action has explicit active and disabled visual states")
 	map.set_battle(1, "접적", 140, 120, 113, 120)
 	var contact_anchor: Vector2 = map.fleet_anchor_points()["allied_primary"]
 	var hub := Vector2(map.size.x * .52, map.size.y * .55)

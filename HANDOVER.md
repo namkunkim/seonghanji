@@ -1,5 +1,7 @@
 # HANDOVER — SEONGHANJI: MANDATE
 
+> **2026-09-09 DEMO-RC 명령 덱 시각 계층 — PASS:** `다음 페이즈`를 금색 주 행동으로 강조하고 모든 전술 조작에 명시적 hover·pressed·focus·disabled 스타일을 적용했다. 1600×900 GPU에서 상태 구분과 잘림을 확인했다.
+>
 > **2026-09-09 DEMO-RC 페이즈 작전 지침 — PASS:** `PhaseBattleReport` 두 번째 줄이 5페이즈별 현재 판단 목표와 AI 위임 상태를 표시한다. 설명 전용이며 코어 판정값을 만들지 않는다. 집중·제품 E2E 실패 0·1600×900 GPU 검수 PASS.
 >
 > **2026-09-09 DEMO-RC 진형 가독성 — PASS:** 위군 전력 카드가 현재 코어 진형을 표시하고 선택기도 실제 `attacker_formation_id` 변경 시 동기화한다. 사용자가 고른 다음 진형 후보는 매 프레임 덮어쓰지 않는다. 제품 E2E 실패 0·1600×900 GPU 검수 PASS.
