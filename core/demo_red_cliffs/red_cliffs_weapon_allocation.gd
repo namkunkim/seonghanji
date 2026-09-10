@@ -201,8 +201,10 @@ func _capabilities_for_squadron(squadron_id: String) -> Array:
 			if weapon.platforms.has(ship_id): capability = weapon.platforms[ship_id]
 			elif not equipment_id.is_empty() and weapon.fast_equipment.has(equipment_id): capability = weapon.fast_equipment[equipment_id]
 			if capability.is_empty(): continue
-			if not best.has(weapon_id) or int(capability.range) > int(best[weapon_id].range):
-				best[weapon_id] = {"weapon_id": String(weapon_id), "range": int(capability.range), "arc_deg": float(capability.arc_deg)}
+			if not best.has(weapon_id) or int(capability.range) > int(best[weapon_id].range) \
+					or int(capability.range) == int(best[weapon_id].range) and ship_id < String(best[weapon_id].platform_id):
+				best[weapon_id] = {"weapon_id": String(weapon_id), "platform_id": ship_id,
+					"mission_equipment_id": equipment_id, "range": int(capability.range), "arc_deg": float(capability.arc_deg)}
 	var ids: Array = best.keys(); ids.sort(); var result: Array = []
 	for weapon_id in ids: result.append(best[weapon_id])
 	return result

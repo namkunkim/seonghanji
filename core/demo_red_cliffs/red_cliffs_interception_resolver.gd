@@ -142,6 +142,8 @@ func visible_tactical_events(viewer_faction_id: String, raw_receipt: Dictionary,
 				"arc_deg": float(row.arc_deg)})
 			if row.get("fire_control_snapshot") is Dictionary:
 				visible_event["fire_control_snapshot"] = row.fire_control_snapshot.duplicate(true)
+			if row.get("resource_reservation") is Dictionary:
+				visible_event["resource_reservation"] = row.resource_reservation.duplicate(true)
 		# Formation/sector detail is exact tactical information. A shooter already
 		# has the confirmed contact required to authorize the shot; a target only
 		# receives this detail when its own contact on the shooter is confirmed.
@@ -232,6 +234,7 @@ func _resolve_opportunity_fire(event_by_squad: Dictionary, detection: Dictionary
 			if allocation <= 0 or float(closest.distance) > float(capability.range) or angle_delta > float(capability.arc_deg) * 0.5 + 0.000001: continue
 			if initial_distance <= float(capability.range) and initial_delta <= float(capability.arc_deg) * 0.5 + 0.000001: continue
 			eligible.append({"weapon_id": weapon_id, "allocation_basis_points": allocation,
+				"platform_id": String(capability.get("platform_id", "")),
 				"range": int(capability.range), "arc_deg": float(capability.arc_deg)})
 		if eligible.is_empty(): continue
 		eligible.sort_custom(func(a, b):
@@ -242,6 +245,7 @@ func _resolve_opportunity_fire(event_by_squad: Dictionary, detection: Dictionary
 			"distance": float(closest.distance), "bearing_deg": bearing, "facing_deg": facing,
 			"arc_deg": float(capability.arc_deg), "range": int(capability.range),
 			"selected_weapon_id": String(capability.weapon_id),
+			"selected_platform_id": String(capability.platform_id),
 			"allocation_basis_points": int(capability.allocation_basis_points),
 			"movement_order_index": int(event_by_squad[shooter_id].order_index)})
 	candidates.sort_custom(func(a, b):
@@ -257,6 +261,7 @@ func _resolve_opportunity_fire(event_by_squad: Dictionary, detection: Dictionary
 		event.fire_control_snapshot = {"hold_fire": false,
 			"allocations": weapon_policy[shooter_id].allocations.duplicate(true),
 			"selected_weapon_id": String(candidate.selected_weapon_id),
+			"selected_platform_id": String(candidate.selected_platform_id),
 			"selected_allocation_basis_points": int(candidate.allocation_basis_points),
 			"eligibility": {"range": int(candidate.range), "arc_deg": float(candidate.arc_deg)}}
 		events.append(event)

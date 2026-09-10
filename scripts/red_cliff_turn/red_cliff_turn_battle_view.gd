@@ -194,6 +194,9 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	if _selected_squadron_id.is_empty():
 		var empty := Label.new(); empty.text = "현재 편집 가능한 전대가 없습니다."; _orders.add_child(empty)
 		_add_intelligence_panel()
+		var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id) if _battle.has_method("viewer_snapshot") else {}
+		var resource_ids: Array = viewer.get("own_combat_resources", {}).keys(); resource_ids.sort()
+		if not resource_ids.is_empty(): _add_combat_resource_panel(String(resource_ids[0]))
 		for future in ["탐지"]:
 			var disabled_empty := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled_empty.disabled = true; _orders.add_child(disabled_empty)
 		return
@@ -206,6 +209,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	var action := String(order.get("action", "hold")); var state := Label.new(); state.name = "OrderActionState"; state.text = "현재: %s%s" % [action.to_upper(), " · 첫 경유점 대기" if _move_armed and action != "move" else ""]; _orders.add_child(state)
 	_add_formation_editor()
 	_add_weapon_editor()
+	_add_combat_resource_panel()
 	var coord_row := HBoxContainer.new(); _orders.add_child(coord_row)
 	_coordinate_x = _spin("CoordinateX", float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[0]), float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[0] + snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[2])); coord_row.add_child(_coordinate_x)
 	_coordinate_y = _spin("CoordinateY", float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[1]), float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[1] + snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[3])); coord_row.add_child(_coordinate_y)
@@ -392,7 +396,14 @@ func _add_intelligence_panel() -> void:
 	for index in range(events.size()):
 		var event: Dictionary = events[index]; var event_label := Label.new(); event_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var kind := String(event.get("event_type", event.get("type", "전술 이벤트")))
-		if kind.contains("fire") or String(event.get("outcome", "")) == "shot_authorized":
+		if kind == "resource_consumed":
+			event_label.text = "자원 소모 · %s · 비용 %s\n%s" % [_weapon_name(String(event.get("weapon_id", ""))), _resource_cost_text(event.get("cost", {})), _resource_transition_text(event.get("before", {}), event.get("after", {}), String(event.get("weapon_id", "")))]
+		elif kind == "fire_suppressed":
+			event_label.text = "사격 억제 · %s · %s" % [_weapon_name(String(event.get("weapon_id", ""))), String(event.get("reason_label", "코어 자원 조건 미충족"))]
+		elif kind == "resource_recovered":
+			event_label.name = "CombatResourceRecovery"
+			event_label.text = "턴 %d 판정 시작 회복 · %s" % [int(event.get("resolution_turn", 0)), _resource_recovery_text(event.get("before", {}), event.get("after", {}))]
+		elif kind.contains("fire") or String(event.get("outcome", "")) == "shot_authorized":
 			var modifier: Dictionary = event.get("formation_modifier", {})
 			if String(event.get("own_role", "")) == "target":
 				if modifier.is_empty():
@@ -485,6 +496,27 @@ func _on_hold_fire(enabled: bool) -> void:
 	_set_receipt(_battle.set_hold_fire(_selected_squadron_id, enabled)); _refresh()
 
 
+func _add_combat_resource_panel(squadron_id: String = "") -> void:
+	if not _battle.has_method("viewer_snapshot"): return
+	if squadron_id.is_empty(): squadron_id = _selected_squadron_id
+	var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id)
+	var own_resources: Dictionary = viewer.get("own_combat_resources", {})
+	if not own_resources.has(squadron_id): return
+	var resources: Dictionary = own_resources[squadron_id]
+	var shared: Dictionary = resources.get("shared", {})
+	var title := Label.new(); title.name = "CombatResourceTitle"; title.text = "제한 전투 자원 · 내 전대만"; title.add_theme_color_override("font_color", Color("9fd4e2")); _orders.add_child(title)
+	var shared_label := Label.new(); shared_label.name = "CombatResourceShared"; shared_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	shared_label.text = "에너지 %d/%d · 열 %d/%d" % [int(shared.get("energy", 0)), int(shared.get("energy_capacity", 0)), int(shared.get("heat", 0)), int(shared.get("heat_capacity", 0))]; _orders.add_child(shared_label)
+	var weapons: Dictionary = resources.get("weapons", {})
+	for category in viewer.get("weapon_categories", []):
+		var weapon_id := String(category.get("weapon_id", ""))
+		if not weapons.has(weapon_id): continue
+		var weapon: Dictionary = weapons[weapon_id]; var row := Label.new(); row.name = "CombatResource_%s" % weapon_id; row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		row.text = "%s · 탄약 %d/%d · 함재기 %d/%d · 특수 %d/%d" % [String(category.get("name", weapon_id)), int(weapon.get("ammo", 0)), int(weapon.get("ammo_capacity", 0)), int(weapon.get("carrier_ready", 0)), int(weapon.get("carrier_capacity", 0)), int(weapon.get("special", 0)), int(weapon.get("special_capacity", 0))]
+		_orders.add_child(row)
+	var note := Label.new(); note.text = "부족·과열·미복귀에 따른 사격 억제와 턴 소모/회복은 코어 이벤트로만 표시됩니다."; note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; note.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(note)
+
+
 func _bps_text(value: int) -> String:
 	if value < 0: return "코어 값 없음"
 	return "%d bp · %.2f%%" % [value, float(value) / 100.0]
@@ -497,6 +529,26 @@ func _weapon_name(weapon_id: String) -> String:
 		if String(category.get("weapon_id", "")) == weapon_id:
 			return String(category.get("name", weapon_id))
 	return weapon_id
+
+
+func _resource_cost_text(cost: Dictionary) -> String:
+	return "탄약 %d · 에너지 %d · 열 +%d · 함재기 %d · 특수 %d" % [int(cost.get("ammo", 0)), int(cost.get("energy", 0)), int(cost.get("heat", 0)), int(cost.get("carrier_sorties", 0)), int(cost.get("special", 0))]
+
+
+func _resource_transition_text(before: Dictionary, after: Dictionary, weapon_id: String) -> String:
+	var before_shared: Dictionary = before.get("shared", {}); var after_shared: Dictionary = after.get("shared", {})
+	var before_weapon: Dictionary = before.get("weapons", {}).get(weapon_id, {}); var after_weapon: Dictionary = after.get("weapons", {}).get(weapon_id, {})
+	return "전→후 · 에너지 %d→%d · 열 %d→%d · 탄약 %d→%d · 함재기 %d→%d · 특수 %d→%d" % [int(before_shared.get("energy", 0)), int(after_shared.get("energy", 0)), int(before_shared.get("heat", 0)), int(after_shared.get("heat", 0)), int(before_weapon.get("ammo", 0)), int(after_weapon.get("ammo", 0)), int(before_weapon.get("carrier_ready", 0)), int(after_weapon.get("carrier_ready", 0)), int(before_weapon.get("special", 0)), int(after_weapon.get("special", 0))]
+
+
+func _resource_recovery_text(before: Dictionary, after: Dictionary) -> String:
+	var before_shared: Dictionary = before.get("shared", {}); var after_shared: Dictionary = after.get("shared", {})
+	var parts: Array[String] = ["에너지 %d→%d" % [int(before_shared.get("energy", 0)), int(after_shared.get("energy", 0))], "열 %d→%d" % [int(before_shared.get("heat", 0)), int(after_shared.get("heat", 0))]]
+	var weapon_ids: Array = before.get("weapons", {}).keys(); weapon_ids.sort()
+	for weapon_id in weapon_ids:
+		var before_weapon: Dictionary = before.weapons[weapon_id]; var after_weapon: Dictionary = after.get("weapons", {}).get(weapon_id, {})
+		parts.append("%s 함재기 %d→%d" % [_weapon_name(String(weapon_id)), int(before_weapon.get("carrier_ready", 0)), int(after_weapon.get("carrier_ready", 0))])
+	return " · ".join(parts)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

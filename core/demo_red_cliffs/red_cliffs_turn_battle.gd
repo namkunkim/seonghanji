@@ -8,6 +8,7 @@ const MovementResolver := preload("res://core/demo_red_cliffs/red_cliffs_movemen
 const InterceptionResolver := preload("res://core/demo_red_cliffs/red_cliffs_interception_resolver.gd")
 const FormationResolver := preload("res://core/demo_red_cliffs/red_cliffs_formation_resolver.gd")
 const WeaponAllocation := preload("res://core/demo_red_cliffs/red_cliffs_weapon_allocation.gd")
+const CombatResources := preload("res://core/demo_red_cliffs/red_cliffs_combat_resources.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
 	"weapon_fire", "damage", "casualties", "victory"
@@ -18,6 +19,7 @@ var _movement
 var _interception
 var _formation
 var _weapon_control
+var _combat_resources
 var _viewer_receipts_by_turn: Dictionary = {}
 
 
@@ -43,10 +45,14 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	var weapon_control = WeaponAllocation.new()
 	var weapon_result: Dictionary = weapon_control.initialize(setup)
 	if not weapon_result.ok: return weapon_result
+	var combat_resources = CombatResources.new()
+	var resource_result: Dictionary = combat_resources.initialize(setup)
+	if not resource_result.ok: return resource_result
 	_movement = movement
 	_interception = interception
 	_formation = formation
 	_weapon_control = weapon_control
+	_combat_resources = combat_resources
 	_viewer_receipts_by_turn = {}
 	_state = {
 		"applied_setup": setup,
@@ -59,6 +65,9 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 		"detection_state": _interception.initial_detection_state(),
 		"formation_state": _formation.initial_state(),
 		"weapon_allocation_state": _weapon_control.initial_state(),
+		"combat_resource_state": _combat_resources.initial_state(),
+		"last_resource_recovery_events": [],
+		"last_resource_recovery_turn": 0,
 		"command_draft": {},
 		"turn_log": [_new_turn_log(1)],
 	}
@@ -121,6 +130,15 @@ func weapon_allocation_state() -> Dictionary:
 	return _state.get("weapon_allocation_state", {}).duplicate(true)
 
 
+func combat_resource_state() -> Dictionary:
+	return _state.get("combat_resource_state", {}).duplicate(true)
+
+
+func visible_combat_resources(viewer_faction_id: String) -> Dictionary:
+	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
+	return _combat_resources.visible_state(viewer_faction_id, _state.combat_resource_state)
+
+
 func visible_contacts(viewer_faction_id: String) -> Dictionary:
 	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
 	return _interception.visible_contacts(viewer_faction_id, _state.detection_state, _state.live_navigation)
@@ -173,6 +191,9 @@ func viewer_snapshot(viewer_faction_id: String) -> Dictionary:
 		"own_formation_state": _own_formation_state(viewer_faction_id), "allowed_formations": allowed_formations(),
 		"own_weapon_allocation_state": _own_weapon_allocation_state(viewer_faction_id),
 		"weapon_categories": weapon_categories(), "weapon_presets": weapon_presets(),
+		"own_combat_resources": visible_combat_resources(viewer_faction_id).resource_state,
+		"resource_recovery_events": _combat_resources.visible_events(viewer_faction_id,
+			{"recovery_events": _state.last_resource_recovery_events}).events,
 		"tactical_events": visible_tactical_events(viewer_faction_id).events,
 		"prompt_policy": prompt_policy() if viewer_faction_id == "sun_quan" else {}}
 
@@ -362,6 +383,13 @@ func submit_sun_orders(orders: Array) -> Dictionary:
 func resolve_turn() -> Dictionary:
 	if phase() != "resolution":
 		return _error("현재 단계에서는 턴 판정을 확정할 수 없습니다.")
+	var resource_base_state: Dictionary = _state.combat_resource_state.duplicate(true)
+	var recovery_events: Array = []
+	if turn() >= 2 and int(_state.last_resource_recovery_turn) < turn():
+		var recovered: Dictionary = _combat_resources.recover_at_resolution_start(resource_base_state, turn())
+		if not recovered.ok: return recovered
+		resource_base_state = recovered.resource_state.duplicate(true)
+		recovery_events = recovered.recovery_events.duplicate(true)
 	var orders: Array = []
 	orders.append_array(_current_log().liu_orders)
 	orders.append_array(_current_log().sun_orders)
@@ -387,6 +415,9 @@ func resolve_turn() -> Dictionary:
 	var decorated: Dictionary = _formation.decorate_shot_events(interception_result.opportunity_fire_events,
 		formation_result.formation_state, movement_result.live_navigation)
 	if not decorated.ok: return decorated
+	var resource_result: Dictionary = _combat_resources.resolve_shots(decorated.events,
+		resource_base_state, turn())
+	if not resource_result.ok: return resource_result
 	var receipt := {
 		"ok": true,
 		"turn": turn(),
@@ -398,17 +429,29 @@ func resolve_turn() -> Dictionary:
 		"weapon_allocation_events": weapon_result.weapon_allocation_events.duplicate(true),
 		"path_intersection_events": interception_result.path_intersection_events.duplicate(true),
 		"detection_events": interception_result.detection_events.duplicate(true),
-		"opportunity_fire_events": decorated.events.duplicate(true),
+		"opportunity_fire_events": resource_result.authorized_events.duplicate(true),
+		"resource_consumption_events": resource_result.consumption_events.duplicate(true),
+		"suppressed_fire_events": resource_result.suppressed_fire_events.duplicate(true),
+		"resource_recovery_events": recovery_events.duplicate(true),
 		"victory_check_required": true,
 	}
 	_state.live_navigation = movement_result.live_navigation.duplicate(true)
 	_state.detection_state = interception_result.detection_state.duplicate(true)
 	_state.formation_state = formation_result.formation_state.duplicate(true)
 	_state.weapon_allocation_state = weapon_result.weapon_allocation_state.duplicate(true)
+	_state.combat_resource_state = resource_result.resource_state.duplicate(true)
+	_state.last_resource_recovery_events = recovery_events.duplicate(true)
+	if turn() >= 2: _state.last_resource_recovery_turn = turn()
 	_viewer_receipts_by_turn[turn()] = {}
 	for faction in _state.applied_setup.factions:
 		var faction_id := String(faction.id)
 		var visible: Dictionary = _interception.visible_tactical_events(faction_id, receipt, _state.detection_state)
+		var resource_visible: Dictionary = _combat_resources.visible_events(faction_id,
+			{"consumption_events": receipt.resource_consumption_events,
+			"suppressed_fire_events": receipt.suppressed_fire_events,
+			"recovery_events": receipt.resource_recovery_events})
+		visible.events.append_array(resource_visible.events)
+		visible.events.sort_custom(func(a, b): return String(a.get("event_id", "")) < String(b.get("event_id", "")))
 		visible["turn"] = turn()
 		_viewer_receipts_by_turn[turn()][faction_id] = visible.duplicate(true)
 	var log := _current_log()
@@ -425,6 +468,7 @@ func continue_turn() -> Dictionary:
 	if phase() != "victory_check":
 		return _error("턴 판정 뒤 외부 승리 확인 경계에서만 다음 턴으로 진행할 수 있습니다.")
 	_state.current_turn = turn() + 1
+	_state.last_resource_recovery_events = []
 	_state.phase = "liu_command"
 	_state.resolved = false
 	_state.turn_log.append(_new_turn_log(turn()))

@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-resource-v1",
+  "statement": "적벽 역사 편성에서 파생하는 데모 전투 자원 초기량이며 수치는 역사적 사실이 아닌 normal-demo-v1 게임 밸런스다. special은 이 프로필 안에서만 유한 charge이며 글로벌 미사일 규칙을 변경하지 않는다.",
+  "resolution_policy": "shot_authorized_event_id_asc; reserve_and_consume_atomically; selected_weapon_shortage_suppresses_without_fallback",
+  "resource_semantics": {
+    "ammo": "finite_consumable",
+    "energy": "recoverable_gauge",
+    "heat": "accumulates_and_cools",
+    "carrier_sorties": "readiness_and_concurrent_operation_limit_no_permanent_loss",
+    "special": "finite_charge_in_normal-demo-resource-v1_only"
+  },
+  "shared_initial_per_ship": {"energy": 12, "heat_capacity": 8},
+  "shared_base": {"energy_capacity": 80, "heat_capacity": 100},
+  "weapon_initial_per_platform": {
+    "artillery": {"ammo": 6, "carrier_sorties": 0, "special": 0},
+    "line_fire": {"ammo": 10, "carrier_sorties": 0, "special": 0},
+    "intercept": {"ammo": 8, "carrier_sorties": 0, "special": 0},
+    "torpedo": {"ammo": 0, "carrier_sorties": 0, "special": 2}
+  },
+  "platform_overrides": {
+    "line_fire@SHP-01": {"carrier_sorties_per_platform": 4}
+  },
+  "shot_cost": {
+    "artillery": {"ammo": 1, "energy": 5, "heat": 25, "carrier_sorties": 0, "special": 0},
+    "line_fire": {"ammo": 1, "energy": 8, "heat": 20, "carrier_sorties": 0, "special": 0},
+    "intercept": {"ammo": 1, "energy": 4, "heat": 15, "carrier_sorties": 0, "special": 0},
+    "torpedo": {"ammo": 0, "energy": 3, "heat": 20, "carrier_sorties": 0, "special": 1}
+  },
+  "carrier_platform_shot_cost": {"line_fire@SHP-01": 1},
+  "resolution_start_recovery": {"starts_at_turn": 2, "once_per_turn": true, "energy_percent_of_capacity": 20, "heat_dissipation": 30, "carrier_percent_of_capacity": 25},
+  "suppression_reasons": {
+    "ammo": "탄약 부족",
+    "energy": "에너지 부족",
+    "overheat": "과열 한계",
+    "carrier_not_returned": "함재기 미복귀",
+    "special": "특수 자원 부족"
+  },
+  "result_pending": ["hit", "damage", "casualties", "victory"]
+}
