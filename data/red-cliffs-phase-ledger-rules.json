@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-five-phase-ledger-v1",
+  "statement": "적벽 데모의 턴 사건을 5단계 원장으로 조직하는 표시·감사 계약이며 새로운 전투 결과를 계산하지 않는다.",
+  "phase_order": ["contact", "barrage", "engagement", "assault", "resolution"],
+  "phases": {
+    "contact": {"name": "접적", "sources": ["formation_events", "weapon_allocation_events", "resource_recovery_events", "movement_events", "path_intersection_events", "detection_events"], "pending": []},
+    "barrage": {"name": "포화", "sources": ["opportunity_fire_events", "resource_consumption_events", "suppressed_fire_events"], "pending": ["weapon_fire", "hit", "damage"]},
+    "engagement": {"name": "교전", "sources": [], "pending": ["weapon_fire", "damage"]},
+    "assault": {"name": "강습", "sources": [], "pending": ["assault_resolution", "casualties"]},
+    "resolution": {"name": "결착", "sources": ["resolution_boundary"], "pending": ["damage", "casualties", "victory"]}
+  },
+  "event_id_policy": "LED-turn-phase_order-source_order-event_order-sha256_payload",
+  "digest_policy": "sha256_canonical_json_without_turn_digest",
+  "forbidden_outcomes": ["hit", "damage", "casualties", "winner"]
+}

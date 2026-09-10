@@ -44,6 +44,7 @@ var _waypoint_rows: VBoxContainer
 var _preview_text: Label
 var _map_mode_text: Label
 var _viewer_faction_id := "liu_bei"
+var _ledger_phase_filter := ""
 
 
 func configure(battle_controller, applied_revision: int, applied_digest: String) -> Dictionary:
@@ -197,6 +198,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 		var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id) if _battle.has_method("viewer_snapshot") else {}
 		var resource_ids: Array = viewer.get("own_combat_resources", {}).keys(); resource_ids.sort()
 		if not resource_ids.is_empty(): _add_combat_resource_panel(String(resource_ids[0]))
+		_add_phase_ledger()
 		for future in ["탐지"]:
 			var disabled_empty := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled_empty.disabled = true; _orders.add_child(disabled_empty)
 		return
@@ -224,6 +226,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	_preview_text = Label.new(); _preview_text.name = "MovementPreview"; _preview_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; _orders.add_child(_preview_text)
 	_update_preview_text(order)
 	_add_intelligence_panel()
+	_add_phase_ledger()
 	for future in ["탐지"]:
 		var disabled := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled.disabled = true; _orders.add_child(disabled)
 
@@ -549,6 +552,67 @@ func _resource_recovery_text(before: Dictionary, after: Dictionary) -> String:
 		var before_weapon: Dictionary = before.weapons[weapon_id]; var after_weapon: Dictionary = after.get("weapons", {}).get(weapon_id, {})
 		parts.append("%s 함재기 %d→%d" % [_weapon_name(String(weapon_id)), int(before_weapon.get("carrier_ready", 0)), int(after_weapon.get("carrier_ready", 0))])
 	return " · ".join(parts)
+
+
+func _add_phase_ledger() -> void:
+	if not _battle.has_method("viewer_phase_summary") or not _battle.has_method("viewer_phase"): return
+	var divider := HSeparator.new(); _orders.add_child(divider)
+	var heading := Label.new(); heading.name = "FivePhaseLedgerTitle"; heading.text = "턴 전투 5단계 판정 원장"; heading.add_theme_color_override("font_color", Color("e8c779")); _orders.add_child(heading)
+	var summary: Dictionary = _battle.viewer_phase_summary(_viewer_faction_id)
+	if not bool(summary.get("ok", false)):
+		var unavailable := Label.new(); unavailable.name = "FivePhaseLedgerPending"; unavailable.text = "판정 완료 후 viewer 원장이 공개됩니다."; unavailable.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(unavailable); return
+	var digest := Label.new(); digest.name = "FivePhaseTurnDigest"; digest.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY; digest.text = "턴 %d digest · %s" % [int(summary.get("turn", 0)), String(summary.get("turn_digest", ""))]; digest.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(digest)
+	var mode_row := HBoxContainer.new(); mode_row.add_theme_constant_override("separation", 5); _orders.add_child(mode_row)
+	var automatic := _button("자동 전체", "LedgerPhaseAuto", 105); automatic.disabled = _ledger_phase_filter.is_empty(); automatic.pressed.connect(_on_ledger_phase.bind("")); mode_row.add_child(automatic)
+	var phase_picker := OptionButton.new(); phase_picker.name = "LedgerPhasePicker"; phase_picker.custom_minimum_size = Vector2(225, 44); phase_picker.focus_mode = Control.FOCUS_ALL; phase_picker.add_item("단계별 보기")
+	for index in range(summary.get("phases", []).size()):
+		var row: Dictionary = summary.phases[index]; phase_picker.add_item("%d %s" % [index + 1, String(row.get("phase_name", ""))]); phase_picker.set_item_metadata(index + 1, String(row.get("phase_id", "")))
+		if String(row.get("phase_id", "")) == _ledger_phase_filter: phase_picker.select(index + 1)
+	phase_picker.item_selected.connect(_on_ledger_picker.bind(phase_picker)); mode_row.add_child(phase_picker)
+	var timeline := GridContainer.new(); timeline.name = "FivePhaseTimeline"; timeline.columns = 3; timeline.add_theme_constant_override("h_separation", 4); timeline.add_theme_constant_override("v_separation", 4); _orders.add_child(timeline)
+	for index in range(summary.get("phases", []).size()):
+		var row: Dictionary = summary.phases[index]; var phase_id := String(row.get("phase_id", ""))
+		var button := _button("%d %s\n%s" % [index + 1, String(row.get("phase_name", "")), _ledger_compact_status(row)], "LedgerPhase_%s" % phase_id, 108); button.custom_minimum_size.y = 54; button.clip_text = true; button.tooltip_text = _ledger_status_text(row); button.pressed.connect(_on_ledger_phase.bind(phase_id)); timeline.add_child(button)
+	var shown: Array = []
+	if _ledger_phase_filter.is_empty():
+		for row in summary.get("phases", []): shown.append(String(row.get("phase_id", "")))
+	else: shown.append(_ledger_phase_filter)
+	for phase_id in shown:
+		var result: Dictionary = _battle.viewer_phase(_viewer_faction_id, phase_id)
+		if not bool(result.get("ok", false)): continue
+		var phase: Dictionary = result.get("phase", {}); var phase_label := Label.new(); phase_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var lines: Array[String] = ["%d. %s · %s" % [int(phase.get("order", 0)), String(phase.get("phase_name", "")), _ledger_status_text({"status": phase.get("status", ""), "event_count": phase.get("events", []).size(), "pending_count": phase.get("pending", []).size()})]]
+		for value in phase.get("events", []):
+			var event: Dictionary = value; lines.append("  • %s · %s" % [String(event.get("event_type", "event")), String(event.get("ledger_event_id", ""))])
+		for pending in phase.get("pending", []): lines.append("  ◌ pending · %s" % String(pending))
+		phase_label.text = "\n".join(lines); _orders.add_child(phase_label)
+
+
+func _ledger_status_text(row: Dictionary) -> String:
+	var status := String(row.get("status", "")); var events := int(row.get("event_count", 0)); var pending := int(row.get("pending_count", 0))
+	if status == "no_visible_events": return "가시 이벤트 없음%s" % (" · pending %d" % pending if pending > 0 else "")
+	if status == "recorded": return "실제 이벤트 %d" % events
+	if status == "partial": return "실제 %d · pending %d" % [events, pending]
+	if status == "pending": return "pending %d" % pending
+	return status
+
+
+func _ledger_compact_status(row: Dictionary) -> String:
+	var status := String(row.get("status", "")); var events := int(row.get("event_count", 0)); var pending := int(row.get("pending_count", 0))
+	if status == "no_visible_events": return "가시 없음%s" % (" · P%d" % pending if pending > 0 else "")
+	if status == "recorded": return "실제 %d" % events
+	if status == "partial": return "실제 %d · P%d" % [events, pending]
+	if status == "pending": return "P%d" % pending
+	return status
+
+
+func _on_ledger_phase(phase_id: String) -> void:
+	_ledger_phase_filter = phase_id; _refresh()
+
+
+func _on_ledger_picker(index: int, picker: OptionButton) -> void:
+	if index <= 0: return
+	_on_ledger_phase(String(picker.get_item_metadata(index)))
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

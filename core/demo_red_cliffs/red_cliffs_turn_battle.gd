@@ -9,6 +9,7 @@ const InterceptionResolver := preload("res://core/demo_red_cliffs/red_cliffs_int
 const FormationResolver := preload("res://core/demo_red_cliffs/red_cliffs_formation_resolver.gd")
 const WeaponAllocation := preload("res://core/demo_red_cliffs/red_cliffs_weapon_allocation.gd")
 const CombatResources := preload("res://core/demo_red_cliffs/red_cliffs_combat_resources.gd")
+const PhaseLedger := preload("res://core/demo_red_cliffs/red_cliffs_phase_ledger.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
 	"weapon_fire", "damage", "casualties", "victory"
@@ -20,7 +21,9 @@ var _interception
 var _formation
 var _weapon_control
 var _combat_resources
+var _phase_ledger
 var _viewer_receipts_by_turn: Dictionary = {}
+var _viewer_phase_ledgers_by_turn: Dictionary = {}
 
 
 func _init(applied_setup: Dictionary = {}) -> void:
@@ -48,12 +51,17 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	var combat_resources = CombatResources.new()
 	var resource_result: Dictionary = combat_resources.initialize(setup)
 	if not resource_result.ok: return resource_result
+	var phase_ledger = PhaseLedger.new()
+	var ledger_result: Dictionary = phase_ledger.initialize()
+	if not ledger_result.ok: return ledger_result
 	_movement = movement
 	_interception = interception
 	_formation = formation
 	_weapon_control = weapon_control
 	_combat_resources = combat_resources
+	_phase_ledger = phase_ledger
 	_viewer_receipts_by_turn = {}
+	_viewer_phase_ledgers_by_turn = {}
 	_state = {
 		"applied_setup": setup,
 		"current_turn": 1,
@@ -68,6 +76,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 		"combat_resource_state": _combat_resources.initial_state(),
 		"last_resource_recovery_events": [],
 		"last_resource_recovery_turn": 0,
+		"phase_ledgers": {},
 		"command_draft": {},
 		"turn_log": [_new_turn_log(1)],
 	}
@@ -150,6 +159,33 @@ func visible_tactical_events(viewer_faction_id: String, turn_number: int = 0) ->
 	if not _viewer_receipts_by_turn.has(wanted_turn) or not _viewer_receipts_by_turn[wanted_turn].has(viewer_faction_id):
 		return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "turn": wanted_turn, "events": []}
 	return _viewer_receipts_by_turn[wanted_turn][viewer_faction_id].duplicate(true)
+
+
+func phase_ledger(turn_number: int = 0) -> Dictionary:
+	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
+	var wanted_turn := turn() if turn_number <= 0 else turn_number
+	if not _state.phase_ledgers.has(wanted_turn): return _error("아직 확정된 5단계 원장이 없습니다: %d턴" % wanted_turn)
+	return _state.phase_ledgers[wanted_turn].duplicate(true)
+
+
+func viewer_phase_ledger(viewer_faction_id: String, turn_number: int = 0) -> Dictionary:
+	if not _faction_ids().has(viewer_faction_id): return _error("미지 관측 세력입니다: %s" % viewer_faction_id)
+	var wanted_turn := turn() if turn_number <= 0 else turn_number
+	if not _viewer_phase_ledgers_by_turn.has(wanted_turn) or not _viewer_phase_ledgers_by_turn[wanted_turn].has(viewer_faction_id):
+		return _error("아직 확정된 viewer 5단계 원장이 없습니다: %d턴" % wanted_turn)
+	return _viewer_phase_ledgers_by_turn[wanted_turn][viewer_faction_id].duplicate(true)
+
+
+func viewer_phase_summary(viewer_faction_id: String, turn_number: int = 0) -> Dictionary:
+	var ledger := viewer_phase_ledger(viewer_faction_id, turn_number)
+	if not ledger.ok: return ledger
+	return _phase_ledger.summary(ledger)
+
+
+func viewer_phase(viewer_faction_id: String, phase_id: String, turn_number: int = 0) -> Dictionary:
+	var ledger := viewer_phase_ledger(viewer_faction_id, turn_number)
+	if not ledger.ok: return ledger
+	return _phase_ledger.phase(ledger, phase_id)
 
 
 func viewer_turn_log(viewer_faction_id: String) -> Dictionary:
@@ -435,6 +471,27 @@ func resolve_turn() -> Dictionary:
 		"resource_recovery_events": recovery_events.duplicate(true),
 		"victory_check_required": true,
 	}
+	var ledger: Dictionary = _phase_ledger.build(turn(), receipt)
+	if not ledger.ok: return ledger
+	receipt["phase_ledger"] = ledger.duplicate(true)
+	var next_viewer_receipts := {}; var next_viewer_ledgers := {}
+	for faction in _state.applied_setup.factions:
+		var faction_id := String(faction.id)
+		var visible: Dictionary = _interception.visible_tactical_events(faction_id, receipt, interception_result.detection_state)
+		if not visible.ok: return visible
+		var resource_visible: Dictionary = _combat_resources.visible_events(faction_id,
+			{"consumption_events": receipt.resource_consumption_events,
+			"suppressed_fire_events": receipt.suppressed_fire_events,
+			"recovery_events": receipt.resource_recovery_events})
+		if not resource_visible.ok: return resource_visible
+		visible.events.append_array(resource_visible.events)
+		visible.events.sort_custom(func(a, b): return String(a.get("event_id", "")) < String(b.get("event_id", "")))
+		visible["turn"] = turn()
+		var viewer_ledger: Dictionary = _phase_ledger.build_viewer(turn(),
+			_viewer_ledger_receipt(faction_id, receipt, visible.events))
+		if not viewer_ledger.ok: return viewer_ledger
+		next_viewer_receipts[faction_id] = visible.duplicate(true)
+		next_viewer_ledgers[faction_id] = viewer_ledger.duplicate(true)
 	_state.live_navigation = movement_result.live_navigation.duplicate(true)
 	_state.detection_state = interception_result.detection_state.duplicate(true)
 	_state.formation_state = formation_result.formation_state.duplicate(true)
@@ -442,18 +499,9 @@ func resolve_turn() -> Dictionary:
 	_state.combat_resource_state = resource_result.resource_state.duplicate(true)
 	_state.last_resource_recovery_events = recovery_events.duplicate(true)
 	if turn() >= 2: _state.last_resource_recovery_turn = turn()
-	_viewer_receipts_by_turn[turn()] = {}
-	for faction in _state.applied_setup.factions:
-		var faction_id := String(faction.id)
-		var visible: Dictionary = _interception.visible_tactical_events(faction_id, receipt, _state.detection_state)
-		var resource_visible: Dictionary = _combat_resources.visible_events(faction_id,
-			{"consumption_events": receipt.resource_consumption_events,
-			"suppressed_fire_events": receipt.suppressed_fire_events,
-			"recovery_events": receipt.resource_recovery_events})
-		visible.events.append_array(resource_visible.events)
-		visible.events.sort_custom(func(a, b): return String(a.get("event_id", "")) < String(b.get("event_id", "")))
-		visible["turn"] = turn()
-		_viewer_receipts_by_turn[turn()][faction_id] = visible.duplicate(true)
+	_state.phase_ledgers[turn()] = ledger.duplicate(true)
+	_viewer_receipts_by_turn[turn()] = next_viewer_receipts.duplicate(true)
+	_viewer_phase_ledgers_by_turn[turn()] = next_viewer_ledgers.duplicate(true)
 	var log := _current_log()
 	log.resolution_receipt = receipt.duplicate(true)
 	log.victory_check_required = true
@@ -599,6 +647,40 @@ func _own_weapon_allocation_state(faction_id: String) -> Dictionary:
 	var result := {}
 	for squadron_id in _operational_squadron_ids(faction_id):
 		result[squadron_id] = _state.weapon_allocation_state[squadron_id].duplicate(true)
+	return result
+
+
+func _viewer_ledger_receipt(faction_id: String, receipt: Dictionary, visible_events: Array) -> Dictionary:
+	var safe := {"turn": int(receipt.turn), "rules_pending": receipt.rules_pending.duplicate(),
+		"victory_check_required": bool(receipt.victory_check_required),
+		"formation_events": [], "weapon_allocation_events": [], "resource_recovery_events": [],
+		"movement_events": [], "path_intersection_events": [], "detection_events": [],
+		"opportunity_fire_events": [], "resource_consumption_events": [], "suppressed_fire_events": []}
+	for source in ["formation_events", "weapon_allocation_events", "resource_recovery_events",
+			"movement_events", "resource_consumption_events", "suppressed_fire_events"]:
+		for value in receipt.get(source, []):
+			if value is Dictionary:
+				var squadron_id := String(value.get("squadron_id", ""))
+				if _squadron_faction_id(squadron_id) == faction_id: safe[source].append(value.duplicate(true))
+	for value in visible_events:
+		if not value is Dictionary: continue
+		var event_type := String(value.get("event_type", "")); var source := ""
+		if event_type == "path_intersection": source = "path_intersection_events"
+		elif event_type == "detection": source = "detection_events"
+		elif event_type == "shot_authorized": source = "opportunity_fire_events"
+		if not source.is_empty(): safe[source].append(value.duplicate(true))
+	return safe
+
+
+func _squadron_faction_id(squadron_id: String) -> String:
+	for squad in _state.get("applied_setup", {}).get("squadrons", []):
+		if String(squad.get("id", "")) == squadron_id: return String(squad.get("faction_id", ""))
+	return ""
+
+
+func _faction_ids() -> Array:
+	var result: Array = []
+	for faction in _state.get("applied_setup", {}).get("factions", []): result.append(String(faction.get("id", "")))
 	return result
 
 
