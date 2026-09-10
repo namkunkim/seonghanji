@@ -18,6 +18,11 @@ var _editable_ids: Array[String] = []
 var _selected_id := ""
 var _order: Dictionary = {}
 var _preview: Dictionary = {}
+var _intelligence_enabled := false
+var _viewer_faction_id := ""
+var _contacts_by_target: Dictionary = {}
+var _contacts_by_id: Dictionary = {}
+var _fire_events: Array = []
 var _mode := Mode.SELECT
 var _zoom := 1.0
 var _pan := Vector2.ZERO
@@ -57,12 +62,33 @@ func set_route(order: Dictionary, preview: Dictionary) -> void:
 	queue_redraw()
 
 
+func set_intelligence(viewer_faction_id: String, contacts: Array, fire_events: Array) -> void:
+	_intelligence_enabled = true; _viewer_faction_id = viewer_faction_id; _contacts_by_target.clear(); _contacts_by_id.clear()
+	for value in contacts:
+		if value is Dictionary:
+			var row: Dictionary = value.duplicate(true); _contacts_by_id[String(row.get("contact_id", ""))] = row
+			if row.has("target_squadron_id"): _contacts_by_target[String(row.target_squadron_id)] = row
+	_fire_events = fire_events.duplicate(true); queue_redraw()
+
+
+func clear_intelligence() -> void:
+	_intelligence_enabled = false; _contacts_by_target.clear(); _contacts_by_id.clear(); _fire_events.clear(); queue_redraw()
+
+
 func reset_camera() -> void:
 	_zoom = 1.0; _pan = Vector2.ZERO; queue_redraw()
 
 
 func camera_state() -> Dictionary:
 	return {"zoom": _zoom, "pan": _pan}
+
+
+func intelligence_state_for_test() -> Dictionary:
+	var visible_own: Array[String] = []
+	for squad in _squadrons: visible_own.append(String(squad.get("id", "")))
+	visible_own.sort()
+	return {"viewer_faction_id": _viewer_faction_id, "own_squadron_ids": visible_own,
+		"contacts": _contacts_by_id.values().duplicate(true), "tactical_events": _fire_events.duplicate(true)}
 
 
 func content_rect() -> Rect2:
@@ -94,8 +120,8 @@ func set_camera_for_test(zoom_value: float, pan_value: Vector2) -> void:
 
 
 func marker_local_position(squadron_id: String) -> Vector2:
-	var row: Dictionary = _navigation.get(squadron_id, {})
-	return battle_to_local(row.get("position", [0, 0]))
+	var descriptor := _marker_descriptor(squadron_id)
+	return battle_to_local(descriptor.get("position", [0, 0]))
 
 
 func handle_click_for_test(point: Vector2, double_click := false) -> void:
@@ -142,6 +168,7 @@ func _activate_click(point: Vector2, double_click: bool) -> void:
 func _marker_at(point: Vector2) -> String:
 	for value in _squadrons:
 		var id := String(value.get("id", ""))
+		if not bool(_marker_descriptor(id).get("visible", false)): continue
 		if point.distance_to(marker_local_position(id)) <= MARKER_RADIUS + 6.0: return id
 	return ""
 
@@ -157,12 +184,18 @@ func _draw() -> void:
 		var y := rect.position.y + rect.size.y * float(index) / 5.0
 		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.16, 0.31, 0.38, 0.45), 1.0)
 	_draw_route()
+	_draw_fire_events()
+	_draw_opaque_contacts()
 	for value in _squadrons:
-		var squad: Dictionary = value; var id := String(squad.get("id", "")); var faction := String(squad.get("faction_id", "")); var p := marker_local_position(id)
+		var squad: Dictionary = value; var id := String(squad.get("id", "")); var descriptor := _marker_descriptor(id)
+		if not bool(descriptor.get("visible", false)): continue
+		var faction := String(squad.get("faction_id", "")); var p := marker_local_position(id); var contact_state := String(descriptor.get("state", "friendly"))
 		var color: Color = {"liu_bei": Color("63c58a"), "sun_quan": Color("df7d72"), "cao_cao": Color("69add5")}.get(faction, Color.WHITE)
-		draw_circle(p, MARKER_RADIUS + (4.0 if id == _selected_id else 0.0), color, false, 3.0)
-		draw_circle(p, 7.0, color, true)
-		var label := ("◆ " if bool(squad.get("flagship", false)) else "") + String(squad.get("name", id))
+		if contact_state in ["estimated", "lost"]:
+			color = Color("e0b66d"); _draw_dashed_circle(p, MARKER_RADIUS + 5.0, color)
+		else:
+			draw_circle(p, MARKER_RADIUS + (4.0 if id == _selected_id else 0.0), color, false, 3.0); draw_circle(p, 7.0, color, true)
+		var label := "추정 접촉 · 마지막 확인 T%d · 실제 위치와 다를 수 있음" % int(descriptor.get("last_seen_turn", 0)) if contact_state in ["estimated", "lost"] else (("◆ " if bool(squad.get("flagship", false)) else "") + String(squad.get("name", id)) + (" · 확인 접촉" if contact_state == "confirmed" else ""))
 		draw_string(get_theme_default_font(), p + Vector2(24, -9), label, HORIZONTAL_ALIGNMENT_LEFT, 150, 14, color)
 
 
@@ -183,3 +216,48 @@ func _draw_route() -> void:
 		draw_circle(target, 12, Color("f0d17b"), true)
 		draw_string(get_theme_default_font(), target + Vector2(-4, 5), str(index + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("071018"))
 		cursor = target
+
+
+func _marker_descriptor(squadron_id: String) -> Dictionary:
+	var squad: Dictionary = {}
+	for value in _squadrons:
+		if String(value.get("id", "")) == squadron_id: squad = value; break
+	var live: Dictionary = _navigation.get(squadron_id, {})
+	if not _intelligence_enabled or String(squad.get("faction_id", "")) == _viewer_faction_id:
+		return {"visible": true, "state": "friendly", "position": live.get("position", [0, 0])}
+	var contact: Dictionary = _contacts_by_target.get(squadron_id, {})
+	var state := String(contact.get("state", "undetected"))
+	if state in ["undetected", "unknown"] or contact.is_empty(): return {"visible": false, "state": "undetected"}
+	return {"visible": true, "state": state, "position": contact.get("display_position", contact.get("last_known_position", [0, 0])), "last_seen_turn": contact.get("last_seen_turn", 0)}
+
+
+func _draw_fire_events() -> void:
+	for index in range(_fire_events.size()):
+		var event: Dictionary = _fire_events[index]
+		if String(event.get("event_type", "")) != "shot_authorized": continue
+		var own_desc := _marker_descriptor(String(event.get("own_squadron_id", ""))); var contact: Dictionary = _contacts_by_id.get(String(event.get("contact_id", "")), {})
+		var contact_position = contact.get("display_position")
+		if contact_position == null: contact_position = contact.get("last_known_position")
+		if not bool(own_desc.get("visible", false)) or not contact_position is Array: continue
+		var from := battle_to_local(own_desc.position); var to := battle_to_local(contact_position); var color := Color("f08a68")
+		draw_dashed_line(from, to, color, 3.0, 7.0)
+		draw_string(get_theme_default_font(), (from + to) * 0.5 + Vector2(5, -6), "사격 %d" % (index + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, color)
+
+
+func _draw_opaque_contacts() -> void:
+	for contact in _contacts_by_id.values():
+		var position = contact.get("display_position")
+		if position == null: position = contact.get("last_known_position")
+		if not position is Array: continue
+		var p := battle_to_local(position); var stale := bool(contact.get("stale", false)); var state := String(contact.get("state", "unknown")); var color := Color("9b8d70") if stale else (Color("f08a68") if state == "confirmed" else Color("e0b66d"))
+		if state == "confirmed": draw_circle(p, MARKER_RADIUS + 4.0, color, false, 3.0); draw_circle(p, 7.0, color, true)
+		else: _draw_dashed_circle(p, MARKER_RADIUS + 5.0, color)
+		var label := "확인 접촉" if state == "confirmed" else ("%s · 마지막 확인 T%d · 실제 위치와 다를 수 있음" % ["소실 접촉(stale)" if stale else "추정 접촉", int(contact.get("last_seen_turn", 0))])
+		draw_string(get_theme_default_font(), p + Vector2(24, -9), label, HORIZONTAL_ALIGNMENT_LEFT, 390, 14, color)
+
+
+func _draw_dashed_circle(center: Vector2, radius: float, color: Color) -> void:
+	for index in range(16):
+		if index % 2 == 0: continue
+		var a := TAU * float(index) / 16.0; var b := TAU * float(index + 1) / 16.0
+		draw_line(center + Vector2(cos(a), sin(a)) * radius, center + Vector2(cos(b), sin(b)) * radius, color, 3.0)

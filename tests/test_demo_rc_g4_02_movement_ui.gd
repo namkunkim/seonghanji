@@ -88,7 +88,7 @@ func _test_draft_edit_submit_and_live_redraw() -> void:
 	var event := _event(battle.turn_log()[0].resolution_receipt.movement_events, "RC-LIU-SQ-01")
 	_ok(not event.is_empty() and float(event.actual_distance) > 0, "movement receipt recorded")
 	_eq(view.find_child("AppliedSquadronMap", true, false).marker_local_position("RC-LIU-SQ-01"), view.find_child("AppliedSquadronMap", true, false).battle_to_local(event.to), "map redraw uses live position")
-	_ok(view.find_child("TurnLedger", true, false).text.contains("부분 이동"), "movement receipt visible in ledger")
+	_ok(view.find_child("TurnLedger", true, false).text.contains("판정 확정"), "viewer-redacted resolution visible in ledger")
 	for name in ["Disabled무기", "Disabled진형 변경", "Disabled탐지"]:
 		var control: Button = view.find_child(name, true, false); _ok(control != null and control.disabled, "%s remains disabled" % name)
 	view.free()

@@ -136,7 +136,7 @@ func resolve_orders(orders: Array, live_navigation: Dictionary) -> Dictionary:
 			events.append({"squadron_id": squadron_id, "action": "hold", "order_index": index,
 				"from": from, "to": from.duplicate(), "requested_waypoints": [], "reached_waypoints": [],
 				"actual_distance": 0.0, "remaining_distance": 0.0, "path_complete": true,
-				"facing_deg": float(current.facing_deg),
+				"from_facing_deg": float(current.facing_deg), "facing_deg": float(current.facing_deg),
 				"base_speed": int(row.speed.base_speed), "effective_speed": int(row.speed.effective_speed)})
 			continue
 		var movement := _follow_waypoints(from, order.waypoints, int(row.speed.effective_speed))
@@ -146,7 +146,8 @@ func resolve_orders(orders: Array, live_navigation: Dictionary) -> Dictionary:
 			"from": from, "to": movement.to.duplicate(), "requested_waypoints": order.waypoints.duplicate(true),
 			"reached_waypoints": movement.reached_waypoints.duplicate(true),
 			"actual_distance": movement.actual_distance, "remaining_distance": movement.remaining_distance,
-			"path_complete": movement.path_complete, "facing_deg": float(order.facing_deg),
+			"path_complete": movement.path_complete, "from_facing_deg": float(current.facing_deg),
+			"facing_deg": float(order.facing_deg),
 			"base_speed": int(row.speed.base_speed), "effective_speed": int(row.speed.effective_speed)})
 	return {"ok": true, "errors": [], "events": events, "live_navigation": next_navigation}
 

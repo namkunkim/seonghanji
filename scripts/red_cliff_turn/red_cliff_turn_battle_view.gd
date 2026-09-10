@@ -43,6 +43,7 @@ var _facing: SpinBox
 var _waypoint_rows: VBoxContainer
 var _preview_text: Label
 var _map_mode_text: Label
+var _viewer_faction_id := "liu_bei"
 
 
 func configure(battle_controller, applied_revision: int, applied_digest: String) -> Dictionary:
@@ -160,7 +161,13 @@ func _rebuild_steps(phase: String) -> void:
 
 func _rebuild_map(snapshot: Dictionary) -> void:
 	var setup: Dictionary = snapshot.get("applied_setup", {})
-	_map.configure(setup.get("battlefield_bounds", [0, 0, 1600, 900]), setup.get("squadrons", []), _battle.live_navigation())
+	var direct: String = _battle.current_direct_faction_id()
+	if not direct.is_empty(): _viewer_faction_id = direct
+	if _battle.has_method("viewer_snapshot"):
+		var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id)
+		_map.configure(setup.get("battlefield_bounds", [0, 0, 1600, 900]), viewer.get("own_squadrons", []), viewer.get("own_navigation", {}))
+		_map.set_intelligence(_viewer_faction_id, viewer.get("contacts", []), viewer.get("tactical_events", []))
+	else: _map.clear_intelligence()
 	var editable := _editable_squadron_ids(snapshot)
 	if not editable.has(_selected_squadron_id): _selected_squadron_id = editable[0] if not editable.is_empty() else ""
 	var mode := TacticalMap.Mode.ADD_WAYPOINT if _move_armed else TacticalMap.Mode.SELECT
@@ -186,6 +193,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	var heading := Label.new(); heading.text = "%s · %s" % [FACTION_NAMES.get(faction_id, "자동 처리"), "직접 명령" if not faction_id.is_empty() else "입력 잠김"]; heading.add_theme_font_size_override("font_size", 17); _orders.add_child(heading)
 	if _selected_squadron_id.is_empty():
 		var empty := Label.new(); empty.text = "현재 편집 가능한 전대가 없습니다."; _orders.add_child(empty)
+		_add_intelligence_panel()
 		for future in ["무기", "진형 변경", "탐지"]:
 			var disabled_empty := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled_empty.disabled = true; _orders.add_child(disabled_empty)
 		return
@@ -209,25 +217,25 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	var clear := _button("경유점 전체 초기화", "ClearWaypoints", 340); clear.disabled = action != "move"; clear.pressed.connect(_clear_waypoints); _orders.add_child(clear)
 	_preview_text = Label.new(); _preview_text.name = "MovementPreview"; _preview_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; _orders.add_child(_preview_text)
 	_update_preview_text(order)
+	_add_intelligence_panel()
 	for future in ["무기", "진형 변경", "탐지"]:
 		var disabled := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled.disabled = true; _orders.add_child(disabled)
 
 
 func _rebuild_log() -> void:
 	var lines: Array[String] = []
-	for value in _battle.turn_log():
+	var visible_log: Dictionary = _battle.viewer_turn_log(_viewer_faction_id) if _battle.has_method("viewer_turn_log") else {"turn_log": []}
+	for value in visible_log.get("turn_log", []):
 		var entry: Dictionary = value; var turn_number := int(entry.get("turn", 0)); var parts: Array[String] = []
-		if not entry.get("liu_orders", []).is_empty(): parts.append("유비 명령 %d" % entry.liu_orders.size())
-		var decision: Dictionary = entry.get("sun_control_decision", {})
-		if not decision.is_empty(): parts.append("손권 %s" % ("수동" if decision.get("control") == "manual" else "AI"))
-		if not entry.get("sun_orders", []).is_empty(): parts.append("손권 명령 %d" % entry.sun_orders.size())
-		if not entry.get("cao_orders", []).is_empty(): parts.append("조조 AI HOLD %d" % entry.cao_orders.size())
-		var resolution: Dictionary = entry.get("resolution_receipt", {})
-		if not resolution.is_empty():
-			var moved := 0; var partial := 0
-			for event in resolution.get("movement_events", []):
-				if String(event.get("action", "")) == "move": moved += 1; partial += 0 if bool(event.get("path_complete", true)) else 1
-			parts.append("이동 %d · 부분 이동 %d · rules_pending" % [moved, partial])
+		if not entry.get("own_orders", []).is_empty():
+			var moved := 0
+			for order in entry.own_orders: moved += 1 if String(order.get("action", "")) == "move" else 0
+			parts.append("내 명령 %d · MOVE %d" % [entry.own_orders.size(), moved])
+		var intersections := 0; var detections := 0; var shots := 0
+		for event in entry.get("tactical_events", []):
+			var kind := String(event.get("event_type", "")); intersections += 1 if kind == "path_intersection" else 0; detections += 1 if kind == "detection" else 0; shots += 1 if kind == "shot_authorized" else 0
+		if intersections + detections + shots > 0: parts.append("교차 %d · 탐지 %d · 기회 사격 %d · 피해 판정 후속" % [intersections, detections, shots])
+		if bool(entry.get("resolved", false)): parts.append("판정 확정 · rules_pending")
 		lines.append("[턴 %d] %s" % [turn_number, " · ".join(parts) if not parts.is_empty() else "유비 명령 대기"])
 	_log.text = "\n".join(lines); _log.scroll_to_line(maxi(0, lines.size() - 1))
 
@@ -268,7 +276,7 @@ func _status_for_phase(phase: String) -> String:
 	if phase == "liu_command": return "유비군 전대별 HOLD/MOVE 초안을 검토한 뒤 제출합니다."
 	if phase == "sun_control_prompt": return "손권군 제어 방식을 선택해야 계속할 수 있습니다."
 	if phase == "sun_command": return "손권군 전대별 HOLD/MOVE 초안을 검토한 뒤 제출합니다."
-	if phase == "victory_check": return "이동 판정이 확정되었습니다. 충돌/요격/무기/탐지/피해/승패는 후속 구현 대기입니다."
+	if phase == "victory_check": return "이동·경로 교차·탐지·기회 사격 판정이 확정되었습니다. 진형 변경·피해·승패는 후속 구현 대기입니다."
 	if phase == "turn_limit_reached": return "20/20 · 결과 판정 대기. 승자와 피해는 아직 계산하지 않았습니다."
 	return "AI 명령 및 명령 원장을 처리하는 중입니다."
 
@@ -361,6 +369,34 @@ func _update_preview_text(order: Dictionary) -> void:
 
 func _on_interaction_rejected(message: String) -> void:
 	_last_error = message; _refresh()
+
+
+func _add_intelligence_panel() -> void:
+	if not _battle.has_method("visible_contacts") or not _battle.has_method("visible_tactical_events"): return
+	var divider := HSeparator.new(); _orders.add_child(divider)
+	var title := Label.new(); title.text = "접촉 및 기회 사격 · %s 시야" % FACTION_NAMES.get(_viewer_faction_id, _viewer_faction_id); title.add_theme_color_override("font_color", Color("e8c779")); _orders.add_child(title)
+	var contacts_result: Dictionary = _battle.visible_contacts(_viewer_faction_id); var contacts: Array = contacts_result.get("contacts", [])
+	if contacts.is_empty():
+		var none := Label.new(); none.text = "공개된 적 접촉 없음"; _orders.add_child(none)
+	for value in contacts:
+		var contact: Dictionary = value; var state := String(contact.get("state", "unknown"))
+		if state in ["unknown", "undetected"]: continue
+		var contact_label := Label.new(); contact_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		if state in ["estimated", "lost"]:
+			contact_label.text = "△ 추정 접촉 · 마지막 확인 T%d · stale · 실제 위치와 다를 수 있음" % int(contact.get("last_seen_turn", 0))
+		else: contact_label.text = "● 확인 접촉 · 현재 위치 확인"
+		_orders.add_child(contact_label)
+	var events_result: Dictionary = _battle.visible_tactical_events(_viewer_faction_id); var events: Array = events_result.get("events", [])
+	for index in range(events.size()):
+		var event: Dictionary = events[index]; var event_label := Label.new(); event_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var kind := String(event.get("event_type", event.get("type", "전술 이벤트")))
+		if kind.contains("fire") or String(event.get("outcome", "")) == "shot_authorized":
+			if String(event.get("own_role", "")) == "target":
+				event_label.text = "사격 %d · 적 기회 사격 승인 감지 · 피해 판정 후속" % [index + 1]
+			else:
+				event_label.text = "사격 %d · 승인 · 거리 %.1f/사거리 %.1f · 방위 %.1f° · 사격각 %.1f° · 피해 판정 후속" % [index + 1, float(event.get("distance", 0)), float(event.get("range", 0)), float(event.get("bearing_deg", 0)), float(event.get("arc_deg", 0))]
+		else: event_label.text = "%d. %s · 코어 판정" % [index + 1, kind]
+		_orders.add_child(event_label)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

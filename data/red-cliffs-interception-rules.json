@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-interception-v1",
+  "deterministic_seed": "RED-CLIFFS-208-G4-03",
+  "statement": "경로 근접, 탐지와 기회 사격은 데모용 결정론적 게임 규칙이며 역사적 사실이나 실제 피해 판정이 아니다.",
+  "intersection_epsilon": 0.001,
+  "intersection_policy": "actual_reached_polyline_only; hostile_only; endpoint_and_collinear_overlap_count; one_event_per_pair_per_turn",
+  "opportunity_fire_policy": "confirmed_target_enters_range_and_arc_while_target_moves; one_authorization_per_shooter_target_turn",
+  "hostile_faction_pairs": [["liu_bei", "cao_cao"], ["sun_quan", "cao_cao"]],
+  "detection_ranges": {"estimated_range": 280, "confirmed_range": 180},
+  "opportunity_weapon_by_ship_type": {
+    "SHP-01": {"range": 190, "arc_deg": 120},
+    "SHP-02": {"range": 150, "arc_deg": 80},
+    "SHP-03": {"range": 260, "arc_deg": 90},
+    "SHP-04": {"range": 180, "arc_deg": 120},
+    "SHP-07": {"range": 210, "arc_deg": 180}
+  },
+  "fast_craft_weapon_by_equipment": {
+    "FAST-EQ-INTERCEPT": {"range": 200, "arc_deg": 200},
+    "FAST-EQ-TORPEDO": {"range": 170, "arc_deg": 70}
+  }
+}

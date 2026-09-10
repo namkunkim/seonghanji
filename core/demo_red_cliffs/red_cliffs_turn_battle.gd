@@ -5,13 +5,16 @@ extends RefCounted
 ## 명령 원장과 턴 경계만 소유하며 이동·사격·피해·탐지·승패는 후속 resolver에 맡긴다.
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
 const MovementResolver := preload("res://core/demo_red_cliffs/red_cliffs_movement_resolver.gd")
+const InterceptionResolver := preload("res://core/demo_red_cliffs/red_cliffs_interception_resolver.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
-	"weapon_fire", "formation_change", "detection", "damage", "casualties", "victory"
+	"weapon_fire", "formation_change", "damage", "casualties", "victory"
 ]
 
 var _state: Dictionary = {}
 var _movement
+var _interception
+var _viewer_receipts_by_turn: Dictionary = {}
 
 
 func _init(applied_setup: Dictionary = {}) -> void:
@@ -27,7 +30,12 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	var movement = MovementResolver.new()
 	var movement_result: Dictionary = movement.initialize(setup)
 	if not movement_result.ok: return movement_result
+	var interception = InterceptionResolver.new()
+	var interception_result: Dictionary = interception.initialize(setup)
+	if not interception_result.ok: return interception_result
 	_movement = movement
+	_interception = interception
+	_viewer_receipts_by_turn = {}
 	_state = {
 		"applied_setup": setup,
 		"current_turn": 1,
@@ -36,6 +44,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 		"resolved": false,
 		"sun_prompt_policy": {"enabled": true},
 		"live_navigation": _movement.initial_navigation(),
+		"detection_state": _interception.initial_detection_state(),
 		"command_draft": {},
 		"turn_log": [_new_turn_log(1)],
 	}
@@ -69,6 +78,53 @@ func turn_log() -> Array:
 
 func live_navigation() -> Dictionary:
 	return _state.get("live_navigation", {}).duplicate(true)
+
+
+func detection_state() -> Dictionary:
+	return _state.get("detection_state", {}).duplicate(true)
+
+
+func visible_contacts(viewer_faction_id: String) -> Dictionary:
+	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
+	return _interception.visible_contacts(viewer_faction_id, _state.detection_state, _state.live_navigation)
+
+
+func visible_tactical_events(viewer_faction_id: String, turn_number: int = 0) -> Dictionary:
+	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
+	var wanted_turn := turn() if turn_number <= 0 else turn_number
+	if not _viewer_receipts_by_turn.has(wanted_turn) or not _viewer_receipts_by_turn[wanted_turn].has(viewer_faction_id):
+		return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "turn": wanted_turn, "events": []}
+	return _viewer_receipts_by_turn[wanted_turn][viewer_faction_id].duplicate(true)
+
+
+func viewer_turn_log(viewer_faction_id: String) -> Dictionary:
+	var contacts := visible_contacts(viewer_faction_id)
+	if not contacts.ok: return contacts
+	var logs: Array = []
+	for value in _state.turn_log:
+		var row: Dictionary = value; var visible := {"turn": int(row.turn), "resolved": not row.resolution_receipt.is_empty()}
+		if viewer_faction_id == "liu_bei": visible["own_orders"] = row.liu_orders.duplicate(true)
+		elif viewer_faction_id == "sun_quan":
+			visible["own_orders"] = row.sun_orders.duplicate(true)
+			visible["own_control_decision"] = row.sun_control_decision.duplicate(true)
+		elif viewer_faction_id == "cao_cao": visible["own_orders"] = row.cao_orders.duplicate(true)
+		else: return _error("미지 관측 세력입니다: %s" % viewer_faction_id)
+		visible["tactical_events"] = visible_tactical_events(viewer_faction_id, int(row.turn)).events
+		logs.append(visible)
+	return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "turn_log": logs}
+
+
+func viewer_snapshot(viewer_faction_id: String) -> Dictionary:
+	var contacts := visible_contacts(viewer_faction_id)
+	if not contacts.ok: return contacts
+	var own_squadrons: Array = []; var own_navigation := {}
+	for squad in _state.applied_setup.squadrons:
+		if String(squad.faction_id) == viewer_faction_id:
+			own_squadrons.append(squad.duplicate(true)); own_navigation[String(squad.id)] = _state.live_navigation[String(squad.id)].duplicate(true)
+	return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "turn": turn(), "phase": phase(),
+		"own_squadrons": own_squadrons, "own_navigation": own_navigation, "contacts": contacts.contacts,
+		"tactical_events": visible_tactical_events(viewer_faction_id).events,
+		"prompt_policy": prompt_policy() if viewer_faction_id == "sun_quan" else {}}
 
 
 func movement_preview(squadron_id: String, waypoints: Array, facing_deg) -> Dictionary:
@@ -202,15 +258,28 @@ func resolve_turn() -> Dictionary:
 	orders.append_array(_current_log().cao_orders)
 	var movement_result: Dictionary = _movement.resolve_orders(orders, _state.live_navigation)
 	if not movement_result.ok: return movement_result
+	var interception_result: Dictionary = _interception.resolve(movement_result.events,
+		movement_result.live_navigation, _state.detection_state, turn())
+	if not interception_result.ok: return interception_result
 	var receipt := {
 		"ok": true,
 		"turn": turn(),
 		"status": "orders_committed",
 		"rules_pending": RULES_PENDING.duplicate(),
 		"movement_events": movement_result.events.duplicate(true),
+		"path_intersection_events": interception_result.path_intersection_events.duplicate(true),
+		"detection_events": interception_result.detection_events.duplicate(true),
+		"opportunity_fire_events": interception_result.opportunity_fire_events.duplicate(true),
 		"victory_check_required": true,
 	}
 	_state.live_navigation = movement_result.live_navigation.duplicate(true)
+	_state.detection_state = interception_result.detection_state.duplicate(true)
+	_viewer_receipts_by_turn[turn()] = {}
+	for faction in _state.applied_setup.factions:
+		var faction_id := String(faction.id)
+		var visible: Dictionary = _interception.visible_tactical_events(faction_id, receipt, _state.detection_state)
+		visible["turn"] = turn()
+		_viewer_receipts_by_turn[turn()][faction_id] = visible.duplicate(true)
 	var log := _current_log()
 	log.resolution_receipt = receipt.duplicate(true)
 	log.victory_check_required = true
