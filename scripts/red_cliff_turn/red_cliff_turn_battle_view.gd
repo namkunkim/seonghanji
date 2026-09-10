@@ -194,7 +194,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	if _selected_squadron_id.is_empty():
 		var empty := Label.new(); empty.text = "현재 편집 가능한 전대가 없습니다."; _orders.add_child(empty)
 		_add_intelligence_panel()
-		for future in ["무기", "탐지"]:
+		for future in ["탐지"]:
 			var disabled_empty := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled_empty.disabled = true; _orders.add_child(disabled_empty)
 		return
 	var squad := _find_squad(snapshot, _selected_squadron_id)
@@ -205,6 +205,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	var order_result: Dictionary = _battle.command_order(_selected_squadron_id); var order: Dictionary = order_result.get("order", {})
 	var action := String(order.get("action", "hold")); var state := Label.new(); state.name = "OrderActionState"; state.text = "현재: %s%s" % [action.to_upper(), " · 첫 경유점 대기" if _move_armed and action != "move" else ""]; _orders.add_child(state)
 	_add_formation_editor()
+	_add_weapon_editor()
 	var coord_row := HBoxContainer.new(); _orders.add_child(coord_row)
 	_coordinate_x = _spin("CoordinateX", float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[0]), float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[0] + snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[2])); coord_row.add_child(_coordinate_x)
 	_coordinate_y = _spin("CoordinateY", float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[1]), float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[1] + snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[3])); coord_row.add_child(_coordinate_y)
@@ -219,7 +220,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	_preview_text = Label.new(); _preview_text.name = "MovementPreview"; _preview_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; _orders.add_child(_preview_text)
 	_update_preview_text(order)
 	_add_intelligence_panel()
-	for future in ["무기", "탐지"]:
+	for future in ["탐지"]:
 		var disabled := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled.disabled = true; _orders.add_child(disabled)
 
 
@@ -399,7 +400,12 @@ func _add_intelligence_panel() -> void:
 				else:
 					event_label.text = "피격 경보 %d · %s · 내 진형 방어 %s · sector 방어 %s · 합계 %s · 명중/피해 판정 후속" % [index + 1, _sector_label(String(modifier.get("incoming_sector", "indeterminate"))), _signed_percent(int(modifier.get("own_defense_percent", 0))), _signed_percent(int(modifier.get("own_sector_defense_percent", 0))), _signed_percent(int(modifier.get("own_total_defense_percent", 0)))]
 			else:
-				event_label.text = "사격 %d · 승인 · 거리 %.1f/사거리 %.1f · 방위 %.1f° · 사격각 %.1f° · 표적 %s · 내 화력 %s · 명중/피해 판정 후속" % [index + 1, float(event.get("distance", 0)), float(event.get("range", 0)), float(event.get("bearing_deg", 0)), float(event.get("arc_deg", 0)), _sector_label(String(modifier.get("target_sector", "indeterminate"))), _signed_percent(int(modifier.get("own_fire_percent", 0)))]
+				var fire_control: Dictionary = event.get("fire_control_snapshot", {})
+				var eligibility: Dictionary = fire_control.get("eligibility", {})
+				var weapon_summary := "내 무기 정보 없음"
+				if not fire_control.is_empty():
+					weapon_summary = "%s · 배분 %s · 코어 적격 사거리 %.1f / 사격각 %.1f°" % [_weapon_name(String(fire_control.get("selected_weapon_id", ""))), _bps_text(int(fire_control.get("selected_allocation_basis_points", 0))), float(eligibility.get("range", 0)), float(eligibility.get("arc_deg", 0))]
+				event_label.text = "사격 %d · 승인 · 거리 %.1f/사거리 %.1f · 방위 %.1f° · 사격각 %.1f° · %s · 표적 %s · 내 화력 %s · 명중/피해 판정 후속" % [index + 1, float(event.get("distance", 0)), float(event.get("range", 0)), float(event.get("bearing_deg", 0)), float(event.get("arc_deg", 0)), weapon_summary, _sector_label(String(modifier.get("target_sector", "indeterminate"))), _signed_percent(int(modifier.get("own_fire_percent", 0)))]
 		else: event_label.text = "%d. %s · 코어 판정" % [index + 1, kind]
 		_orders.add_child(event_label)
 
@@ -442,6 +448,55 @@ func _sector_label(sector: String) -> String:
 
 func _signed_percent(value: int) -> String:
 	return "%+d%%" % value
+
+
+func _add_weapon_editor() -> void:
+	if not _battle.has_method("weapon_allocation_order") or not _battle.has_method("viewer_snapshot"): return
+	var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id); var categories: Array = viewer.get("weapon_categories", []); var presets: Array = viewer.get("weapon_presets", [])
+	var live: Dictionary = viewer.get("own_weapon_allocation_state", {}).get(_selected_squadron_id, {})
+	var order_result: Dictionary = _battle.weapon_allocation_order(_selected_squadron_id); var order: Dictionary = order_result.get("order", {})
+	var title := Label.new(); title.text = "무기 운용 초안 · %s" % ("공격 보류" if bool(order.get("hold_fire", false)) else "사격 재개"); title.add_theme_color_override("font_color", Color("e8c779")); _orders.add_child(title)
+	var fire_row := HBoxContainer.new(); _orders.add_child(fire_row)
+	var hold := _button("공격 보류", "HoldFire", 165); hold.disabled = bool(order.get("hold_fire", false)); hold.pressed.connect(_on_hold_fire.bind(true)); fire_row.add_child(hold)
+	var resume := _button("사격 재개", "ResumeFire", 165); resume.disabled = not bool(order.get("hold_fire", false)) or live.get("available_categories", []).is_empty(); resume.pressed.connect(_on_hold_fire.bind(false)); fire_row.add_child(resume)
+	var preset_row := HBoxContainer.new(); _orders.add_child(preset_row)
+	var preset_picker := OptionButton.new(); preset_picker.name = "WeaponPresetPicker"; preset_picker.custom_minimum_size = Vector2(225,44); preset_picker.focus_mode = Control.FOCUS_ALL
+	for index in range(presets.size()): preset_picker.add_item(String(presets[index].get("name", presets[index].get("preset_id", "")))); preset_picker.set_item_metadata(index, String(presets[index].get("preset_id", "")))
+	preset_row.add_child(preset_picker)
+	var apply := _button("프리셋 적용", "ApplyWeaponPreset", 110); apply.disabled = presets.is_empty(); apply.pressed.connect(_on_weapon_preset.bind(preset_picker)); preset_row.add_child(apply)
+	var available: Array = live.get("available_categories", []); var allocations: Dictionary = order.get("allocations", {})
+	for category in categories:
+		var weapon_id := String(category.get("weapon_id", "")); var row := HBoxContainer.new(); _orders.add_child(row)
+		var label := Label.new(); label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; label.text = "%s · %s" % [String(category.get("name", weapon_id)), _bps_text(int(allocations.get(weapon_id, 0))) if available.has(weapon_id) else "사용 불가 · 0.00%"] ; row.add_child(label)
+		var spin := SpinBox.new(); spin.name = "WeaponBps_%s" % weapon_id; spin.min_value = 0; spin.max_value = 10000; spin.step = 1; spin.value = int(allocations.get(weapon_id, 0)); spin.suffix = " bp"; spin.custom_minimum_size = Vector2(125,44); spin.editable = available.has(weapon_id); spin.focus_mode = Control.FOCUS_ALL if spin.editable else Control.FOCUS_NONE; spin.value_changed.connect(_on_weapon_basis_points.bind(weapon_id)); row.add_child(spin)
+	var total := Label.new(); total.name = "WeaponAllocationTotal"; total.text = "정규화 합계 · %s" % (_bps_text(int(order_result.get("total_basis_points", -1))) if order_result.has("total_basis_points") else "코어 합계 대기"); total.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(total)
+
+
+func _on_weapon_basis_points(value: float, weapon_id: String) -> void:
+	_set_receipt(_battle.set_weapon_basis_points(_selected_squadron_id, weapon_id, int(value))); _refresh()
+
+
+func _on_weapon_preset(picker: OptionButton) -> void:
+	if picker.item_count <= 0: return
+	_set_receipt(_battle.apply_weapon_preset(_selected_squadron_id, String(picker.get_item_metadata(picker.selected)))); _refresh()
+
+
+func _on_hold_fire(enabled: bool) -> void:
+	_set_receipt(_battle.set_hold_fire(_selected_squadron_id, enabled)); _refresh()
+
+
+func _bps_text(value: int) -> String:
+	if value < 0: return "코어 값 없음"
+	return "%d bp · %.2f%%" % [value, float(value) / 100.0]
+
+
+func _weapon_name(weapon_id: String) -> String:
+	if weapon_id.is_empty(): return "무기 미선택"
+	for value in _battle.weapon_categories():
+		var category: Dictionary = value
+		if String(category.get("weapon_id", "")) == weapon_id:
+			return String(category.get("name", weapon_id))
+	return weapon_id
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

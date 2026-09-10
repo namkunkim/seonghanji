@@ -65,6 +65,7 @@ func _test_draft_edit_submit_and_live_redraw() -> void:
 	view.configure(battle, int(setup.get("formation_revision",0)), JSON.stringify(setup)); root.add_child(view); await process_frame; await process_frame
 	_eq(view.size.round(), Vector2(1600,900), "view fills 1600x900")
 	_ok(view.find_child("FormationOrderPicker", true, false) != null, "formation command is available after G4-04")
+	_ok(view.find_child("WeaponPresetPicker", true, false) != null, "weapon allocation command is available after G4-05")
 	_ok(view.find_child("MovementOrderScroll", true, false) != null, "independent order scroll exists")
 	view.call("_select_squadron", "RC-CAO-SQ-01"); _eq(battle.command_draft_summary().faction_id, "liu_bei", "programmatic enemy selection cannot edit")
 	view.call("_select_squadron", "RC-LIU-SQ-01"); view.call("_on_arm_move")
@@ -90,7 +91,7 @@ func _test_draft_edit_submit_and_live_redraw() -> void:
 	_ok(not event.is_empty() and float(event.actual_distance) > 0, "movement receipt recorded")
 	_eq(view.find_child("AppliedSquadronMap", true, false).marker_local_position("RC-LIU-SQ-01"), view.find_child("AppliedSquadronMap", true, false).battle_to_local(event.to), "map redraw uses live position")
 	_ok(view.find_child("TurnLedger", true, false).text.contains("판정 확정"), "viewer-redacted resolution visible in ledger")
-	for name in ["Disabled무기", "Disabled탐지"]:
+	for name in ["Disabled탐지"]:
 		var control: Button = view.find_child(name, true, false); _ok(control != null and control.disabled, "%s remains disabled" % name)
 	view.free()
 

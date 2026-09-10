@@ -3,11 +3,13 @@ extends RefCounted
 
 ## DEMO-RC-G4-03 — 경로 교차·탐지·기회 사격의 결정론적 코어 권위.
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
+const WeaponAllocation := preload("res://core/demo_red_cliffs/red_cliffs_weapon_allocation.gd")
 const RULES_PATH := "res://data/red-cliffs-interception-rules.json"
 const STATE_RANK := {"undetected": 0, "estimated": 1, "confirmed": 2}
 
 var _setup: Dictionary = {}
 var _rules: Dictionary = {}
+var _weapon_control
 
 
 func initialize(applied_setup: Dictionary) -> Dictionary:
@@ -15,8 +17,12 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not bool(setup_result.get("ok", false)): return _error("유효한 G3 적용 편성이 필요합니다.")
 	var rules_result := _load_rules()
 	if not bool(rules_result.get("ok", false)): return rules_result
+	var weapon_control = WeaponAllocation.new()
+	var weapon_result: Dictionary = weapon_control.initialize(setup_result.setup)
+	if not weapon_result.ok: return weapon_result
 	_setup = setup_result.setup.duplicate(true)
 	_rules = rules_result.rules.duplicate(true)
+	_weapon_control = weapon_control
 	return _ok()
 
 
@@ -36,15 +42,19 @@ func initial_detection_state() -> Dictionary:
 
 func weapon_capabilities() -> Dictionary:
 	var result := {}
-	for squad in _operational_squadrons():
-		var capability := _weapon_capability(squad)
-		result[String(squad.id)] = {"weapon_ship_type_id": String(capability.ship_type_id),
+	var policy: Dictionary = _weapon_control.interception_policy(_weapon_control.initial_state())
+	for squadron_id in policy:
+		var capabilities: Array = policy[squadron_id].capabilities
+		var capability: Dictionary = capabilities[0] if not capabilities.is_empty() else {"weapon_id": "", "range": 0, "arc_deg": 0.0}
+		for candidate in capabilities:
+			if int(candidate.range) > int(capability.range): capability = candidate
+		result[String(squadron_id)] = {"weapon_id": String(capability.weapon_id),
 			"range": int(capability.range), "arc_deg": float(capability.arc_deg)}
 	return result
 
 
 func resolve(movement_events: Array, live_navigation: Dictionary, prior_detection: Dictionary,
-		turn_number: int) -> Dictionary:
+		turn_number: int, weapon_policy: Dictionary = {}) -> Dictionary:
 	if _setup.is_empty(): return _error("요격 판정기가 초기화되지 않았습니다.")
 	var checked: Dictionary = _validate_inputs(movement_events, live_navigation, prior_detection, turn_number)
 	if not checked.ok: return checked
@@ -52,7 +62,10 @@ func resolve(movement_events: Array, live_navigation: Dictionary, prior_detectio
 	var detection: Dictionary = prior_detection.duplicate(true)
 	var intersection_events: Array = _resolve_intersections(event_by_squad, turn_number)
 	var detection_events: Array = _resolve_detection(event_by_squad, detection, turn_number)
-	var fire_events: Array = _resolve_opportunity_fire(event_by_squad, detection, turn_number)
+	var active_policy: Dictionary = weapon_policy.duplicate(true) if not weapon_policy.is_empty() else _weapon_control.interception_policy(_weapon_control.initial_state())
+	var policy_check := _validate_weapon_policy(active_policy)
+	if not policy_check.ok: return policy_check
+	var fire_events: Array = _resolve_opportunity_fire(event_by_squad, detection, turn_number, active_policy)
 	return {"ok": true, "errors": [], "path_intersection_events": intersection_events,
 		"detection_events": detection_events, "opportunity_fire_events": fire_events,
 		"detection_state": detection}
@@ -127,6 +140,8 @@ func visible_tactical_events(viewer_faction_id: String, raw_receipt: Dictionary,
 			visible_event.merge({"range": int(row.range), "distance": float(row.distance),
 				"bearing_deg": float(row.bearing_deg), "facing_deg": float(row.facing_deg),
 				"arc_deg": float(row.arc_deg)})
+			if row.get("fire_control_snapshot") is Dictionary:
+				visible_event["fire_control_snapshot"] = row.fire_control_snapshot.duplicate(true)
 		# Formation/sector detail is exact tactical information. A shooter already
 		# has the confirmed contact required to authorize the shot; a target only
 		# receives this detail when its own contact on the shooter is confirmed.
@@ -191,33 +206,43 @@ func _resolve_detection(event_by_squad: Dictionary, detection: Dictionary, turn_
 
 
 func _resolve_opportunity_fire(event_by_squad: Dictionary, detection: Dictionary,
-		turn_number: int) -> Array:
+		turn_number: int, weapon_policy: Dictionary) -> Array:
 	var candidates: Array = []
-	var capabilities := weapon_capabilities()
 	for key_value in detection.keys():
 		var contact: Dictionary = detection[key_value]
 		if String(contact.state) != "confirmed": continue
 		var shooter_id := String(contact.observer_squadron_id); var target_id := String(contact.target_squadron_id)
+		if bool(weapon_policy[shooter_id].hold_fire): continue
 		var target_event: Dictionary = event_by_squad[target_id]
 		if String(target_event.action) != "move" or float(target_event.get("actual_distance", 0.0)) <= 0.000001: continue
-		var capability: Dictionary = capabilities[shooter_id]
-		if int(capability.range) <= 0: continue
 		var closest := _closest_paths(_event_path(event_by_squad[shooter_id]), _event_path(event_by_squad[target_id]))
-		if float(closest.distance) > float(capability.range): continue
 		var facing := float(event_by_squad[shooter_id].facing_deg)
 		var vector := Vector2(float(closest.point_b[0]) - float(closest.point_a[0]), float(closest.point_b[1]) - float(closest.point_a[1]))
 		var bearing := facing if vector.length_squared() <= 0.000001 else fposmod(rad_to_deg(atan2(vector.y, vector.x)), 360.0)
 		var angle_delta := absf(wrapf(bearing - facing, -180.0, 180.0))
-		if angle_delta > float(capability.arc_deg) * 0.5 + 0.000001: continue
 		var shooter_event: Dictionary = event_by_squad[shooter_id]
 		var initial_vector := _v(target_event.from) - _v(shooter_event.from)
 		var initial_distance := initial_vector.length()
 		var initial_bearing := float(shooter_event.get("from_facing_deg", facing)) if initial_vector.length_squared() <= 0.000001 else fposmod(rad_to_deg(atan2(initial_vector.y, initial_vector.x)), 360.0)
 		var initial_delta := absf(wrapf(initial_bearing - float(shooter_event.get("from_facing_deg", facing)), -180.0, 180.0))
-		if initial_distance <= float(capability.range) and initial_delta <= float(capability.arc_deg) * 0.5 + 0.000001: continue
+		var eligible: Array = []
+		for value in weapon_policy[shooter_id].capabilities:
+			var capability: Dictionary = value; var weapon_id := String(capability.weapon_id)
+			var allocation := int(weapon_policy[shooter_id].allocations.get(weapon_id, 0))
+			if allocation <= 0 or float(closest.distance) > float(capability.range) or angle_delta > float(capability.arc_deg) * 0.5 + 0.000001: continue
+			if initial_distance <= float(capability.range) and initial_delta <= float(capability.arc_deg) * 0.5 + 0.000001: continue
+			eligible.append({"weapon_id": weapon_id, "allocation_basis_points": allocation,
+				"range": int(capability.range), "arc_deg": float(capability.arc_deg)})
+		if eligible.is_empty(): continue
+		eligible.sort_custom(func(a, b):
+			if int(a.allocation_basis_points) != int(b.allocation_basis_points): return int(a.allocation_basis_points) > int(b.allocation_basis_points)
+			return String(a.weapon_id) < String(b.weapon_id))
+		var capability: Dictionary = eligible[0]
 		candidates.append({"shooter_squadron_id": shooter_id, "target_squadron_id": target_id,
 			"distance": float(closest.distance), "bearing_deg": bearing, "facing_deg": facing,
 			"arc_deg": float(capability.arc_deg), "range": int(capability.range),
+			"selected_weapon_id": String(capability.weapon_id),
+			"allocation_basis_points": int(capability.allocation_basis_points),
 			"movement_order_index": int(event_by_squad[shooter_id].order_index)})
 	candidates.sort_custom(func(a, b):
 		if int(a.movement_order_index) != int(b.movement_order_index): return int(a.movement_order_index) < int(b.movement_order_index)
@@ -229,6 +254,11 @@ func _resolve_opportunity_fire(event_by_squad: Dictionary, detection: Dictionary
 		var index := events.size(); var event_id := _event_id("FIRE", turn_number, shooter_id, String(candidate.target_squadron_id))
 		var event: Dictionary = candidate.duplicate(true); event.event_id = event_id; event.turn = turn_number; event.order_index = index
 		event.outcome = "shot_authorized"; event.damage_pending = true; event.tie_breaker = String(_rules.deterministic_seed)
+		event.fire_control_snapshot = {"hold_fire": false,
+			"allocations": weapon_policy[shooter_id].allocations.duplicate(true),
+			"selected_weapon_id": String(candidate.selected_weapon_id),
+			"selected_allocation_basis_points": int(candidate.allocation_basis_points),
+			"eligibility": {"range": int(candidate.range), "arc_deg": float(candidate.arc_deg)}}
 		events.append(event)
 	return events
 
@@ -322,18 +352,26 @@ func _detection_ranges(squad: Dictionary) -> Dictionary:
 	return _rules.detection_ranges
 
 
-func _weapon_capability(squad: Dictionary) -> Dictionary:
-	var best := {"ship_type_id": "", "range": 0, "arc_deg": 0.0}
-	for component in squad.composition:
-		var count := int(component.count)
-		if count <= 0: continue
-		var ship_id := String(component.ship_type_id); var weapon: Dictionary = {}
-		if ship_id == Setup.FAST_CRAFT_ID: weapon = _rules.fast_craft_weapon_by_equipment.get(String(component.get("mission_equipment_id", "")), {})
-		else: weapon = _rules.opportunity_weapon_by_ship_type.get(ship_id, {})
-		if weapon.is_empty(): continue
-		if int(weapon.range) > int(best.range) or int(weapon.range) == int(best.range) and (String(best.ship_type_id).is_empty() or ship_id < String(best.ship_type_id)):
-			best.ship_type_id = ship_id; best.range = int(weapon.range); best.arc_deg = float(weapon.arc_deg)
-	return best
+func _validate_weapon_policy(policy: Dictionary) -> Dictionary:
+	if policy.size() != _operational_ids().size(): return _error("모든 operational 전대의 무기 정책이 필요합니다.")
+	var canonical: Dictionary = _weapon_control.interception_policy(_weapon_control.initial_state())
+	for squadron_id in _operational_ids():
+		if not policy.has(squadron_id) or not policy[squadron_id] is Dictionary: return _error("무기 정책이 누락되었습니다: %s" % squadron_id)
+		var row: Dictionary = policy[squadron_id]
+		if not row.get("hold_fire") is bool or not row.get("allocations") is Dictionary or not row.get("capabilities") is Array: return _error("무기 정책 스키마가 잘못되었습니다: %s" % squadron_id)
+		if row.capabilities != canonical[squadron_id].capabilities: return _error("무기 range/arc capability는 권위 규칙과 같아야 합니다: %s" % squadron_id)
+		var allocation_keys: Array = row.allocations.keys(); allocation_keys.sort()
+		if allocation_keys != ["artillery", "intercept", "line_fire", "torpedo"]: return _error("무기 정책 배분 키가 잘못되었습니다: %s" % squadron_id)
+		var available: Array = []; for capability in row.capabilities: available.append(String(capability.weapon_id))
+		var total := 0
+		for weapon_id in allocation_keys:
+			var value = row.allocations[weapon_id]
+			if not (value is int or value is float) or int(value) < 0 or int(value) > 10000 or not is_equal_approx(float(value), floor(float(value))): return _error("무기 정책 basis points가 잘못되었습니다: %s" % squadron_id)
+			if not available.has(weapon_id) and int(value) != 0: return _error("사용 불가 무기 정책은 0이어야 합니다: %s" % squadron_id)
+			total += int(value)
+		if total != (0 if available.is_empty() else 10000): return _error("무기 정책 합계가 잘못되었습니다: %s" % squadron_id)
+		if available.is_empty() and not bool(row.hold_fire): return _error("무장 0 전대는 사격 보류여야 합니다: %s" % squadron_id)
+	return _ok()
 
 
 func _contact_precedes(a: Dictionary, b: Dictionary) -> bool:
@@ -418,7 +456,7 @@ func _load_rules() -> Dictionary:
 	if not _positive_number(parsed.get("intersection_epsilon")): return _error("교차 epsilon은 양수여야 합니다.")
 	if String(parsed.get("intersection_policy", "")) != "actual_reached_polyline_only; hostile_only; endpoint_and_collinear_overlap_count; one_event_per_pair_per_turn": return _error("교차 판정 정책이 지원 계약과 다릅니다.")
 	if String(parsed.get("opportunity_fire_policy", "")) != "confirmed_target_enters_range_and_arc_while_target_moves; one_authorization_per_shooter_target_turn": return _error("기회 사격 정책이 지원 계약과 다릅니다.")
-	for key in ["hostile_faction_pairs", "detection_ranges", "opportunity_weapon_by_ship_type", "fast_craft_weapon_by_equipment"]:
+	for key in ["hostile_faction_pairs", "detection_ranges", "weapon_control_profile"]:
 		if not parsed.has(key): return _error("요격 규칙 필수 항목 누락: %s" % key)
 	if not parsed.hostile_faction_pairs is Array or parsed.hostile_faction_pairs.size() != 2: return _error("적대 세력 쌍은 유비-조조, 손권-조조여야 합니다.")
 	var hostile_keys: Array = []
@@ -428,12 +466,7 @@ func _load_rules() -> Dictionary:
 	hostile_keys.sort()
 	if hostile_keys != ["cao_cao|liu_bei", "cao_cao|sun_quan"]: return _error("적대 세력 쌍이 지원 계약과 다릅니다.")
 	if not parsed.detection_ranges is Dictionary or not _positive_number(parsed.detection_ranges.get("estimated_range")) or not _positive_number(parsed.detection_ranges.get("confirmed_range")) or float(parsed.detection_ranges.confirmed_range) > float(parsed.detection_ranges.estimated_range): return _error("데모 탐지 범위가 잘못되었습니다.")
-	for table_key in ["opportunity_weapon_by_ship_type", "fast_craft_weapon_by_equipment"]:
-		if not parsed[table_key] is Dictionary: return _error("기회 사격 표는 객체여야 합니다.")
-		for weapon in parsed[table_key].values():
-			if not weapon is Dictionary or not _positive_number(weapon.get("range")) or not _positive_number(weapon.get("arc_deg")) or float(weapon.arc_deg) > 360.0: return _error("기회 사격 규칙이 잘못되었습니다.")
-	var fast_ids: Array = parsed.fast_craft_weapon_by_equipment.keys(); fast_ids.sort()
-	if fast_ids != ["FAST-EQ-INTERCEPT", "FAST-EQ-TORPEDO"]: return _error("고속정 기회 사격 장비 경계가 잘못되었습니다.")
+	if String(parsed.weapon_control_profile) != "normal-demo-weapon-allocation-v1": return _error("무기 제어 규칙 연결이 잘못되었습니다.")
 	return {"ok": true, "errors": [], "rules": parsed.duplicate(true)}
 
 

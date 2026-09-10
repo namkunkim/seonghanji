@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-weapon-allocation-v1",
+  "statement": "적벽 데모의 무기 비율과 프리셋용 게임 수치이며 역사적 사실이나 실제 탄약·에너지·열 소비를 뜻하지 않는다.",
+  "application_timing": "submitted_with_command_draft; applied_atomically_at_resolution_start_before_opportunity_fire; persists_until_changed",
+  "total_basis_points": 10000,
+  "weapons": {
+    "artillery": {"name": "장거리 포격", "platforms": {"SHP-02": {"range": 150, "arc_deg": 80}, "SHP-03": {"range": 260, "arc_deg": 90}}, "fast_equipment": {}},
+    "line_fire": {"name": "전열 사격", "platforms": {"SHP-01": {"range": 190, "arc_deg": 120}, "SHP-04": {"range": 180, "arc_deg": 120}}, "fast_equipment": {}},
+    "intercept": {"name": "요격 사격", "platforms": {"SHP-07": {"range": 210, "arc_deg": 180}}, "fast_equipment": {"FAST-EQ-INTERCEPT": {"range": 200, "arc_deg": 200}}},
+    "torpedo": {"name": "뇌격", "platforms": {}, "fast_equipment": {"FAST-EQ-TORPEDO": {"range": 170, "arc_deg": 70}}}
+  },
+  "presets": {
+    "balanced": {"name": "균형 배분", "weights": {"artillery": 1, "line_fire": 1, "intercept": 1, "torpedo": 1}},
+    "long_range": {"name": "장거리 집중", "weights": {"artillery": 5, "line_fire": 2, "intercept": 1, "torpedo": 1}},
+    "screen": {"name": "요격망 우선", "weights": {"artillery": 1, "line_fire": 2, "intercept": 5, "torpedo": 2}},
+    "close_strike": {"name": "근접 타격", "weights": {"artillery": 1, "line_fire": 4, "intercept": 2, "torpedo": 5}}
+  },
+  "normalization": "changed_weapon_fixed_basis_points; remainder_proportional_to_previous_available_positive; equal_fallback; floor_then_fraction_desc_weapon_id_asc",
+  "result_pending": ["ammo", "energy", "heat", "hit", "damage", "casualties", "victory"]
+}
