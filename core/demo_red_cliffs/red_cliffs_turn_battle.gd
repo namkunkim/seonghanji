@@ -10,6 +10,7 @@ const FormationResolver := preload("res://core/demo_red_cliffs/red_cliffs_format
 const WeaponAllocation := preload("res://core/demo_red_cliffs/red_cliffs_weapon_allocation.gd")
 const CombatResources := preload("res://core/demo_red_cliffs/red_cliffs_combat_resources.gd")
 const PhaseLedger := preload("res://core/demo_red_cliffs/red_cliffs_phase_ledger.gd")
+const FogOfWar := preload("res://core/demo_red_cliffs/red_cliffs_fog_of_war.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
 	"weapon_fire", "damage", "casualties", "victory"
@@ -22,6 +23,7 @@ var _formation
 var _weapon_control
 var _combat_resources
 var _phase_ledger
+var _fog
 var _viewer_receipts_by_turn: Dictionary = {}
 var _viewer_phase_ledgers_by_turn: Dictionary = {}
 
@@ -54,12 +56,16 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	var phase_ledger = PhaseLedger.new()
 	var ledger_result: Dictionary = phase_ledger.initialize()
 	if not ledger_result.ok: return ledger_result
+	var fog = FogOfWar.new()
+	var fog_result: Dictionary = fog.initialize(setup)
+	if not fog_result.ok: return fog_result
 	_movement = movement
 	_interception = interception
 	_formation = formation
 	_weapon_control = weapon_control
 	_combat_resources = combat_resources
 	_phase_ledger = phase_ledger
+	_fog = fog
 	_viewer_receipts_by_turn = {}
 	_viewer_phase_ledgers_by_turn = {}
 	_state = {
@@ -198,15 +204,18 @@ func viewer_turn_log(viewer_faction_id: String) -> Dictionary:
 			visible["own_orders"] = row.liu_orders.duplicate(true)
 			visible["own_formation_orders"] = row.liu_formation_orders.duplicate(true)
 			visible["own_weapon_allocation_orders"] = row.liu_weapon_allocation_orders.duplicate(true)
+			visible["own_estimated_fire_orders"] = row.liu_estimated_fire_orders.duplicate(true)
 		elif viewer_faction_id == "sun_quan":
 			visible["own_orders"] = row.sun_orders.duplicate(true)
 			visible["own_formation_orders"] = row.sun_formation_orders.duplicate(true)
 			visible["own_weapon_allocation_orders"] = row.sun_weapon_allocation_orders.duplicate(true)
+			visible["own_estimated_fire_orders"] = row.sun_estimated_fire_orders.duplicate(true)
 			visible["own_control_decision"] = row.sun_control_decision.duplicate(true)
 		elif viewer_faction_id == "cao_cao":
 			visible["own_orders"] = row.cao_orders.duplicate(true)
 			visible["own_formation_orders"] = row.cao_formation_orders.duplicate(true)
 			visible["own_weapon_allocation_orders"] = row.cao_weapon_allocation_orders.duplicate(true)
+			visible["own_estimated_fire_orders"] = []
 		else: return _error("미지 관측 세력입니다: %s" % viewer_faction_id)
 		visible["tactical_events"] = visible_tactical_events(viewer_faction_id, int(row.turn)).events
 		logs.append(visible)
@@ -271,6 +280,34 @@ func weapon_allocation_order(squadron_id: String) -> Dictionary:
 		"total_basis_points": _allocation_total(orders[squadron_id].allocations)}
 
 
+func estimated_fire_order(squadron_id: String) -> Dictionary:
+	var draft: Dictionary = _state.get("command_draft", {})
+	var orders: Dictionary = draft.get("estimated_fire_orders", {})
+	return {"ok": true, "errors": [], "order": orders.get(squadron_id, {}).duplicate(true)}
+
+
+func set_estimated_fire(squadron_id: String, contact_id_value: String) -> Dictionary:
+	var access := _command_draft_access(squadron_id)
+	if not access.ok: return access
+	var faction_id := String(_state.command_draft.faction_id)
+	var contacts := visible_contacts(faction_id)
+	if not contacts.ok: return contacts
+	for value in contacts.contacts:
+		if value is Dictionary and String(value.get("contact_id", "")) == contact_id_value:
+			var made: Dictionary = _fog.make_order(faction_id, squadron_id, value, turn())
+			if not made.ok: return made
+			_state.command_draft.estimated_fire_orders[squadron_id] = made.order.duplicate(true)
+			return {"ok": true, "errors": [], "order": made.order.duplicate(true)}
+	return _error("현재 관측 정보에 없는 추정 contact입니다: %s" % contact_id_value)
+
+
+func clear_estimated_fire(squadron_id: String) -> Dictionary:
+	var access := _command_draft_access(squadron_id)
+	if not access.ok: return access
+	_state.command_draft.estimated_fire_orders.erase(squadron_id)
+	return _ok()
+
+
 func command_draft_summary() -> Dictionary:
 	var draft: Dictionary = _state.get("command_draft", {})
 	var orders: Dictionary = draft.get("orders", {})
@@ -281,6 +318,7 @@ func command_draft_summary() -> Dictionary:
 		if String(order.get("action", "")) == "move": move_count += 1
 	return {"faction_id": String(draft.get("faction_id", "")), "total": orders.size(),
 		"hold_count": hold_count, "move_count": move_count,
+		"estimated_fire_count": draft.get("estimated_fire_orders", {}).size(),
 		"all_orders_ready": not orders.is_empty() and orders.size() == _operational_squadron_ids(String(draft.get("faction_id", ""))).size()}
 
 
@@ -358,6 +396,7 @@ func submit_liu_orders(orders: Array) -> Dictionary:
 	_current_log()["liu_orders"] = checked.orders.duplicate(true)
 	_current_log()["liu_formation_orders"] = _submitted_formation_orders("liu_bei")
 	_current_log()["liu_weapon_allocation_orders"] = _submitted_weapon_orders("liu_bei")
+	_current_log()["liu_estimated_fire_orders"] = _submitted_estimated_fire_orders("liu_bei")
 	_state.command_draft = {}
 	if bool(_state.sun_prompt_policy.enabled):
 		_state.phase = "sun_control_prompt"
@@ -408,10 +447,12 @@ func submit_sun_orders(orders: Array) -> Dictionary:
 	_current_log()["sun_orders"] = checked.orders.duplicate(true)
 	_current_log()["sun_formation_orders"] = _submitted_formation_orders("sun_quan")
 	_current_log()["sun_weapon_allocation_orders"] = _submitted_weapon_orders("sun_quan")
+	_current_log()["sun_estimated_fire_orders"] = _submitted_estimated_fire_orders("sun_quan")
 	_state.command_draft = {}
 	_current_log()["cao_orders"] = _ai_hold_orders("cao_cao")
 	_current_log()["cao_formation_orders"] = _current_formation_orders("cao_cao")
 	_current_log()["cao_weapon_allocation_orders"] = _current_weapon_orders("cao_cao")
+	_current_log()["cao_estimated_fire_orders"] = []
 	_state.phase = "resolution"
 	return _ok()
 
@@ -451,7 +492,16 @@ func resolve_turn() -> Dictionary:
 	var decorated: Dictionary = _formation.decorate_shot_events(interception_result.opportunity_fire_events,
 		formation_result.formation_state, movement_result.live_navigation)
 	if not decorated.ok: return decorated
-	var resource_result: Dictionary = _combat_resources.resolve_shots(decorated.events,
+	var estimated_events: Array = []; var estimated_suppressed: Array = []
+	for faction_id in ["liu_bei", "sun_quan"]:
+		var estimated_result: Dictionary = _fog.authorize_orders(_estimated_orders_from_log(faction_id), faction_id,
+			movement_result.live_navigation, _weapon_control.interception_policy(weapon_result.weapon_allocation_state), turn())
+		if not estimated_result.ok: return estimated_result
+		estimated_events.append_array(estimated_result.estimated_fire_events)
+		estimated_suppressed.append_array(estimated_result.suppressed_events)
+	var all_authorized: Array = decorated.events.duplicate(true)
+	all_authorized.append_array(estimated_events)
+	var resource_result: Dictionary = _combat_resources.resolve_shots(all_authorized,
 		resource_base_state, turn())
 	if not resource_result.ok: return resource_result
 	var receipt := {
@@ -465,7 +515,9 @@ func resolve_turn() -> Dictionary:
 		"weapon_allocation_events": weapon_result.weapon_allocation_events.duplicate(true),
 		"path_intersection_events": interception_result.path_intersection_events.duplicate(true),
 		"detection_events": interception_result.detection_events.duplicate(true),
-		"opportunity_fire_events": resource_result.authorized_events.duplicate(true),
+		"opportunity_fire_events": _events_with_outcome(resource_result.authorized_events, "shot_authorized"),
+		"estimated_fire_events": _events_with_outcome(resource_result.authorized_events, "estimated_fire_authorized"),
+		"estimated_fire_suppressed_events": estimated_suppressed.duplicate(true),
 		"resource_consumption_events": resource_result.consumption_events.duplicate(true),
 		"suppressed_fire_events": resource_result.suppressed_fire_events.duplicate(true),
 		"resource_recovery_events": recovery_events.duplicate(true),
@@ -485,6 +537,8 @@ func resolve_turn() -> Dictionary:
 			"recovery_events": receipt.resource_recovery_events})
 		if not resource_visible.ok: return resource_visible
 		visible.events.append_array(resource_visible.events)
+		var fog_visible: Dictionary = _fog.visible_events(faction_id, receipt)
+		visible.events.append_array(fog_visible.events)
 		visible.events.sort_custom(func(a, b): return String(a.get("event_id", "")) < String(b.get("event_id", "")))
 		visible["turn"] = turn()
 		var viewer_ledger: Dictionary = _phase_ledger.build_viewer(turn(),
@@ -529,6 +583,8 @@ func _prepare_ai_resolution() -> void:
 	_current_log()["cao_formation_orders"] = _current_formation_orders("cao_cao")
 	_current_log()["sun_weapon_allocation_orders"] = _current_weapon_orders("sun_quan")
 	_current_log()["cao_weapon_allocation_orders"] = _current_weapon_orders("cao_cao")
+	_current_log()["sun_estimated_fire_orders"] = []
+	_current_log()["cao_estimated_fire_orders"] = []
 	_state.command_draft = {}
 	_current_log()["sun_orders"] = _ai_hold_orders("sun_quan")
 	_current_log()["cao_orders"] = _ai_hold_orders("cao_cao")
@@ -614,6 +670,27 @@ func _submitted_weapon_orders(faction_id: String) -> Array:
 	return result.duplicate(true)
 
 
+func _submitted_estimated_fire_orders(faction_id: String) -> Array:
+	var draft: Dictionary = _state.get("command_draft", {})
+	if String(draft.get("faction_id", "")) != faction_id: return []
+	var result: Array = draft.get("estimated_fire_orders", {}).values()
+	result.sort_custom(func(a, b): return String(a.squadron_id) < String(b.squadron_id))
+	return result.duplicate(true)
+
+
+func _estimated_orders_from_log(faction_id: String) -> Array:
+	if faction_id == "liu_bei": return _current_log().liu_estimated_fire_orders.duplicate(true)
+	if faction_id == "sun_quan": return _current_log().sun_estimated_fire_orders.duplicate(true)
+	return []
+
+
+func _events_with_outcome(events: Array, outcome: String) -> Array:
+	var result: Array = []
+	for value in events:
+		if value is Dictionary and String(value.get("outcome", "")) == outcome: result.append(value.duplicate(true))
+	return result
+
+
 func _weapon_draft_state() -> Dictionary:
 	var result := {}
 	for squadron_id in _state.get("command_draft", {}).get("weapon_allocation_orders", {}):
@@ -655,7 +732,8 @@ func _viewer_ledger_receipt(faction_id: String, receipt: Dictionary, visible_eve
 		"victory_check_required": bool(receipt.victory_check_required),
 		"formation_events": [], "weapon_allocation_events": [], "resource_recovery_events": [],
 		"movement_events": [], "path_intersection_events": [], "detection_events": [],
-		"opportunity_fire_events": [], "resource_consumption_events": [], "suppressed_fire_events": []}
+		"opportunity_fire_events": [], "estimated_fire_events": [], "estimated_fire_suppressed_events": [],
+		"resource_consumption_events": [], "suppressed_fire_events": []}
 	for source in ["formation_events", "weapon_allocation_events", "resource_recovery_events",
 			"movement_events", "resource_consumption_events", "suppressed_fire_events"]:
 		for value in receipt.get(source, []):
@@ -668,6 +746,8 @@ func _viewer_ledger_receipt(faction_id: String, receipt: Dictionary, visible_eve
 		if event_type == "path_intersection": source = "path_intersection_events"
 		elif event_type == "detection": source = "detection_events"
 		elif event_type == "shot_authorized": source = "opportunity_fire_events"
+		elif event_type == "estimated_fire_authorized": source = "estimated_fire_events"
+		elif event_type == "estimated_fire_suppressed": source = "estimated_fire_suppressed_events"
 		if not source.is_empty(): safe[source].append(value.duplicate(true))
 	return safe
 
@@ -698,6 +778,7 @@ func _begin_command_draft(faction_id: String) -> void:
 	var orders := {}
 	var formation_orders := {}
 	var weapon_orders := {}
+	var estimated_fire_orders := {}
 	for squadron_id in _operational_squadron_ids(faction_id):
 		orders[squadron_id] = {"squadron_id": squadron_id, "action": "hold"}
 		formation_orders[squadron_id] = {"squadron_id": squadron_id,
@@ -706,7 +787,7 @@ func _begin_command_draft(faction_id: String) -> void:
 		weapon_orders[squadron_id] = {"squadron_id": squadron_id,
 			"allocations": weapon_row.allocations.duplicate(true), "hold_fire": bool(weapon_row.hold_fire)}
 	_state.command_draft = {"faction_id": faction_id, "orders": orders, "formation_orders": formation_orders,
-		"weapon_allocation_orders": weapon_orders}
+		"weapon_allocation_orders": weapon_orders, "estimated_fire_orders": estimated_fire_orders}
 
 
 func _command_draft_access(squadron_id: String) -> Dictionary:
@@ -730,13 +811,16 @@ func _new_turn_log(turn_number: int) -> Dictionary:
 		"liu_orders": [],
 		"liu_formation_orders": [],
 		"liu_weapon_allocation_orders": [],
+		"liu_estimated_fire_orders": [],
 		"sun_control_decision": {},
 		"sun_orders": [],
 		"sun_formation_orders": [],
 		"sun_weapon_allocation_orders": [],
+		"sun_estimated_fire_orders": [],
 		"cao_orders": [],
 		"cao_formation_orders": [],
 		"cao_weapon_allocation_orders": [],
+		"cao_estimated_fire_orders": [],
 		"resolution_receipt": {},
 		"victory_check_required": false,
 	}

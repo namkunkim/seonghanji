@@ -45,6 +45,7 @@ var _preview_text: Label
 var _map_mode_text: Label
 var _viewer_faction_id := "liu_bei"
 var _ledger_phase_filter := ""
+var _selected_contact_id := ""
 
 
 func configure(battle_controller, applied_revision: int, applied_digest: String) -> Dictionary:
@@ -98,7 +99,7 @@ func _build() -> void:
 		var mode_button := _button(row[0], row[1], 112); mode_button.pressed.connect(_on_map_mode.bind(row[2])); map_tools.add_child(mode_button)
 	var reset_camera := _button("보기 초기화", "ResetMapCamera", 110); reset_camera.pressed.connect(func(): _map.reset_camera()); map_tools.add_child(reset_camera)
 	_map_mode_text = Label.new(); _map_mode_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map_mode_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT; _map_mode_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER; map_tools.add_child(_map_mode_text)
-	_map = TacticalMap.new(); _map.name = "AppliedSquadronMap"; _map.size_flags_vertical = Control.SIZE_EXPAND_FILL; _map.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map.squadron_selected.connect(_on_map_squadron_selected); _map.waypoint_requested.connect(_on_waypoint_requested); _map.interaction_rejected.connect(_on_interaction_rejected); map_panel.get_meta("stack").add_child(_map)
+	_map = TacticalMap.new(); _map.name = "AppliedSquadronMap"; _map.size_flags_vertical = Control.SIZE_EXPAND_FILL; _map.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map.squadron_selected.connect(_on_map_squadron_selected); _map.contact_selected.connect(_on_map_contact_selected); _map.waypoint_requested.connect(_on_waypoint_requested); _map.interaction_rejected.connect(_on_interaction_rejected); map_panel.get_meta("stack").add_child(_map)
 	var order_panel := _panel("이동 명령 초안", 405); body.add_child(order_panel)
 	var order_scroll := ScrollContainer.new(); order_scroll.name = "MovementOrderScroll"; order_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL; order_panel.get_meta("stack").add_child(order_scroll)
 	_orders = VBoxContainer.new(); _orders.name = "CurrentFactionOrders"; _orders.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _orders.add_theme_constant_override("separation", 6); order_scroll.add_child(_orders)
@@ -168,6 +169,11 @@ func _rebuild_map(snapshot: Dictionary) -> void:
 		var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id)
 		_map.configure(setup.get("battlefield_bounds", [0, 0, 1600, 900]), viewer.get("own_squadrons", []), viewer.get("own_navigation", {}))
 		_map.set_intelligence(_viewer_faction_id, viewer.get("contacts", []), viewer.get("tactical_events", []))
+		var selectable_contacts: Array[String] = []
+		for value in viewer.get("contacts", []):
+			if String(value.get("state", "")) == "estimated": selectable_contacts.append(String(value.get("contact_id", "")))
+		if not selectable_contacts.has(_selected_contact_id): _selected_contact_id = ""
+		_map.set_selected_contact(_selected_contact_id)
 	else: _map.clear_intelligence()
 	var editable := _editable_squadron_ids(snapshot)
 	if not editable.has(_selected_squadron_id): _selected_squadron_id = editable[0] if not editable.is_empty() else ""
@@ -226,6 +232,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	_preview_text = Label.new(); _preview_text.name = "MovementPreview"; _preview_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; _orders.add_child(_preview_text)
 	_update_preview_text(order)
 	_add_intelligence_panel()
+	_add_estimated_fire_editor()
 	_add_phase_ledger()
 	for future in ["탐지"]:
 		var disabled := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled.disabled = true; _orders.add_child(disabled)
@@ -318,6 +325,13 @@ func _select_squadron(id: String) -> void:
 func _on_map_squadron_selected(id: String) -> void: _select_squadron(id)
 
 
+func _on_map_contact_selected(contact_id: String) -> void:
+	var contact := _viewer_contact(contact_id)
+	if contact.is_empty() or String(contact.get("state", "")) != "estimated":
+		_last_error = "현재 추정 상태인 접촉만 선택할 수 있습니다."; _refresh(); return
+	_selected_contact_id = contact_id; _move_armed = false; _last_error = ""; _refresh()
+
+
 func _on_map_mode(mode: int) -> void:
 	if mode == TacticalMap.Mode.ADD_WAYPOINT:
 		_on_arm_move(); return
@@ -392,8 +406,8 @@ func _add_intelligence_panel() -> void:
 		if state in ["unknown", "undetected"]: continue
 		var contact_label := Label.new(); contact_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		if state in ["estimated", "lost"]:
-			contact_label.text = "△ 추정 접촉 · 마지막 확인 T%d · stale · 실제 위치와 다를 수 있음" % int(contact.get("last_seen_turn", 0))
-		else: contact_label.text = "● 확인 접촉 · 현재 위치 확인"
+			contact_label.text = _estimated_contact_text(contact)
+		else: contact_label.text = "● 확인 접촉 · 현재 위치 재확인"
 		_orders.add_child(contact_label)
 	var events_result: Dictionary = _battle.visible_tactical_events(_viewer_faction_id); var events: Array = events_result.get("events", [])
 	for index in range(events.size()):
@@ -458,6 +472,48 @@ func _formation_name(rows: Array, formation_id: String) -> String:
 
 func _sector_label(sector: String) -> String:
 	return {"front":"정면", "flank":"측면", "rear":"후면", "indeterminate":"방향 불명(동일 좌표)"}.get(sector, "방향 불명")
+
+
+func _estimated_contact_text(contact: Dictionary) -> String:
+	var position: Array = contact.get("last_known_position", [0, 0])
+	return "△ %s · 마지막 확인 (%.1f, %.1f) T%d · 경과 %d턴 · 신뢰 %d bp · 오차 반경 %d · T%d 뒤 만료 · 실제 위치와 다를 수 있음" % ["소실 접촉(stale)" if String(contact.get("state", "")) == "lost" else "추정 접촉", float(position[0]), float(position[1]), int(contact.get("last_seen_turn", 0)), int(contact.get("staleness_turns", 0)), int(contact.get("confidence_basis_points", 0)), int(contact.get("error_radius", 0)), int(contact.get("expires_after_turn", 0))]
+
+
+func _add_estimated_fire_editor() -> void:
+	if not _battle.has_method("estimated_fire_order") or _selected_squadron_id.is_empty(): return
+	var contacts: Array = _battle.visible_contacts(_viewer_faction_id).get("contacts", []); var estimated: Array = []
+	for value in contacts:
+		if String(value.get("state", "")) == "estimated": estimated.append(value)
+	var title := Label.new(); title.text = "추정 사격 · 마지막 확인 좌표 기준"; title.add_theme_color_override("font_color", Color("e8c779")); _orders.add_child(title)
+	if estimated.is_empty():
+		var none := Label.new(); none.text = "현재 선택 가능한 추정 접촉 없음"; _orders.add_child(none); return
+	for index in range(estimated.size()):
+		var contact: Dictionary = estimated[index]; var contact_id := String(contact.get("contact_id", "")); var select := _button(("● " if contact_id == _selected_contact_id else "○ ") + "추정 접촉 %d 선택" % (index + 1), "SelectEstimatedContact%d" % (index + 1), 340); select.pressed.connect(_on_map_contact_selected.bind(contact_id)); _orders.add_child(select)
+	if not _selected_contact_id.is_empty():
+		var selected := Label.new(); selected.name = "SelectedEstimatedContact"; selected.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; selected.text = _estimated_contact_text(_viewer_contact(_selected_contact_id)); _orders.add_child(selected)
+	var order_result: Dictionary = _battle.estimated_fire_order(_selected_squadron_id); var order: Dictionary = order_result.get("order", {})
+	if not order.is_empty():
+		var aim: Array = order.get("aim_position", [0, 0]); var offset: Array = order.get("error_offset", [0, 0]); var order_label := Label.new(); order_label.name = "EstimatedFireDraft"; order_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; order_label.text = "추정 사격 초안 · 코어 조준 (%.1f, %.1f) · 오차 (%.1f, %.1f) / 반경 %d · 신뢰 %d bp · 명중/피해 pending" % [float(aim[0]), float(aim[1]), float(offset[0]), float(offset[1]), int(order.get("error_radius", 0)), int(order.get("confidence_basis_points", 0))]; _orders.add_child(order_label)
+	var actions := HBoxContainer.new(); _orders.add_child(actions)
+	var stage := _button("추정 사격", "SetEstimatedFire", 165); stage.disabled = _selected_contact_id.is_empty(); stage.pressed.connect(_on_set_estimated_fire); actions.add_child(stage)
+	var clear := _button("추정 사격 취소", "ClearEstimatedFire", 165); clear.disabled = order.is_empty(); clear.pressed.connect(_on_clear_estimated_fire); actions.add_child(clear)
+
+
+func _viewer_contact(contact_id: String) -> Dictionary:
+	if _battle == null or not _battle.has_method("visible_contacts"): return {}
+	for value in _battle.visible_contacts(_viewer_faction_id).get("contacts", []):
+		if String(value.get("contact_id", "")) == contact_id: return value
+	return {}
+
+
+func _on_set_estimated_fire() -> void:
+	if _selected_squadron_id.is_empty() or _selected_contact_id.is_empty(): return
+	_set_receipt(_battle.set_estimated_fire(_selected_squadron_id, _selected_contact_id)); _refresh()
+
+
+func _on_clear_estimated_fire() -> void:
+	if _selected_squadron_id.is_empty(): return
+	_set_receipt(_battle.clear_estimated_fire(_selected_squadron_id)); _refresh()
 
 
 func _signed_percent(value: int) -> String:

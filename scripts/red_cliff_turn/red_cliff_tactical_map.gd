@@ -3,6 +3,7 @@ extends Control
 
 ## DEMO-RC-G4-02 전술 지도. 전장 좌표와 화면 좌표 변환/입력만 담당한다.
 signal squadron_selected(squadron_id: String)
+signal contact_selected(contact_id: String)
 signal waypoint_requested(point: Array)
 signal interaction_rejected(message: String)
 
@@ -22,6 +23,7 @@ var _intelligence_enabled := false
 var _viewer_faction_id := ""
 var _contacts_by_target: Dictionary = {}
 var _contacts_by_id: Dictionary = {}
+var _selected_contact_id := ""
 var _fire_events: Array = []
 var _mode := Mode.SELECT
 var _zoom := 1.0
@@ -69,6 +71,11 @@ func set_intelligence(viewer_faction_id: String, contacts: Array, fire_events: A
 			var row: Dictionary = value.duplicate(true); _contacts_by_id[String(row.get("contact_id", ""))] = row
 			if row.has("target_squadron_id"): _contacts_by_target[String(row.target_squadron_id)] = row
 	_fire_events = fire_events.duplicate(true); queue_redraw()
+
+
+func set_selected_contact(contact_id: String) -> void:
+	_selected_contact_id = contact_id if _contacts_by_id.has(contact_id) else ""
+	queue_redraw()
 
 
 func clear_intelligence() -> void:
@@ -151,6 +158,11 @@ func _gui_input(event: InputEvent) -> void:
 
 
 func _activate_click(point: Vector2, double_click: bool) -> void:
+	var contact_id := _contact_at(point)
+	if not contact_id.is_empty():
+		if _mode == Mode.SELECT: contact_selected.emit(contact_id)
+		else: interaction_rejected.emit("추정 접촉은 선택 모드에서 지정할 수 있습니다.")
+		return
 	var marker_id := _marker_at(point)
 	if not marker_id.is_empty():
 		if _editable_ids.has(marker_id): squadron_selected.emit(marker_id)
@@ -170,6 +182,15 @@ func _marker_at(point: Vector2) -> String:
 		var id := String(value.get("id", ""))
 		if not bool(_marker_descriptor(id).get("visible", false)): continue
 		if point.distance_to(marker_local_position(id)) <= MARKER_RADIUS + 6.0: return id
+	return ""
+
+
+func _contact_at(point: Vector2) -> String:
+	for contact_id in _contacts_by_id:
+		var contact: Dictionary = _contacts_by_id[contact_id]; var state := String(contact.get("state", "unknown"))
+		if state != "estimated": continue
+		var position = contact.get("display_position", contact.get("last_known_position"))
+		if position is Array and point.distance_to(battle_to_local(position)) <= MARKER_RADIUS + 8.0: return String(contact_id)
 	return ""
 
 
@@ -259,8 +280,10 @@ func _draw_opaque_contacts() -> void:
 		if not position is Array: continue
 		var p := battle_to_local(position); var stale := bool(contact.get("stale", false)); var state := String(contact.get("state", "unknown")); var color := Color("9b8d70") if stale else (Color("f08a68") if state == "confirmed" else Color("e0b66d"))
 		if state == "confirmed": draw_circle(p, MARKER_RADIUS + 4.0, color, false, 3.0); draw_circle(p, 7.0, color, true)
-		else: _draw_dashed_circle(p, MARKER_RADIUS + 5.0, color)
-		var label := "확인 접촉" if state == "confirmed" else ("%s · 마지막 확인 T%d · 실제 위치와 다를 수 있음" % ["소실 접촉(stale)" if stale else "추정 접촉", int(contact.get("last_seen_turn", 0))])
+		else:
+			_draw_dashed_circle(p, MARKER_RADIUS + 5.0, color)
+			if String(contact.get("contact_id", "")) == _selected_contact_id: draw_circle(p, MARKER_RADIUS + 11.0, Color("f3d27a"), false, 2.0)
+		var label := "확인 접촉 · 현재 위치 재확인" if state == "confirmed" else ("%s · 확인 T%d · 경과 %d · 오차 %d · 실제 좌표 아님" % ["소실 접촉(stale)" if state == "lost" else "추정 접촉", int(contact.get("last_seen_turn", 0)), int(contact.get("staleness_turns", 0)), int(contact.get("error_radius", 0))])
 		draw_string(get_theme_default_font(), p + Vector2(24, -9), label, HORIZONTAL_ALIGNMENT_LEFT, 390, 14, color)
 
 

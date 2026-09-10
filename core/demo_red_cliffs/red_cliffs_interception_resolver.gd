@@ -4,12 +4,14 @@ extends RefCounted
 ## DEMO-RC-G4-03 — 경로 교차·탐지·기회 사격의 결정론적 코어 권위.
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
 const WeaponAllocation := preload("res://core/demo_red_cliffs/red_cliffs_weapon_allocation.gd")
+const FogOfWar := preload("res://core/demo_red_cliffs/red_cliffs_fog_of_war.gd")
 const RULES_PATH := "res://data/red-cliffs-interception-rules.json"
-const STATE_RANK := {"undetected": 0, "estimated": 1, "confirmed": 2}
+const STATE_RANK := {"undetected": 0, "lost": 1, "estimated": 2, "confirmed": 3}
 
 var _setup: Dictionary = {}
 var _rules: Dictionary = {}
 var _weapon_control
+var _fog
 
 
 func initialize(applied_setup: Dictionary) -> Dictionary:
@@ -20,9 +22,12 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	var weapon_control = WeaponAllocation.new()
 	var weapon_result: Dictionary = weapon_control.initialize(setup_result.setup)
 	if not weapon_result.ok: return weapon_result
+	var fog = FogOfWar.new(); var fog_result: Dictionary = fog.initialize(setup_result.setup)
+	if not fog_result.ok: return fog_result
 	_setup = setup_result.setup.duplicate(true)
 	_rules = rules_result.rules.duplicate(true)
 	_weapon_control = weapon_control
+	_fog = fog
 	return _ok()
 
 
@@ -37,6 +42,7 @@ func initial_detection_state() -> Dictionary:
 			var key := _contact_key(String(observer.id), String(target.id))
 			result[key] = {"observer_squadron_id": String(observer.id), "target_squadron_id": String(target.id),
 				"state": "undetected", "last_known_position": null, "last_seen_turn": 0}
+			result[key].merge(_fog.initial_contact_fields())
 	return result
 
 
@@ -90,12 +96,16 @@ func visible_contacts(viewer_faction_id: String, detection_state: Dictionary,
 		var last_known = row.get("last_known_position")
 		var display_position = null
 		if state == "confirmed" and live_navigation.has(target_id): display_position = live_navigation[target_id].position.duplicate()
-		elif state == "estimated" and last_known is Array: display_position = last_known.duplicate()
-		if state == "undetected" and int(row.get("last_seen_turn", 0)) <= 0: continue
-		var contact := {"contact_id": _contact_id(viewer_faction_id, target_id), "state": state,
+		elif ["estimated", "lost"].has(state) and last_known is Array: display_position = last_known.duplicate()
+		if state == "undetected": continue
+		var contact := {"contact_id": _fog.contact_id(viewer_faction_id, target_id), "state": state,
 			"display_position": display_position,
 			"last_known_position": last_known.duplicate() if last_known is Array else null,
 			"last_seen_turn": int(row.get("last_seen_turn", 0)),
+			"staleness_turns": int(row.get("staleness_turns", 0)),
+			"confidence_basis_points": int(row.get("confidence_basis_points", 0)),
+			"error_radius": int(row.get("error_radius", 0)),
+			"expires_after_turn": int(row.get("expires_after_turn", 0)),
 			"stale": state != "confirmed",
 			"source_observer_squadron_id": String(row.get("observer_squadron_id", ""))}
 		if state == "confirmed": contact["target_squadron_id"] = target_id
@@ -118,7 +128,7 @@ func visible_tactical_events(viewer_faction_id: String, raw_receipt: Dictionary,
 	for value in raw_receipt.get("detection_events", []):
 		var row: Dictionary = value; var observer_id := String(row.observer_squadron_id)
 		if String(_find_squad(observer_id).faction_id) != viewer_faction_id: continue
-		if String(row.state) == "undetected" and int(row.last_seen_turn) <= 0: continue
+		if String(row.state) == "undetected": continue
 		events.append({"event_id": String(row.event_id), "event_type": "detection", "observer_squadron_id": observer_id,
 			"contact_id": _contact_id(viewer_faction_id, String(row.target_squadron_id)), "previous_state": String(row.previous_state),
 			"state": String(row.state), "last_known_position": row.last_known_position.duplicate() if row.last_known_position is Array else null,
@@ -193,17 +203,15 @@ func _resolve_detection(event_by_squad: Dictionary, detection: Dictionary, turn_
 		var distance := float(closest.distance); var previous := String(row.state); var state := "undetected"
 		if distance <= float(ranges.confirmed_range): state = "confirmed"
 		elif distance <= float(ranges.estimated_range): state = "estimated"
-		row.state = state
-		if state != "undetected":
-			# Record the point actually observed along the reached path, never the
-			# target's later unobserved endpoint.
-			row.last_known_position = closest.point_b.duplicate()
-			row.last_seen_turn = turn_number
+		var observed = closest.point_b.duplicate() if state != "undetected" else null
+		row = _fog.transition(row, state, observed, turn_number)
+		detection[key] = row
 		result.append({"event_id": _event_id("DET", turn_number, observer_id, target_id), "turn": turn_number,
 			"observer_squadron_id": observer_id, "target_squadron_id": target_id,
-			"previous_state": previous, "state": state, "minimum_distance": distance,
+			"previous_state": previous, "state": String(row.state), "minimum_distance": distance,
 			"last_known_position": row.last_known_position.duplicate() if row.last_known_position is Array else null,
-			"last_seen_turn": int(row.last_seen_turn)})
+			"last_seen_turn": int(row.last_seen_turn), "staleness_turns": int(row.staleness_turns),
+			"confidence_basis_points": int(row.confidence_basis_points), "error_radius": int(row.error_radius)})
 	return result
 
 
@@ -387,13 +395,7 @@ func _contact_precedes(a: Dictionary, b: Dictionary) -> bool:
 
 
 func _viewer_has_contact(viewer_faction_id: String, target_id: String, detection_state: Dictionary) -> bool:
-	var state := _viewer_contact_state(viewer_faction_id, target_id, detection_state)
-	if state != "undetected": return true
-	for value in detection_state.values():
-		if not value is Dictionary or String(value.target_squadron_id) != target_id: continue
-		var observer := _find_squad(String(value.observer_squadron_id))
-		if String(observer.get("faction_id", "")) == viewer_faction_id and int(value.last_seen_turn) > 0: return true
-	return false
+	return _viewer_contact_state(viewer_faction_id, target_id, detection_state) != "undetected"
 
 
 func _viewer_contact_state(viewer_faction_id: String, target_id: String, detection_state: Dictionary) -> String:
@@ -403,8 +405,7 @@ func _viewer_contact_state(viewer_faction_id: String, target_id: String, detecti
 		var observer := _find_squad(String(value.observer_squadron_id))
 		if String(observer.get("faction_id", "")) != viewer_faction_id: continue
 		var state := String(value.get("state", "undetected"))
-		if state == "confirmed": return state
-		if state == "estimated": best = state
+		if int(STATE_RANK.get(state, 0)) > int(STATE_RANK.get(best, 0)): best = state
 	return best
 
 
@@ -444,7 +445,7 @@ func _contact_key(observer_id: String, target_id: String) -> String: return "%s>
 
 
 func _contact_id(viewer_faction_id: String, target_id: String) -> String:
-	return "CONTACT-%s" % ("%s|%s|%s" % [_rules.deterministic_seed, viewer_faction_id, target_id]).sha256_text().substr(0, 12)
+	return _fog.contact_id(viewer_faction_id, target_id)
 
 
 func _event_id(kind: String, turn_number: int, a: String, b: String) -> String:

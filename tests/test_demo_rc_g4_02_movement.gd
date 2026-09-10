@@ -129,7 +129,7 @@ func _test_command_draft_and_live_persistence() -> void:
 	_ok(battle.initialize(setup).ok, "turn battle initializes movement boundary")
 	_eq(battle.current_direct_faction_id(), "liu_bei", "Liu is current direct-control faction")
 	var summary: Dictionary = battle.command_draft_summary()
-	_eq(summary, {"faction_id": "liu_bei", "total": 2, "hold_count": 2, "move_count": 0, "all_orders_ready": true}, "new direct-control draft defaults each squadron to hold")
+	_eq(summary, {"faction_id": "liu_bei", "total": 2, "hold_count": 2, "move_count": 0, "estimated_fire_count": 0, "all_orders_ready": true}, "new direct-control draft defaults each squadron to hold")
 	_eq(battle.command_order("RC-LIU-SQ-02").order.action, "hold", "per-squad query exposes persisted hold")
 	var before := battle.digest()
 	_ok(not battle.set_order_move("RC-LIU-SQ-01", [], 0).ok, "invalid move draft rejected")

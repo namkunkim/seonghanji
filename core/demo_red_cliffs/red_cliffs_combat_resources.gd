@@ -56,7 +56,7 @@ func resolve_shots(shot_events: Array, prior_state: Dictionary, turn_number: int
 	if turn_number < 1: return _error("턴 번호는 1 이상이어야 합니다.")
 	var rows := shot_events.duplicate(true)
 	for row in rows:
-		if not row is Dictionary or String(row.get("outcome", "")) != "shot_authorized" or String(row.get("event_id", "")).is_empty(): return _error("유효한 shot_authorized 이벤트만 자원을 예약할 수 있습니다.")
+		if not row is Dictionary or not ["shot_authorized", "estimated_fire_authorized"].has(String(row.get("outcome", ""))) or String(row.get("event_id", "")).is_empty(): return _error("유효한 사격 승인 이벤트만 자원을 예약할 수 있습니다.")
 		if int(row.get("turn", 0)) != turn_number: return _error("사격 이벤트 턴이 자원 판정 턴과 일치해야 합니다.")
 	rows.sort_custom(func(a, b): return String(a.event_id) < String(b.event_id))
 	var next := prior_state.duplicate(true); var authorized: Array = []; var consumed: Array = []; var suppressed: Array = []; var seen := {}
@@ -143,9 +143,12 @@ func _consume(row: Dictionary, weapon_id: String, cost: Dictionary) -> void:
 
 
 func _suppressed(event: Dictionary, reason: String, label: String) -> Dictionary:
-	return {"event_type": "fire_suppressed", "event_id": "SUP-%s" % String(event.event_id), "turn": int(event.get("turn", 0)),
+	var result := {"event_type": "fire_suppressed", "event_id": "SUP-%s" % String(event.event_id), "turn": int(event.get("turn", 0)),
 		"shot_event_id": String(event.event_id), "squadron_id": String(event.get("shooter_squadron_id", "")),
-		"weapon_id": String(event.get("selected_weapon_id", "")), "reason": reason, "reason_label": label}
+		"weapon_id": String(event.get("selected_weapon_id", "")), "reason": reason, "reason_label": label,
+		"authorization_type": String(event.get("outcome", ""))}
+	if event.has("contact_id"): result["contact_id"] = String(event.contact_id)
+	return result
 
 
 func _public_row(row: Dictionary) -> Dictionary:

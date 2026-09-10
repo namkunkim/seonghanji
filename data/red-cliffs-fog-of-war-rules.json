@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-fog-v1",
+  "deterministic_seed": "RED-CLIFFS-208-G5-01",
+  "statement": "적벽 데모의 전쟁 안개·추정 사격 규칙이며 실제 표적 위치, 명중, 피해 또는 승패를 계산하지 않는다.",
+  "contact_lifecycle": {
+    "estimated_memory_turns": 3,
+    "age_policy": "age_1_to_2_estimated; age_3_lost_stale; age_gt_3_expired_omit",
+    "estimated_confidence_basis_points": 5000,
+    "stale_confidence_loss_per_turn": 1000,
+    "minimum_confidence_basis_points": 1500,
+    "base_error_radius": 30,
+    "error_radius_per_stale_turn": 25,
+    "contact_id_policy": "viewer_faction_and_target_stable_for_battle_including_expiry_and_reacquisition"
+  },
+  "estimated_fire": {
+    "allowed_contact_state": "estimated",
+    "aim_policy": "sealed_last_known_plus_deterministic_error_clamped_to_battlefield_bounds_never_current_position",
+    "weapon_selection": "positive_allocation_and_last_known_range_arc; allocation_desc_weapon_id_asc; no_fallback_after_resource_gate",
+    "confidence_label": "low",
+    "result_pending": ["hit", "damage", "casualties", "victory"]
+  }
+}
