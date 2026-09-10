@@ -1,5 +1,7 @@
 # DEMO-RC-QA-04 — 수동 집결 전투 진입 독립 수용
 
+> **최신 상태(2026-09-10 · `MGMT-HANDOVER-01`): 과거 구현 기준선 증거.** 수동 장거리 집결은 최신 데모 필수 흐름에서 제외됐으므로 이 PASS는 최신 진입 수용을 뜻하지 않는다.
+
 ## 범위와 독립성
 
 이 수용은 구현 파일을 수정하지 않고 `tests/test_demo_rc_qa04_manual_deployment_loop.gd`에서 실제 `Main` 제품 장면을 기동한다. 시험은 `_start_red_cliff_demo()`와 가시 `Button.pressed`만 사용한다. 함대 위치, 도착 틱, manifest 참가자, 전투 상태·snapshot, 승패 및 뉴스는 직접 주입하지 않는다.
