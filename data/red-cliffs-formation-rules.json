@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-formation-v1",
+  "statement": "적벽 데모의 진형·방향 보정용 보통 난이도 게임 수치이며 역사적 사실이나 data/formations.json의 기존 5단계 전투 계수를 뜻하지 않는다.",
+  "application_timing": "submitted_with_command_draft; applied_atomically_at_resolution_start_before_movement_detection_and_fire; persists_until_changed",
+  "sector_rule": {
+    "front_limit_deg": 60.0,
+    "rear_limit_deg": 120.0,
+    "epsilon": 0.001,
+    "boundary_policy": "front_if_abs_delta_lte_front_limit; rear_if_abs_delta_gte_rear_limit; otherwise_flank; coincident_indeterminate"
+  },
+  "sector_defense_percent": {
+    "front": 10,
+    "flank": 0,
+    "rear": -15,
+    "indeterminate": 0
+  },
+  "formations": {
+    "FRM-01": {"name": "어린진", "role": "중앙 돌파", "mobility_percent": 5, "detection_percent": 0, "fire_percent": 10, "defense_percent": -5},
+    "FRM-02": {"name": "학익진", "role": "양익 포위", "mobility_percent": -5, "detection_percent": 5, "fire_percent": 5, "defense_percent": 10},
+    "FRM-03": {"name": "방원진", "role": "종심 방어", "mobility_percent": -10, "detection_percent": 0, "fire_percent": -5, "defense_percent": 15},
+    "FRM-04": {"name": "안행진", "role": "사격 전개", "mobility_percent": 0, "detection_percent": 5, "fire_percent": 15, "defense_percent": -5},
+    "FRM-05": {"name": "봉시진", "role": "축차 투입", "mobility_percent": 10, "detection_percent": -5, "fire_percent": 10, "defense_percent": -10},
+    "FRM-06": {"name": "장사진", "role": "종렬 항진", "mobility_percent": 15, "detection_percent": -10, "fire_percent": -5, "defense_percent": -10},
+    "FRM-07": {"name": "팔진", "role": "가변 대응", "mobility_percent": 0, "detection_percent": 10, "fire_percent": 10, "defense_percent": 10}
+  },
+  "result_contract": {
+    "shot_authorized_only": true,
+    "pending": ["hit", "damage", "ammo", "heat", "casualties", "victory"]
+  }
+}

@@ -194,7 +194,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	if _selected_squadron_id.is_empty():
 		var empty := Label.new(); empty.text = "현재 편집 가능한 전대가 없습니다."; _orders.add_child(empty)
 		_add_intelligence_panel()
-		for future in ["무기", "진형 변경", "탐지"]:
+		for future in ["무기", "탐지"]:
 			var disabled_empty := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled_empty.disabled = true; _orders.add_child(disabled_empty)
 		return
 	var squad := _find_squad(snapshot, _selected_squadron_id)
@@ -204,6 +204,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	var move := _button("이동 MOVE", "ArmOrderMove", 165); move.pressed.connect(_on_arm_move); action_row.add_child(move)
 	var order_result: Dictionary = _battle.command_order(_selected_squadron_id); var order: Dictionary = order_result.get("order", {})
 	var action := String(order.get("action", "hold")); var state := Label.new(); state.name = "OrderActionState"; state.text = "현재: %s%s" % [action.to_upper(), " · 첫 경유점 대기" if _move_armed and action != "move" else ""]; _orders.add_child(state)
+	_add_formation_editor()
 	var coord_row := HBoxContainer.new(); _orders.add_child(coord_row)
 	_coordinate_x = _spin("CoordinateX", float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[0]), float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[0] + snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[2])); coord_row.add_child(_coordinate_x)
 	_coordinate_y = _spin("CoordinateY", float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[1]), float(snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[1] + snapshot.get("applied_setup", {}).get("battlefield_bounds", [0,0,1600,900])[3])); coord_row.add_child(_coordinate_y)
@@ -218,7 +219,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	_preview_text = Label.new(); _preview_text.name = "MovementPreview"; _preview_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; _orders.add_child(_preview_text)
 	_update_preview_text(order)
 	_add_intelligence_panel()
-	for future in ["무기", "진형 변경", "탐지"]:
+	for future in ["무기", "탐지"]:
 		var disabled := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled.disabled = true; _orders.add_child(disabled)
 
 
@@ -276,7 +277,7 @@ func _status_for_phase(phase: String) -> String:
 	if phase == "liu_command": return "유비군 전대별 HOLD/MOVE 초안을 검토한 뒤 제출합니다."
 	if phase == "sun_control_prompt": return "손권군 제어 방식을 선택해야 계속할 수 있습니다."
 	if phase == "sun_command": return "손권군 전대별 HOLD/MOVE 초안을 검토한 뒤 제출합니다."
-	if phase == "victory_check": return "이동·경로 교차·탐지·기회 사격 판정이 확정되었습니다. 진형 변경·피해·승패는 후속 구현 대기입니다."
+	if phase == "victory_check": return "진형·이동·경로 교차·탐지·기회 사격 판정이 확정되었습니다. 명중·피해·승패는 후속 구현 대기입니다."
 	if phase == "turn_limit_reached": return "20/20 · 결과 판정 대기. 승자와 피해는 아직 계산하지 않았습니다."
 	return "AI 명령 및 명령 원장을 처리하는 중입니다."
 
@@ -391,12 +392,56 @@ func _add_intelligence_panel() -> void:
 		var event: Dictionary = events[index]; var event_label := Label.new(); event_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var kind := String(event.get("event_type", event.get("type", "전술 이벤트")))
 		if kind.contains("fire") or String(event.get("outcome", "")) == "shot_authorized":
+			var modifier: Dictionary = event.get("formation_modifier", {})
 			if String(event.get("own_role", "")) == "target":
-				event_label.text = "사격 %d · 적 기회 사격 승인 감지 · 피해 판정 후속" % [index + 1]
+				if modifier.is_empty():
+					event_label.text = "피격 경보 %d · 적 접촉 상세 비공개 · 명중/피해 판정 후속" % [index + 1]
+				else:
+					event_label.text = "피격 경보 %d · %s · 내 진형 방어 %s · sector 방어 %s · 합계 %s · 명중/피해 판정 후속" % [index + 1, _sector_label(String(modifier.get("incoming_sector", "indeterminate"))), _signed_percent(int(modifier.get("own_defense_percent", 0))), _signed_percent(int(modifier.get("own_sector_defense_percent", 0))), _signed_percent(int(modifier.get("own_total_defense_percent", 0)))]
 			else:
-				event_label.text = "사격 %d · 승인 · 거리 %.1f/사거리 %.1f · 방위 %.1f° · 사격각 %.1f° · 피해 판정 후속" % [index + 1, float(event.get("distance", 0)), float(event.get("range", 0)), float(event.get("bearing_deg", 0)), float(event.get("arc_deg", 0))]
+				event_label.text = "사격 %d · 승인 · 거리 %.1f/사거리 %.1f · 방위 %.1f° · 사격각 %.1f° · 표적 %s · 내 화력 %s · 명중/피해 판정 후속" % [index + 1, float(event.get("distance", 0)), float(event.get("range", 0)), float(event.get("bearing_deg", 0)), float(event.get("arc_deg", 0)), _sector_label(String(modifier.get("target_sector", "indeterminate"))), _signed_percent(int(modifier.get("own_fire_percent", 0)))]
 		else: event_label.text = "%d. %s · 코어 판정" % [index + 1, kind]
 		_orders.add_child(event_label)
+
+
+func _add_formation_editor() -> void:
+	if not _battle.has_method("formation_order") or not _battle.has_method("viewer_snapshot"): return
+	var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id); var allowed: Array = viewer.get("allowed_formations", [])
+	var current: Dictionary = viewer.get("own_formation_state", {}).get(_selected_squadron_id, {})
+	var draft_result: Dictionary = _battle.formation_order(_selected_squadron_id); var draft: Dictionary = draft_result.get("order", {})
+	var current_id := String(current.get("formation_id", "")); var draft_id := String(draft.get("formation_id", current_id))
+	var heading := Label.new(); heading.text = "진형 · 현재 %s / 변경 초안 %s" % [_formation_name(allowed, current_id), _formation_name(allowed, draft_id)]; heading.add_theme_color_override("font_color", Color("9fd4e2")); _orders.add_child(heading)
+	var picker := OptionButton.new(); picker.name = "FormationOrderPicker"; picker.custom_minimum_size = Vector2(340,44); picker.focus_mode = Control.FOCUS_ALL
+	var selected_index := 0
+	for index in range(allowed.size()):
+		var row: Dictionary = allowed[index]; picker.add_item("%s · %s" % [String(row.get("name", row.get("formation_id", ""))), String(row.get("role", ""))]); picker.set_item_metadata(index, String(row.get("formation_id", "")))
+		if String(row.get("formation_id", "")) == draft_id: selected_index = index
+	picker.select(selected_index); picker.item_selected.connect(_on_formation_selected.bind(picker)); _orders.add_child(picker)
+	var selected_row := _formation_row(allowed, draft_id); var modifiers: Dictionary = selected_row.get("modifiers", {})
+	var detail := Label.new(); detail.name = "FormationModifierSnapshot"; detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; detail.text = "코어 profile · 기동 %s · 탐지 %s · 화력 %s · 방어 %s" % [_signed_percent(int(modifiers.get("mobility_percent",0))), _signed_percent(int(modifiers.get("detection_percent",0))), _signed_percent(int(modifiers.get("fire_percent",0))), _signed_percent(int(modifiers.get("defense_percent",0)))]; _orders.add_child(detail)
+
+
+func _on_formation_selected(index: int, picker: OptionButton) -> void:
+	if _selected_squadron_id.is_empty() or index < 0: return
+	_set_receipt(_battle.set_formation_order(_selected_squadron_id, String(picker.get_item_metadata(index)))); _refresh()
+
+
+func _formation_row(rows: Array, formation_id: String) -> Dictionary:
+	for row in rows:
+		if String(row.get("formation_id", "")) == formation_id: return row
+	return {}
+
+
+func _formation_name(rows: Array, formation_id: String) -> String:
+	return String(_formation_row(rows, formation_id).get("name", formation_id))
+
+
+func _sector_label(sector: String) -> String:
+	return {"front":"정면", "flank":"측면", "rear":"후면", "indeterminate":"방향 불명(동일 좌표)"}.get(sector, "방향 불명")
+
+
+func _signed_percent(value: int) -> String:
+	return "%+d%%" % value
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

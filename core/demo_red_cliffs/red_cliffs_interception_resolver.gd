@@ -127,6 +127,26 @@ func visible_tactical_events(viewer_faction_id: String, raw_receipt: Dictionary,
 			visible_event.merge({"range": int(row.range), "distance": float(row.distance),
 				"bearing_deg": float(row.bearing_deg), "facing_deg": float(row.facing_deg),
 				"arc_deg": float(row.arc_deg)})
+		# Formation/sector detail is exact tactical information. A shooter already
+		# has the confirmed contact required to authorize the shot; a target only
+		# receives this detail when its own contact on the shooter is confirmed.
+		var exact_modifier_visible := shooter_own or _viewer_contact_state(viewer_faction_id, enemy_id, detection_state) == "confirmed"
+		if exact_modifier_visible and row.get("formation_modifier") is Dictionary:
+			var modifier: Dictionary = row.formation_modifier
+			if shooter_own:
+				visible_event["formation_modifier"] = {"own_role": "shooter",
+					"own_formation_id": String(modifier.shooter.formation_id),
+					"own_fire_percent": int(modifier.shooter.fire_percent),
+					"target_sector": String(modifier.target.sector),
+					"result_pending": modifier.result_pending.duplicate()}
+			else:
+				visible_event["formation_modifier"] = {"own_role": "target",
+					"own_formation_id": String(modifier.target.formation_id),
+					"own_defense_percent": int(modifier.target.defense_percent),
+					"incoming_sector": String(modifier.target.sector),
+					"own_sector_defense_percent": int(modifier.target.sector_defense_percent),
+					"own_total_defense_percent": int(modifier.target.total_defense_percent),
+					"result_pending": modifier.result_pending.duplicate()}
 		events.append(visible_event)
 	events.sort_custom(func(a, b): return String(a.event_id) < String(b.event_id))
 	return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "events": events}
@@ -324,11 +344,25 @@ func _contact_precedes(a: Dictionary, b: Dictionary) -> bool:
 
 
 func _viewer_has_contact(viewer_faction_id: String, target_id: String, detection_state: Dictionary) -> bool:
+	var state := _viewer_contact_state(viewer_faction_id, target_id, detection_state)
+	if state != "undetected": return true
 	for value in detection_state.values():
 		if not value is Dictionary or String(value.target_squadron_id) != target_id: continue
 		var observer := _find_squad(String(value.observer_squadron_id))
-		if String(observer.get("faction_id", "")) == viewer_faction_id and (String(value.state) != "undetected" or int(value.last_seen_turn) > 0): return true
+		if String(observer.get("faction_id", "")) == viewer_faction_id and int(value.last_seen_turn) > 0: return true
 	return false
+
+
+func _viewer_contact_state(viewer_faction_id: String, target_id: String, detection_state: Dictionary) -> String:
+	var best := "undetected"
+	for value in detection_state.values():
+		if not value is Dictionary or String(value.target_squadron_id) != target_id: continue
+		var observer := _find_squad(String(value.observer_squadron_id))
+		if String(observer.get("faction_id", "")) != viewer_faction_id: continue
+		var state := String(value.get("state", "undetected"))
+		if state == "confirmed": return state
+		if state == "estimated": best = state
+	return best
 
 
 func _hostile(a: String, b: String) -> bool:

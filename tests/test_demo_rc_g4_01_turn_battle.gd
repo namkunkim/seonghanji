@@ -110,7 +110,7 @@ func _test_manual_and_ai_flows() -> void:
 	_eq(battle.phase(), "victory_check", "resolution waits at external victory check")
 	_ok(battle.snapshot().resolved, "resolution marks current turn resolved")
 	_ok(receipt.victory_check_required, "resolution explicitly requires victory check")
-	_eq(receipt.rules_pending, ["weapon_fire", "formation_change", "damage", "casualties", "victory"], "post-detection pending detailed rules are explicit")
+	_eq(receipt.rules_pending, ["weapon_fire", "damage", "casualties", "victory"], "post-formation pending detailed rules are explicit")
 	_ok(not receipt.has("winner") and not receipt.has("damage") and not receipt.has("casualties"), "resolution invents no winner, damage, or casualties")
 	var log: Dictionary = battle.turn_log()[0]
 	_eq(log.turn, 1, "turn log records turn number")

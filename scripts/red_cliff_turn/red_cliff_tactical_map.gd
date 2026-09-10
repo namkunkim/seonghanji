@@ -235,13 +235,21 @@ func _draw_fire_events() -> void:
 	for index in range(_fire_events.size()):
 		var event: Dictionary = _fire_events[index]
 		if String(event.get("event_type", "")) != "shot_authorized": continue
-		var own_desc := _marker_descriptor(String(event.get("own_squadron_id", ""))); var contact: Dictionary = _contacts_by_id.get(String(event.get("contact_id", "")), {})
+		var own_desc := _marker_descriptor(String(event.get("own_squadron_id", ""))); var modifier: Dictionary = event.get("formation_modifier", {})
+		if not bool(own_desc.get("visible", false)): continue
+		var from := battle_to_local(own_desc.position); var color := Color("f08a68")
+		if String(event.get("own_role", "")) == "target":
+			draw_circle(from, MARKER_RADIUS + 10.0, color, false, 3.0)
+			var target_label := "피격 · 상세 비공개" if modifier.is_empty() else "피격 · %s · 방어 %s" % [_sector_text(String(modifier.incoming_sector)), _percent_text(int(modifier.own_total_defense_percent))]
+			draw_string(get_theme_default_font(), from + Vector2(25, 18), target_label, HORIZONTAL_ALIGNMENT_LEFT, 230, 13, color)
+			continue
+		var contact: Dictionary = _contacts_by_id.get(String(event.get("contact_id", "")), {})
 		var contact_position = contact.get("display_position")
 		if contact_position == null: contact_position = contact.get("last_known_position")
-		if not bool(own_desc.get("visible", false)) or not contact_position is Array: continue
-		var from := battle_to_local(own_desc.position); var to := battle_to_local(contact_position); var color := Color("f08a68")
+		if not contact_position is Array: continue
+		var to := battle_to_local(contact_position)
 		draw_dashed_line(from, to, color, 3.0, 7.0)
-		draw_string(get_theme_default_font(), (from + to) * 0.5 + Vector2(5, -6), "사격 %d" % (index + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, color)
+		draw_string(get_theme_default_font(), (from + to) * 0.5 + Vector2(5, -6), "사격 %d · 표적 %s · 화력 %s" % [index + 1, _sector_text(String(modifier.get("target_sector", "indeterminate"))), _percent_text(int(modifier.get("own_fire_percent", 0)))], HORIZONTAL_ALIGNMENT_LEFT, 250, 13, color)
 
 
 func _draw_opaque_contacts() -> void:
@@ -261,3 +269,11 @@ func _draw_dashed_circle(center: Vector2, radius: float, color: Color) -> void:
 		if index % 2 == 0: continue
 		var a := TAU * float(index) / 16.0; var b := TAU * float(index + 1) / 16.0
 		draw_line(center + Vector2(cos(a), sin(a)) * radius, center + Vector2(cos(b), sin(b)) * radius, color, 3.0)
+
+
+func _sector_text(sector: String) -> String:
+	return {"front":"정면", "flank":"측면", "rear":"후면", "indeterminate":"방향 불명(동일 좌표)"}.get(sector, "방향 불명")
+
+
+func _percent_text(value: int) -> String:
+	return "%+d%%" % value

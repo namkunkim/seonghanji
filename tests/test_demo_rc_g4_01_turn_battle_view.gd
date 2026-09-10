@@ -52,7 +52,8 @@ func _test_view_flow() -> void:
 	_eq(view.view_state().applied_digest, digest, "exact applied digest retained")
 	var tactical_map = view.find_child("AppliedSquadronMap", true, false)
 	_ok(tactical_map != null and tactical_map.marker_local_position("RC-LIU-SQ-01") != Vector2.ZERO, "live tactical squadron markers visible")
-	for name in ["Disabled무기", "Disabled진형 변경", "Disabled탐지"]:
+	_ok(view.find_child("FormationOrderPicker", true, false) != null, "G4-04 formation command is active")
+	for name in ["Disabled무기", "Disabled탐지"]:
 		var control: Button = view.find_child(name, true, false); _ok(control != null and control.disabled, "%s disabled" % name)
 	var first_digest: String = battle.digest(); view.call("_on_primary"); await _settle()
 	_eq(battle.phase(), "sun_control_prompt", "Liu HOLD opens prompt")
