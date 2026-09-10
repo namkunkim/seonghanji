@@ -199,5 +199,18 @@ func _test_product_entry() -> void:
 	var start: Button = view.find_child("StartTurnBattle", true, false)
 	start.pressed.emit()
 	await process_frame
-	_ok("아직 전투를 시작하지 않았습니다" in status.text, "battle start does not enter missing turn engine")
+	var turn_view: Control = main.red_cliff_turn_battle_view
+	_ok(bool(main.red_cliff_turn_battle_state.get("active", false)),
+		"battle start activates the validated G4 turn battle")
+	_ok(turn_view != null and turn_view.visible, "battle start opens the G4 turn view")
+	_eq(main.red_cliff_turn_battle_state.get("applied_digest"),
+		preparation_state_before.get("applied_digest"), "G4 receives current applied setup digest")
+	_eq(JSON.stringify(turn_view.battle_controller().snapshot().get("applied_setup", {})),
+		expected_applied_digest, "G4 controller receives the validated current applied setup")
+	_eq(main.find_children("RedCliffTurnBattleView", "Control", true, false).size(), 1,
+		"battle start creates a single G4 turn view")
+	var initial_log: Dictionary = turn_view.battle_controller().turn_log()[0]
+	_ok(not initial_log.get("resolution_receipt", {}).has("winner")
+		and not initial_log.get("resolution_receipt", {}).has("damage"),
+		"G4 start invents no winner or damage")
 	main.free()

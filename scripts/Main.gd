@@ -34,6 +34,11 @@ var red_cliff_scenario_choices: VBoxContainer
 var red_cliff_scenario_continue: Button
 var red_cliff_preparation_view: Control
 var red_cliff_preparation_state: Dictionary = {}
+var red_cliff_turn_battle_view: Control
+var red_cliff_turn_battle_state: Dictionary = {}
+var _red_cliff_turn_battle
+var _red_cliff_turn_applied_revision := 0
+var _red_cliff_turn_applied_digest := ""
 var _red_cliff_historical_setup: Dictionary = {}
 var _red_cliff_applied_setup: Dictionary = {}
 var active_menu_id := "overview"
@@ -70,11 +75,13 @@ const GameDataScript = preload("res://core/data/game_data.gd")
 const CampaignScript = preload("res://core/campaign.gd")
 const HomeMapSnapshotScript = preload("res://app/home_map_snapshot.gd")
 const RedCliffsDemoSetupScript = preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
+const RedCliffsTurnBattleScript = preload("res://core/demo_red_cliffs/red_cliffs_turn_battle.gd")
 const HOME_SUBMENU_PATH := "res://scripts/HomeSubmenu.gd"
 const FLEET_MOVE_PANEL_PATH := "res://scripts/FleetMovePanel.gd"
 const TACTICAL_ROUTE_VIEW_PATH := "res://app/views/tactical_route_view.gd"
 const FLEET_VOYAGE_3D_PATH := "res://app/views/fleet_voyage_3d.gd"
 const RED_CLIFF_PREPARATION_VIEW_PATH := "res://scripts/red_cliff_turn/red_cliff_preparation_view.gd"
+const RED_CLIFF_TURN_BATTLE_VIEW_PATH := "res://scripts/red_cliff_turn/red_cliff_turn_battle_view.gd"
 var hud_safe_rect := Rect2(184.0, 70.0, 1116.0, 620.0)
 var home_state: Dictionary = {}
 var home_snapshot
@@ -459,6 +466,11 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     red_cliff_battle_view = null
     red_cliff_preparation_view = null
     red_cliff_preparation_state.clear()
+    red_cliff_turn_battle_view = null
+    red_cliff_turn_battle_state.clear()
+    _red_cliff_turn_battle = null
+    _red_cliff_turn_applied_revision = 0
+    _red_cliff_turn_applied_digest = ""
     if map != null:
         map.visible = true
     ui_layer = CanvasLayer.new()
@@ -1462,6 +1474,7 @@ func _start_red_cliff_demo() -> bool:
         red_cliff_preparation_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
         red_cliff_preparation_view.connect("close_requested", _close_red_cliff_preparation)
         red_cliff_preparation_view.connect("formation_applied", _on_red_cliff_formation_applied)
+        red_cliff_preparation_view.connect("battle_started", _on_red_cliff_turn_battle_started)
         ui_root.add_child(red_cliff_preparation_view)
     red_cliff_preparation_view.call("configure", load_result, _red_cliff_applied_setup)
     red_cliff_preparation_view.visible = true
@@ -1499,6 +1512,55 @@ func _on_red_cliff_formation_applied(setup: Dictionary, summary: Dictionary) -> 
         "applied_setup": setup.duplicate(true),
         "errors": [],
     }
+
+
+func _on_red_cliff_turn_battle_started(setup: Dictionary, applied_revision: int, applied_digest: String) -> void:
+    if not is_instance_valid(red_cliff_turn_battle_view):
+        _red_cliff_turn_battle = RedCliffsTurnBattleScript.new()
+        var initialized: Dictionary = _red_cliff_turn_battle.initialize(setup)
+        if not bool(initialized.get("ok", false)):
+            red_cliff_preparation_view.call("battle_start_result", false, "턴 전투 시작 실패 · " + " · ".join(initialized.get("errors", [])))
+            return
+        _red_cliff_turn_applied_revision = applied_revision
+        _red_cliff_turn_applied_digest = applied_digest
+        var view_script: Script = load(RED_CLIFF_TURN_BATTLE_VIEW_PATH)
+        if view_script == null:
+            red_cliff_preparation_view.call("battle_start_result", false, "턴 전투 화면을 불러올 수 없습니다.")
+            return
+        red_cliff_turn_battle_view = view_script.new() as Control
+        red_cliff_turn_battle_view.name = "RedCliffTurnBattleView"
+        red_cliff_turn_battle_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+        red_cliff_turn_battle_view.connect("close_requested", _close_red_cliff_turn_battle)
+        red_cliff_turn_battle_view.connect("state_changed", _on_red_cliff_turn_battle_state_changed)
+        ui_root.add_child(red_cliff_turn_battle_view)
+        var configured: Dictionary = red_cliff_turn_battle_view.call("configure", _red_cliff_turn_battle, applied_revision, applied_digest)
+        if not bool(configured.get("ok", false)):
+            red_cliff_turn_battle_view.queue_free()
+            red_cliff_turn_battle_view = null
+            _red_cliff_turn_battle = null
+            red_cliff_preparation_view.call("battle_start_result", false, "턴 전투 화면 설정에 실패했습니다.")
+            return
+    red_cliff_preparation_view.visible = false
+    red_cliff_turn_battle_view.visible = true
+    red_cliff_preparation_view.call("battle_start_result", true, "진행 중인 턴 전투를 표시합니다.")
+    _on_red_cliff_turn_battle_state_changed(_red_cliff_turn_battle.snapshot())
+
+
+func _on_red_cliff_turn_battle_state_changed(snapshot: Dictionary) -> void:
+    red_cliff_turn_battle_state = {
+        "active": true,
+        "turn": int(snapshot.get("current_turn", 0)),
+        "phase": String(snapshot.get("phase", "uninitialized")),
+        "applied_revision": _red_cliff_turn_applied_revision,
+        "applied_digest": _red_cliff_turn_applied_digest,
+        "prompt_policy": snapshot.get("sun_prompt_policy", {}).duplicate(true),
+        "log_count": snapshot.get("turn_log", []).size(),
+    }
+
+
+func _close_red_cliff_turn_battle() -> void:
+    if is_instance_valid(red_cliff_turn_battle_view): red_cliff_turn_battle_view.visible = false
+    if is_instance_valid(red_cliff_preparation_view): red_cliff_preparation_view.visible = true
 
 
 func _close_red_cliff_preparation() -> void:

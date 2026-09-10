@@ -6,6 +6,7 @@ extends Control
 
 signal close_requested
 signal formation_applied(setup: Dictionary, summary: Dictionary)
+signal battle_started(setup: Dictionary, applied_revision: int, applied_digest: String)
 
 const FormationEditorScript := preload("res://scripts/red_cliff_turn/red_cliff_formation_editor.gd")
 
@@ -16,6 +17,7 @@ var _status: Label
 var _start_button: Button
 var _faction_columns: HBoxContainer
 var _formation_editor: Control
+var _start_requested := false
 
 
 func _ready() -> void:
@@ -297,7 +299,20 @@ func _on_formation_applied(setup: Dictionary, summary: Dictionary) -> void:
 func _on_start_pressed() -> void:
 	if not bool(_load_result.get("ok", false)):
 		return
-	_status.text = "전투 준비 완료 · 턴 전투 엔진 연결이 필요합니다. 아직 전투를 시작하지 않았습니다."
+	if _start_requested:
+		return
+	_start_requested = true
+	_start_button.disabled = true
+	var setup: Dictionary = _load_result.get("setup", {}).duplicate(true)
+	_status.text = "적용 편성을 검증하고 턴 전투를 여는 중입니다."
+	battle_started.emit(setup, int(setup.get("formation_revision", 0)), JSON.stringify(setup))
+
+
+func battle_start_result(ok: bool, message: String) -> void:
+	_start_requested = false
+	_start_button.disabled = not bool(_load_result.get("ok", false))
+	_status.text = message
+	_status.add_theme_color_override("font_color", Color("9fd7bc") if ok else Color("ff8f87"))
 
 
 func _button(text: String, node_name: String) -> Button:
