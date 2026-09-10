@@ -7,6 +7,7 @@
 > 작성일: 2026-09-09
 > 문서 성격: 게임 디렉션·시나리오·UX·기술 관점의 리뷰 및 후속 작업 제안
 > 상태: 실행 관리 중 — G0 일부 결정 수용, 제품 수용은 미완료
+> 요구사항 인터뷰: [MGMT-HANDOVER-01 적벽 데모 요구사항 인터뷰 기록](demo-rc-requirements-interview.md). 인터뷰 완료 전에는 이 문서의 과거 손권 플레이·선행 선택·수동 집결 가정을 새 구현 기준으로 사용하지 않는다.
 > 실행 기록: [8시간 자율 진행](demo-rc-overnight-execution.md) · 2026-09-10 사용자 위임에 따라 순차 진행
 > 마감 참고: [소스 후보 플레이 안내](demo-rc-fin-play-guide.md) · [중간 QA 증거](demo-rc-fin-qa-evidence.md). 자동시험 통과와 전체 데모 수용은 구분한다.
 > 최신 실행: [구현·검증 재개 관리](demo-rc-resumed-execution.md) — 사용자 전 범위 허용에 따라 Terra 멀티 에이전트로 잔여 진행 중.
