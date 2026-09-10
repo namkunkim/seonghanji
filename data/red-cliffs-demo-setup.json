@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "setup_id": "RED-CLIFFS-208-DIRECT",
+  "battle_id": "DEMO-RC-208-01",
+  "title": "적벽대전 전투 준비",
+  "player_faction_id": "liu_bei",
+  "historical_context": {
+    "date_label": "건안 13년(208) 적벽대전 직전",
+    "location_label": "구지 궤도 전역",
+    "statement": "세력·지휘관·전투 역할은 적벽대전의 역사적 구도를 바탕으로 한다. 함선 수, 비용과 2D 좌표는 게임 플레이를 위한 데모 값이다."
+  },
+  "balance_profile": {
+    "id": "normal-demo-v1",
+    "difficulty": "보통",
+    "statement": "함종별 수량·비용·초기 2D 좌표는 역사적 사실이 아닌 normal-demo-v1 게임 밸런스 값이다."
+  },
+  "ship_types": [
+    {"id": "SHP-01", "name": "강습모함", "unit_cost": 18, "category": "capital"},
+    {"id": "SHP-02", "name": "공성함", "unit_cost": 14, "category": "siege"},
+    {"id": "SHP-03", "name": "포격함", "unit_cost": 12, "category": "artillery"},
+    {"id": "SHP-04", "name": "전열함", "unit_cost": 10, "category": "line"},
+    {"id": "SHP-05", "name": "보급함", "unit_cost": 8, "category": "support"},
+    {"id": "SHP-06", "name": "전자전함", "unit_cost": 9, "category": "recon"},
+    {"id": "SHP-07", "name": "요격함", "unit_cost": 7, "category": "interceptor"},
+    {
+      "id": "SHP-08",
+      "name": "고속정",
+      "unit_cost": 2,
+      "category": "small_craft",
+      "mission_equipment": [
+        {"id": "FAST-EQ-INTERCEPT", "name": "요격", "unit_cost": 1},
+        {"id": "FAST-EQ-TORPEDO", "name": "뇌격", "unit_cost": 2},
+        {"id": "FAST-EQ-RECON", "name": "정찰", "unit_cost": 1},
+        {"id": "FAST-EQ-RESCUE", "name": "구조", "unit_cost": 1}
+      ]
+    }
+  ],
+  "factions": [
+    {"id": "liu_bei", "name": "유비군", "control": "player", "supreme_commander": "유비", "historical_role": "손유 연합의 유비 측 참가군"},
+    {"id": "sun_quan", "name": "손권군", "control": "turn_prompt_ai", "supreme_commander": "주유", "historical_role": "손유 연합의 손권 측 주력군"},
+    {"id": "cao_cao", "name": "조조군", "control": "ai", "supreme_commander": "조조", "historical_role": "북방에서 남하한 조조 측 주력군"}
+  ],
+  "squadrons": [
+    {
+      "id": "RC-LIU-SQ-01",
+      "faction_id": "liu_bei",
+      "name": "유비 기함 전대",
+      "commander": {"id": "CHR-0128", "name": "유비"},
+      "flagship": true,
+      "initial_position": [310, 590],
+      "formation_id": "FRM-01",
+      "historical_basis": "유비군 참가와 지휘 관계를 반영한 역사 역할 기준",
+      "composition": [
+        {"ship_type_id": "SHP-04", "count": 4},
+        {"ship_type_id": "SHP-07", "count": 3},
+        {"ship_type_id": "SHP-08", "count": 6, "mission_equipment_id": "FAST-EQ-RECON"}
+      ],
+      "declared_total_cost": 79
+    },
+    {
+      "id": "RC-SUN-SQ-01",
+      "faction_id": "sun_quan",
+      "name": "주유 수군 전대",
+      "commander": {"id": "CHR-0211", "name": "주유"},
+      "flagship": true,
+      "initial_position": [410, 500],
+      "formation_id": "FRM-02",
+      "historical_basis": "주유의 손권군 지휘와 연합 주력 역할을 반영",
+      "composition": [
+        {"ship_type_id": "SHP-01", "count": 1},
+        {"ship_type_id": "SHP-03", "count": 3},
+        {"ship_type_id": "SHP-04", "count": 5},
+        {"ship_type_id": "SHP-06", "count": 2},
+        {"ship_type_id": "SHP-07", "count": 4},
+        {"ship_type_id": "SHP-08", "count": 8, "mission_equipment_id": "FAST-EQ-TORPEDO"}
+      ],
+      "declared_total_cost": 182
+    },
+    {
+      "id": "RC-CAO-SQ-01",
+      "faction_id": "cao_cao",
+      "name": "조조 중군 전대",
+      "commander": {"id": "CHR-0034", "name": "조조"},
+      "flagship": true,
+      "initial_position": [1110, 330],
+      "formation_id": "FRM-04",
+      "historical_basis": "조조의 남하군 총지휘와 대규모 주력 역할을 반영",
+      "composition": [
+        {"ship_type_id": "SHP-01", "count": 2},
+        {"ship_type_id": "SHP-02", "count": 2},
+        {"ship_type_id": "SHP-03", "count": 6},
+        {"ship_type_id": "SHP-04", "count": 10},
+        {"ship_type_id": "SHP-05", "count": 3},
+        {"ship_type_id": "SHP-06", "count": 3},
+        {"ship_type_id": "SHP-07", "count": 5},
+        {"ship_type_id": "SHP-08", "count": 10, "mission_equipment_id": "FAST-EQ-INTERCEPT"}
+      ],
+      "declared_total_cost": 352
+    }
+  ]
+}

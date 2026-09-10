@@ -136,7 +136,7 @@
 [알림 — 프로젝트 고정 운영 설정]
 
 1. 오케스트레이터와 모든 하위 에이전트는 반드시 다음 설정을 사용한다.
-   - Model: gpt-5.6-terra
+   - Model: gpt-5.6-sol
    - Reasoning effort: medium
    - 다른 모델로 변경하거나 대체하지 않는다.
 

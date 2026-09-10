@@ -32,6 +32,8 @@ var red_cliff_scenario_prompt: Label
 var red_cliff_scenario_conditions: Label
 var red_cliff_scenario_choices: VBoxContainer
 var red_cliff_scenario_continue: Button
+var red_cliff_preparation_view: Control
+var red_cliff_preparation_state: Dictionary = {}
 var active_menu_id := "overview"
 var map_context_menu_id := "overview"
 var submenu: Control
@@ -65,10 +67,12 @@ const CANONICAL_WORLD_SIZE := Vector2(37312.0, 30000.0)
 const GameDataScript = preload("res://core/data/game_data.gd")
 const CampaignScript = preload("res://core/campaign.gd")
 const HomeMapSnapshotScript = preload("res://app/home_map_snapshot.gd")
+const RedCliffsDemoSetupScript = preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
 const HOME_SUBMENU_PATH := "res://scripts/HomeSubmenu.gd"
 const FLEET_MOVE_PANEL_PATH := "res://scripts/FleetMovePanel.gd"
 const TACTICAL_ROUTE_VIEW_PATH := "res://app/views/tactical_route_view.gd"
 const FLEET_VOYAGE_3D_PATH := "res://app/views/fleet_voyage_3d.gd"
+const RED_CLIFF_PREPARATION_VIEW_PATH := "res://scripts/red_cliff_turn/red_cliff_preparation_view.gd"
 var hud_safe_rect := Rect2(184.0, 70.0, 1116.0, 620.0)
 var home_state: Dictionary = {}
 var home_snapshot
@@ -451,6 +455,8 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
     battle_screen_state = null
     battle_screen_battle_id = ""
     red_cliff_battle_view = null
+    red_cliff_preparation_view = null
+    red_cliff_preparation_state.clear()
     if map != null:
         map.visible = true
     ui_layer = CanvasLayer.new()
@@ -1419,23 +1425,59 @@ func _route_home_action(route_id: String, title: String = "", icon: String = "",
             _open_home_submenu(route_id, title, icon, payload)
 
 
-## DEMO-RC-01 product entry. It uses only Campaign's public command surface;
-## no fixture, private ledger mutation, or injected battle snapshot is involved.
+## DEMO-RC-G2-01 — 유비 직행 전투 준비 화면 및 역사적 초기 상태 경계.
+## The focused demo now opens its explicit, validated 2D preparation boundary.
+## It does not replay the superseded Sun Quan choices or long deployment route.
 func _start_red_cliff_demo() -> bool:
-    if data == null:
+    if ui_root == null or not ResourceLoader.exists(RED_CLIFF_PREPARATION_VIEW_PATH):
         return false
-    var demo := CampaignScript.scenario_03(data, 20803)
-    demo.ai_domestic_enabled = false
-    campaign = demo
-    red_cliff_demo_mode = true
+    var load_result: Dictionary = RedCliffsDemoSetupScript.load_default()
+    red_cliff_preparation_state = {
+        "ready": bool(load_result.get("ok", false)),
+        "player_faction_id": String(load_result.get("setup", {}).get("player_faction_id", "")),
+        "setup_id": String(load_result.get("setup", {}).get("setup_id", "")),
+        "balance_profile_id": String(load_result.get("setup", {}).get("balance_profile", {}).get("id", "")),
+        "errors": load_result.get("errors", []).duplicate(),
+    }
+    if not is_instance_valid(red_cliff_preparation_view):
+        var preparation_script: Script = load(RED_CLIFF_PREPARATION_VIEW_PATH)
+        if preparation_script == null:
+            red_cliff_preparation_state = {"ready": false, "player_faction_id": "", "setup_id": "",
+                "balance_profile_id": "", "errors": ["전투 준비 화면을 불러올 수 없습니다."]}
+            return false
+        red_cliff_preparation_view = preparation_script.new() as Control
+        if red_cliff_preparation_view == null:
+            return false
+        red_cliff_preparation_view.name = "RedCliffPreparationView"
+        red_cliff_preparation_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+        red_cliff_preparation_view.connect("close_requested", _close_red_cliff_preparation)
+        ui_root.add_child(red_cliff_preparation_view)
+    red_cliff_preparation_view.call("configure", load_result)
+    red_cliff_preparation_view.visible = true
+    red_cliff_demo_mode = false
     if red_cliff_demo_button != null:
-        red_cliff_demo_button.text = "DEMO"
-        red_cliff_demo_button.tooltip_text = "적벽대전 단편 시나리오를 진행합니다."
-    campaign.world.clock.paused = true
-    playback_speed_index = 0
-    _refresh_home_snapshot()
-    _refresh_red_cliff_scenario_overlay()
+        red_cliff_demo_button.text = "준비"
+        red_cliff_demo_button.tooltip_text = "유비 시점의 적벽대전 역사 편성과 데모 밸런스를 확인합니다."
+    _close_home_submenu()
+    if is_instance_valid(red_cliff_scenario_overlay):
+        red_cliff_scenario_overlay.visible = false
+    if is_instance_valid(battle_screen):
+        battle_screen.visible = false
+    if map != null:
+        map.visible = false
+    _set_home_ui_visible(false)
+    if map_input_blocker != null:
+        map_input_blocker.visible = false
     return true
+
+
+func _close_red_cliff_preparation() -> void:
+    if is_instance_valid(red_cliff_preparation_view):
+        red_cliff_preparation_view.visible = false
+    if map != null:
+        map.visible = true
+    _set_home_ui_visible(true)
+    _refresh_red_cliff_banner()
 
 
 func _open_home_submenu(route_id: String, title: String, icon: String, route_payload: Dictionary = {}) -> void:
