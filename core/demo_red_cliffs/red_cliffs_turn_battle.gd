@@ -4,12 +4,14 @@ extends RefCounted
 ## DEMO-RC-G4-01 — 유비 명령·손권 제어 선택·20턴 판정 루프.
 ## 명령 원장과 턴 경계만 소유하며 이동·사격·피해·탐지·승패는 후속 resolver에 맡긴다.
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
+const MovementResolver := preload("res://core/demo_red_cliffs/red_cliffs_movement_resolver.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
-	"movement", "weapon_fire", "formation_change", "detection", "damage", "casualties", "victory"
+	"weapon_fire", "formation_change", "detection", "damage", "casualties", "victory"
 ]
 
 var _state: Dictionary = {}
+var _movement
 
 
 func _init(applied_setup: Dictionary = {}) -> void:
@@ -22,6 +24,10 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not bool(validation.get("ok", false)):
 		return _error("유효한 G3 적용 편성이 필요합니다.", validation.get("errors", []))
 	var setup: Dictionary = validation.get("setup", {}).duplicate(true)
+	var movement = MovementResolver.new()
+	var movement_result: Dictionary = movement.initialize(setup)
+	if not movement_result.ok: return movement_result
+	_movement = movement
 	_state = {
 		"applied_setup": setup,
 		"current_turn": 1,
@@ -29,8 +35,11 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 		"phase": "liu_command",
 		"resolved": false,
 		"sun_prompt_policy": {"enabled": true},
+		"live_navigation": _movement.initial_navigation(),
+		"command_draft": {},
 		"turn_log": [_new_turn_log(1)],
 	}
+	_begin_command_draft("liu_bei")
 	return _ok()
 
 
@@ -58,12 +67,79 @@ func turn_log() -> Array:
 	return _state.get("turn_log", []).duplicate(true)
 
 
+func live_navigation() -> Dictionary:
+	return _state.get("live_navigation", {}).duplicate(true)
+
+
+func movement_preview(squadron_id: String, waypoints: Array, facing_deg) -> Dictionary:
+	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
+	return _movement.movement_preview(squadron_id, waypoints, facing_deg, _state.live_navigation)
+
+
+func command_draft() -> Dictionary:
+	return _state.get("command_draft", {}).duplicate(true)
+
+
+func current_direct_faction_id() -> String:
+	if phase() == "liu_command": return "liu_bei"
+	if phase() == "sun_command": return "sun_quan"
+	return ""
+
+
+func command_order(squadron_id: String) -> Dictionary:
+	var draft: Dictionary = _state.get("command_draft", {})
+	var orders: Dictionary = draft.get("orders", {})
+	if not orders.has(squadron_id): return _error("현재 명령 초안에 전대가 없습니다: %s" % squadron_id)
+	return {"ok": true, "errors": [], "order": orders[squadron_id].duplicate(true)}
+
+
+func command_draft_summary() -> Dictionary:
+	var draft: Dictionary = _state.get("command_draft", {})
+	var orders: Dictionary = draft.get("orders", {})
+	var hold_count := 0
+	var move_count := 0
+	for order in orders.values():
+		if String(order.get("action", "")) == "hold": hold_count += 1
+		if String(order.get("action", "")) == "move": move_count += 1
+	return {"faction_id": String(draft.get("faction_id", "")), "total": orders.size(),
+		"hold_count": hold_count, "move_count": move_count,
+		"all_orders_ready": not orders.is_empty() and orders.size() == _operational_squadron_ids(String(draft.get("faction_id", ""))).size()}
+
+
+func set_order_hold(squadron_id: String) -> Dictionary:
+	var access := _command_draft_access(squadron_id)
+	if not access.ok: return access
+	_state.command_draft.orders[squadron_id] = {"squadron_id": squadron_id, "action": "hold"}
+	return _ok()
+
+
+func set_order_move(squadron_id: String, waypoints: Array, facing_deg) -> Dictionary:
+	var access := _command_draft_access(squadron_id)
+	if not access.ok: return access
+	var preview := movement_preview(squadron_id, waypoints, facing_deg)
+	if not preview.ok: return preview
+	_state.command_draft.orders[squadron_id] = {"squadron_id": squadron_id, "action": "move",
+		"waypoints": waypoints.duplicate(true), "facing_deg": float(facing_deg)}
+	return preview
+
+
+func submit_command_draft() -> Dictionary:
+	var draft: Dictionary = _state.get("command_draft", {})
+	var faction_id := String(draft.get("faction_id", ""))
+	var orders: Array = draft.get("orders", {}).values()
+	orders.sort_custom(func(a, b): return String(a.squadron_id) < String(b.squadron_id))
+	if phase() == "liu_command" and faction_id == "liu_bei": return submit_liu_orders(orders)
+	if phase() == "sun_command" and faction_id == "sun_quan": return submit_sun_orders(orders)
+	return _error("현재 단계의 직접 지휘 명령 초안을 제출할 수 없습니다.")
+
+
 func submit_liu_orders(orders: Array) -> Dictionary:
 	if phase() != "liu_command":
 		return _error("현재 단계에서는 유비군 명령을 제출할 수 없습니다.")
 	var checked := _validate_orders("liu_bei", orders)
 	if not bool(checked.get("ok", false)): return checked
 	_current_log()["liu_orders"] = checked.orders.duplicate(true)
+	_state.command_draft = {}
 	if bool(_state.sun_prompt_policy.enabled):
 		_state.phase = "sun_control_prompt"
 	else:
@@ -90,6 +166,7 @@ func submit_sun_control_choice(answer: String, dont_ask_again: bool = false) -> 
 	}
 	if manual:
 		_state.phase = "sun_command"
+		_begin_command_draft("sun_quan")
 	else:
 		if dont_ask_again: _state.sun_prompt_policy.enabled = false
 		_prepare_ai_resolution()
@@ -110,6 +187,7 @@ func submit_sun_orders(orders: Array) -> Dictionary:
 	var checked := _validate_orders("sun_quan", orders)
 	if not bool(checked.get("ok", false)): return checked
 	_current_log()["sun_orders"] = checked.orders.duplicate(true)
+	_state.command_draft = {}
 	_current_log()["cao_orders"] = _ai_hold_orders("cao_cao")
 	_state.phase = "resolution"
 	return _ok()
@@ -118,13 +196,21 @@ func submit_sun_orders(orders: Array) -> Dictionary:
 func resolve_turn() -> Dictionary:
 	if phase() != "resolution":
 		return _error("현재 단계에서는 턴 판정을 확정할 수 없습니다.")
+	var orders: Array = []
+	orders.append_array(_current_log().liu_orders)
+	orders.append_array(_current_log().sun_orders)
+	orders.append_array(_current_log().cao_orders)
+	var movement_result: Dictionary = _movement.resolve_orders(orders, _state.live_navigation)
+	if not movement_result.ok: return movement_result
 	var receipt := {
 		"ok": true,
 		"turn": turn(),
 		"status": "orders_committed",
 		"rules_pending": RULES_PENDING.duplicate(),
+		"movement_events": movement_result.events.duplicate(true),
 		"victory_check_required": true,
 	}
+	_state.live_navigation = movement_result.live_navigation.duplicate(true)
 	var log := _current_log()
 	log.resolution_receipt = receipt.duplicate(true)
 	log.victory_check_required = true
@@ -142,10 +228,12 @@ func continue_turn() -> Dictionary:
 	_state.phase = "liu_command"
 	_state.resolved = false
 	_state.turn_log.append(_new_turn_log(turn()))
+	_begin_command_draft("liu_bei")
 	return _ok()
 
 
 func _prepare_ai_resolution() -> void:
+	_state.command_draft = {}
 	_current_log()["sun_orders"] = _ai_hold_orders("sun_quan")
 	_current_log()["cao_orders"] = _ai_hold_orders("cao_cao")
 	_state.phase = "resolution"
@@ -161,16 +249,28 @@ func _validate_orders(faction_id: String, orders: Array) -> Dictionary:
 		if not value is Dictionary:
 			return _error("명령은 squadron_id와 action을 가진 객체여야 합니다.")
 		var order: Dictionary = value
-		if order.size() != 2 or not order.has("squadron_id") or not order.has("action"):
-			return _error("명령 스키마는 {squadron_id, action}만 허용합니다.")
+		if not order.has("squadron_id") or not order.has("action"):
+			return _error("명령에는 squadron_id와 action이 필요합니다.")
 		var squadron_id := String(order.get("squadron_id", ""))
 		if not expected_set.has(squadron_id):
 			return _error("미지 전대이거나 해당 세력의 operational 전대가 아닙니다: %s" % squadron_id)
 		if seen.has(squadron_id): return _error("전대 명령이 중복되었습니다: %s" % squadron_id)
-		if String(order.get("action", "")) != "hold":
-			return _error("이번 단계에서는 hold 명령만 허용합니다.")
+		var action := String(order.get("action", ""))
+		if action == "hold":
+			if order.size() != 2: return _error("hold 명령에는 이동 필드를 지정할 수 없습니다.")
+		elif action == "move":
+			if order.size() != 4 or not order.has("waypoints") or not order.has("facing_deg") or not order.waypoints is Array:
+				return _error("move 명령 스키마는 squadron_id, action, waypoints, facing_deg입니다.")
+			var preview := movement_preview(squadron_id, order.waypoints, order.facing_deg)
+			if not preview.ok: return preview
+		else:
+			return _error("hold 또는 move 명령만 허용합니다.")
 		seen[squadron_id] = true
-		normalized.append({"squadron_id": squadron_id, "action": "hold"})
+		var normalized_order := {"squadron_id": squadron_id, "action": action}
+		if action == "move":
+			normalized_order.waypoints = order.waypoints.duplicate(true)
+			normalized_order.facing_deg = float(order.facing_deg)
+		normalized.append(normalized_order)
 	if seen.size() != expected.size():
 		return _error("세력의 모든 operational 전대 명령을 제출해야 합니다.")
 	normalized.sort_custom(func(a, b): return String(a.squadron_id) < String(b.squadron_id))
@@ -192,6 +292,24 @@ func _operational_squadron_ids(faction_id: String) -> Array:
 			result.append(String(value.get("id", "")))
 	result.sort()
 	return result
+
+
+func _begin_command_draft(faction_id: String) -> void:
+	var orders := {}
+	for squadron_id in _operational_squadron_ids(faction_id):
+		orders[squadron_id] = {"squadron_id": squadron_id, "action": "hold"}
+	_state.command_draft = {"faction_id": faction_id, "orders": orders}
+
+
+func _command_draft_access(squadron_id: String) -> Dictionary:
+	var faction_id := ""
+	if phase() == "liu_command": faction_id = "liu_bei"
+	elif phase() == "sun_command": faction_id = "sun_quan"
+	if faction_id.is_empty() or String(_state.get("command_draft", {}).get("faction_id", "")) != faction_id:
+		return _error("현재 단계에는 편집 가능한 명령 초안이 없습니다.")
+	if not _operational_squadron_ids(faction_id).has(squadron_id):
+		return _error("현재 직접 지휘 세력의 operational 전대가 아닙니다: %s" % squadron_id)
+	return _ok()
 
 
 func _current_log() -> Dictionary:

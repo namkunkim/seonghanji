@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-movement-v1",
+  "statement": "적벽 데모의 자유 좌표 이동을 위한 게임 밸런스 값이며 역사적 사실을 뜻하지 않는다.",
+  "max_waypoints": 5,
+  "coordinate_rule": "applied_setup.battlefield_bounds 안의 finite [x,y] 좌표",
+  "facing_rule": "finite degree, 0 <= facing_deg < 360",
+  "default_facing_deg": 0,
+  "base_speed_by_ship_type": {
+    "SHP-01": 120,
+    "SHP-02": 90,
+    "SHP-03": 130,
+    "SHP-04": 140,
+    "SHP-05": 70,
+    "SHP-06": 80,
+    "SHP-07": 180,
+    "SHP-08": 220
+  }
+}

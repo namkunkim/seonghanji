@@ -50,8 +50,9 @@ func _test_view_flow() -> void:
 	root.add_child(view); await _settle()
 	_eq(view.size.round(), Vector2(1600, 900), "view fills 1600x900")
 	_eq(view.view_state().applied_digest, digest, "exact applied digest retained")
-	_eq(view.find_children("MapMarker_*", "Button", true, false).size(), setup.squadrons.size(), "all applied squadron markers visible")
-	for name in ["Disabled이동", "Disabled무기", "Disabled진형 변경", "Disabled탐지"]:
+	var tactical_map = view.find_child("AppliedSquadronMap", true, false)
+	_ok(tactical_map != null and tactical_map.marker_local_position("RC-LIU-SQ-01") != Vector2.ZERO, "live tactical squadron markers visible")
+	for name in ["Disabled무기", "Disabled진형 변경", "Disabled탐지"]:
 		var control: Button = view.find_child(name, true, false); _ok(control != null and control.disabled, "%s disabled" % name)
 	var first_digest: String = battle.digest(); view.call("_on_primary"); await _settle()
 	_eq(battle.phase(), "sun_control_prompt", "Liu HOLD opens prompt")
@@ -63,7 +64,8 @@ func _test_view_flow() -> void:
 	view.find_child("PrimaryTurnAction", true, false).pressed.emit(); await _settle()
 	_eq(battle.phase(), "victory_check", "manual Sun HOLD resolves ledger once")
 	var receipt: Dictionary = battle.turn_log()[0].resolution_receipt
-	_ok(receipt.get("rules_pending", []).has("movement") and not receipt.has("winner") and not receipt.has("damage"), "summary is rules_pending without fake result")
+	_ok(not receipt.get("rules_pending", []).has("movement") and not receipt.get("movement_events", []).is_empty() \
+		and not receipt.has("winner") and not receipt.has("damage"), "movement resolves while remaining rules stay pending without fake result")
 	_ok(view.find_child("TurnStatus", true, false).text.contains("후속 구현 대기"), "pending victory copy visible")
 	view.find_child("PrimaryTurnAction", true, false).pressed.emit(); await _settle()
 	_eq(battle.turn(), 2, "next turn increments once")
