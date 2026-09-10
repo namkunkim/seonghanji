@@ -34,6 +34,8 @@ var red_cliff_scenario_choices: VBoxContainer
 var red_cliff_scenario_continue: Button
 var red_cliff_preparation_view: Control
 var red_cliff_preparation_state: Dictionary = {}
+var _red_cliff_historical_setup: Dictionary = {}
+var _red_cliff_applied_setup: Dictionary = {}
 var active_menu_id := "overview"
 var map_context_menu_id := "overview"
 var submenu: Control
@@ -1432,13 +1434,21 @@ func _start_red_cliff_demo() -> bool:
     if ui_root == null or not ResourceLoader.exists(RED_CLIFF_PREPARATION_VIEW_PATH):
         return false
     var load_result: Dictionary = RedCliffsDemoSetupScript.load_default()
-    red_cliff_preparation_state = {
-        "ready": bool(load_result.get("ok", false)),
-        "player_faction_id": String(load_result.get("setup", {}).get("player_faction_id", "")),
-        "setup_id": String(load_result.get("setup", {}).get("setup_id", "")),
-        "balance_profile_id": String(load_result.get("setup", {}).get("balance_profile", {}).get("id", "")),
-        "errors": load_result.get("errors", []).duplicate(),
-    }
+    if bool(load_result.get("ok", false)) and _red_cliff_historical_setup.is_empty():
+        _red_cliff_historical_setup = load_result.get("setup", {}).duplicate(true)
+    if bool(load_result.get("ok", false)) and _red_cliff_applied_setup.is_empty():
+        _red_cliff_applied_setup = _red_cliff_historical_setup.duplicate(true)
+    if red_cliff_preparation_state.is_empty():
+        red_cliff_preparation_state = {
+            "ready": bool(load_result.get("ok", false)),
+            "player_faction_id": String(_red_cliff_applied_setup.get("player_faction_id", "")),
+            "setup_id": String(_red_cliff_applied_setup.get("setup_id", "")),
+            "balance_profile_id": String(_red_cliff_applied_setup.get("balance_profile", {}).get("id", "")),
+            "applied_revision": int(_red_cliff_applied_setup.get("formation_revision", 0)),
+            "applied_digest": JSON.stringify(_red_cliff_applied_setup),
+            "applied_setup": _red_cliff_applied_setup.duplicate(true),
+            "errors": load_result.get("errors", []).duplicate(),
+        }
     if not is_instance_valid(red_cliff_preparation_view):
         var preparation_script: Script = load(RED_CLIFF_PREPARATION_VIEW_PATH)
         if preparation_script == null:
@@ -1451,8 +1461,9 @@ func _start_red_cliff_demo() -> bool:
         red_cliff_preparation_view.name = "RedCliffPreparationView"
         red_cliff_preparation_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
         red_cliff_preparation_view.connect("close_requested", _close_red_cliff_preparation)
+        red_cliff_preparation_view.connect("formation_applied", _on_red_cliff_formation_applied)
         ui_root.add_child(red_cliff_preparation_view)
-    red_cliff_preparation_view.call("configure", load_result)
+    red_cliff_preparation_view.call("configure", load_result, _red_cliff_applied_setup)
     red_cliff_preparation_view.visible = true
     red_cliff_demo_mode = false
     if red_cliff_demo_button != null:
@@ -1469,6 +1480,25 @@ func _start_red_cliff_demo() -> bool:
     if map_input_blocker != null:
         map_input_blocker.visible = false
     return true
+
+
+func _on_red_cliff_formation_applied(setup: Dictionary, summary: Dictionary) -> void:
+    _red_cliff_applied_setup = setup.duplicate(true)
+    var faction_costs: Dictionary = summary.get("faction_costs", {}).duplicate(true)
+    var player_faction_id := String(setup.get("player_faction_id", ""))
+    red_cliff_preparation_state = {
+        "ready": true,
+        "player_faction_id": player_faction_id,
+        "setup_id": String(setup.get("setup_id", "")),
+        "balance_profile_id": String(setup.get("balance_profile", {}).get("id", "")),
+        "applied_revision": int(summary.get("formation_revision", setup.get("formation_revision", 0))),
+        "total_cost": int(faction_costs.get(player_faction_id, 0)),
+        "faction_costs": faction_costs,
+        "overcap_summary": summary.get("over_cap_squadrons", []).duplicate(),
+        "applied_digest": JSON.stringify(setup),
+        "applied_setup": setup.duplicate(true),
+        "errors": [],
+    }
 
 
 func _close_red_cliff_preparation() -> void:

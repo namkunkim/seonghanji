@@ -4,6 +4,16 @@
   "battle_id": "DEMO-RC-208-01",
   "title": "적벽대전 전투 준비",
   "player_faction_id": "liu_bei",
+  "formation_revision": 0,
+  "formation_options": {"sun_manual": false},
+  "battlefield_bounds": [0, 0, 1600, 900],
+  "command_limit_rules": {
+    "recommended_base_cost": 40,
+    "recommended_cost_per_command": 2,
+    "over_tier_ratio": 0.25,
+    "max_penalty_tier": 4,
+    "penalty_per_tier": {"mobility_percent": 5, "accuracy_percent": 4, "formation_change_percent": 8}
+  },
   "historical_context": {
     "date_label": "건안 13년(208) 적벽대전 직전",
     "location_label": "구지 궤도 전역",
@@ -36,9 +46,37 @@
     }
   ],
   "factions": [
-    {"id": "liu_bei", "name": "유비군", "control": "player", "supreme_commander": "유비", "historical_role": "손유 연합의 유비 측 참가군"},
-    {"id": "sun_quan", "name": "손권군", "control": "turn_prompt_ai", "supreme_commander": "주유", "historical_role": "손유 연합의 손권 측 주력군"},
-    {"id": "cao_cao", "name": "조조군", "control": "ai", "supreme_commander": "조조", "historical_role": "북방에서 남하한 조조 측 주력군"}
+    {
+      "id": "liu_bei", "name": "유비군", "control": "player", "supreme_commander": "유비",
+      "historical_role": "손유 연합의 유비 측 참가군",
+      "inventory": {"SHP-01": 1, "SHP-02": 2, "SHP-03": 5, "SHP-04": 10, "SHP-05": 3, "SHP-06": 3, "SHP-07": 8, "SHP-08": 16},
+      "demo_roster": [
+        {"id": "CHR-0128", "name": "유비", "command": 82, "level": 8},
+        {"id": "CHR-0134", "name": "제갈량", "command": 96, "level": 9},
+        {"id": "CHR-0137", "name": "조운", "command": 91, "level": 8},
+        {"id": "CHR-0129", "name": "관우", "command": 95, "level": 9}
+      ]
+    },
+    {
+      "id": "sun_quan", "name": "손권군", "control": "turn_prompt_ai", "supreme_commander": "주유",
+      "historical_role": "손유 연합의 손권 측 주력군",
+      "inventory": {"SHP-01": 3, "SHP-02": 3, "SHP-03": 8, "SHP-04": 14, "SHP-05": 5, "SHP-06": 6, "SHP-07": 12, "SHP-08": 24},
+      "demo_roster": [
+        {"id": "CHR-0211", "name": "주유", "command": 97, "level": 9},
+        {"id": "CHR-0206", "name": "노숙", "command": 85, "level": 8},
+        {"id": "CHR-0194", "name": "손권", "command": 81, "level": 8}
+      ]
+    },
+    {
+      "id": "cao_cao", "name": "조조군", "control": "ai", "supreme_commander": "조조",
+      "historical_role": "북방에서 남하한 조조 측 주력군",
+      "inventory": {"SHP-01": 4, "SHP-02": 5, "SHP-03": 12, "SHP-04": 20, "SHP-05": 8, "SHP-06": 8, "SHP-07": 16, "SHP-08": 30},
+      "demo_roster": [
+        {"id": "CHR-0034", "name": "조조", "command": 96, "level": 10},
+        {"id": "CHR-0041", "name": "조인", "command": 90, "level": 9},
+        {"id": "CHR-0038", "name": "하후돈", "command": 89, "level": 9}
+      ]
+    }
   ],
   "squadrons": [
     {
@@ -46,9 +84,10 @@
       "faction_id": "liu_bei",
       "name": "유비 기함 전대",
       "commander": {"id": "CHR-0128", "name": "유비"},
-      "flagship": true,
+      "flagship": false,
       "initial_position": [310, 590],
       "formation_id": "FRM-01",
+      "deployment": {"kind": "fleet", "fleet_id": "RC-LIU-FLT-01"},
       "historical_basis": "유비군 참가와 지휘 관계를 반영한 역사 역할 기준",
       "composition": [
         {"ship_type_id": "SHP-04", "count": 4},
@@ -58,6 +97,24 @@
       "declared_total_cost": 79
     },
     {
+      "id": "RC-LIU-SQ-02",
+      "faction_id": "liu_bei",
+      "name": "제갈량 지원 전대",
+      "commander": {"id": "CHR-0134", "name": "제갈량"},
+      "flagship": true,
+      "initial_position": [250, 660],
+      "formation_id": "FRM-03",
+      "deployment": {"kind": "fleet", "fleet_id": "RC-LIU-FLT-01"},
+      "historical_basis": "제갈량의 연합 작전 지원 역할을 데모 전대로 표현",
+      "composition": [
+        {"ship_type_id": "SHP-03", "count": 2},
+        {"ship_type_id": "SHP-04", "count": 3},
+        {"ship_type_id": "SHP-05", "count": 1},
+        {"ship_type_id": "SHP-07", "count": 2}
+      ],
+      "declared_total_cost": 76
+    },
+    {
       "id": "RC-SUN-SQ-01",
       "faction_id": "sun_quan",
       "name": "주유 수군 전대",
@@ -65,6 +122,7 @@
       "flagship": true,
       "initial_position": [410, 500],
       "formation_id": "FRM-02",
+      "deployment": {"kind": "fleet", "fleet_id": "RC-SUN-FLT-01"},
       "historical_basis": "주유의 손권군 지휘와 연합 주력 역할을 반영",
       "composition": [
         {"ship_type_id": "SHP-01", "count": 1},
@@ -84,6 +142,7 @@
       "flagship": true,
       "initial_position": [1110, 330],
       "formation_id": "FRM-04",
+      "deployment": {"kind": "fleet", "fleet_id": "RC-CAO-FLT-01"},
       "historical_basis": "조조의 남하군 총지휘와 대규모 주력 역할을 반영",
       "composition": [
         {"ship_type_id": "SHP-01", "count": 2},
@@ -97,5 +156,10 @@
       ],
       "declared_total_cost": 352
     }
+  ],
+  "fleet_groups": [
+    {"id": "RC-LIU-FLT-01", "faction_id": "liu_bei", "name": "유비 연합 전단", "squadron_ids": ["RC-LIU-SQ-01", "RC-LIU-SQ-02"], "flagship_squadron_id": "RC-LIU-SQ-02"},
+    {"id": "RC-SUN-FLT-01", "faction_id": "sun_quan", "name": "주유 수군", "squadron_ids": ["RC-SUN-SQ-01"], "flagship_squadron_id": "RC-SUN-SQ-01"},
+    {"id": "RC-CAO-FLT-01", "faction_id": "cao_cao", "name": "조조 중군", "squadron_ids": ["RC-CAO-SQ-01"], "flagship_squadron_id": "RC-CAO-SQ-01"}
   ]
 }

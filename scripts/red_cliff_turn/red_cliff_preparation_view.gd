@@ -5,12 +5,17 @@ extends Control
 ## 순수 2D Control 화면이다. 편성 편집과 턴 전투는 후속 Task 경계로 남긴다.
 
 signal close_requested
+signal formation_applied(setup: Dictionary, summary: Dictionary)
+
+const FormationEditorScript := preload("res://scripts/red_cliff_turn/red_cliff_formation_editor.gd")
 
 var _load_result: Dictionary = {}
+var _historical_result: Dictionary = {}
 var _content: VBoxContainer
 var _status: Label
 var _start_button: Button
 var _faction_columns: HBoxContainer
+var _formation_editor: Control
 
 
 func _ready() -> void:
@@ -20,8 +25,11 @@ func _ready() -> void:
 	_render()
 
 
-func configure(load_result: Dictionary) -> void:
+func configure(load_result: Dictionary, applied_setup: Dictionary = {}) -> void:
+	_historical_result = load_result.duplicate(true)
 	_load_result = load_result.duplicate(true)
+	if bool(load_result.get("ok", false)) and not applied_setup.is_empty():
+		_load_result["setup"] = applied_setup.duplicate(true)
 	if is_node_ready():
 		_render()
 
@@ -35,6 +43,10 @@ func state() -> Dictionary:
 		"setup_id": String(setup.get("setup_id", "")),
 		"balance_profile_id": String(setup.get("balance_profile", {}).get("id", "")),
 		"squadron_count": setup.get("squadrons", []).size(), "errors": []}
+
+
+func formation_editor() -> Control:
+	return _formation_editor
 
 
 func _build() -> void:
@@ -156,7 +168,7 @@ func _render() -> void:
 	var ship_types := _ship_type_index(setup["ship_types"])
 	for faction_id in ["liu_bei", "sun_quan", "cao_cao"]:
 		_faction_columns.add_child(_faction_card(setup, faction_id, ship_types))
-	_status.text = "역사 편성이 준비되었습니다. 사용자 편성과 턴 전투는 다음 구현 단계에서 연결됩니다."
+	_status.text = "현재 적용 편성이 준비되었습니다. 사용자 편성에서 전대·함대를 편집할 수 있습니다."
 	_status.add_theme_color_override("font_color", Color("9fd7bc"))
 
 
@@ -240,11 +252,46 @@ func _squadron_summary(squadron: Dictionary, ship_types: Dictionary, tint: Color
 
 func _on_restore_pressed() -> void:
 	if bool(_load_result.get("ok", false)):
-		_status.text = "역사 편성을 복원했습니다. normal-demo-v1 초기값은 변경되지 않았습니다."
+		_open_formation_editor(true)
 
 
 func _on_custom_pressed() -> void:
-	_status.text = "사용자 편성은 다음 구현 단계에서 제공됩니다. 현재 데이터는 변경되지 않았습니다."
+	_open_formation_editor(false)
+
+
+func _open_formation_editor(restore_historical: bool) -> void:
+	if not bool(_load_result.get("ok", false)):
+		_status.text = "초기 데이터 오류로 사용자 편성을 열 수 없습니다."
+		return
+	if not is_instance_valid(_formation_editor):
+		_formation_editor = FormationEditorScript.new()
+		_formation_editor.name = "RedCliffFormationEditor"
+		_formation_editor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_formation_editor.close_requested.connect(_close_formation_editor)
+		_formation_editor.formation_applied.connect(_on_formation_applied)
+		add_child(_formation_editor)
+	var receipt: Dictionary = _formation_editor.configure(
+		_historical_result.get("setup", {}), _load_result.get("setup", {}))
+	if not bool(receipt.get("ok", false)):
+		_status.text = "편성 편집기를 열 수 없습니다.\n" + "\n".join(receipt.get("errors", []))
+		return
+	if restore_historical:
+		_formation_editor.call("_restore_historical")
+	_formation_editor.visible = true
+	_status.text = ("역사 편성을 초안에 복원했습니다. 편성 적용 전까지 현재 적용본은 유지됩니다."
+		if restore_historical else "사용자 편성 초안을 열었습니다. 적용 전에는 준비 상태가 바뀌지 않습니다.")
+
+
+func _close_formation_editor() -> void:
+	if is_instance_valid(_formation_editor):
+		_formation_editor.visible = false
+
+
+func _on_formation_applied(setup: Dictionary, summary: Dictionary) -> void:
+	_load_result = {"ok": true, "errors": [], "setup": setup.duplicate(true)}
+	_render()
+	_status.text = "사용자 편성을 적용했습니다. 준비 요약과 전투 시작 입력이 갱신되었습니다."
+	formation_applied.emit(setup.duplicate(true), summary.duplicate(true))
 
 
 func _on_start_pressed() -> void:

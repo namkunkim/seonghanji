@@ -180,11 +180,22 @@ func _test_product_entry() -> void:
 		"duplicate entry reuses one view")
 	_eq(main.find_children("RedCliffPreparationView", "Control", true, false).size(), 1,
 		"only one preparation view exists")
+	var preparation_state_before: Dictionary = main.red_cliff_preparation_state.duplicate(true)
+	var expected_applied: Dictionary = Setup.load_default().get("setup", {})
+	var expected_applied_digest: String = JSON.stringify(expected_applied)
 	var custom: Button = view.find_child("OpenCustomFormation", true, false)
 	custom.pressed.emit()
 	await process_frame
 	var status: Label = view.find_child("PreparationStatus", true, false)
-	_ok("다음 구현 단계" in status.text, "custom formation is a non-destructive follow-up state")
+	var editor: Control = view.formation_editor()
+	_ok(editor != null and editor.visible, "custom formation opens the G3 editor")
+	var draft = editor.draft_controller()
+	_eq(main.red_cliff_preparation_state, preparation_state_before,
+		"opening editor does not mutate Main preparation state")
+	_eq(int(draft.applied_snapshot().get("formation_revision", -1)), 0,
+		"opening editor preserves applied revision")
+	_eq(draft.applied_digest(), expected_applied_digest,
+		"opening editor preserves applied setup digest")
 	var start: Button = view.find_child("StartTurnBattle", true, false)
 	start.pressed.emit()
 	await process_frame
