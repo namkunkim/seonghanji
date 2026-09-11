@@ -27,6 +27,8 @@ var _selected_contact_id := ""
 var _fire_events: Array = []
 var _terrain_zones: Array = []
 var _fast_craft_supply_sources: Array = []
+var _fast_craft_return_statuses: Array = []
+var _map_label_rects: Array[Rect2] = []
 var _mode := Mode.SELECT
 var _zoom := 1.0
 var _pan := Vector2.ZERO
@@ -96,6 +98,15 @@ func set_fast_craft_supply(receipt: Dictionary) -> void:
 
 func fast_craft_supply_sources_for_test() -> Array:
 	return _fast_craft_supply_sources.duplicate(true)
+
+
+func set_fast_craft_returns(receipt: Dictionary) -> void:
+	_fast_craft_return_statuses = receipt.get("statuses", []).duplicate(true) if bool(receipt.get("ok", false)) else []
+	queue_redraw()
+
+
+func fast_craft_return_statuses_for_test() -> Array:
+	return _fast_craft_return_statuses.duplicate(true)
 
 
 func clear_intelligence() -> void:
@@ -216,6 +227,7 @@ func _contact_at(point: Vector2) -> String:
 
 func _draw() -> void:
 	var rect := content_rect()
+	_map_label_rects.clear()
 	draw_rect(rect, Color("071923"), true)
 	draw_rect(rect, Color("477387"), false, 2.0)
 	for index in range(1, 8):
@@ -226,6 +238,7 @@ func _draw() -> void:
 		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.16, 0.31, 0.38, 0.45), 1.0)
 	_draw_terrain_zones()
 	_draw_fast_craft_supply_sources()
+	_draw_fast_craft_return_routes()
 	_draw_route()
 	_draw_fire_events()
 	_draw_opaque_contacts()
@@ -239,7 +252,7 @@ func _draw() -> void:
 		else:
 			draw_circle(p, MARKER_RADIUS + (4.0 if id == _selected_id else 0.0), color, false, 3.0); draw_circle(p, 7.0, color, true)
 		var label := "추정 접촉 · 마지막 확인 T%d · 실제 위치와 다를 수 있음" % int(descriptor.get("last_seen_turn", 0)) if contact_state in ["estimated", "lost"] else (("◆ " if bool(squad.get("flagship", false)) else "") + String(squad.get("name", id)) + (" · 확인 접촉" if contact_state == "confirmed" else ""))
-		draw_string(get_theme_default_font(), p + Vector2(24, -9), label, HORIZONTAL_ALIGNMENT_LEFT, 150, 14, color)
+		_draw_map_label(p, label, color, 14, 150.0, Vector2(24, -9))
 
 
 func _draw_terrain_zones() -> void:
@@ -276,7 +289,49 @@ func _draw_fast_craft_supply_sources() -> void:
 		draw_circle(center, radius, Color(color.r, color.g, color.b, 0.08), true)
 		draw_circle(center, radius, Color(color.r, color.g, color.b, 0.72), false, 2.0)
 		var type_label: String = {"supply_ship":"보급함", "carrier":"강습모함", "friendly_base":"아군 거점"}.get(source_type, "보급원")
-		draw_string(get_theme_default_font(), center + Vector2(-radius + 7.0, -7.0), "%s 자동 보급 · 반경 %d · 처리 %d 전대/턴" % [type_label, int(source.get("radius", 0)), int(source.get("capacity_squadrons_per_turn", 0))], HORIZONTAL_ALIGNMENT_LEFT, maxf(120.0, radius * 2.0 - 14.0), 12, color)
+		_draw_map_label(center, "%s · R%d · %d/턴" % [type_label, int(source.get("radius", 0)), int(source.get("capacity_squadrons_per_turn", 0))], color, 12, 155.0, Vector2(20, -28))
+
+
+func _draw_fast_craft_return_routes() -> void:
+	for value in _fast_craft_return_statuses:
+		if not value is Dictionary: continue
+		var status: Dictionary = value; var route = status.get("route", [])
+		if not route is Array or route.is_empty(): continue
+		var mode := String(status.get("status", "normal")); var color: Color = {"normal":Color("78a7b8"), "early_return":Color("e1c36f"), "forced_return":Color("f08a68"), "stranded_risk":Color("ef6c75")}.get(mode, Color("9fb5bf"))
+		var display_route: Array = []
+		var squadron_id := String(status.get("squadron_id", "")); var live: Dictionary = _navigation.get(squadron_id, {})
+		if live.get("position", []) is Array: display_route.append(live.position)
+		display_route.append_array(route)
+		for index in range(display_route.size() - 1):
+			var start = display_route[index]; var finish = display_route[index + 1]
+			if start is Array and finish is Array: draw_dashed_line(battle_to_local(start), battle_to_local(finish), color, 3.0, 8.0)
+		var destination = display_route[-1]
+		if not destination is Array: continue
+		var target := battle_to_local(destination); draw_circle(target, 12.0, color, false, 3.0)
+		_draw_map_label(target, "%s · %s · ETA %d턴" % [_fast_return_status_label(mode), String(status.get("nearest_source_id", "도달 가능 보급원 없음")), int(status.get("eta_turns", 0))], color, 13, 220.0, Vector2(18, -10))
+
+
+func _fast_return_status_label(status: String) -> String:
+	return String({"normal":"귀환 예측", "early_return":"조기 귀환", "forced_return":"비상 강제귀환", "stranded_risk":"도달 불가 위험"}.get(status, status))
+
+
+func _draw_map_label(anchor: Vector2, label: String, color: Color, font_size: int, width: float, preferred_offset: Vector2) -> void:
+	var height := float(font_size + 9)
+	var offsets: Array[Vector2] = [preferred_offset, Vector2(22, -34), Vector2(22, 8), Vector2(22, 34), Vector2(-width - 22, -34), Vector2(-width - 22, 8), Vector2(-width - 22, 34), Vector2(22, 60)]
+	var bounds := content_rect().grow(-4.0); var chosen := Rect2(anchor + preferred_offset, Vector2(width, height))
+	for offset in offsets:
+		var candidate := Rect2(anchor + offset, Vector2(width, height))
+		candidate.position.x = clampf(candidate.position.x, bounds.position.x, bounds.end.x - candidate.size.x)
+		candidate.position.y = clampf(candidate.position.y, bounds.position.y, bounds.end.y - candidate.size.y)
+		chosen = candidate
+		var collides := false
+		for occupied in _map_label_rects:
+			if candidate.grow(3.0).intersects(occupied): collides = true; break
+		if not collides: chosen = candidate; break
+	_map_label_rects.append(chosen)
+	draw_rect(chosen, Color(0.025, 0.075, 0.095, 0.86), true)
+	draw_rect(chosen, Color(color.r, color.g, color.b, 0.68), false, 1.0)
+	draw_string(get_theme_default_font(), chosen.position + Vector2(5, font_size + 2), label, HORIZONTAL_ALIGNMENT_LEFT, chosen.size.x - 10.0, font_size, color)
 
 
 func _draw_route() -> void:

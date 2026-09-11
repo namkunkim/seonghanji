@@ -45,6 +45,14 @@
     "mutual_supply_alliances": [["liu_bei", "sun_quan"]],
     "inventory_contract": "normal-demo source capacity authorizes refill up to per-squadron maximum only; source stock, damage and base reload accounting are deferred to G6-06"
   },
+  "return_contract": {
+    "fuel_basis_points_per_distance": 10,
+    "reserve_turns": 1,
+    "destination_policy": "nearest_reachable_friendly_supply_source_then_source_id",
+    "recalculate_timing": "each_resolution_before_movement",
+    "fuel_consumption_timing": "actual_movement_distance_after_movement_before_end_turn_supply",
+    "unreachable_contract": "stranded_risk_warning_only; zero_fuel_drift_is_G6-05"
+  },
   "basing_modes": ["independent", "carrier", "base"],
   "basing_contract": {
     "independent": "독립 전장 배치",
@@ -58,5 +66,5 @@
   "inventory_policy": "applied setup faction inventory minus all setup squadron assignments; preparation may create or delete user fast-craft squadrons from remaining same-faction stock; cross-faction transfer forbidden",
   "cost_policy": "per craft subtotal=(setup SHP-08 base unit cost+selected setup mission-equipment unit cost)*count; historical cost is the declared normal-demo baseline",
   "command_limit_source": "applied_setup.command_limit_rules_and_faction_demo_roster",
-  "out_of_scope": ["in_battle_equipment_change", "tactical_mission_effect", "automatic_return", "drift", "rescue_result", "capture_result", "supply_source_stock", "supply_source_damage", "base_reloading"]
+  "out_of_scope": ["in_battle_equipment_change", "tactical_mission_effect", "drift", "rescue_result", "capture_result", "supply_source_stock", "supply_source_damage", "base_reloading"]
 }

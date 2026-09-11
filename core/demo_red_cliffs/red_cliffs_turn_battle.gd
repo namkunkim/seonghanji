@@ -16,6 +16,7 @@ const AiPlanner := preload("res://core/demo_red_cliffs/red_cliffs_ai_planner.gd"
 const ChainExplosion := preload("res://core/demo_red_cliffs/red_cliffs_chain_explosion.gd")
 const FastCraftMission := preload("res://core/demo_red_cliffs/red_cliffs_fast_craft_mission.gd")
 const FastCraftSupply := preload("res://core/demo_red_cliffs/red_cliffs_fast_craft_supply.gd")
+const FastCraftReturn := preload("res://core/demo_red_cliffs/red_cliffs_fast_craft_return.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
 	"weapon_fire", "damage", "casualties", "victory"
@@ -34,6 +35,7 @@ var _ai_planner
 var _chain_explosion
 var _fast_craft_mission
 var _fast_craft_supply
+var _fast_craft_return
 var _viewer_receipts_by_turn: Dictionary = {}
 var _viewer_phase_ledgers_by_turn: Dictionary = {}
 
@@ -84,6 +86,8 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not mission_result.ok: return mission_result
 	var fast_craft_supply = FastCraftSupply.new(); var supply_result: Dictionary = fast_craft_supply.initialize(setup)
 	if not supply_result.ok: return supply_result
+	var fast_craft_return = FastCraftReturn.new(); var return_result: Dictionary = fast_craft_return.initialize(setup)
+	if not return_result.ok: return return_result
 	_movement = movement
 	_interception = interception
 	_formation = formation
@@ -96,6 +100,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	_chain_explosion = chain_explosion
 	_fast_craft_mission = fast_craft_mission
 	_fast_craft_supply = fast_craft_supply
+	_fast_craft_return = fast_craft_return
 	_viewer_receipts_by_turn = {}
 	_viewer_phase_ledgers_by_turn = {}
 	_state = {
@@ -115,6 +120,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 		"chain_explosion_state": _chain_explosion.initial_state(),
 		"fast_craft_mission_state": _fast_craft_mission.initial_state(),
 		"fast_craft_supply_state": _fast_craft_supply.initial_state(_movement.initial_navigation()),
+		"fast_craft_return_state": _fast_craft_return.initial_state(),
 		"phase_ledgers": {},
 		"command_draft": {},
 		"turn_log": [_new_turn_log(1)],
@@ -426,6 +432,30 @@ func viewer_fast_craft_supply(viewer_faction_id: String) -> Dictionary:
 	visible["turn"] = turn(); visible["phase"] = phase(); return visible
 
 
+func viewer_fast_craft_returns(viewer_faction_id: String) -> Dictionary:
+	if _state.is_empty() or not ["liu_bei", "sun_quan", "cao_cao"].has(viewer_faction_id): return _error("미지 관측 세력입니다.")
+	var statuses: Array = []; var sources: Array = _fast_craft_supply.source_zones(_state.live_navigation)
+	for squadron_id in _state.fast_craft_supply_state.resources.keys():
+		var speed: Dictionary = _movement.effective_speed(String(squadron_id)); if not speed.ok: return speed
+		var row: Dictionary = _fast_craft_return.status(String(squadron_id),_state.fast_craft_return_state,_state.fast_craft_supply_state,sources,_state.live_navigation,int(speed.effective_speed)); if not row.ok:return row
+		statuses.append(row)
+	var visible: Dictionary = _fast_craft_return.visible(viewer_faction_id,_state.fast_craft_return_state,statuses); visible["turn"]=turn();visible["phase"]=phase();return visible
+
+
+func request_fast_craft_return(requesting_faction_id:String,squadron_id:String)->Dictionary:
+	if current_direct_faction_id()!=requesting_faction_id or _squadron_faction_id(squadron_id)!=requesting_faction_id:return _error("현재 직접 지휘 세력의 고속정만 조기 귀환할 수 있습니다.")
+	var status_row:Dictionary=_return_status(squadron_id);if not status_row.ok:return status_row
+	var changed:Dictionary=_fast_craft_return.request_early(_state.fast_craft_return_state,status_row,turn());if not changed.ok:return changed
+	_state.fast_craft_return_state=changed.state.duplicate(true);return {"ok":true,"errors":[],"event":changed.event.duplicate(true)}
+
+
+func cancel_fast_craft_return(requesting_faction_id:String,squadron_id:String)->Dictionary:
+	if current_direct_faction_id()!=requesting_faction_id or _squadron_faction_id(squadron_id)!=requesting_faction_id:return _error("현재 직접 지휘 세력의 고속정 조기 귀환만 취소할 수 있습니다.")
+	var status_row:Dictionary=_return_status(squadron_id);if not status_row.ok:return status_row
+	var changed:Dictionary=_fast_craft_return.cancel_early(_state.fast_craft_return_state,status_row,turn());if not changed.ok:return changed
+	_state.fast_craft_return_state=changed.state.duplicate(true);return {"ok":true,"errors":[],"event":changed.event.duplicate(true)}
+
+
 func set_fast_craft_mission(requesting_faction_id: String, squadron_id: String, mission_id: String) -> Dictionary:
 	if _state.is_empty() or phase() == "turn_limit_reached": return _error("현재 단계에서는 전술 임무를 변경할 수 없습니다.")
 	var faction_id := _squadron_faction_id(squadron_id); var application := ""
@@ -694,14 +724,31 @@ func resolve_turn() -> Dictionary:
 	formation_orders.append_array(_current_log().cao_formation_orders)
 	var formation_result: Dictionary = _formation.resolve_orders(formation_orders, _state.formation_state, turn())
 	if not formation_result.ok: return formation_result
+	var return_speeds := {}; for squadron_id in _state.fast_craft_supply_state.resources.keys():
+		var speed:Dictionary=_movement.effective_speed(String(squadron_id));if not speed.ok:return speed
+		return_speeds[squadron_id]=int(speed.effective_speed)
+	var return_result:Dictionary=_fast_craft_return.plan(_state.fast_craft_return_state,_state.fast_craft_supply_state,_fast_craft_supply.source_zones(_state.live_navigation),_state.live_navigation,return_speeds,turn())
+	if not return_result.ok:return return_result
 	var weapon_orders: Array = []
 	weapon_orders.append_array(_current_log().liu_weapon_allocation_orders)
 	weapon_orders.append_array(_current_log().sun_weapon_allocation_orders)
 	weapon_orders.append_array(_current_log().cao_weapon_allocation_orders)
+	for index in range(weapon_orders.size()):
+		var weapon_sid:=String(weapon_orders[index].squadron_id)
+		if return_result.overrides.has(weapon_sid):
+			weapon_orders[index]=weapon_orders[index].duplicate(true);weapon_orders[index]["hold_fire"]=true
 	var weapon_result: Dictionary = _weapon_control.resolve_orders(weapon_orders, _state.weapon_allocation_state, turn())
 	if not weapon_result.ok: return weapon_result
+	for index in range(orders.size()):
+		var sid:String=String(orders[index].squadron_id)
+		if return_result.overrides.has(sid):orders[index]=return_result.overrides[sid].duplicate(true)
 	var movement_result: Dictionary = _movement.resolve_orders(orders, _state.live_navigation)
 	if not movement_result.ok: return movement_result
+	var fuel_result:Dictionary=_fast_craft_return.consume_fuel(_state.fast_craft_supply_state,movement_result.events,turn())
+	if not fuel_result.ok:return fuel_result
+	var recorded_fuel:Dictionary=_fast_craft_return.record_fuel_events(return_result.state,fuel_result.events,turn())
+	if not recorded_fuel.ok:return recorded_fuel
+	return_result.state=recorded_fuel.state.duplicate(true);fuel_result.events=recorded_fuel.events.duplicate(true)
 	var interception_result: Dictionary = _interception.resolve(movement_result.events,
 		movement_result.live_navigation, _state.detection_state, turn(),
 		_weapon_control.interception_policy(weapon_result.weapon_allocation_state), formation_result.formation_state)
@@ -725,10 +772,13 @@ func resolve_turn() -> Dictionary:
 	if not resource_result.ok: return resource_result
 	# G6-03 replenishment is an end-of-turn consumer: movement, fire authorization,
 	# and combat resource consumption have already completed.
-	var supply_result: Dictionary = _fast_craft_supply.resolve(_state.fast_craft_supply_state, _state.live_navigation, movement_result.live_navigation, movement_result.events, turn())
+	var supply_result: Dictionary = _fast_craft_supply.resolve(fuel_result.state, _state.live_navigation, movement_result.live_navigation, movement_result.events, turn())
 	if not supply_result.ok: return supply_result
 	var finite_refill: Dictionary = _combat_resources.refill_fast_craft_finite(supply_result.completed_squadron_ids, resource_result.resource_state, turn())
 	if not finite_refill.ok: return finite_refill
+	var cleared_returns:Dictionary=_fast_craft_return.clear_completed(return_result.state,supply_result.completed_squadron_ids)
+	if not cleared_returns.ok:return cleared_returns
+	return_result.state=cleared_returns.state.duplicate(true)
 	resource_result.resource_state = finite_refill.resource_state.duplicate(true)
 	var refill_by_squad := {}; for event in finite_refill.events: refill_by_squad[String(event.squadron_id)] = event
 	for event in supply_result.events:
@@ -770,6 +820,8 @@ func resolve_turn() -> Dictionary:
 		"formation_modifier_snapshots": formation_result.modifier_snapshots.duplicate(true),
 		"fast_craft_mission_events": _state.fast_craft_mission_state.events_by_turn.get(turn(), []).duplicate(true),
 		"fast_craft_supply_events": supply_result.events.duplicate(true),
+		"fast_craft_return_events": return_result.events.duplicate(true),
+		"fast_craft_fuel_events": fuel_result.events.duplicate(true),
 		"weapon_allocation_events": weapon_result.weapon_allocation_events.duplicate(true),
 		"chain_explosion_events": chain_result.events.duplicate(true),
 		"path_intersection_events": interception_result.path_intersection_events.duplicate(true),
@@ -815,6 +867,7 @@ func resolve_turn() -> Dictionary:
 	_state.combat_resource_state = resource_result.resource_state.duplicate(true)
 	_state.chain_explosion_state = chain_result.state.duplicate(true)
 	_state.fast_craft_supply_state = supply_result.state.duplicate(true)
+	_state.fast_craft_return_state = return_result.state.duplicate(true)
 	_state.last_resource_recovery_events = recovery_events.duplicate(true)
 	if turn() >= 2: _state.last_resource_recovery_turn = turn()
 	_state.phase_ledgers[turn()] = ledger.duplicate(true)
@@ -1186,6 +1239,11 @@ func _late_fast_craft_mission_editable(faction_id: String) -> bool:
 	if faction_id == "liu_bei": return true
 	if faction_id != "sun_quan": return false
 	return String(_current_log().get("sun_control_decision", {}).get("control", "")) == "manual"
+
+
+func _return_status(squadron_id:String)->Dictionary:
+	var speed:Dictionary=_movement.effective_speed(squadron_id);if not speed.ok:return speed
+	return _fast_craft_return.status(squadron_id,_state.fast_craft_return_state,_state.fast_craft_supply_state,_fast_craft_supply.source_zones(_state.live_navigation),_state.live_navigation,int(speed.effective_speed))
 
 
 func _command_draft_access(squadron_id: String) -> Dictionary:

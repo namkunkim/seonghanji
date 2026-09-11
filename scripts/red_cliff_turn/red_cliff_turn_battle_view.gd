@@ -177,13 +177,14 @@ func _rebuild_map(snapshot: Dictionary) -> void:
 		_map.configure(setup.get("battlefield_bounds", [0, 0, 1600, 900]), viewer.get("own_squadrons", []), viewer.get("own_navigation", {}))
 		_map.set_terrain_zones(viewer.get("terrain_zones", []))
 		_map.set_fast_craft_supply(_battle.viewer_fast_craft_supply(_viewer_faction_id) if _battle.has_method("viewer_fast_craft_supply") else {})
+		_map.set_fast_craft_returns(_battle.viewer_fast_craft_returns(_viewer_faction_id) if _battle.has_method("viewer_fast_craft_returns") else {})
 		_map.set_intelligence(_viewer_faction_id, viewer.get("contacts", []), viewer.get("tactical_events", []))
 		var selectable_contacts: Array[String] = []
 		for value in viewer.get("contacts", []):
 			if String(value.get("state", "")) == "estimated": selectable_contacts.append(String(value.get("contact_id", "")))
 		if not selectable_contacts.has(_selected_contact_id): _selected_contact_id = ""
 		_map.set_selected_contact(_selected_contact_id)
-	else: _map.clear_intelligence(); _map.set_fast_craft_supply({})
+	else: _map.clear_intelligence(); _map.set_fast_craft_supply({}); _map.set_fast_craft_returns({})
 	var editable := _editable_squadron_ids(snapshot)
 	if not editable.has(_selected_squadron_id): _selected_squadron_id = editable[0] if not editable.is_empty() else ""
 	var mode := TacticalMap.Mode.ADD_WAYPOINT if _move_armed else TacticalMap.Mode.SELECT
@@ -314,7 +315,7 @@ func _add_fast_craft_mission_panel(status: Dictionary, receipt: Dictionary, show
 		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: latest = value
 	if not latest.is_empty():
 		var event := Label.new(); event.name = "FastCraftMissionLastEvent"; event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _fast_mission_event_text(latest, receipt); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
-	var boundary := Label.new(); boundary.name = "FastCraftMissionBoundary"; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "현재 턴 명령 중에는 즉시 적용, 판정 중 요청은 다음 턴 예약입니다. 전술 임무 효과·자동 귀환·표류·구조·나포 결과는 G6-04 이후입니다."; boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+	var boundary := Label.new(); boundary.name = "FastCraftMissionBoundary"; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "현재 턴 명령 중에는 즉시 적용, 판정 중 요청은 다음 턴 예약입니다. 비상·조기 귀환은 아래 G6-04 패널에서 다루며 전술 임무 효과·표류·구조·나포 결과는 후속 범위입니다."; boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
 	_add_fast_craft_supply_panel(squadron_id, show_identity)
 
 
@@ -378,7 +379,8 @@ func _add_fast_craft_supply_panel(squadron_id: String, show_identity: bool) -> v
 	for index in range(maxi(0, matching_events.size() - 3), matching_events.size()):
 		var event_row: Dictionary = matching_events[index]; var event := Label.new(); event.name = "FastCraftSupplyLatest%s" % suffix if index == matching_events.size() - 1 else "FastCraftSupplyEvent%s_%d" % [suffix, int(event_row.get("serial", index))]; event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _fast_supply_event_text(event_row); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
 	var priority := Label.new(); priority.name = "FastCraftSupplyPriority%s" % suffix; priority.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; priority.text = "자동 처리 우선순위 · %s" % _fast_supply_priority_text(receipt.get("priority", [])); _orders.add_child(priority)
-	var boundary := Label.new(); boundary.name = "FastCraftSupplyBoundary%s" % suffix; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "보급 영역·대기열·정박·처리량은 코어 자동 판정입니다. 수동 보급 명령은 없습니다. 임무 효과·자동 귀환·표류·구조·나포는 G6-04 이후입니다. %s" % String(receipt.get("inventory_contract", "")); boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+	var boundary := Label.new(); boundary.name = "FastCraftSupplyBoundary%s" % suffix; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "보급 영역·대기열·정박·처리량은 코어 자동 판정입니다. 수동 보급 명령은 없습니다. 비상 귀환 계획은 아래 패널에 표시하며 실제 표류·파괴·나포는 G6-05 이후입니다. %s" % String(receipt.get("inventory_contract", "")); boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+	_add_fast_craft_return_panel(squadron_id, show_identity)
 
 
 func _fast_supply_source_label(source: Dictionary) -> String:
@@ -415,6 +417,73 @@ func _fast_supply_event_text(event: Dictionary) -> String:
 			if int(delta.get("ammo_granted", 0)) > 0: text += " · %s 탄약 +%d" % [_weapon_name(String(weapon_id)), int(delta.get("ammo_granted", 0))]
 			if int(delta.get("special_granted", 0)) > 0: text += " · %s 특수 +%d" % [_weapon_name(String(weapon_id)), int(delta.get("special_granted", 0))]
 	elif status == "interrupted": text += " · %s" % String({"left_zone":"영역 이탈", "moved":"정박 중 이동"}.get(String(event.get("reason", "")), event.get("reason", "")))
+	return text
+
+
+func _add_fast_craft_return_panel(squadron_id: String, show_identity: bool) -> void:
+	if not _battle.has_method("viewer_fast_craft_returns"): return
+	var receipt: Dictionary = _battle.viewer_fast_craft_returns(_viewer_faction_id)
+	if not bool(receipt.get("ok", false)): return
+	var status: Dictionary = {}
+	for value in receipt.get("statuses", []):
+		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: status = value; break
+	if status.is_empty(): return
+	var suffix := "_%s" % squadron_id if show_identity else ""; var mode := String(status.get("status", "normal"))
+	var title := Label.new(); title.name = "FastCraftReturnTitle%s" % suffix; title.text = "비상 귀환 · %s" % _fast_return_status_label(mode); title.add_theme_color_override("font_color", Color("ef7b79") if mode in ["forced_return", "stranded_risk"] else Color("e1c36f")); _orders.add_child(title)
+	var state := Label.new(); state.name = "FastCraftReturnState%s" % suffix; state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	state.text = "잔여 연료 %d bp · 필요 %s · 1턴 예비 %d bp · 강제 기준 %s\n가장 가까운 도달 가능 보급원 %s · 거리 %s · 예상 %s\n귀환 경로 현재 위치 → %s" % [int(status.get("fuel_basis_points", 0)), _fast_return_basis_points(status.get("required_fuel_basis_points", -1)), int(status.get("reserve_fuel_basis_points", 0)), _fast_return_basis_points(status.get("threshold_basis_points", -1)), String(status.get("nearest_source_id", "없음")) if not String(status.get("nearest_source_id", "")).is_empty() else "없음", _fast_return_distance(status.get("distance", -1.0)), _fast_return_eta(status.get("eta_turns", -1)), _fast_return_route_text(status.get("route", []))]
+	if mode == "stranded_risk": state.text += "\n경고 · 현재 연료로 도달 가능한 아군 보급원이 없습니다."
+	elif mode == "forced_return": state.text += "\n경고 · 기준 이하 비상 강제귀환 중이며 취소할 수 없습니다."
+	_orders.add_child(state)
+	var controls := HBoxContainer.new(); controls.name = "FastCraftReturnControls%s" % suffix; controls.add_theme_constant_override("separation", 5); _orders.add_child(controls)
+	var request := _button("조기 귀환", "RequestFastCraftReturn%s" % suffix, 145); request.disabled = not bool(status.get("can_request_early", false)); request.pressed.connect(_on_request_fast_craft_return.bind(squadron_id)); controls.add_child(request)
+	var cancel := _button("조기 귀환 취소", "CancelFastCraftReturn%s" % suffix, 165); cancel.disabled = not bool(status.get("can_cancel", false)); cancel.pressed.connect(_on_cancel_fast_craft_return.bind(squadron_id)); controls.add_child(cancel)
+	var events: Array = []
+	for value in receipt.get("events", []):
+		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: events.append(value)
+	for index in range(maxi(0, events.size() - 3), events.size()):
+		var row: Dictionary = events[index]; var event := Label.new(); event.name = "FastCraftReturnLatest%s" % suffix if index == events.size() - 1 else "FastCraftReturnEvent%s_%d" % [suffix, int(row.get("serial", index))]; event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _fast_return_event_text(row); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
+	var boundary := Label.new(); boundary.name = "FastCraftReturnBoundary%s" % suffix; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "목적지는 매 턴 코어가 도달 가능한 가장 가까운 아군 보급원으로 재탐색합니다. 실제 표류·파괴·나포 판정은 G6-05에서 다룹니다."; boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+
+
+func _on_request_fast_craft_return(squadron_id: String) -> void:
+	_set_receipt(_battle.request_fast_craft_return(_viewer_faction_id, squadron_id)); _refresh()
+
+
+func _on_cancel_fast_craft_return(squadron_id: String) -> void:
+	_set_receipt(_battle.cancel_fast_craft_return(_viewer_faction_id, squadron_id)); _refresh()
+
+
+func _fast_return_status_label(status: String) -> String:
+	return String({"normal":"정상 임무", "early_return":"조기 귀환", "forced_return":"강제귀환 잠금", "stranded_risk":"도달 불가 위험"}.get(status, status))
+
+
+func _fast_return_route_text(route) -> String:
+	if not route is Array or route.is_empty(): return "없음"
+	var points: Array[String] = []
+	for value in route:
+		if value is Array and value.size() == 2: points.append("(%.1f, %.1f)" % [float(value[0]), float(value[1])])
+	return " → ".join(points) if not points.is_empty() else "없음"
+
+
+func _fast_return_basis_points(value) -> String:
+	return "%d bp" % int(value) if int(value) >= 0 else "산출 불가"
+
+
+func _fast_return_distance(value) -> String:
+	return "%.1f" % float(value) if float(value) >= 0.0 else "도달 불가"
+
+
+func _fast_return_eta(value) -> String:
+	return "%d턴" % int(value) if int(value) >= 0 else "산출 불가"
+
+
+func _fast_return_event_text(event: Dictionary) -> String:
+	var event_type := String(event.get("event_type", "")); var status := String(event.get("status", ""))
+	if event_type == "fast_craft_fuel_consumed":
+		return "귀환 연료 소비 · T%d · 실제 이동 %.1f · 연료 %d→%d bp (-%d)" % [int(event.get("turn", 0)), float(event.get("actual_distance", 0.0)), int(event.get("fuel_before_basis_points", 0)), int(event.get("fuel_after_basis_points", 0)), int(event.get("fuel_used_basis_points", 0))]
+	var label: String = {"early_requested":"조기 귀환 요청", "early_cancelled":"조기 귀환 취소", "retargeted":"목적지 재탐색", "fuel_consumed":"귀환 연료 소비", "forced_return":"강제귀환 전환", "stranded_risk":"도달 불가 위험"}.get(status, status)
+	var text := "%s · T%d · %s · 필요 %d / 예비 %d bp · ETA %d턴" % [label, int(event.get("turn", 0)), String(event.get("nearest_source_id", event.get("source_id", ""))), int(event.get("required_fuel_basis_points", 0)), int(event.get("reserve_fuel_basis_points", 0)), int(event.get("eta_turns", 0))]
 	return text
 
 

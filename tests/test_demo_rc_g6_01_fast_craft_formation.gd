@@ -50,7 +50,7 @@ func _test_historical_setup_and_catalog() -> void:
 	_eq(catalog.basing_modes, ["independent", "carrier", "base"], "independent, carrier-based, and base-deployed preparation metadata are explicit")
 	_ok(String(catalog.basing_contract.carrier).contains("G6-03") and String(catalog.basing_contract.base).contains("G6-03"), "carrier/base metadata does not pretend later resupply behavior")
 	_eq(catalog.penalty_application, {"mobility_percent":"active_g4_movement", "accuracy_percent":"active_pre_resource_accuracy_snapshot", "formation_change_percent":"active_resolution_start_modifier_effectiveness"}, "penalty consumer capability is explicit")
-	_eq(catalog.out_of_scope, ["in_battle_equipment_change", "tactical_mission_change", "fuel", "ammo_resupply", "automatic_return", "drift", "rescue_result", "capture_result"], "later G6 systems remain exactly out of scope")
+	_eq(catalog.out_of_scope, ["in_battle_equipment_change", "tactical_mission_effect", "drift", "rescue_result", "capture_result", "supply_source_stock", "supply_source_damage", "base_reloading"], "equipment mutation and remaining G6-05+ or source-stock effects remain exactly out of scope")
 	var source := FileAccess.get_file_as_string("res://data/red-cliffs-fast-craft-rules.json") + FileAccess.get_file_as_string("res://core/demo_red_cliffs/red_cliffs_fast_craft_formation.gd")
 	_ok(not source.contains("28척") and not source.contains("SQUADRON_SHIPS") and not source.contains("global_economy") and not source.contains("core/combat/battle.gd") and not source.contains("data/ship-types.json"), "no fixed 28-craft or global economy authority coupling")
 
