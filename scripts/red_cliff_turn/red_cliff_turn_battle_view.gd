@@ -220,6 +220,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 		return
 	var squad := _find_squad(snapshot, _selected_squadron_id)
 	var selected := Label.new(); selected.text = "선택: %s" % String(squad.get("name", _selected_squadron_id)); selected.add_theme_color_override("font_color", Color("f0cf7e")); _orders.add_child(selected)
+	_add_fast_craft_applied_loadout(squad)
 	var action_row := HBoxContainer.new(); _orders.add_child(action_row)
 	var hold := _button("대기 HOLD", "SetOrderHold", 165); hold.pressed.connect(_on_set_hold); action_row.add_child(hold)
 	var move := _button("이동 MOVE", "ArmOrderMove", 165); move.pressed.connect(_on_arm_move); action_row.add_child(move)
@@ -248,6 +249,19 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	_add_estimated_fire_editor()
 	_add_phase_ledger()
 	var detection_auto := _button("탐지 · 자동 코어 판정 · 수동 조작 없음", "DetectionAutomatic", 340); detection_auto.disabled = true; _orders.add_child(detection_auto)
+
+
+func _add_fast_craft_applied_loadout(squad: Dictionary) -> void:
+	var composition: Array = squad.get("composition", [])
+	if composition.size() != 1 or not composition[0] is Dictionary or String(composition[0].get("ship_type_id", "")) != "SHP-08": return
+	var component: Dictionary = composition[0]
+	var label := Label.new(); label.name = "AppliedFastCraftLoadout"; label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.text = "고속정 임무 편성 · 전투 중 불변\n%d척 · %s · 적용 비용 %d\n전투 중 장비 변경·보급·귀환·구조 결과는 후속 기능" % [int(component.get("count", 0)), _fast_equipment_label(String(component.get("mission_equipment_id", ""))), int(squad.get("declared_total_cost", 0))]
+	label.add_theme_color_override("font_color", Color("eac77e")); _orders.add_child(label)
+
+
+func _fast_equipment_label(equipment_id: String) -> String:
+	return String({"FAST-EQ-INTERCEPT":"요격 장비", "FAST-EQ-TORPEDO":"뇌격 장비", "FAST-EQ-RECON":"정찰 장비", "FAST-EQ-RESCUE":"구조 장비"}.get(equipment_id, "적용 장비"))
 
 
 func _rebuild_log() -> void:

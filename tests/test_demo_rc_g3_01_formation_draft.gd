@@ -69,7 +69,7 @@ func _test_setup_data_and_boundaries() -> void:
 	var liu_count := 0
 	for squad in setup.squadrons:
 		if String(squad.faction_id) == "liu_bei": liu_count += 1
-	_eq(liu_count, 2, "Liu Bei has at least two editable squadrons")
+	_eq(liu_count, 3, "Liu Bei has two main squadrons plus one independent fast-craft squadron")
 	for faction in setup.factions:
 		_eq(faction.inventory.size(), setup.ship_types.size(), "inventory covers every ship type: %s" % faction.id)
 		for commander in faction.demo_roster:
@@ -85,7 +85,7 @@ func _test_setup_data_and_boundaries() -> void:
 	bad.factions[0].inventory["SHP-01"] = -1
 	_ok(not Setup.validate_document(bad).ok, "negative inventory rejected")
 	bad = setup.duplicate(true)
-	bad.squadrons.remove_at(1)
+	bad.squadrons = bad.squadrons.filter(func(row): return String(row.faction_id) != "liu_bei" or String(row.id) == "RC-LIU-SQ-01")
 	bad.fleet_groups[0].squadron_ids = ["RC-LIU-SQ-01"]
 	bad.fleet_groups[0].flagship_squadron_id = "RC-LIU-SQ-01"
 	bad.squadrons[0].flagship = true
@@ -116,12 +116,12 @@ func _test_snapshots_and_mutations() -> void:
 
 	_ok(editor.set_ship_count("RC-LIU-SQ-01", "SHP-04", 5).ok, "Liu composition count mutates")
 	_ok(editor.set_fast_equipment("RC-LIU-SQ-01", "FAST-EQ-TORPEDO").ok, "fast-craft equipment mutates")
-	_ok(editor.set_commander("RC-LIU-SQ-01", "CHR-0136").ok, "same-faction unused commander mutates")
+	_ok(editor.set_commander("RC-LIU-SQ-01", "CHR-0107").ok, "same-faction unused commander mutates")
 	_ok(editor.set_formation("RC-LIU-SQ-01", "FRM-07").ok, "formation mutates")
 	_ok(editor.set_position("RC-LIU-SQ-01", Vector2(0, 900)).ok, "inclusive battlefield edge accepted")
 	var squad := _find_squad(editor.draft_snapshot(), "RC-LIU-SQ-01")
 	_eq(squad.formation_id, "FRM-07", "formation persisted in draft")
-	_eq(squad.commander.id, "CHR-0136", "commander persisted in draft")
+	_eq(squad.commander.id, "CHR-0107", "commander persisted in draft")
 	_eq(squad.initial_position, [0.0, 900.0], "position persisted in draft")
 	_eq(squad.declared_total_cost, 95, "composition and exact equipment cost recalculated")
 	_ok(editor.validate_draft().ok, "valid mutations produce a valid draft")
@@ -164,7 +164,7 @@ func _test_inventory_summary() -> void:
 	_eq(liu.inventory.size(), 8, "inventory summary covers every ship type")
 	_eq(liu.inventory["SHP-04"], {"total": 10, "used": 7, "available": 3},
 		"historical Liu line-ship inventory is calculated")
-	_eq(liu.inventory["SHP-08"], {"total": 16, "used": 6, "available": 10},
+	_eq(liu.inventory["SHP-08"], {"total": 16, "used": 12, "available": 4},
 		"historical Liu fast-craft inventory is calculated")
 	_ok(editor.set_ship_count("RC-LIU-SQ-01", "SHP-04", 5).ok, "inventory test stages count change")
 	var changed: Dictionary = editor.faction_inventory_summary("liu_bei")

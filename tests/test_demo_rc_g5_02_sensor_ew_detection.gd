@@ -79,7 +79,8 @@ func _test_character_authority_and_invalid_crosscheck() -> void:
 
 func _test_all_editable_reserve_commanders_apply_into_detection() -> void:
 	var setup := _setup()
-	var cases := [["RC-LIU-SQ-01", "CHR-0136", "조운", false], ["RC-LIU-SQ-01", "CHR-0107", "관우", false],
+	var zhao_detector = Detection.new(); _ok(zhao_detector.initialize(setup).ok, "조운 assigned fast-craft commander initializes detection")
+	var cases := [["RC-LIU-SQ-01", "CHR-0107", "관우", false],
 		["RC-SUN-SQ-01", "CHR-0186", "노숙", true]]
 	for row in cases:
 		var editable_setup: Dictionary = setup.duplicate(true)
@@ -101,7 +102,7 @@ func _test_all_editable_reserve_commanders_apply_into_detection() -> void:
 		_ok(detector.initialize(cao_setup).ok, "%s canonical ID/name initializes G5 detection" % row[1])
 
 func _test_multi_observer_merge_viewer_redaction_atomicity() -> void:
-	var setup := _setup(); var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 100], "RC-SUN-SQ-01": [100, 700], "RC-CAO-SQ-01": [300, 100]}
+	var setup := _setup(); var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 100], "RC-LIU-FC-01": [1600, 900], "RC-SUN-SQ-01": [100, 700], "RC-CAO-SQ-01": [300, 100]}
 	for squad in setup.squadrons: squad.initial_position = positions[String(squad.id)].duplicate(); squad.initial_facing_deg = 0
 	var movement = Movement.new(); movement.initialize(setup); var moved: Dictionary = movement.resolve_orders(_holds(setup), movement.initial_navigation())
 	var interception = Interception.new(); _ok(interception.initialize(setup).ok, "interception initializes G5-02")
@@ -126,7 +127,7 @@ func _test_multi_observer_merge_viewer_redaction_atomicity() -> void:
 	_ok(not invalid.ok, "malformed formation state rejected"); _eq(JSON.stringify(prior), digest, "invalid evaluation atomic")
 
 func _test_battle_estimated_fire_phase_resource_regression() -> void:
-	var setup := _setup(); var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 100], "RC-SUN-SQ-01": [100, 100], "RC-CAO-SQ-01": [400, 100]}
+	var setup := _setup(); var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 100], "RC-LIU-FC-01": [1600, 900], "RC-SUN-SQ-01": [100, 100], "RC-CAO-SQ-01": [400, 100]}
 	for squad in setup.squadrons: squad.initial_position = positions[String(squad.id)].duplicate(); squad.initial_facing_deg = 0
 	var battle = Battle.new(); _ok(battle.initialize(setup).ok, "battle initializes G5-02")
 	battle.submit_command_draft(); battle.submit_sun_control_choice("ai"); var first: Dictionary = battle.resolve_turn(); _ok(first.ok, "AI/manual-neutral detection turn resolves")

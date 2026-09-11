@@ -108,7 +108,7 @@ func _test_resolver_order_partial_and_atomicity() -> void:
 	_eq(result.events.size(), setup.squadrons.size(), "receipt contains every operational squadron")
 	var resolved_ids: Array = []
 	for event in result.events: resolved_ids.append(String(event.squadron_id))
-	_eq(resolved_ids, ["RC-LIU-SQ-01", "RC-SUN-SQ-01", "RC-LIU-SQ-02", "RC-CAO-SQ-01"], "effective speed descending then stable ID resolution order")
+	_eq(resolved_ids, ["RC-LIU-FC-01", "RC-LIU-SQ-01", "RC-SUN-SQ-01", "RC-LIU-SQ-02", "RC-CAO-SQ-01"], "fast-craft then effective speed descending and stable ID resolution order")
 	var move := _event(result.events, "RC-LIU-SQ-01")
 	_eq(move.from, [310.0, 590.0], "movement receipt exposes live origin")
 	_eq(move.to, [450.0, 590.0], "movement receipt exposes partial destination")
@@ -129,7 +129,7 @@ func _test_command_draft_and_live_persistence() -> void:
 	_ok(battle.initialize(setup).ok, "turn battle initializes movement boundary")
 	_eq(battle.current_direct_faction_id(), "liu_bei", "Liu is current direct-control faction")
 	var summary: Dictionary = battle.command_draft_summary()
-	_eq(summary, {"faction_id": "liu_bei", "total": 2, "hold_count": 2, "move_count": 0, "estimated_fire_count": 0, "all_orders_ready": true}, "new direct-control draft defaults each squadron to hold")
+	_eq(summary, {"faction_id": "liu_bei", "total": 3, "hold_count": 3, "move_count": 0, "estimated_fire_count": 0, "all_orders_ready": true}, "new direct-control draft includes independent fast-craft HOLD")
 	_eq(battle.command_order("RC-LIU-SQ-02").order.action, "hold", "per-squad query exposes persisted hold")
 	var before := battle.digest()
 	_ok(not battle.set_order_move("RC-LIU-SQ-01", [], 0).ok, "invalid move draft rejected")

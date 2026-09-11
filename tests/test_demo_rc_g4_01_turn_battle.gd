@@ -114,7 +114,7 @@ func _test_manual_and_ai_flows() -> void:
 	_ok(not receipt.has("winner") and not receipt.has("damage") and not receipt.has("casualties"), "resolution invents no winner, damage, or casualties")
 	var log: Dictionary = battle.turn_log()[0]
 	_eq(log.turn, 1, "turn log records turn number")
-	_eq(log.liu_orders.size(), 2, "turn log records every Liu squadron")
+	_eq(log.liu_orders.size(), 3, "turn log records both main and independent fast-craft Liu squadrons")
 	_eq(log.sun_control_decision.control, "manual", "turn log records Sun decision")
 	_eq(log.sun_orders.size(), 1, "turn log records Sun orders")
 	_eq(log.cao_orders.size(), 1, "turn log records Cao orders")

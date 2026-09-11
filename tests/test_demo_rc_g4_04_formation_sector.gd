@@ -36,7 +36,7 @@ func _fixture() -> Dictionary:
 	var loaded := Setup.load_default(); _ok(loaded.ok, "setup loads")
 	var setup: Dictionary = loaded.setup.duplicate(true)
 	var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 800],
-		"RC-SUN-SQ-01": [100, 700], "RC-CAO-SQ-01": [400, 100]}
+		"RC-LIU-FC-01": [1600, 900], "RC-SUN-SQ-01": [100, 700], "RC-CAO-SQ-01": [400, 100]}
 	for squad in setup.squadrons:
 		squad.initial_position = positions[String(squad.id)].duplicate()
 		if squad.id == "RC-LIU-SQ-01": squad.initial_facing_deg = 0
@@ -54,7 +54,7 @@ func _test_rules_state_and_sector_boundaries() -> void:
 	var resolver = _resolver(_fixture()); var rules: Dictionary = resolver.rules_snapshot()
 	_eq(rules.get("profile_id", ""), "normal-demo-formation-v1", "explicit balance profile")
 	_eq(resolver.allowed_formations().size(), 7, "FRM-01~07 have one canonical modifier table")
-	var initial: Dictionary = resolver.initial_state(); _eq(initial.size(), 4, "all operational formations initialized from G3")
+	var initial: Dictionary = resolver.initial_state(); _eq(initial.size(), 5, "all operational formations include independent fast-craft squadron")
 	_eq(initial["RC-LIU-SQ-01"].formation_id, "FRM-01", "G3 applied formation is authority input")
 	var front0: Dictionary = resolver.classify_sector([10, 0], [0, 0], 0)
 	_eq(front0.sector, "front", "0 degree is front")
@@ -79,7 +79,7 @@ func _test_atomic_orders_and_deep_copy() -> void:
 	_eq(JSON.stringify(result), JSON.stringify(resolver.resolve_orders(orders, state, 1)), "same formation inputs are deterministic")
 	_eq(JSON.stringify(state), digest, "resolver deep-copies caller state")
 	_eq(result.formation_state[String(orders[0].squadron_id)].formation_id, "FRM-07", "valid formation applies")
-	_eq(result.formation_events.size(), 4, "every squad formation order is recorded")
+	_eq(result.formation_events.size(), 5, "every squad formation order includes independent fast craft")
 	_eq(result.formation_events[0].application_timing, "submitted_with_command_draft; applied_atomically_at_resolution_start_before_movement_detection_and_fire; persists_until_changed", "application timing explicit")
 	var invalid: Array = orders.duplicate(true); invalid[0].formation_id = "FRM-99"
 	_ok(not resolver.resolve_orders(invalid, state, 1).ok, "unknown formation rejected")
@@ -142,7 +142,7 @@ func _test_battle_timing_persistence_ai_and_redaction() -> void:
 	_ok(battle.submit_command_draft().ok, "manual Sun draft submits")
 	var second: Dictionary = battle.resolve_turn(); _ok(second.ok, "manual Sun turn resolves")
 	_eq(battle.formation_state()["RC-SUN-SQ-01"].formation_id, "FRM-05", "manual Sun formation applies with parity")
-	_eq(second.formation_events.size(), 4, "AI/manual formations share complete resolver")
+	_eq(second.formation_events.size(), 5, "AI/manual formations share complete resolver including fast craft")
 
 
 func _fire(events: Array, shooter_id: String, target_id: String) -> Dictionary:

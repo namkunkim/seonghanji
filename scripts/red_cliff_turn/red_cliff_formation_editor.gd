@@ -8,6 +8,7 @@ signal close_requested
 signal formation_applied(setup: Dictionary, summary: Dictionary)
 
 const DraftScript := preload("res://core/demo_red_cliffs/red_cliffs_formation_draft.gd")
+const FastCraftEditor := preload("res://scripts/red_cliff_turn/red_cliff_fast_craft_editor.gd")
 const FACTION_ORDER := ["liu_bei", "sun_quan", "cao_cao"]
 const FACTION_LABEL := {
 	"liu_bei": "유비군 · 직접 편집",
@@ -25,6 +26,7 @@ var _tabs: HBoxContainer
 var _status: Label
 var _apply_button: Button
 var _apply_in_progress := false
+var _fast_craft_editor: Control
 
 
 func configure(historical_setup: Dictionary, applied_setup: Dictionary = {}) -> Dictionary:
@@ -99,6 +101,9 @@ func _build_shell() -> void:
 	profile.add_theme_color_override("font_color", Color("9fc0ce"))
 	profile.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	header.add_child(profile)
+	var fast_craft := _button("고속정 임무 편성", "OpenFastCraftEditor", 165)
+	fast_craft.pressed.connect(_open_fast_craft_editor)
+	header.add_child(fast_craft)
 
 	_tabs = HBoxContainer.new()
 	_tabs.name = "FactionPermissionTabs"
@@ -472,6 +477,49 @@ func _request_close() -> void:
 		_refresh()
 		return
 	close_requested.emit()
+
+
+func _open_fast_craft_editor() -> void:
+	if _draft == null: return
+	if _draft.draft_digest() != _draft.applied_digest():
+		_status_text = "기존 편성 변경을 먼저 적용하거나 취소한 뒤 고속정 임무 편성을 여세요."
+		_status_error = true
+		_refresh()
+		return
+	if _fast_craft_editor == null or not is_instance_valid(_fast_craft_editor):
+		_fast_craft_editor = FastCraftEditor.new()
+		_fast_craft_editor.name = "RedCliffFastCraftEditor"
+		add_child(_fast_craft_editor)
+		var receipt: Dictionary = _fast_craft_editor.configure(_draft.historical_snapshot(), _draft.applied_snapshot())
+		if not bool(receipt.get("ok", false)):
+			_set_receipt(receipt)
+			_fast_craft_editor.queue_free()
+			_fast_craft_editor = null
+			_refresh()
+			return
+		_fast_craft_editor.close_requested.connect(func(): _fast_craft_editor.visible = false)
+		_fast_craft_editor.loadout_applied.connect(_on_fast_craft_loadout_applied)
+	else:
+		var receipt: Dictionary = _fast_craft_editor.configure(_draft.historical_snapshot(), _draft.applied_snapshot())
+		if not bool(receipt.get("ok", false)): _set_receipt(receipt); _refresh(); return
+	_fast_craft_editor.visible = true
+	_fast_craft_editor.move_to_front()
+
+
+func _on_fast_craft_loadout_applied(receipt: Dictionary) -> void:
+	var applied_setup: Dictionary = receipt.get("applied_setup", {})
+	if applied_setup.is_empty():
+		_set_receipt({"ok":false, "errors":["적용된 고속정 전투 편성이 누락되었습니다."]})
+		return
+	var configured: Dictionary = _draft.configure(_draft.historical_snapshot(), applied_setup)
+	if not bool(configured.get("ok", false)):
+		_set_receipt(configured)
+		return
+	_select_first_squadron()
+	_status_text = "고속정 임무 편성을 전투 준비 편성에 적용했습니다. 전투 시작 뒤에는 불변입니다."
+	_status_error = false
+	formation_applied.emit(applied_setup.duplicate(true), _draft.summary().duplicate(true))
+	_refresh()
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

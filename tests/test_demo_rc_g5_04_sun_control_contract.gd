@@ -20,7 +20,7 @@ func _run() -> void:
 
 func _fixture() -> Dictionary:
 	var loaded := Setup.load_default(); _ok(loaded.ok, "setup loads"); var setup: Dictionary = loaded.setup.duplicate(true)
-	var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 100], "RC-SUN-SQ-01": [100, 100], "RC-CAO-SQ-01": [300, 100]}
+	var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 100], "RC-LIU-FC-01": [1600, 900], "RC-SUN-SQ-01": [100, 100], "RC-CAO-SQ-01": [300, 100]}
 	for squad in setup.squadrons: squad.initial_position = positions[String(squad.id)].duplicate(); squad.initial_facing_deg = 0
 	return setup
 

@@ -34,7 +34,7 @@ func _fixture(cao_position: Array = [300, 100]) -> Dictionary:
 	var loaded := Setup.load_default(); _ok(loaded.ok, "setup loads")
 	var setup: Dictionary = loaded.setup.duplicate(true)
 	var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 100],
-		"RC-SUN-SQ-01": [100, 100], "RC-CAO-SQ-01": cao_position}
+		"RC-LIU-FC-01": [1600, 900], "RC-SUN-SQ-01": [100, 100], "RC-CAO-SQ-01": cao_position}
 	for squad in setup.squadrons:
 		squad.initial_position = positions[String(squad.id)].duplicate(); squad.initial_facing_deg = 0
 	_ok(Setup.validate_document(setup).ok, "fixture valid")

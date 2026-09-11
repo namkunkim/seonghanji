@@ -25,7 +25,7 @@ func _run() -> void:
 
 func _test_readiness_cancel_trigger_and_redaction() -> void:
 	var loaded := Setup.load_default(); _ok(loaded.ok, "setup loads"); var setup: Dictionary = loaded.setup.duplicate(true)
-	var positions := {"RC-LIU-SQ-01":[700,49], "RC-LIU-SQ-02":[700,49], "RC-SUN-SQ-01":[550,100], "RC-CAO-SQ-01":[781,11]}
+	var positions := {"RC-LIU-SQ-01":[700,49], "RC-LIU-SQ-02":[700,49], "RC-LIU-FC-01":[700,49], "RC-SUN-SQ-01":[550,100], "RC-CAO-SQ-01":[781,11]}
 	for squad in setup.squadrons: squad.initial_position = positions[String(squad.id)].duplicate(); squad.initial_facing_deg = 0
 	var battle = Battle.new(); _ok(battle.initialize(setup).ok, "battle initializes")
 	var view := View.new(); view.configure(battle, 0, JSON.stringify(setup)); root.add_child(view); await _settle()
@@ -58,7 +58,7 @@ func _test_readiness_cancel_trigger_and_redaction() -> void:
 
 func _test_disruption_and_retry_copy() -> void:
 	var loaded := Setup.load_default(); var setup: Dictionary = loaded.setup.duplicate(true)
-	var positions := {"RC-LIU-SQ-01":[700,49], "RC-LIU-SQ-02":[700,49], "RC-SUN-SQ-01":[550,100], "RC-CAO-SQ-01":[781,11]}
+	var positions := {"RC-LIU-SQ-01":[700,49], "RC-LIU-SQ-02":[700,49], "RC-LIU-FC-01":[700,49], "RC-SUN-SQ-01":[550,100], "RC-CAO-SQ-01":[781,11]}
 	for squad in setup.squadrons: squad.initial_position = positions[String(squad.id)].duplicate(); squad.initial_facing_deg = 0
 	var battle = Battle.new(); _ok(battle.initialize(setup).ok, "disruption fixture initializes")
 	# Turn 1 creates the legal confirmed contact. Turn 2 is left unstaged so the

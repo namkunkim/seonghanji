@@ -110,7 +110,7 @@ func _test_invalid_atomic_resolve_and_zero_weapon_hold() -> void:
 func _test_range_arc_eligibility_and_hold_fire() -> void:
 	var setup := _setup()
 	var angle := deg_to_rad(70.0)
-	var positions := {"RC-LIU-SQ-01": [100.0, 100.0], "RC-LIU-SQ-02": [100, 800], "RC-SUN-SQ-01": [100, 700],
+	var positions := {"RC-LIU-SQ-01": [100.0, 100.0], "RC-LIU-SQ-02": [100, 800], "RC-LIU-FC-01": [1600, 900], "RC-SUN-SQ-01": [100, 700],
 		"RC-CAO-SQ-01": [100.0 + cos(angle) * 230.0, 100.0 + sin(angle) * 230.0]}
 	for squad in setup.squadrons:
 		squad.initial_position = positions[String(squad.id)].duplicate()
@@ -169,7 +169,7 @@ func _test_battle_draft_timing_persistence_parity_and_redaction() -> void:
 	_ok(first.rules_pending.has("weapon_fire"), "actual weapon fire remains pending")
 	_eq(battle.weapon_allocation_state()["RC-LIU-SQ-01"].allocations.line_fire, 4321, "allocation applied")
 	_ok(battle.weapon_allocation_state()["RC-LIU-SQ-01"].hold_fire, "hold-fire applied")
-	_eq(first.weapon_allocation_events.size(), 4, "AI and player share complete resolver")
+	_eq(first.weapon_allocation_events.size(), 5, "AI and player share complete resolver including fast craft")
 	_ok(not first.has("ammo") and not first.has("energy") and not first.has("heat") and not first.has("hit") and not first.has("damage") and not first.has("winner"), "no G4-06 result fabricated")
 	var liu_view: Dictionary = battle.viewer_snapshot("liu_bei")
 	_ok(liu_view.own_weapon_allocation_state.has("RC-LIU-SQ-01") and not liu_view.own_weapon_allocation_state.has("RC-CAO-SQ-01"), "viewer snapshot exposes own allocation only")

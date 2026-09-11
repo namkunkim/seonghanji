@@ -54,7 +54,7 @@ func _test_initial_state_and_save_primitives() -> void:
 	_ok(String(rules.statement).contains("역사적 사실이 아닌"), "demo quantities not presented as historical fact")
 	_ok(String(rules.statement).contains("글로벌 미사일 규칙을 변경하지 않는다"), "finite special charge scope is profile-local")
 	_eq(rules.resource_semantics.special, "finite_charge_in_normal-demo-resource-v1_only", "special is finite only in demo profile")
-	var state: Dictionary = resolver.initial_state(); _eq(state.size(), 4, "all operational squads receive resources")
+	var state: Dictionary = resolver.initial_state(); _eq(state.size(), 5, "all operational squads including fast craft receive resources")
 	var liu: Dictionary = state["RC-LIU-SQ-01"]
 	_ok(int(liu.shared.energy) == int(liu.shared.energy_capacity) and int(liu.shared.heat) == 0, "shared energy full and heat zero")
 	_eq(int(liu.weapons.line_fire.ammo), 40, "line-fire ammo derives from four line ships")
@@ -132,12 +132,12 @@ func _test_all_suppression_reasons_and_recovery() -> void:
 	_ok(int(after.weapons.line_fire.carrier_ready) > 0, "carrier sorties return at turn boundary")
 	_eq(int(after.weapons.line_fire.ammo), ammo_before, "ammo does not recover")
 	_eq(int(after.weapons.torpedo.special), special_before, "special resource does not recover")
-	_eq(recovered.recovery_events.size(), 4, "stable recovery receipt covers all squads")
+	_eq(recovered.recovery_events.size(), 5, "stable recovery receipt covers all squads including fast craft")
 	_eq(JSON.stringify(recovered), JSON.stringify(resolver.recover_at_resolution_start(spent, 2)), "recovery deterministic")
 
 
 func _test_battle_integration_manual_ai_and_viewer_redaction() -> void:
-	var setup := _setup(); var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 800],
+	var setup := _setup(); var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 800], "RC-LIU-FC-01": [1600, 900],
 		"RC-SUN-SQ-01": [100, 700], "RC-CAO-SQ-01": [400, 100]}
 	for squad in setup.squadrons:
 		squad.initial_position = positions[String(squad.id)].duplicate()
@@ -166,11 +166,11 @@ func _test_battle_integration_manual_ai_and_viewer_redaction() -> void:
 	_ok(battle.submit_command_draft().ok and battle.submit_sun_control_choice("manual").ok, "manual Sun phase starts")
 	_ok(battle.submit_command_draft().ok, "manual Sun shares command/resource resolver")
 	var second: Dictionary = battle.resolve_turn(); _ok(second.ok, "manual Sun/AI Cao turn resolves")
-	_eq(second.resource_recovery_events.size(), 4, "turn 2 resolution start recovers every squad exactly once")
+	_eq(second.resource_recovery_events.size(), 5, "turn 2 resolution start recovers every squad exactly once")
 	var after_second_digest := battle.digest()
 	_ok(not battle.resolve_turn().ok, "duplicate turn 2 resolve is rejected")
 	_eq(battle.digest(), after_second_digest, "duplicate resolve cannot recover or consume twice")
 	_ok(JSON.stringify(battle.visible_tactical_events("cao_cao")).contains("resource_recovered"), "own recovery event visible after resolution")
 	_ok(not battle.viewer_snapshot("cao_cao").resource_recovery_events.is_empty(), "viewer snapshot exposes resolution-start recovery receipt")
-	_eq(second.weapon_allocation_events.size(), 4, "manual Sun and AI use same allocation resolver")
-	_eq(battle.combat_resource_state().size(), 4, "all factions retain resource state")
+	_eq(second.weapon_allocation_events.size(), 5, "manual Sun and AI use same allocation resolver")
+	_eq(battle.combat_resource_state().size(), 5, "all factions retain resource state including fast craft")

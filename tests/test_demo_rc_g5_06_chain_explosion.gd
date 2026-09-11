@@ -23,7 +23,7 @@ func _run() -> void:
 
 func _fixture() -> Dictionary:
 	var loaded := Setup.load_default(); _ok(loaded.ok, "setup loads"); var setup: Dictionary = loaded.setup.duplicate(true)
-	var positions := {"RC-LIU-SQ-01": [590, 180], "RC-LIU-SQ-02": [590, 0], "RC-SUN-SQ-01": [600, 100], "RC-CAO-SQ-01": [700, 100]}
+	var positions := {"RC-LIU-SQ-01": [590, 180], "RC-LIU-SQ-02": [590, 0], "RC-LIU-FC-01": [580, 200], "RC-SUN-SQ-01": [600, 100], "RC-CAO-SQ-01": [700, 100]}
 	for squad in setup.squadrons:
 		squad.initial_position = positions[String(squad.id)].duplicate(); squad.initial_facing_deg = 0
 		if String(squad.id) == "RC-CAO-SQ-01": squad.commander = {"id": "CHR-0043", "name": "하후돈"}
@@ -31,6 +31,8 @@ func _fixture() -> Dictionary:
 			for row in squad.composition:
 				if String(row.ship_type_id) == "SHP-08": row.count = 16
 			squad.declared_total_cost = 109
+	for faction in setup.factions:
+		if String(faction.id) == "liu_bei": faction.inventory["SHP-08"] = 22
 	return setup
 
 func _chain(setup: Dictionary):

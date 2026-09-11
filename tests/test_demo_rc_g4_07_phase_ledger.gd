@@ -97,7 +97,7 @@ func _fixture(enemy_position: Array = [1200, 100]) -> Dictionary:
 	var loaded := Setup.load_default(); _ok(loaded.ok, "battle setup loads")
 	var setup: Dictionary = loaded.setup.duplicate(true)
 	var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 800],
-		"RC-SUN-SQ-01": [100, 700], "RC-CAO-SQ-01": enemy_position}
+		"RC-LIU-FC-01": [1600, 900], "RC-SUN-SQ-01": [100, 700], "RC-CAO-SQ-01": enemy_position}
 	for squad in setup.squadrons: squad.initial_position = positions[String(squad.id)].duplicate()
 	return setup
 

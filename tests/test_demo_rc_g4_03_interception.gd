@@ -37,7 +37,7 @@ func _run() -> void:
 func _fixture(liu_one: Array, liu_two: Array, sun: Array, cao: Array) -> Dictionary:
 	var loaded := Setup.load_default(); _ok(loaded.ok, "setup fixture loads")
 	var setup: Dictionary = loaded.setup.duplicate(true)
-	var positions := {"RC-LIU-SQ-01": liu_one, "RC-LIU-SQ-02": liu_two, "RC-SUN-SQ-01": sun, "RC-CAO-SQ-01": cao}
+	var positions := {"RC-LIU-SQ-01": liu_one, "RC-LIU-SQ-02": liu_two, "RC-LIU-FC-01": [1600, 900], "RC-SUN-SQ-01": sun, "RC-CAO-SQ-01": cao}
 	for squad in setup.squadrons: squad.initial_position = positions[String(squad.id)].duplicate()
 	_ok(Setup.validate_document(setup).ok, "position fixture remains valid")
 	return setup
@@ -58,7 +58,7 @@ func _test_rules_and_initial_redaction() -> void:
 	_ok(not String(rules.deterministic_seed).is_empty(), "deterministic seed is data-owned")
 	_ok(String(rules.intersection_policy).contains("actual_reached_polyline_only") and String(rules.intersection_policy).contains("hostile_only"), "actual hostile path policy explicit")
 	var detection: Dictionary = resolver.initial_detection_state()
-	_eq(detection.size(), 6, "directed hostile observer-target pairs initialized")
+	_eq(detection.size(), 8, "directed hostile observer-target pairs include independent Liu fast-craft squadron")
 	for row in detection.values():
 		_eq(row.state, "undetected", "initial detection is undetected")
 		_eq(row.last_known_position, null, "never-seen contact has no last-known position")
@@ -113,7 +113,10 @@ func _test_actual_path_intersection_policy() -> void:
 	movement = _new_movement(setup); interception = _new_interception(setup); navigation = movement.initial_navigation()
 	var future_orders := _holds(setup); _set_move(future_orders, "RC-LIU-SQ-01", [[500, 100]], 0)
 	moved = movement.resolve_orders(future_orders, navigation)
-	_ok(not moved.events[0].path_complete, "future-path fixture is partial")
+	var future_move := {}
+	for event in moved.events:
+		if String(event.squadron_id) == "RC-LIU-SQ-01": future_move = event
+	_ok(not future_move.is_empty() and not future_move.path_complete, "future-path fixture is partial")
 	var future := interception.resolve(moved.events, moved.live_navigation, interception.initial_detection_state(), 1)
 	_eq(future.path_intersection_events.size(), 0, "unreached requested path cannot create interception")
 

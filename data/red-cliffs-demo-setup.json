@@ -115,6 +115,22 @@
       "declared_total_cost": 76
     },
     {
+      "id": "RC-LIU-FC-01",
+      "faction_id": "liu_bei",
+      "name": "유비 정찰 고속정대",
+      "commander": {"id": "CHR-0136", "name": "조운"},
+      "flagship": false,
+      "operational": true,
+      "initial_position": [220, 720],
+      "formation_id": "FRM-06",
+      "deployment": {"kind": "independent"},
+      "historical_basis": "유비군의 연합 정찰 역할을 독립 고속정대로 표현한 normal-demo-v1 게임 편성",
+      "composition": [
+        {"ship_type_id": "SHP-08", "count": 6, "mission_equipment_id": "FAST-EQ-RECON"}
+      ],
+      "declared_total_cost": 18
+    },
+    {
       "id": "RC-SUN-SQ-01",
       "faction_id": "sun_quan",
       "name": "주유 수군 전대",

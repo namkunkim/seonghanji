@@ -83,7 +83,7 @@ func _test_estimated_aim_terrain_independence() -> void:
 	_ok(not JSON.stringify(a).contains("RC-CAO-SQ-01"), "estimated terrain receipt leaks no true target ID")
 
 func _test_battle_phase_viewer_redaction_and_control_parity() -> void:
-	var setup := _setup(); var positions := {"RC-LIU-SQ-01": [550, 100], "RC-LIU-SQ-02": [200, 600], "RC-SUN-SQ-01": [300, 700], "RC-CAO-SQ-01": [1300, 350]}
+	var setup := _setup(); var positions := {"RC-LIU-SQ-01": [550, 100], "RC-LIU-SQ-02": [200, 600], "RC-LIU-FC-01": [1600, 900], "RC-SUN-SQ-01": [300, 700], "RC-CAO-SQ-01": [1300, 350]}
 	for squad in setup.squadrons: squad.initial_position = positions[String(squad.id)].duplicate(); squad.initial_facing_deg = 0
 	var ai = Battle.new(); _ok(ai.initialize(setup).ok, "AI battle initializes"); var preview: Dictionary = ai.set_order_move("RC-LIU-SQ-01", [[750, 100]], 0)
 	_ok(preview.ok and not preview.terrain_segments.is_empty(), "movement preview consumes terrain resolver receipt")

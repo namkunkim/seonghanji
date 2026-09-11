@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-fast-craft-v1",
+  "statement": "적벽 데모 고속정 전대의 편성·임무장비·비용 규칙이다. 수량과 비용은 역사적 사실이 아닌 normal-demo 밸런스 값이다.",
+  "fast_craft_ship_type_id": "SHP-08",
+  "interceptor_ship_type_id": "SHP-07",
+  "category_contract": {
+    "fast_craft": "small_craft",
+    "interceptor": "interceptor",
+    "distinction": "고속정은 임무장비 1종을 탑재하는 소형 전투정이고, 요격함은 독립 고속 전투함이다. 두 함종의 재고와 비용은 합산하지 않는다."
+  },
+  "mission_equipment": [
+    {"mission_id": "intercept", "equipment_id": "FAST-EQ-INTERCEPT", "label": "요격", "eligible_ship_type_ids": ["SHP-08"]},
+    {"mission_id": "torpedo", "equipment_id": "FAST-EQ-TORPEDO", "label": "뇌격", "eligible_ship_type_ids": ["SHP-08"]},
+    {"mission_id": "recon", "equipment_id": "FAST-EQ-RECON", "label": "정찰", "eligible_ship_type_ids": ["SHP-08"]},
+    {"mission_id": "rescue", "equipment_id": "FAST-EQ-RESCUE", "label": "구조", "eligible_ship_type_ids": ["SHP-08"]}
+  ],
+  "basing_modes": ["independent", "carrier", "base"],
+  "basing_contract": {
+    "independent": "독립 전장 배치",
+    "carrier": "강습모함 탑재형 준비 metadata; 실제 전투 중 출격·재보급은 G6-03 이후",
+    "base": "우주기지·행성 거점 배치형 준비 metadata; 실제 자동 보급은 G6-03 이후"
+  },
+  "historical_squadron_ids": ["RC-LIU-FC-01"],
+  "historical_loadouts": [
+    {"squadron_id": "RC-LIU-FC-01", "faction_id": "liu_bei", "count": 6, "equipment_id": "FAST-EQ-RECON", "declared_historical_cost": 18}
+  ],
+  "inventory_policy": "applied setup faction inventory minus all setup squadron assignments; preparation may create or delete user fast-craft squadrons from remaining same-faction stock; cross-faction transfer forbidden",
+  "cost_policy": "per craft subtotal=(setup SHP-08 base unit cost+selected setup mission-equipment unit cost)*count; historical cost is the declared normal-demo baseline",
+  "command_limit_source": "applied_setup.command_limit_rules_and_faction_demo_roster",
+  "out_of_scope": ["in_battle_equipment_change", "tactical_mission_change", "fuel", "ammo_resupply", "automatic_return", "drift", "rescue_result", "capture_result"]
+}
