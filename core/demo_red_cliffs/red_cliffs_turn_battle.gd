@@ -79,7 +79,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 		"max_turns": MAX_TURNS,
 		"phase": "liu_command",
 		"resolved": false,
-		"sun_prompt_policy": {"enabled": true},
+		"sun_prompt_policy": {"enabled": true, "current_turn_enabled": true, "effective_turn": 1},
 		"live_navigation": _movement.initial_navigation(),
 		"detection_state": _interception.initial_detection_state(),
 		"formation_state": _formation.initial_state(),
@@ -415,7 +415,7 @@ func submit_liu_orders(orders: Array) -> Dictionary:
 	_current_log()["liu_weapon_allocation_orders"] = _submitted_weapon_orders("liu_bei")
 	_current_log()["liu_estimated_fire_orders"] = _submitted_estimated_fire_orders("liu_bei")
 	_state.command_draft = {}
-	if bool(_state.sun_prompt_policy.enabled):
+	if bool(_state.sun_prompt_policy.current_turn_enabled):
 		_state.phase = "sun_control_prompt"
 	else:
 		_current_log()["sun_control_decision"] = {
@@ -452,6 +452,8 @@ func set_sun_prompt_enabled(enabled: bool) -> Dictionary:
 	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
 	if phase() == "sun_control_prompt":
 		return _error("진행 중인 손권 선택에 먼저 답해야 합니다.")
+	# Settings changes are visible immediately but become effective only when the
+	# next turn begins. They never discard or redirect the current direct draft.
 	_state.sun_prompt_policy.enabled = enabled
 	return _ok()
 
@@ -590,6 +592,8 @@ func continue_turn() -> Dictionary:
 	if phase() != "victory_check":
 		return _error("턴 판정 뒤 외부 승리 확인 경계에서만 다음 턴으로 진행할 수 있습니다.")
 	_state.current_turn = turn() + 1
+	_state.sun_prompt_policy.current_turn_enabled = bool(_state.sun_prompt_policy.enabled)
+	_state.sun_prompt_policy.effective_turn = turn()
 	_state.last_resource_recovery_events = []
 	_state.phase = "liu_command"
 	_state.resolved = false

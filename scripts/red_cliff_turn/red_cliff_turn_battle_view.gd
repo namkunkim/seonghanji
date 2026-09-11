@@ -33,6 +33,7 @@ var _log: RichTextLabel
 var _status: Label
 var _primary: Button
 var _prompt: PanelContainer
+var _prompt_blocker: ColorRect
 var _reenable_prompt: Button
 var _squad_list: VBoxContainer
 var _selected_squadron_id := ""
@@ -116,6 +117,7 @@ func _build() -> void:
 
 
 func _build_prompt() -> void:
+	_prompt_blocker = ColorRect.new(); _prompt_blocker.name = "SunControlModalBlocker"; _prompt_blocker.color = Color(0.01, 0.03, 0.05, 0.72); _prompt_blocker.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); _prompt_blocker.mouse_filter = Control.MOUSE_FILTER_STOP; _prompt_blocker.visible = false; add_child(_prompt_blocker)
 	_prompt = PanelContainer.new(); _prompt.name = "SunControlPrompt"; _prompt.custom_minimum_size = Vector2(580, 330); _prompt.add_theme_stylebox_override("panel", _style(Color("0b1b25"), Color("d1ad61"))); _prompt.visible = false; add_child(_prompt)
 	_prompt.set_anchors_preset(Control.PRESET_CENTER)
 	_prompt.offset_left = -290; _prompt.offset_top = -165; _prompt.offset_right = 290; _prompt.offset_bottom = 165
@@ -126,10 +128,13 @@ func _build_prompt() -> void:
 	_prompt.add_child(margin)
 	var stack := VBoxContainer.new(); stack.add_theme_constant_override("separation", 10); margin.add_child(stack)
 	var title := Label.new(); title.text = "손권군을 이번 턴에 직접 지휘하시겠습니까?"; title.add_theme_font_size_override("font_size", 21); title.add_theme_color_override("font_color", Color("f0d48e")); stack.add_child(title)
-	var note := Label.new(); note.text = "선택 전에는 Esc로 닫히지 않습니다. ‘더 이상 묻지 않음’은 AI 위임에만 적용됩니다."; note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; stack.add_child(note)
+	var note := Label.new(); note.text = "Esc로 닫을 수 없습니다. ‘더 이상 묻지 않음’은 AI 위임 전용입니다."; note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; stack.add_child(note)
 	var manual := _button("이번 턴 직접 명령", "SunManualThisTurn", 520); manual.pressed.connect(_on_sun_choice.bind("manual", false)); stack.add_child(manual)
 	var ai := _button("이번 턴 AI 위임", "SunAiThisTurn", 520); ai.pressed.connect(_on_sun_choice.bind("ai", false)); stack.add_child(ai)
 	var ai_always := _button("AI 위임하고 더 이상 묻지 않음", "SunAiDontAsk", 520); ai_always.pressed.connect(_on_sun_choice.bind("ai", true)); stack.add_child(ai_always)
+	manual.focus_neighbor_top = NodePath("../SunAiDontAsk"); manual.focus_previous = manual.focus_neighbor_top; manual.focus_neighbor_bottom = NodePath("../SunAiThisTurn"); manual.focus_next = manual.focus_neighbor_bottom
+	ai.focus_neighbor_top = NodePath("../SunManualThisTurn"); ai.focus_previous = ai.focus_neighbor_top; ai.focus_neighbor_bottom = NodePath("../SunAiDontAsk"); ai.focus_next = ai.focus_neighbor_bottom
+	ai_always.focus_neighbor_top = NodePath("../SunAiThisTurn"); ai_always.focus_previous = ai_always.focus_neighbor_top; ai_always.focus_neighbor_bottom = NodePath("../SunManualThisTurn"); ai_always.focus_next = ai_always.focus_neighbor_bottom
 
 
 func _refresh() -> void:
@@ -139,6 +144,7 @@ func _refresh() -> void:
 	_header.text = "적 벽 대 전  ·  턴 %d/%d" % [_battle.turn(), int(snapshot.get("max_turns", 20))]
 	_phase_text.text = String(PHASE_LABELS.get(phase, phase))
 	_rebuild_steps(phase); _rebuild_squad_list(snapshot); _rebuild_map(snapshot); _rebuild_orders(snapshot, phase); _rebuild_log()
+	_prompt_blocker.visible = phase == "sun_control_prompt"
 	_prompt.visible = phase == "sun_control_prompt"
 	if _prompt.visible:
 		var first: Button = _prompt.find_child("SunManualThisTurn", true, false); if first != null: first.grab_focus()

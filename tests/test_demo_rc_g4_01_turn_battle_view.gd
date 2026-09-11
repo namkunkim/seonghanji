@@ -96,9 +96,10 @@ func _test_view_flow() -> void:
 
 func _test_turn_limit() -> void:
 	var fixture := _fixture(); var battle = fixture[0]; var setup: Dictionary = fixture[1]
-	battle.set_sun_prompt_enabled(false)
 	for turn_number in range(1, 21):
-		battle.submit_liu_orders(_orders(setup, "liu_bei")); battle.resolve_turn()
+		battle.submit_liu_orders(_orders(setup, "liu_bei"))
+		if turn_number == 1: battle.submit_sun_control_choice("no", true)
+		battle.resolve_turn()
 		if turn_number < 20: battle.continue_turn()
 	var view := View.new(); view.configure(battle, int(setup.get("formation_revision", 0)), JSON.stringify(setup)); root.add_child(view); await process_frame
 	_eq(battle.phase(), "turn_limit_reached", "turn 20 reaches result pending")

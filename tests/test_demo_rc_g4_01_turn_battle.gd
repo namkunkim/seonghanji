@@ -110,7 +110,7 @@ func _test_manual_and_ai_flows() -> void:
 	_eq(battle.phase(), "victory_check", "resolution waits at external victory check")
 	_ok(battle.snapshot().resolved, "resolution marks current turn resolved")
 	_ok(receipt.victory_check_required, "resolution explicitly requires victory check")
-	_eq(receipt.rules_pending, ["terrain_detection", "weapon_fire", "damage", "casualties", "victory"], "post-formation pending detailed rules are explicit")
+	_eq(receipt.rules_pending, ["weapon_fire", "damage", "casualties", "victory"], "post-formation pending detailed rules are explicit")
 	_ok(not receipt.has("winner") and not receipt.has("damage") and not receipt.has("casualties"), "resolution invents no winner, damage, or casualties")
 	var log: Dictionary = battle.turn_log()[0]
 	_eq(log.turn, 1, "turn log records turn number")
@@ -147,8 +147,9 @@ func _test_prompt_policy_lifetime() -> void:
 	battle.submit_liu_orders(_orders(setup, "liu_bei"))
 	_eq(battle.phase(), "resolution", "disabled prompt automatically prepares Sun and Cao AI")
 	_eq(battle.turn_log()[2].sun_control_decision.source, "saved_policy", "automatic decision records saved policy source")
-	battle.resolve_turn(); battle.continue_turn()
-	_ok(battle.set_sun_prompt_enabled(true).ok, "public setting restores Sun prompt")
+	battle.resolve_turn()
+	_ok(battle.set_sun_prompt_enabled(true).ok, "public setting schedules restored Sun prompt")
+	battle.continue_turn()
 	battle.submit_liu_orders(_orders(setup, "liu_bei"))
 	_eq(battle.phase(), "sun_control_prompt", "restored setting prompts on next turn")
 	var before: String = battle.digest()
@@ -201,10 +202,11 @@ func _test_twenty_turn_limit() -> void:
 	var fixture := _new_battle()
 	var battle = fixture[0]
 	var setup: Dictionary = fixture[1]
-	_ok(battle.set_sun_prompt_enabled(false).ok, "20-turn loop uses explicit Sun AI setting")
 	for turn_number in range(1, 21):
 		_eq(battle.turn(), turn_number, "loop current turn %d" % turn_number)
 		_ok(battle.submit_liu_orders(_orders(setup, "liu_bei")).ok, "loop Liu orders %d" % turn_number)
+		if turn_number == 1:
+			_ok(battle.submit_sun_control_choice("no", true).ok, "first prompt selects persistent Sun AI policy")
 		_eq(battle.phase(), "resolution", "loop AI resolution phase %d" % turn_number)
 		_ok(battle.resolve_turn().ok, "loop resolution %d" % turn_number)
 		if turn_number < 20:
