@@ -24,7 +24,7 @@ func _run() -> void:
 
 func _test_map_preview_membership_and_redaction() -> void:
 	var loaded := Setup.load_default(); _ok(loaded.ok, "setup loads"); var setup: Dictionary = loaded.setup.duplicate(true)
-	var positions := {"RC-LIU-SQ-01": [550, 100], "RC-LIU-SQ-02": [200, 600], "RC-SUN-SQ-01": [300, 700], "RC-CAO-SQ-01": [1300, 350]}
+	var positions := {"RC-LIU-SQ-01": [550, 100], "RC-LIU-SQ-02": [200, 600], "RC-LIU-FC-01": [220, 720], "RC-SUN-SQ-01": [300, 700], "RC-CAO-SQ-01": [1300, 350]}
 	for squad in setup.squadrons: squad.initial_position = positions[String(squad.id)].duplicate(); squad.initial_facing_deg = 0
 	var battle = Battle.new(); _ok(battle.initialize(setup).ok, "battle initializes")
 	var view := View.new(); view.configure(battle, 0, JSON.stringify(setup)); root.add_child(view); await process_frame; await process_frame

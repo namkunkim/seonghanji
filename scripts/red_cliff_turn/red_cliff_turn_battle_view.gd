@@ -176,13 +176,14 @@ func _rebuild_map(snapshot: Dictionary) -> void:
 		var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id)
 		_map.configure(setup.get("battlefield_bounds", [0, 0, 1600, 900]), viewer.get("own_squadrons", []), viewer.get("own_navigation", {}))
 		_map.set_terrain_zones(viewer.get("terrain_zones", []))
+		_map.set_fast_craft_supply(_battle.viewer_fast_craft_supply(_viewer_faction_id) if _battle.has_method("viewer_fast_craft_supply") else {})
 		_map.set_intelligence(_viewer_faction_id, viewer.get("contacts", []), viewer.get("tactical_events", []))
 		var selectable_contacts: Array[String] = []
 		for value in viewer.get("contacts", []):
 			if String(value.get("state", "")) == "estimated": selectable_contacts.append(String(value.get("contact_id", "")))
 		if not selectable_contacts.has(_selected_contact_id): _selected_contact_id = ""
 		_map.set_selected_contact(_selected_contact_id)
-	else: _map.clear_intelligence()
+	else: _map.clear_intelligence(); _map.set_fast_craft_supply({})
 	var editable := _editable_squadron_ids(snapshot)
 	if not editable.has(_selected_squadron_id): _selected_squadron_id = editable[0] if not editable.is_empty() else ""
 	var mode := TacticalMap.Mode.ADD_WAYPOINT if _move_armed else TacticalMap.Mode.SELECT
@@ -313,7 +314,8 @@ func _add_fast_craft_mission_panel(status: Dictionary, receipt: Dictionary, show
 		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: latest = value
 	if not latest.is_empty():
 		var event := Label.new(); event.name = "FastCraftMissionLastEvent"; event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _fast_mission_event_text(latest, receipt); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
-	var boundary := Label.new(); boundary.name = "FastCraftMissionBoundary"; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "현재 턴 명령 중에는 즉시 적용, 판정 중 요청은 다음 턴 예약입니다. 임무 효과·연료·보급·귀환·표류·구조·나포 결과는 G6-03 이후입니다."; boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+	var boundary := Label.new(); boundary.name = "FastCraftMissionBoundary"; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "현재 턴 명령 중에는 즉시 적용, 판정 중 요청은 다음 턴 예약입니다. 전술 임무 효과·자동 귀환·표류·구조·나포 결과는 G6-04 이후입니다."; boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+	_add_fast_craft_supply_panel(squadron_id, show_identity)
 
 
 func _on_fast_craft_mission(squadron_id: String, mission_id: String) -> void:
@@ -343,6 +345,77 @@ func _fast_mission_event_text(event: Dictionary, receipt: Dictionary) -> String:
 
 func _fast_mission_change_reason(reason: String) -> String:
 	return String({"queue_already_exists":"이미 다음 턴 예약이 있어 먼저 취소해야 합니다.", "turn_limit_no_next_turn":"20턴 판정 중에는 적용할 다음 턴이 없습니다."}.get(reason, reason))
+
+
+func _add_fast_craft_supply_panel(squadron_id: String, show_identity: bool) -> void:
+	if not _battle.has_method("viewer_fast_craft_supply"): return
+	var receipt: Dictionary = _battle.viewer_fast_craft_supply(_viewer_faction_id)
+	if not bool(receipt.get("ok", false)): return
+	var resource: Dictionary = {}; var queued: Dictionary = {}
+	for value in receipt.get("resources", []):
+		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: resource = value; break
+	if resource.is_empty(): return
+	for value in receipt.get("queue", []):
+		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: queued = value; break
+	var source: Dictionary = {}
+	if not queued.is_empty():
+		for value in receipt.get("sources", []):
+			if value is Dictionary and String(value.get("source_id", "")) == String(queued.get("source_id", "")): source = value; break
+	var suffix := "_%s" % squadron_id if show_identity else ""
+	var title := Label.new(); title.name = "FastCraftSupplyTitle%s" % suffix; title.text = "자동 보급 · 수동 조작 없음"; title.add_theme_color_override("font_color", Color("74d9b0")); _orders.add_child(title)
+	var maximum := int(resource.get("maximum_basis_points", 10000)); var state := Label.new(); state.name = "FastCraftSupplyState%s" % suffix; state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	state.text = "연료 %d/%d bp" % [int(resource.get("fuel_basis_points", 0)), maximum]
+	var finite_text := _fast_supply_finite_resource_text(squadron_id)
+	if not finite_text.is_empty(): state.text += "\n실제 G4 유한 자원 · %s" % finite_text
+	if queued.is_empty(): state.text += "\n자동 대기열 없음 · 아군 보급 영역 진입 시 자동 등록"
+	else:
+		state.text += "\n자동 대기열 · %s · 진입 T%d · 연속 정박 %d/%d턴" % [_fast_supply_source_label(source), int(queued.get("entry_turn", 0)), int(queued.get("docked_turns", 0)), int(receipt.get("required_stationary_turns", 0))]
+		state.text += " · 처리 순위 %d · 처리량 %d 전대/턴" % [int(queued.get("priority_rank", 0)), int(source.get("capacity_squadrons_per_turn", 0))]
+	_orders.add_child(state)
+	var matching_events: Array = []
+	for value in receipt.get("events", []):
+		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: matching_events.append(value)
+	for index in range(maxi(0, matching_events.size() - 3), matching_events.size()):
+		var event_row: Dictionary = matching_events[index]; var event := Label.new(); event.name = "FastCraftSupplyLatest%s" % suffix if index == matching_events.size() - 1 else "FastCraftSupplyEvent%s_%d" % [suffix, int(event_row.get("serial", index))]; event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _fast_supply_event_text(event_row); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
+	var priority := Label.new(); priority.name = "FastCraftSupplyPriority%s" % suffix; priority.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; priority.text = "자동 처리 우선순위 · %s" % _fast_supply_priority_text(receipt.get("priority", [])); _orders.add_child(priority)
+	var boundary := Label.new(); boundary.name = "FastCraftSupplyBoundary%s" % suffix; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "보급 영역·대기열·정박·처리량은 코어 자동 판정입니다. 수동 보급 명령은 없습니다. 임무 효과·자동 귀환·표류·구조·나포는 G6-04 이후입니다. %s" % String(receipt.get("inventory_contract", "")); boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+
+
+func _fast_supply_source_label(source: Dictionary) -> String:
+	var source_type := String(source.get("source_type", "")); var type_label: String = {"supply_ship":"보급함", "carrier":"강습모함", "friendly_base":"아군 거점"}.get(source_type, "보급원")
+	return "%s %s" % [type_label, String(source.get("source_id", ""))]
+
+
+func _fast_supply_priority_text(values: Array) -> String:
+	var labels: Array[String] = []
+	var known := {"remaining_fuel_ascending":"잔여 연료 낮은 순", "entry_turn_ascending":"진입 턴 빠른 순", "squadron_id_ascending":"전대 ID 오름차순"}
+	for value in values: labels.append(String(known.get(String(value), value)))
+	return " → ".join(labels)
+
+
+func _fast_supply_finite_resource_text(squadron_id: String) -> String:
+	if not _battle.has_method("viewer_snapshot"): return ""
+	var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id); var row: Dictionary = viewer.get("own_combat_resources", {}).get(squadron_id, {})
+	var parts: Array[String] = []; var weapon_ids: Array = row.get("weapons", {}).keys(); weapon_ids.sort()
+	for weapon_id in weapon_ids:
+		var weapon: Dictionary = row.weapons[weapon_id]
+		if int(weapon.get("ammo_capacity", 0)) > 0: parts.append("%s 탄약 %d/%d" % [_weapon_name(String(weapon_id)), int(weapon.get("ammo", 0)), int(weapon.get("ammo_capacity", 0))])
+		if int(weapon.get("special_capacity", 0)) > 0: parts.append("%s 특수 %d/%d" % [_weapon_name(String(weapon_id)), int(weapon.get("special", 0)), int(weapon.get("special_capacity", 0))])
+	return " · ".join(parts)
+
+
+func _fast_supply_event_text(event: Dictionary) -> String:
+	var status := String(event.get("status", "")); var status_label: String = {"queued":"자동 대기열 진입", "interrupted":"정박 중단", "waiting_capacity":"처리량 대기", "completed":"보급 완료"}.get(status, status)
+	var text := "%s · T%d · %s" % [status_label, int(event.get("turn", 0)), String(event.get("source_id", ""))]
+	if status == "completed":
+		text += " · 연료 +%d bp · 실제 G4 유한 자원 반영" % int(event.get("fuel_granted_basis_points", 0))
+		var refill: Dictionary = event.get("combat_resource_refill", {}); var weapon_ids: Array = refill.keys(); weapon_ids.sort()
+		for weapon_id in weapon_ids:
+			var delta: Dictionary = refill[weapon_id]
+			if int(delta.get("ammo_granted", 0)) > 0: text += " · %s 탄약 +%d" % [_weapon_name(String(weapon_id)), int(delta.get("ammo_granted", 0))]
+			if int(delta.get("special_granted", 0)) > 0: text += " · %s 특수 +%d" % [_weapon_name(String(weapon_id)), int(delta.get("special_granted", 0))]
+	elif status == "interrupted": text += " · %s" % String({"left_zone":"영역 이탈", "moved":"정박 중 이동"}.get(String(event.get("reason", "")), event.get("reason", "")))
+	return text
 
 
 func _add_command_penalty_status() -> void:

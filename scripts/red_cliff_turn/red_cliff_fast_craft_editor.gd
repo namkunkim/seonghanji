@@ -96,14 +96,14 @@ func _build_identity_panel(summary: Dictionary) -> Control:
 	var commander: Dictionary = summary.get("commander", {}); var commander_label := Label.new(); commander_label.text = "지휘관  %s · 통솔 %d" % [String(commander.get("name", "—")), int(commander.get("command", 0))]; stack.add_child(commander_label)
 	stack.add_child(HSeparator.new())
 	var history := Label.new(); history.name = "FastCraftHistoricalBaseline"; history.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; history.text = "역사 기본  %d척 · 비용 %d\n현재 초안  %d척 · 임무 %s" % [int(summary.get("historical_count", 0)), int(summary.get("historical_total_cost", 0)), int(summary.get("count", 0)), _mission_label(String(summary.get("mission_id", "")))]; stack.add_child(history)
-	var boundary := Label.new(); boundary.name = "FastCraftScopeBoundary"; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "전투 시작 전에만 편성합니다. 적용된 전투에서는 장비 구성이 변경되지 않습니다. 전투 중 상시 변경·보급·귀환·표류·구조 결과는 후속 기능입니다."; boundary.add_theme_color_override("font_color", Color("91aab5")); stack.add_child(boundary)
+	var boundary := Label.new(); boundary.name = "FastCraftScopeBoundary"; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "전투 시작 전에만 편성합니다. 적용된 전투에서는 장비 구성이 변경되지 않습니다. 전술 임무와 자동 보급 상태는 전투 화면에서 표시하며, 자동 귀환·표류·구조 결과는 후속 기능입니다."; boundary.add_theme_color_override("font_color", Color("91aab5")); stack.add_child(boundary)
 	var actions := HBoxContainer.new(); actions.add_theme_constant_override("separation", 6); stack.add_child(actions)
 	var create := _button("여유 재고로 생성", "CreateFastCraftSquadron", 135); create.disabled = not _draft.can_edit_faction(_active_faction); create.pressed.connect(_create_spare); actions.add_child(create)
 	var split := _button("혼성 고속정 분리", "SplitFastCraftSquadron", 135); split.disabled = not _draft.can_edit_faction(_active_faction); split.pressed.connect(_split_mixed); actions.add_child(split)
 	var remove := _button("선택 전대 해체", "DeleteFastCraftSquadron", 125); remove.disabled = _selected_squadron.is_empty() or not _draft.can_edit_faction(_active_faction); remove.pressed.connect(_delete_selected); actions.add_child(remove)
 	var deployment := _button("독립 ↔ 함대 편입", "ToggleFastCraftDeployment", 150); deployment.disabled = summary.is_empty() or not _draft.can_edit_faction(_active_faction); deployment.pressed.connect(_toggle_deployment); stack.add_child(deployment)
 	var basing := _button("운용 기반 전환", "CycleFastCraftBasing", 150); basing.disabled = summary.is_empty() or not _draft.can_edit_faction(_active_faction); basing.pressed.connect(_cycle_basing); stack.add_child(basing)
-	var model := Label.new(); model.name = "FastCraftDeploymentModel"; model.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; model.text = "지휘 배치: %s · 운용 기반: %s\n독립/함대 편입과 독립정·강습모함 탑재형·거점 배치형을 준비 단계에서 지정합니다. 발진·복귀·보급 결과는 후속 기능입니다." % [String(summary.get("deployment", {}).get("kind", "—")), String(summary.get("basing_mode", "—"))]; stack.add_child(model)
+	var model := Label.new(); model.name = "FastCraftDeploymentModel"; model.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; model.text = "지휘 배치: %s · 운용 기반: %s\n독립/함대 편입과 독립정·강습모함 탑재형·거점 배치형을 준비 단계에서 지정합니다. 자동 보급은 전투 화면에 표시하며 발진·복귀 결과는 후속 기능입니다." % [String(summary.get("deployment", {}).get("kind", "—")), String(summary.get("basing_mode", "—"))]; stack.add_child(model)
 	return panel
 
 

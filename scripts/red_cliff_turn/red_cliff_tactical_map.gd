@@ -26,6 +26,7 @@ var _contacts_by_id: Dictionary = {}
 var _selected_contact_id := ""
 var _fire_events: Array = []
 var _terrain_zones: Array = []
+var _fast_craft_supply_sources: Array = []
 var _mode := Mode.SELECT
 var _zoom := 1.0
 var _pan := Vector2.ZERO
@@ -86,6 +87,15 @@ func set_terrain_zones(zones: Array) -> void:
 
 func terrain_zones_for_test() -> Array:
 	return _terrain_zones.duplicate(true)
+
+
+func set_fast_craft_supply(receipt: Dictionary) -> void:
+	_fast_craft_supply_sources = receipt.get("sources", []).duplicate(true) if bool(receipt.get("ok", false)) else []
+	queue_redraw()
+
+
+func fast_craft_supply_sources_for_test() -> Array:
+	return _fast_craft_supply_sources.duplicate(true)
 
 
 func clear_intelligence() -> void:
@@ -215,6 +225,7 @@ func _draw() -> void:
 		var y := rect.position.y + rect.size.y * float(index) / 5.0
 		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.16, 0.31, 0.38, 0.45), 1.0)
 	_draw_terrain_zones()
+	_draw_fast_craft_supply_sources()
 	_draw_route()
 	_draw_fire_events()
 	_draw_opaque_contacts()
@@ -252,6 +263,20 @@ func _draw_terrain_zones() -> void:
 		var type_label: String = {"nebula":"성운", "debris":"잔해 지대", "planet_shadow":"행성 그림자"}.get(terrain_type, "지형")
 		var label := "%s · %s" % [type_label, String(zone.get("name", zone.get("zone_id", "")))]
 		draw_string(get_theme_default_font(), zone_rect.position + Vector2(8, 19), label, HORIZONTAL_ALIGNMENT_LEFT, maxf(40.0, zone_rect.size.x - 16.0), 13, stroke)
+
+
+func _draw_fast_craft_supply_sources() -> void:
+	for value in _fast_craft_supply_sources:
+		if not value is Dictionary: continue
+		var source: Dictionary = value; var position = source.get("position", [])
+		if not position is Array or position.size() != 2: continue
+		var center := battle_to_local(position); var edge := battle_to_local([float(position[0]) + float(source.get("radius", 0)), float(position[1])])
+		var radius := center.distance_to(edge); var source_type := String(source.get("source_type", ""))
+		var color: Color = {"supply_ship":Color("74d9b0"), "carrier":Color("7fb8e8"), "friendly_base":Color("e1c36f")}.get(source_type, Color("9fb5bf"))
+		draw_circle(center, radius, Color(color.r, color.g, color.b, 0.08), true)
+		draw_circle(center, radius, Color(color.r, color.g, color.b, 0.72), false, 2.0)
+		var type_label: String = {"supply_ship":"보급함", "carrier":"강습모함", "friendly_base":"아군 거점"}.get(source_type, "보급원")
+		draw_string(get_theme_default_font(), center + Vector2(-radius + 7.0, -7.0), "%s 자동 보급 · 반경 %d · 처리 %d 전대/턴" % [type_label, int(source.get("radius", 0)), int(source.get("capacity_squadrons_per_turn", 0))], HORIZONTAL_ALIGNMENT_LEFT, maxf(120.0, radius * 2.0 - 14.0), 12, color)
 
 
 func _draw_route() -> void:

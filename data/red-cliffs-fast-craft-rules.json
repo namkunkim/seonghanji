@@ -25,6 +25,26 @@
     {"mission_id": "torpedo", "label": "뇌격"}
   ],
   "tactical_mission_contract": "equipment is immutable after battle initialization; mission changes only select an allowlisted tactical intent; mission effects and outcomes are pending after G6-02",
+  "supply_contract": {
+    "resource_scale": "basis_points",
+    "initial_fuel_basis_points": 6000,
+    "maximum_basis_points": 10000,
+    "required_stationary_turns": 1,
+    "movement_epsilon": 0.001,
+    "priority": ["remaining_fuel_ascending", "entry_turn_ascending", "squadron_id_ascending"],
+    "source_types": {
+      "supply_ship": {"ship_type_id": "SHP-05", "radius": 140, "capacity_per_ship": 1},
+      "carrier": {"ship_type_id": "SHP-01", "radius": 100, "capacity_per_ship": 1},
+      "friendly_base": {"radius": 180, "capacity_squadrons_per_turn": 4}
+    },
+    "friendly_bases": [
+      {"source_id": "RC-BASE-LIU-01", "faction_id": "liu_bei", "position": [120, 780]},
+      {"source_id": "RC-BASE-SUN-01", "faction_id": "sun_quan", "position": [300, 440]},
+      {"source_id": "RC-BASE-CAO-01", "faction_id": "cao_cao", "position": [1460, 180]}
+    ],
+    "mutual_supply_alliances": [["liu_bei", "sun_quan"]],
+    "inventory_contract": "normal-demo source capacity authorizes refill up to per-squadron maximum only; source stock, damage and base reload accounting are deferred to G6-06"
+  },
   "basing_modes": ["independent", "carrier", "base"],
   "basing_contract": {
     "independent": "독립 전장 배치",
@@ -38,5 +58,5 @@
   "inventory_policy": "applied setup faction inventory minus all setup squadron assignments; preparation may create or delete user fast-craft squadrons from remaining same-faction stock; cross-faction transfer forbidden",
   "cost_policy": "per craft subtotal=(setup SHP-08 base unit cost+selected setup mission-equipment unit cost)*count; historical cost is the declared normal-demo baseline",
   "command_limit_source": "applied_setup.command_limit_rules_and_faction_demo_roster",
-  "out_of_scope": ["in_battle_equipment_change", "tactical_mission_effect", "fuel", "ammo_resupply", "automatic_return", "drift", "rescue_result", "capture_result"]
+  "out_of_scope": ["in_battle_equipment_change", "tactical_mission_effect", "automatic_return", "drift", "rescue_result", "capture_result", "supply_source_stock", "supply_source_damage", "base_reloading"]
 }

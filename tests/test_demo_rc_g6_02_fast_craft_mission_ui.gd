@@ -114,7 +114,7 @@ func _test_source_boundary() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/red_cliff_turn/red_cliff_turn_battle_view.gd")
 	_ok("Node3D" not in source and ".glb" not in source and "voyage_3d" not in source, "mission UI remains 2D only")
 	_ok("viewer_fast_craft_missions" in source and "supported_mission_ids" in source and "can_change" in source and "application" in source, "UI consumes public core receipt capabilities")
-	_ok("mission_effect" not in source and "fuel_cost" not in source, "UI does not implement G6-03+ mission results")
+	_ok("mission_effect" not in source and "fuel_cost" not in source, "mission UI does not implement G6-04+ outcomes")
 
 func _settle() -> void:
 	await process_frame

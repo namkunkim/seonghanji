@@ -15,6 +15,7 @@ const TerrainResolver := preload("res://core/demo_red_cliffs/red_cliffs_terrain_
 const AiPlanner := preload("res://core/demo_red_cliffs/red_cliffs_ai_planner.gd")
 const ChainExplosion := preload("res://core/demo_red_cliffs/red_cliffs_chain_explosion.gd")
 const FastCraftMission := preload("res://core/demo_red_cliffs/red_cliffs_fast_craft_mission.gd")
+const FastCraftSupply := preload("res://core/demo_red_cliffs/red_cliffs_fast_craft_supply.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
 	"weapon_fire", "damage", "casualties", "victory"
@@ -32,6 +33,7 @@ var _terrain
 var _ai_planner
 var _chain_explosion
 var _fast_craft_mission
+var _fast_craft_supply
 var _viewer_receipts_by_turn: Dictionary = {}
 var _viewer_phase_ledgers_by_turn: Dictionary = {}
 
@@ -80,6 +82,8 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not chain_result.ok: return chain_result
 	var fast_craft_mission = FastCraftMission.new(); var mission_result: Dictionary = fast_craft_mission.initialize(setup)
 	if not mission_result.ok: return mission_result
+	var fast_craft_supply = FastCraftSupply.new(); var supply_result: Dictionary = fast_craft_supply.initialize(setup)
+	if not supply_result.ok: return supply_result
 	_movement = movement
 	_interception = interception
 	_formation = formation
@@ -91,6 +95,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	_ai_planner = ai_planner
 	_chain_explosion = chain_explosion
 	_fast_craft_mission = fast_craft_mission
+	_fast_craft_supply = fast_craft_supply
 	_viewer_receipts_by_turn = {}
 	_viewer_phase_ledgers_by_turn = {}
 	_state = {
@@ -109,6 +114,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 		"last_resource_recovery_turn": 0,
 		"chain_explosion_state": _chain_explosion.initial_state(),
 		"fast_craft_mission_state": _fast_craft_mission.initial_state(),
+		"fast_craft_supply_state": _fast_craft_supply.initial_state(_movement.initial_navigation()),
 		"phase_ledgers": {},
 		"command_draft": {},
 		"turn_log": [_new_turn_log(1)],
@@ -414,6 +420,12 @@ func viewer_fast_craft_missions(viewer_faction_id: String) -> Dictionary:
 	return visible
 
 
+func viewer_fast_craft_supply(viewer_faction_id: String) -> Dictionary:
+	if _state.is_empty() or not ["liu_bei", "sun_quan", "cao_cao"].has(viewer_faction_id): return _error("미지 관측 세력입니다.")
+	var visible: Dictionary = _fast_craft_supply.visible(viewer_faction_id, _state.fast_craft_supply_state, _state.live_navigation)
+	visible["turn"] = turn(); visible["phase"] = phase(); return visible
+
+
 func set_fast_craft_mission(requesting_faction_id: String, squadron_id: String, mission_id: String) -> Dictionary:
 	if _state.is_empty() or phase() == "turn_limit_reached": return _error("현재 단계에서는 전술 임무를 변경할 수 없습니다.")
 	var faction_id := _squadron_faction_id(squadron_id); var application := ""
@@ -711,6 +723,25 @@ func resolve_turn() -> Dictionary:
 	var resource_result: Dictionary = _combat_resources.resolve_shots(accuracy_result.eligible_events,
 		resource_base_state, turn())
 	if not resource_result.ok: return resource_result
+	# G6-03 replenishment is an end-of-turn consumer: movement, fire authorization,
+	# and combat resource consumption have already completed.
+	var supply_result: Dictionary = _fast_craft_supply.resolve(_state.fast_craft_supply_state, _state.live_navigation, movement_result.live_navigation, movement_result.events, turn())
+	if not supply_result.ok: return supply_result
+	var finite_refill: Dictionary = _combat_resources.refill_fast_craft_finite(supply_result.completed_squadron_ids, resource_result.resource_state, turn())
+	if not finite_refill.ok: return finite_refill
+	resource_result.resource_state = finite_refill.resource_state.duplicate(true)
+	var refill_by_squad := {}; for event in finite_refill.events: refill_by_squad[String(event.squadron_id)] = event
+	for event in supply_result.events:
+		if String(event.status) == "completed" and refill_by_squad.has(String(event.squadron_id)):
+			var refill: Dictionary = refill_by_squad[String(event.squadron_id)]
+			event["combat_resource_before"] = refill.combat_resource_before.duplicate(true)
+			event["combat_resource_after"] = refill.combat_resource_after.duplicate(true)
+			event["combat_resource_refill"] = refill.combat_resource_refill.duplicate(true)
+			for stored in supply_result.state.events_by_turn.get(turn(), []):
+				if int(stored.serial) == int(event.serial):
+					stored["combat_resource_before"] = refill.combat_resource_before.duplicate(true)
+					stored["combat_resource_after"] = refill.combat_resource_after.duplicate(true)
+					stored["combat_resource_refill"] = refill.combat_resource_refill.duplicate(true)
 	var chain_result := {"ok": true, "state": _state.chain_explosion_state.duplicate(true), "events": []}
 	if String(_state.chain_explosion_state.status) == "staged":
 		var final_contacts: Dictionary = _visible_contacts_from("liu_bei", interception_result.detection_state, movement_result.live_navigation)
@@ -738,6 +769,7 @@ func resolve_turn() -> Dictionary:
 		"formation_events": formation_result.formation_events.duplicate(true),
 		"formation_modifier_snapshots": formation_result.modifier_snapshots.duplicate(true),
 		"fast_craft_mission_events": _state.fast_craft_mission_state.events_by_turn.get(turn(), []).duplicate(true),
+		"fast_craft_supply_events": supply_result.events.duplicate(true),
 		"weapon_allocation_events": weapon_result.weapon_allocation_events.duplicate(true),
 		"chain_explosion_events": chain_result.events.duplicate(true),
 		"path_intersection_events": interception_result.path_intersection_events.duplicate(true),
@@ -782,6 +814,7 @@ func resolve_turn() -> Dictionary:
 	_state.weapon_allocation_state = weapon_result.weapon_allocation_state.duplicate(true)
 	_state.combat_resource_state = resource_result.resource_state.duplicate(true)
 	_state.chain_explosion_state = chain_result.state.duplicate(true)
+	_state.fast_craft_supply_state = supply_result.state.duplicate(true)
 	_state.last_resource_recovery_events = recovery_events.duplicate(true)
 	if turn() >= 2: _state.last_resource_recovery_turn = turn()
 	_state.phase_ledgers[turn()] = ledger.duplicate(true)

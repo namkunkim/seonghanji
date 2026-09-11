@@ -82,6 +82,28 @@ func resolve_shots(shot_events: Array, prior_state: Dictionary, turn_number: int
 		"suppressed_fire_events": suppressed, "resource_state": next}
 
 
+func refill_fast_craft_finite(squadron_ids: Array, prior_state: Dictionary, turn_number: int) -> Dictionary:
+	var valid := _validate_state(prior_state)
+	if not valid.ok: return valid
+	if turn_number < 1: return _error("고속정 보급 턴이 잘못되었습니다.")
+	var seen := {}; var ids: Array = []
+	for value in squadron_ids:
+		var squadron_id := String(value); var squad := _find_squad(squadron_id)
+		if seen.has(squadron_id) or squad.is_empty() or not _pure_fast_craft(squad): return _error("보급 대상은 중복 없는 operational 순수 고속정 전대여야 합니다.")
+		seen[squadron_id] = true; ids.append(squadron_id)
+	ids.sort(); var next := prior_state.duplicate(true); var events: Array = []
+	for squadron_id in ids:
+		var row: Dictionary = next[squadron_id]; var before := _finite_snapshot(row); var refill := {}
+		var weapon_ids: Array = row.weapons.keys(); weapon_ids.sort()
+		for weapon_id in weapon_ids:
+			var weapon: Dictionary = row.weapons[weapon_id]; var ammo_before := int(weapon.ammo); var special_before := int(weapon.special)
+			weapon.ammo = int(weapon.ammo_capacity); weapon.special = int(weapon.special_capacity)
+			refill[weapon_id] = {"ammo_granted": int(weapon.ammo) - ammo_before, "special_granted": int(weapon.special) - special_before}
+		events.append({"event_id":"FC-RESUPPLY-%02d-%s" % [turn_number, squadron_id], "event_type":"fast_craft_finite_refilled", "turn":turn_number,
+			"squadron_id":squadron_id, "combat_resource_before":before, "combat_resource_after":_finite_snapshot(row), "combat_resource_refill":refill})
+	return {"ok":true, "errors":[], "resource_state":next, "events":events}
+
+
 func recover_at_resolution_start(prior_state: Dictionary, resolution_turn: int) -> Dictionary:
 	var valid := _validate_state(prior_state)
 	if not valid.ok: return valid
@@ -201,6 +223,16 @@ func _suppressed(event: Dictionary, reason: String, label: String) -> Dictionary
 
 func _public_row(row: Dictionary) -> Dictionary:
 	return {"shared": row.shared.duplicate(true), "weapons": row.weapons.duplicate(true)}
+
+
+func _finite_snapshot(row: Dictionary) -> Dictionary:
+	var result := {}; var ids: Array = row.weapons.keys(); ids.sort()
+	for weapon_id in ids: result[weapon_id] = {"ammo":int(row.weapons[weapon_id].ammo), "special":int(row.weapons[weapon_id].special)}
+	return result
+
+
+func _pure_fast_craft(squad: Dictionary) -> bool:
+	return bool(squad.get("operational", true)) and squad.get("composition") is Array and squad.composition.size() == 1 and String(squad.composition[0].get("ship_type_id", "")) == Setup.FAST_CRAFT_ID
 
 
 func _weapon_platform_count(squad: Dictionary, weapon_id: String) -> int:
