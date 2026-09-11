@@ -121,6 +121,54 @@ func visible_state(viewer_faction_id: String, state: Dictionary) -> Dictionary:
 	return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "resource_state": result}
 
 
+func scheduled_preview(viewer_faction_id: String, state: Dictionary, resolution_turn: int,
+		last_recovery_turn: int) -> Dictionary:
+	## G5-05 AI may inspect only its own state after the recovery that the normal
+	## resolver is scheduled to apply. This never mutates the authoritative state.
+	var valid := _validate_state(state)
+	if not valid.ok: return valid
+	if not _faction_ids().has(viewer_faction_id) or resolution_turn < 1: return _error("예약 자원 preview 요청이 잘못되었습니다.")
+	var preview := state.duplicate(true); var recovery_events: Array = []
+	if resolution_turn >= 2 and last_recovery_turn < resolution_turn:
+		var recovered := recover_at_resolution_start(preview, resolution_turn)
+		if not recovered.ok: return recovered
+		preview = recovered.resource_state.duplicate(true); recovery_events = recovered.recovery_events.duplicate(true)
+	var visible := visible_state(viewer_faction_id, preview)
+	if not visible.ok: return visible
+	var policy: Dictionary = _weapon.interception_policy(_weapon.initial_state())
+	for squadron_id in visible.resource_state:
+		var public_row: Dictionary = visible.resource_state[squadron_id]
+		var ready_weapon_ids: Array = []
+		for capability in policy.get(squadron_id, {}).get("capabilities", []):
+			var weapon_id := String(capability.weapon_id); var cost := _shot_cost(weapon_id, String(capability.platform_id))
+			if _shortage_reason(preview[squadron_id], weapon_id, cost).is_empty(): ready_weapon_ids.append(weapon_id)
+		ready_weapon_ids.sort(); public_row["ready_weapon_ids"] = ready_weapon_ids
+		public_row["reserve_basis_points"] = _reserve_basis_points(public_row, ready_weapon_ids)
+	var own_events: Array = []
+	for event in recovery_events:
+		if visible.resource_state.has(String(event.squadron_id)): own_events.append(event.duplicate(true))
+	return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "resolution_turn": resolution_turn,
+		"resource_state": visible.resource_state.duplicate(true), "scheduled_recovery_events": own_events}
+
+
+func _reserve_basis_points(row: Dictionary, ready_weapon_ids: Array) -> int:
+	if ready_weapon_ids.is_empty(): return 0
+	var shared: Dictionary = row.shared
+	var energy_bp := 0 if int(shared.energy_capacity) <= 0 else int(floor(float(shared.energy) * 10000.0 / float(shared.energy_capacity)))
+	var heat_bp := 0 if int(shared.heat_capacity) <= 0 else int(floor(float(int(shared.heat_capacity) - int(shared.heat)) * 10000.0 / float(shared.heat_capacity)))
+	var best_weapon_bp := 0
+	for weapon_id in ready_weapon_ids:
+		var weapon: Dictionary = row.weapons[weapon_id]
+		var ratios: Array = []
+		if int(weapon.ammo_capacity) > 0: ratios.append(int(floor(float(weapon.ammo) * 10000.0 / float(weapon.ammo_capacity))))
+		if int(weapon.special_capacity) > 0: ratios.append(int(floor(float(weapon.special) * 10000.0 / float(weapon.special_capacity))))
+		if int(weapon.carrier_capacity) > 0: ratios.append(int(floor(float(weapon.carrier_ready) * 10000.0 / float(weapon.carrier_capacity))))
+		var weapon_bp := 10000
+		for ratio in ratios: weapon_bp = mini(weapon_bp, int(ratio))
+		best_weapon_bp = maxi(best_weapon_bp, weapon_bp)
+	return mini(energy_bp, mini(heat_bp, best_weapon_bp))
+
+
 func _shot_cost(weapon_id: String, platform_id: String) -> Dictionary:
 	var result: Dictionary = _rules.shot_cost[weapon_id].duplicate(true)
 	result.carrier_sorties = int(_rules.carrier_platform_shot_cost.get("%s@%s" % [weapon_id, platform_id], result.carrier_sorties))

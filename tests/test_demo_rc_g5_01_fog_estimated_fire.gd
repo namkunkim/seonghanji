@@ -59,7 +59,7 @@ func _test_lifecycle_and_redaction() -> void:
 	_eq(fog.contact_id("liu_bei", "RC-CAO-SQ-01"), id1, "reacquisition reuses opaque contact id")
 	_eq(row.state, "confirmed", "reacquisition refreshes state")
 
-	var interception = Interception.new(); _ok(interception.initialize(setup).ok, "interception initializes")
+	var interception = Interception.new(); var interception_init: Dictionary = interception.initialize(setup); _ok(interception_init.ok, "interception initializes: %s" % str(interception_init.get("errors", [])))
 	var state := interception.initial_detection_state(); var movement = Movement.new(); _ok(movement.initialize(setup).ok, "movement initializes")
 	var moved: Dictionary = movement.resolve_orders(_holds(setup), movement.initial_navigation())
 	var resolved: Dictionary = interception.resolve(moved.events, moved.live_navigation, state, 1)
@@ -119,7 +119,9 @@ func _test_estimated_fire_seal_determinism_and_resource_gate() -> void:
 	_ok(resource_result.authorized_events[0].has("resource_reservation"), "resource receipt decorates estimated authorization")
 
 func _test_battle_command_ai_redaction_and_ledger() -> void:
-	var setup := _fixture(); var battle = Battle.new(); _ok(battle.initialize(setup).ok, "battle initializes")
+	# G5-05 Cao patrol advances 60 units; start farther out so this fixture still
+	# exercises the intended estimated-contact lifecycle after that legal AI move.
+	var setup := _fixture([400, 100]); var battle = Battle.new(); var battle_init: Dictionary = battle.initialize(setup); _ok(battle_init.ok, "battle initializes: %s" % str(battle_init.get("errors", [])))
 	_ok(battle.submit_command_draft().ok and battle.submit_sun_control_choice("ai").ok, "turn1 Liu then AI HOLD submit")
 	var first: Dictionary = battle.resolve_turn(); _ok(first.ok, "turn1 detection resolves")
 	_eq(first.estimated_fire_events.size(), 0, "AI factions do not synthesize estimated fire")

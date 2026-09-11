@@ -153,7 +153,10 @@ func _test_battle_integration_manual_ai_and_viewer_redaction() -> void:
 	var cao_view: Dictionary = battle.visible_tactical_events("cao_cao")
 	_ok(JSON.stringify(cao_view).contains("resource_consumed"), "shooter viewer sees own resource delta")
 	var liu_view: Dictionary = battle.visible_tactical_events("liu_bei")
-	_ok(not JSON.stringify(liu_view).contains("resource_consumed") and not JSON.stringify(liu_view).contains("resource_reservation"), "target viewer sees no enemy resources")
+	var leaked_enemy_resource := false
+	for event in liu_view.events:
+		if ["resource_consumed", "fire_suppressed"].has(String(event.get("event_type", ""))) and String(event.get("squadron_id", "")).begins_with("RC-CAO-"): leaked_enemy_resource = true
+	_ok(not leaked_enemy_resource, "target viewer sees no enemy resources while retaining own resource receipts")
 	var liu_state: Dictionary = battle.visible_combat_resources("liu_bei")
 	_ok(liu_state.resource_state.has("RC-LIU-SQ-01") and not liu_state.resource_state.has("RC-CAO-SQ-01"), "viewer resource state is own-only")
 	var before_continue := JSON.stringify(battle.combat_resource_state())

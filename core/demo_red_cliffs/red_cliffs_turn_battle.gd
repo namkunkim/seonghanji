@@ -12,6 +12,7 @@ const CombatResources := preload("res://core/demo_red_cliffs/red_cliffs_combat_r
 const PhaseLedger := preload("res://core/demo_red_cliffs/red_cliffs_phase_ledger.gd")
 const FogOfWar := preload("res://core/demo_red_cliffs/red_cliffs_fog_of_war.gd")
 const TerrainResolver := preload("res://core/demo_red_cliffs/red_cliffs_terrain_resolver.gd")
+const AiPlanner := preload("res://core/demo_red_cliffs/red_cliffs_ai_planner.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
 	"weapon_fire", "damage", "casualties", "victory"
@@ -26,6 +27,7 @@ var _combat_resources
 var _phase_ledger
 var _fog
 var _terrain
+var _ai_planner
 var _viewer_receipts_by_turn: Dictionary = {}
 var _viewer_phase_ledgers_by_turn: Dictionary = {}
 
@@ -63,6 +65,13 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not fog_result.ok: return fog_result
 	var terrain = TerrainResolver.new(); var terrain_result: Dictionary = terrain.initialize(setup)
 	if not terrain_result.ok: return terrain_result
+	var ai_planner = AiPlanner.new(); var ai_result: Dictionary = ai_planner.initialize()
+	if not ai_result.ok: return ai_result
+	var formation_ids: Array = formation.allowed_formations().map(func(row): return String(row.formation_id))
+	var preset_ids: Array = weapon_control.presets().map(func(row): return String(row.preset_id))
+	for posture in ai_planner.rules_snapshot().postures.values():
+		if not formation_ids.has(String(posture.formation_id)) or not preset_ids.has(String(posture.weapon_preset_id)):
+			return _error("AI 자세가 미지 진형 또는 무기 프리셋을 참조합니다.")
 	_movement = movement
 	_interception = interception
 	_formation = formation
@@ -71,6 +80,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	_phase_ledger = phase_ledger
 	_fog = fog
 	_terrain = terrain
+	_ai_planner = ai_planner
 	_viewer_receipts_by_turn = {}
 	_viewer_phase_ledgers_by_turn = {}
 	_state = {
@@ -159,9 +169,20 @@ func visible_combat_resources(viewer_faction_id: String) -> Dictionary:
 	return _combat_resources.visible_state(viewer_faction_id, _state.combat_resource_state)
 
 
+func scheduled_resource_preview(viewer_faction_id: String) -> Dictionary:
+	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
+	return _combat_resources.scheduled_preview(viewer_faction_id, _state.combat_resource_state,
+		turn(), int(_state.last_resource_recovery_turn))
+
+
 func visible_contacts(viewer_faction_id: String) -> Dictionary:
 	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
-	return _interception.visible_contacts(viewer_faction_id, _state.detection_state, _state.live_navigation)
+	var result: Dictionary = _interception.visible_contacts(viewer_faction_id, _state.detection_state, _state.live_navigation)
+	if not result.ok: return result
+	for contact in result.contacts:
+		var target_id := _target_id_for_contact(viewer_faction_id, String(contact.contact_id))
+		contact["disposition"] = _ai_planner.disposition(viewer_faction_id, _squadron_faction_id(target_id))
+	return result
 
 
 func terrain_zones() -> Array:
@@ -227,15 +248,30 @@ func viewer_turn_log(viewer_faction_id: String) -> Dictionary:
 			visible["own_weapon_allocation_orders"] = row.sun_weapon_allocation_orders.duplicate(true)
 			visible["own_estimated_fire_orders"] = row.sun_estimated_fire_orders.duplicate(true)
 			visible["own_control_decision"] = row.sun_control_decision.duplicate(true)
+			visible["own_ai_decision"] = row.sun_ai_decision.duplicate(true)
 		elif viewer_faction_id == "cao_cao":
 			visible["own_orders"] = row.cao_orders.duplicate(true)
 			visible["own_formation_orders"] = row.cao_formation_orders.duplicate(true)
 			visible["own_weapon_allocation_orders"] = row.cao_weapon_allocation_orders.duplicate(true)
-			visible["own_estimated_fire_orders"] = []
+			visible["own_estimated_fire_orders"] = row.cao_estimated_fire_orders.duplicate(true)
+			visible["own_ai_decision"] = row.cao_ai_decision.duplicate(true)
 		else: return _error("미지 관측 세력입니다: %s" % viewer_faction_id)
 		visible["tactical_events"] = visible_tactical_events(viewer_faction_id, int(row.turn)).events
 		logs.append(visible)
 	return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "turn_log": logs}
+
+
+func viewer_ai_decision(viewer_faction_id: String, turn_number: int = 0) -> Dictionary:
+	if not ["sun_quan", "cao_cao"].has(viewer_faction_id): return _error("AI 자기 관점 세력만 결정을 조회할 수 있습니다.")
+	var wanted := turn() if turn_number <= 0 else turn_number
+	for row in _state.get("turn_log", []):
+		if int(row.turn) != wanted: continue
+		var decision: Dictionary = row.sun_ai_decision if viewer_faction_id == "sun_quan" else row.cao_ai_decision
+		if decision.is_empty(): return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "turn": wanted, "available": false}
+		var result: Dictionary = decision.duplicate(true); result["ok"] = true; result["errors"] = []
+		result["viewer_faction_id"] = viewer_faction_id; result["turn"] = wanted; result["available"] = true
+		return result
+	return _error("요청한 턴이 없습니다: %d" % wanted)
 
 
 func viewer_snapshot(viewer_faction_id: String) -> Dictionary:
@@ -248,6 +284,7 @@ func viewer_snapshot(viewer_faction_id: String) -> Dictionary:
 			own_squad.formation_id = String(_state.formation_state[String(squad.id)].formation_id)
 			own_squadrons.append(own_squad); own_navigation[String(squad.id)] = _state.live_navigation[String(squad.id)].duplicate(true)
 	return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "turn": turn(), "phase": phase(),
+		"battlefield_bounds": _state.applied_setup.battlefield_bounds.duplicate(),
 		"own_squadrons": own_squadrons, "own_navigation": own_navigation, "contacts": contacts.contacts,
 		"own_formation_state": _own_formation_state(viewer_faction_id), "allowed_formations": allowed_formations(),
 		"own_weapon_allocation_state": _own_weapon_allocation_state(viewer_faction_id),
@@ -410,6 +447,7 @@ func submit_liu_orders(orders: Array) -> Dictionary:
 		return _error("현재 단계에서는 유비군 명령을 제출할 수 없습니다.")
 	var checked := _validate_orders("liu_bei", orders)
 	if not bool(checked.get("ok", false)): return checked
+	var before_ai_state := _state.duplicate(true)
 	_current_log()["liu_orders"] = checked.orders.duplicate(true)
 	_current_log()["liu_formation_orders"] = _submitted_formation_orders("liu_bei")
 	_current_log()["liu_weapon_allocation_orders"] = _submitted_weapon_orders("liu_bei")
@@ -421,7 +459,8 @@ func submit_liu_orders(orders: Array) -> Dictionary:
 		_current_log()["sun_control_decision"] = {
 			"control": "ai", "dont_ask_again": true, "source": "saved_policy"
 		}
-		_prepare_ai_resolution()
+		var prepared := _prepare_ai_resolution(true)
+		if not prepared.ok: _state = before_ai_state; return prepared
 	return _ok()
 
 
@@ -434,6 +473,7 @@ func submit_sun_control_choice(answer: String, dont_ask_again: bool = false) -> 
 	var manual := ["yes", "manual"].has(normalized)
 	if manual and dont_ask_again:
 		return _error("수동 제어와 다시 묻지 않음을 함께 선택할 수 없습니다.")
+	var before_ai_state := _state.duplicate(true)
 	_current_log()["sun_control_decision"] = {
 		"control": "manual" if manual else "ai",
 		"dont_ask_again": dont_ask_again,
@@ -444,7 +484,8 @@ func submit_sun_control_choice(answer: String, dont_ask_again: bool = false) -> 
 		_begin_command_draft("sun_quan")
 	else:
 		if dont_ask_again: _state.sun_prompt_policy.enabled = false
-		_prepare_ai_resolution()
+		var prepared := _prepare_ai_resolution(true)
+		if not prepared.ok: _state = before_ai_state; return prepared
 	return _ok()
 
 
@@ -463,15 +504,14 @@ func submit_sun_orders(orders: Array) -> Dictionary:
 		return _error("현재 단계에서는 손권군 명령을 제출할 수 없습니다.")
 	var checked := _validate_orders("sun_quan", orders)
 	if not bool(checked.get("ok", false)): return checked
+	var before_ai_state := _state.duplicate(true)
 	_current_log()["sun_orders"] = checked.orders.duplicate(true)
 	_current_log()["sun_formation_orders"] = _submitted_formation_orders("sun_quan")
 	_current_log()["sun_weapon_allocation_orders"] = _submitted_weapon_orders("sun_quan")
 	_current_log()["sun_estimated_fire_orders"] = _submitted_estimated_fire_orders("sun_quan")
 	_state.command_draft = {}
-	_current_log()["cao_orders"] = _ai_hold_orders("cao_cao")
-	_current_log()["cao_formation_orders"] = _current_formation_orders("cao_cao")
-	_current_log()["cao_weapon_allocation_orders"] = _current_weapon_orders("cao_cao")
-	_current_log()["cao_estimated_fire_orders"] = []
+	var prepared := _prepare_ai_faction("cao_cao")
+	if not prepared.ok: _state = before_ai_state; return prepared
 	_state.phase = "resolution"
 	return _ok()
 
@@ -512,7 +552,7 @@ func resolve_turn() -> Dictionary:
 		formation_result.formation_state, movement_result.live_navigation)
 	if not decorated.ok: return decorated
 	var estimated_events: Array = []; var estimated_suppressed: Array = []
-	for faction_id in ["liu_bei", "sun_quan"]:
+	for faction_id in ["liu_bei", "sun_quan", "cao_cao"]:
 		var estimated_result: Dictionary = _fog.authorize_orders(_estimated_orders_from_log(faction_id), faction_id,
 			movement_result.live_navigation, _weapon_control.interception_policy(weapon_result.weapon_allocation_state), turn())
 		if not estimated_result.ok: return estimated_result
@@ -602,17 +642,55 @@ func continue_turn() -> Dictionary:
 	return _ok()
 
 
-func _prepare_ai_resolution() -> void:
-	_current_log()["sun_formation_orders"] = _current_formation_orders("sun_quan")
-	_current_log()["cao_formation_orders"] = _current_formation_orders("cao_cao")
-	_current_log()["sun_weapon_allocation_orders"] = _current_weapon_orders("sun_quan")
-	_current_log()["cao_weapon_allocation_orders"] = _current_weapon_orders("cao_cao")
-	_current_log()["sun_estimated_fire_orders"] = []
-	_current_log()["cao_estimated_fire_orders"] = []
+func _prepare_ai_resolution(include_sun: bool) -> Dictionary:
+	var factions := ["cao_cao"]
+	if include_sun: factions.push_front("sun_quan")
+	for faction_id in factions:
+		var prepared := _prepare_ai_faction(faction_id)
+		if not prepared.ok: return prepared
 	_state.command_draft = {}
-	_current_log()["sun_orders"] = _ai_hold_orders("sun_quan")
-	_current_log()["cao_orders"] = _ai_hold_orders("cao_cao")
 	_state.phase = "resolution"
+	return _ok()
+
+
+func _prepare_ai_faction(faction_id: String) -> Dictionary:
+	var viewer: Dictionary = viewer_snapshot(faction_id)
+	if not viewer.ok: return viewer
+	var resources: Dictionary = scheduled_resource_preview(faction_id)
+	if not resources.ok: return resources
+	var plan: Dictionary = _ai_planner.plan(viewer.duplicate(true), resources.duplicate(true), turn())
+	if not plan.ok: return plan
+	var weapon_state: Dictionary = _state.weapon_allocation_state.duplicate(true)
+	var weapon_orders: Array = []
+	for preset_order in plan.weapon_preset_orders:
+		var squadron_id := String(preset_order.squadron_id); var changed: Dictionary
+		if String(preset_order.preset_id).is_empty():
+			changed = {"ok": true, "state": weapon_state.duplicate(true), "row": weapon_state[squadron_id].duplicate(true)}
+		else:
+			changed = _weapon_control.apply_preset(weapon_state, squadron_id, String(preset_order.preset_id))
+			if not changed.ok: return changed
+		weapon_state = changed.state.duplicate(true)
+		var fire_policy: Dictionary = _weapon_control.set_hold_fire(weapon_state, squadron_id, bool(preset_order.hold_fire))
+		if not fire_policy.ok: return fire_policy
+		weapon_state = fire_policy.state.duplicate(true)
+		weapon_orders.append({"squadron_id": squadron_id, "allocations": fire_policy.row.allocations.duplicate(true), "hold_fire": bool(fire_policy.row.hold_fire)})
+	var estimated_orders: Array = []
+	for intent in plan.estimated_fire_intents:
+		var contact := _contact_by_id(viewer.contacts, String(intent.contact_id))
+		if contact.is_empty(): return _error("AI 추정 contact가 viewer snapshot에 없습니다.")
+		var made: Dictionary = _fog.make_order(faction_id, String(intent.squadron_id), contact, turn())
+		if not made.ok: return made
+		estimated_orders.append(made.order.duplicate(true))
+	var prefix := "sun" if faction_id == "sun_quan" else "cao"
+	_current_log()["%s_orders" % prefix] = plan.orders.duplicate(true)
+	_current_log()["%s_formation_orders" % prefix] = plan.formation_orders.duplicate(true)
+	_current_log()["%s_weapon_allocation_orders" % prefix] = weapon_orders
+	_current_log()["%s_estimated_fire_orders" % prefix] = estimated_orders
+	_current_log()["%s_ai_decision" % prefix] = {"source": String(plan.source), "posture": String(plan.posture),
+		"intents": plan.intents.duplicate(true), "orders": plan.orders.duplicate(true),
+		"formation_orders": plan.formation_orders.duplicate(true), "weapon_allocation_orders": weapon_orders.duplicate(true),
+		"estimated_fire_orders": estimated_orders.duplicate(true)}
+	return _ok()
 
 
 func _validate_orders(faction_id: String, orders: Array) -> Dictionary:
@@ -705,6 +783,7 @@ func _submitted_estimated_fire_orders(faction_id: String) -> Array:
 func _estimated_orders_from_log(faction_id: String) -> Array:
 	if faction_id == "liu_bei": return _current_log().liu_estimated_fire_orders.duplicate(true)
 	if faction_id == "sun_quan": return _current_log().sun_estimated_fire_orders.duplicate(true)
+	if faction_id == "cao_cao": return _current_log().cao_estimated_fire_orders.duplicate(true)
 	return []
 
 
@@ -807,6 +886,19 @@ func _operational_squadron_ids(faction_id: String) -> Array:
 	return result
 
 
+func _target_id_for_contact(viewer_faction_id: String, contact_id_value: String) -> String:
+	for squadron_id in _state.get("live_navigation", {}).keys():
+		if _squadron_faction_id(String(squadron_id)) == viewer_faction_id: continue
+		if _fog.contact_id(viewer_faction_id, String(squadron_id)) == contact_id_value: return String(squadron_id)
+	return ""
+
+
+func _contact_by_id(contacts: Array, contact_id_value: String) -> Dictionary:
+	for value in contacts:
+		if value is Dictionary and String(value.get("contact_id", "")) == contact_id_value: return value.duplicate(true)
+	return {}
+
+
 func _begin_command_draft(faction_id: String) -> void:
 	var orders := {}
 	var formation_orders := {}
@@ -850,10 +942,12 @@ func _new_turn_log(turn_number: int) -> Dictionary:
 		"sun_formation_orders": [],
 		"sun_weapon_allocation_orders": [],
 		"sun_estimated_fire_orders": [],
+		"sun_ai_decision": {},
 		"cao_orders": [],
 		"cao_formation_orders": [],
 		"cao_weapon_allocation_orders": [],
 		"cao_estimated_fire_orders": [],
+		"cao_ai_decision": {},
 		"resolution_receipt": {},
 		"victory_check_required": false,
 	}

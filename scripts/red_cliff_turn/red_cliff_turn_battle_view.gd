@@ -208,6 +208,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	if _selected_squadron_id.is_empty():
 		var empty := Label.new(); empty.text = "현재 편집 가능한 전대가 없습니다."; _orders.add_child(empty)
 		_add_intelligence_panel()
+		_add_ai_decision_panel()
 		var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id) if _battle.has_method("viewer_snapshot") else {}
 		var resource_ids: Array = viewer.get("own_combat_resources", {}).keys(); resource_ids.sort()
 		_add_terrain_panel(String(resource_ids[0]) if not resource_ids.is_empty() else "")
@@ -240,6 +241,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	_update_preview_text(order)
 	_add_terrain_panel()
 	_add_intelligence_panel()
+	_add_ai_decision_panel()
 	_add_estimated_fire_editor()
 	_add_phase_ledger()
 	var detection_auto := _button("탐지 · 자동 코어 판정 · 수동 조작 없음", "DetectionAutomatic", 340); detection_auto.disabled = true; _orders.add_child(detection_auto)
@@ -486,6 +488,35 @@ func _add_intelligence_panel() -> void:
 				event_label.text = "사격 %d · 승인 · 거리 %.1f/사거리 %.1f · 방위 %.1f° · 사격각 %.1f° · %s · 표적 %s · 내 화력 %s%s · 명중/피해 판정 후속" % [index + 1, float(event.get("distance", 0)), float(event.get("range", 0)), float(event.get("bearing_deg", 0)), float(event.get("arc_deg", 0)), weapon_summary, _sector_label(String(modifier.get("target_sector", "indeterminate"))), _signed_percent(int(modifier.get("own_fire_percent", 0))), terrain_weapon]
 		else: event_label.text = "%d. %s · 코어 판정" % [index + 1, kind]
 		_orders.add_child(event_label)
+
+
+func _add_ai_decision_panel() -> void:
+	if not _battle.has_method("viewer_ai_decision"): return
+	var divider := HSeparator.new(); _orders.add_child(divider)
+	var title := Label.new(); title.name = "AiDecisionTitle"; title.text = "AI 운용 근거 · 현재 viewer 자기 정보만"; title.add_theme_color_override("font_color", Color("e8c779")); _orders.add_child(title)
+	var wanted_turn: int = _battle.turn()
+	var decision: Dictionary = _battle.viewer_ai_decision(_viewer_faction_id, wanted_turn)
+	if (not bool(decision.get("ok", false)) or not bool(decision.get("available", false))) and wanted_turn > 1:
+		wanted_turn -= 1; decision = _battle.viewer_ai_decision(_viewer_faction_id, wanted_turn)
+	if not bool(decision.get("ok", false)) or not bool(decision.get("available", false)):
+		var none := Label.new(); none.name = "AiDecisionPrivate"; none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; none.text = "공개된 자기 AI 결정 없음 · 다른 세력의 표적·명령·자원·능력치는 전술 결과로 관측된 정보 외 비공개"; none.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(none); return
+	var evidence := Label.new(); evidence.name = "AiParityEvidence"; evidence.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; evidence.text = "턴 %d · 자세 %s · 동일 코어 규칙 출처 %s" % [int(decision.get("turn", wanted_turn)), _ai_posture_label(String(decision.get("posture", ""))), String(decision.get("source", "미상"))]; evidence.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(evidence)
+	for value in decision.get("intents", []):
+		if not value is Dictionary: continue
+		var intent: Dictionary = value; var row := Label.new(); row.name = "AiIntentRow"; row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		row.text = "%s · %s · %s" % [String(intent.get("squadron_id", "내 전대")), _ai_category_label(String(intent.get("category", ""))), String(intent.get("reason_label", "코어 선택 근거"))]
+		if intent.has("confidence_basis_points"): row.text += " · 공개 신뢰 %d bp" % int(intent.confidence_basis_points)
+		if intent.has("reserve_basis_points"): row.text += " · 내 자원 여유 %d bp" % int(intent.reserve_basis_points)
+		_orders.add_child(row)
+	var privacy := Label.new(); privacy.name = "AiDecisionPrivacy"; privacy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; privacy.text = "타 세력의 숨겨진 표적·명령·자원·능력치 및 AI 후보·점수·임계값은 표시하지 않습니다."; privacy.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(privacy)
+
+
+func _ai_category_label(category: String) -> String:
+	return String({"defense":"방어", "hold":"방어", "patrol":"접적", "confirmed_engage":"교전", "estimated_fire":"제한 교전", "resource_conserve":"자원 보존"}.get(category, category))
+
+
+func _ai_posture_label(posture: String) -> String:
+	return String({"allied_defensive":"방어형", "aggressive_pressure":"압박형"}.get(posture, posture if not posture.is_empty() else "미상"))
 
 
 func _add_formation_editor() -> void:

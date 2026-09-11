@@ -60,7 +60,8 @@ func _test_prompt_manual_ai_skip_reenable_sequence() -> void:
 	_ok(not JSON.stringify(battle.visible_tactical_events("cao_cao", 2)).contains("estimated_fire_"), "Cao viewer cannot inspect enemy estimated fire")
 
 	battle.continue_turn(); battle.submit_command_draft(); _ok(battle.submit_sun_control_choice("no").ok, "no selects AI for current turn")
-	_eq(battle.phase(), "resolution", "no goes directly to resolution"); _eq(battle.turn_log()[2].sun_orders[0].action, "hold", "Sun AI deterministic HOLD")
+	_eq(battle.phase(), "resolution", "no goes directly to resolution")
+	_eq(battle.turn_log()[2].sun_orders, battle.viewer_ai_decision("sun_quan", 3).orders, "Sun AI orders match deterministic own-view decision")
 	_eq(battle.turn_log()[2].sun_control_decision.source, "turn_prompt", "one-turn AI remains a prompt decision")
 	_ok(battle.prompt_policy().enabled, "one-turn AI no leaves prompt policy enabled")
 	battle.resolve_turn(); battle.continue_turn(); battle.submit_command_draft()

@@ -54,7 +54,8 @@ func _test_own_state_consumption_recovery_and_redaction() -> void:
 	_ok(not _visible_text(view).contains("RC-CAO-SQ-01") and not _visible_text(view).contains("적 자원"), "enemy resources are not rendered")
 	view.call("_on_arm_move"); view.call("_on_waypoint_requested", [240, 100]); view.find_child("PrimaryTurnAction", true, false).pressed.emit(); await process_frame; await process_frame
 	view.find_child("SunAiThisTurn", true, false).pressed.emit(); await process_frame; await process_frame
-	_ok(not _visible_text(view).contains("자원 소모"), "target viewer does not see enemy consumption")
+	var liu_events: Array = battle.visible_tactical_events("liu_bei").events
+	_ok(liu_events.filter(func(event): return String(event.get("event_type", "")) == "resource_consumed").all(func(event): return String(event.get("squadron_id", "")).begins_with("RC-LIU-")), "target viewer sees no enemy consumption")
 	view.set("_viewer_faction_id", "cao_cao"); view.call("_refresh"); await process_frame
 	_ok(_visible_text(view).contains("자원 소모") and _visible_text(view).contains("전→후"), "shooter viewer sees core consumption receipt")
 	var cao_events: Dictionary = battle.visible_tactical_events("cao_cao"); var consumed := false

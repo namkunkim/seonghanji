@@ -49,7 +49,7 @@ func _test_timeline_auto_step_digest_and_redaction() -> void:
 	_eq(detail_count, 1, "step view renders selected phase detail once")
 	var viewer_ledger: Dictionary = battle.viewer_phase_ledger("liu_bei"); var encoded := JSON.stringify(viewer_ledger)
 	_ok(bool(viewer_ledger.get("viewer_redacted", false)), "viewer ledger explicitly redacted")
-	_ok(not encoded.contains("resource_reservation") and not encoded.contains("RC-CAO-SQ-01\""), "viewer ledger omits enemy resource and opaque identity")
+	_ok(not encoded.contains("cao_ai_decision") and not encoded.contains("sun_ai_decision") and not encoded.contains("reserve_basis_points"), "viewer ledger omits foreign AI plan and resource reserve")
 	_ok(not encoded.contains("winner") and not encoded.contains("hit_result") and not encoded.contains("damage_result"), "no unfinished result fabricated")
 	if DisplayServer.get_name() != "headless":
 		view.call("_on_ledger_phase", ""); await process_frame

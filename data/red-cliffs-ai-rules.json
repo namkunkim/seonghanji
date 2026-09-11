@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-ai-v1",
+  "statement": "적벽 데모의 손권·조조 AI 의사결정용 보통 난이도 규칙이다. AI는 viewer-safe contact, 자기 상태, 예약 자원 preview와 공개 지형만 사용한다.",
+  "target_priority": "hostile_only; state_confirmed_before_estimated; confidence_desc; staleness_asc; contact_id_asc",
+  "resource_reserve_formula": "min(energy_percent, heat_headroom_percent, best_ready_weapon_finite_resource_percent); no_ready_weapon=0; scheduled turn-start recovery preview only",
+  "application": "AI orders use the same movement, formation, weapon, fog, terrain, resource and phase resolvers as manual orders",
+  "alliances": [["liu_bei", "sun_quan"]],
+  "postures": {
+    "sun_quan": {
+      "id": "allied_defensive",
+      "formation_id": "FRM-03",
+      "weapon_preset_id": "screen",
+      "confirmed_standoff": 150,
+      "pursuit_step": 70,
+      "no_contact_action": "hold",
+      "patrol_offset": [0, 0],
+      "estimated_fire": {"enabled": true, "max_staleness_turns": 1, "minimum_confidence_basis_points": 6500, "minimum_resource_reserve_basis_points": 5000}
+    },
+    "cao_cao": {
+      "id": "aggressive_pressure",
+      "formation_id": "FRM-04",
+      "weapon_preset_id": "close_strike",
+      "confirmed_standoff": 100,
+      "pursuit_step": 110,
+      "no_contact_action": "patrol",
+      "patrol_offset": [-60, 40],
+      "estimated_fire": {"enabled": true, "max_staleness_turns": 2, "minimum_confidence_basis_points": 4500, "minimum_resource_reserve_basis_points": 2500}
+    }
+  }
+}

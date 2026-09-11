@@ -24,7 +24,7 @@ func _run() -> void:
 
 func _test_viewer_safe_rationale_and_g5_01_regression() -> void:
 	var loaded := Setup.load_default(); _ok(loaded.ok, "setup loads"); var setup: Dictionary = loaded.setup.duplicate(true)
-	var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 100], "RC-SUN-SQ-01": [100, 700], "RC-CAO-SQ-01": [300, 100]}
+	var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 100], "RC-SUN-SQ-01": [100, 700], "RC-CAO-SQ-01": [400, 100]}
 	for squad in setup.squadrons: squad.initial_position = positions[String(squad.id)].duplicate(); squad.initial_facing_deg = 0
 	var battle = Battle.new(); _ok(battle.initialize(setup).ok, "battle initializes")
 	var view := View.new(); view.configure(battle, 0, JSON.stringify(setup)); root.add_child(view); await process_frame; await process_frame

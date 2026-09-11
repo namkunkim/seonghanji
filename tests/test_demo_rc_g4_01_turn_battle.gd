@@ -129,7 +129,7 @@ func _test_manual_and_ai_flows() -> void:
 	_eq(battle.phase(), "resolution", "AI choice prepares resolution directly")
 	log = battle.turn_log()[0]
 	_eq(log.sun_orders, _orders(setup, "sun_quan"), "Sun AI hold orders are stable ID order")
-	_eq(log.cao_orders, _orders(setup, "cao_cao"), "Cao AI hold orders are stable ID order")
+	_eq(log.cao_orders, battle.viewer_ai_decision("cao_cao", 1).orders, "Cao AI orders match stable own-view decision")
 
 
 func _test_prompt_policy_lifetime() -> void:

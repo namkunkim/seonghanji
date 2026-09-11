@@ -38,7 +38,7 @@ func _test_rules_score_ties_and_formation() -> void:
 	_eq(rules.thresholds, {"confirmed": 37.0, "estimated": 15.0}, "thresholds data-owned")
 	_eq(resolver.call("_percent_round_half_up", 10, 5), 11, "positive half-point rounds up deterministically")
 	_eq(rules.fast_equipment_sensor_points["FAST-EQ-RECON"], 6.0, "structured recon equipment sensor value is data-owned")
-	_eq(rules.terrain.rules_pending, ["terrain_detection"], "terrain is explicit neutral pending")
+	_eq(rules.terrain.status, "active_normal_demo", "G5-03 terrain integration is explicit")
 	var formation := resolver.initial_formation_state()
 	var tie: Dictionary = resolver.evaluate("RC-LIU-SQ-01", "RC-CAO-SQ-01", 199.0, formation)
 	_ok(tie.ok, "score evaluation succeeds"); _eq(tie.authoritative.score, 37, "exact confirmed threshold fixture")
@@ -118,7 +118,7 @@ func _test_multi_observer_merge_viewer_redaction_atomicity() -> void:
 	_ok(not public_json.contains("target_squadron_id"), "estimated merged contact hides exact target identity")
 	for forbidden in ["target_ew_points", "distance_penalty", "\"score\":", "\"margin\":", "confirmed_range", "estimated_range"]:
 		_ok(not public_json.contains(forbidden), "viewer omits enemy/threshold inference field %s" % forbidden)
-	_ok(public_json.contains("terrain_detection") and public_json.contains("pending_neutral"), "viewer sees terrain pending neutral")
+	_ok(public_json.contains("active_normal_demo"), "viewer sees active terrain rationale")
 	var invalid_formation := {}; var invalid := interception.resolve(moved.events, moved.live_navigation, prior, 1, {}, invalid_formation)
 	# Empty means initial formation by compatibility; a malformed non-empty state must reject.
 	invalid_formation = {"RC-LIU-SQ-01": {"formation_id": "BAD"}}
@@ -126,7 +126,7 @@ func _test_multi_observer_merge_viewer_redaction_atomicity() -> void:
 	_ok(not invalid.ok, "malformed formation state rejected"); _eq(JSON.stringify(prior), digest, "invalid evaluation atomic")
 
 func _test_battle_estimated_fire_phase_resource_regression() -> void:
-	var setup := _setup(); var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 100], "RC-SUN-SQ-01": [100, 100], "RC-CAO-SQ-01": [300, 100]}
+	var setup := _setup(); var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 100], "RC-SUN-SQ-01": [100, 100], "RC-CAO-SQ-01": [400, 100]}
 	for squad in setup.squadrons: squad.initial_position = positions[String(squad.id)].duplicate(); squad.initial_facing_deg = 0
 	var battle = Battle.new(); _ok(battle.initialize(setup).ok, "battle initializes G5-02")
 	battle.submit_command_draft(); battle.submit_sun_control_choice("ai"); var first: Dictionary = battle.resolve_turn(); _ok(first.ok, "AI/manual-neutral detection turn resolves")

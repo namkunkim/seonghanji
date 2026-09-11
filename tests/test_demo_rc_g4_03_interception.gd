@@ -69,7 +69,7 @@ func _test_rules_and_initial_redaction() -> void:
 	var viewer: Dictionary = battle.viewer_snapshot("liu_bei")
 	var serialized := JSON.stringify(viewer)
 	_ok(not serialized.contains("RC-CAO-SQ-01") and not serialized.contains("조조"), "unknown viewer snapshot has no enemy identity")
-	_ok(not serialized.contains("1000"), "unknown viewer snapshot has no enemy exact position")
+	_ok(viewer.contacts.is_empty() and not viewer.has("enemy_navigation"), "unknown viewer snapshot has no enemy exact position")
 	_ok(not viewer.has("applied_setup") and not viewer.has("live_navigation") and not viewer.has("turn_log"), "viewer snapshot omits authoritative nested state")
 	_ok(not battle.visible_contacts("unknown").ok, "unknown viewer faction rejected")
 
@@ -224,7 +224,7 @@ func _test_turn_battle_integration_and_viewer_receipts() -> void:
 	var public_log: Dictionary = battle.viewer_turn_log("liu_bei")
 	_ok(public_log.ok and not JSON.stringify(public_log).contains("cao_orders"), "viewer turn log omits enemy raw orders")
 	_eq(battle.turn_log()[0].sun_orders[0].action, "hold", "authoritative AI Sun HOLD remains stable")
-	_eq(battle.turn_log()[0].cao_orders[0].action, "hold", "authoritative AI Cao HOLD remains stable")
+	_eq(battle.turn_log()[0].cao_orders, battle.viewer_ai_decision("cao_cao", 1).orders, "authoritative Cao AI decision remains stable")
 
 
 func _holds(setup: Dictionary) -> Array:
