@@ -122,6 +122,7 @@ func _validate_payload(source: String, payload: Dictionary, turn_number: int) ->
 		"resource_recovery_events": ["resource_recovered"], "movement_events": ["movement_hold", "movement_move"],
 		"terrain_events": ["terrain_transition", "terrain_membership", "terrain_stay"],
 		"path_intersection_events": ["path_intersection"], "detection_events": ["detection"],
+		"chain_explosion_events": ["chain_explosion_disrupted", "chain_explosion_triggered"],
 		"opportunity_fire_events": ["shot_authorized"], "estimated_fire_events": ["estimated_fire_authorized"],
 		"estimated_fire_suppressed_events": ["estimated_fire_suppressed"], "resource_consumption_events": ["resource_consumed"],
 		"suppressed_fire_events": ["fire_suppressed"], "resolution_boundary": ["resolution_boundary"]}

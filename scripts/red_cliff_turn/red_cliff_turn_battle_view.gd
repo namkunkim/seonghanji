@@ -47,6 +47,7 @@ var _map_mode_text: Label
 var _viewer_faction_id := "liu_bei"
 var _ledger_phase_filter := ""
 var _selected_contact_id := ""
+var _chain_contact_id := ""
 
 
 func configure(battle_controller, applied_revision: int, applied_digest: String) -> Dictionary:
@@ -208,6 +209,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	if _selected_squadron_id.is_empty():
 		var empty := Label.new(); empty.text = "현재 편집 가능한 전대가 없습니다."; _orders.add_child(empty)
 		_add_intelligence_panel()
+		_add_chain_explosion_panel()
 		_add_ai_decision_panel()
 		var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id) if _battle.has_method("viewer_snapshot") else {}
 		var resource_ids: Array = viewer.get("own_combat_resources", {}).keys(); resource_ids.sort()
@@ -241,6 +243,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	_update_preview_text(order)
 	_add_terrain_panel()
 	_add_intelligence_panel()
+	_add_chain_explosion_panel()
 	_add_ai_decision_panel()
 	_add_estimated_fire_editor()
 	_add_phase_ledger()
@@ -464,6 +467,10 @@ func _add_intelligence_panel() -> void:
 		elif kind == "terrain_membership":
 			event_label.name = "OwnTerrainBoundaryTouch"
 			event_label.text = "내 전대 지형 경계 접촉 · %s · %s · 코어 판정" % [String(event.get("zone_id", "")), String(event.get("membership", ""))]
+		elif kind == "chain_explosion_disrupted":
+			event_label.name = "ChainExplosionDisruptedEvent"; event_label.text = "연쇄 폭발 작전 방해 · 조건 재확보 필요 · 턴 %d부터 재시도 가능" % int(event.get("retry_allowed_from_turn", 0))
+		elif kind == "chain_explosion_triggered":
+			event_label.name = "ChainExplosionTriggeredEvent"; event_label.text = "연쇄 폭발 작전 발동 확정 · 확률 판정 없음 · 취소 불가\n후속 효과 판정 대기 · 일반 승리 판정 대기"
 		elif kind == "resource_consumed":
 			event_label.text = "자원 소모 · %s · 비용 %s\n%s" % [_weapon_name(String(event.get("weapon_id", ""))), _resource_cost_text(event.get("cost", {})), _resource_transition_text(event.get("before", {}), event.get("after", {}), String(event.get("weapon_id", "")))]
 		elif kind == "fire_suppressed":
@@ -488,6 +495,68 @@ func _add_intelligence_panel() -> void:
 				event_label.text = "사격 %d · 승인 · 거리 %.1f/사거리 %.1f · 방위 %.1f° · 사격각 %.1f° · %s · 표적 %s · 내 화력 %s%s · 명중/피해 판정 후속" % [index + 1, float(event.get("distance", 0)), float(event.get("range", 0)), float(event.get("bearing_deg", 0)), float(event.get("arc_deg", 0)), weapon_summary, _sector_label(String(modifier.get("target_sector", "indeterminate"))), _signed_percent(int(modifier.get("own_fire_percent", 0))), terrain_weapon]
 		else: event_label.text = "%d. %s · 코어 판정" % [index + 1, kind]
 		_orders.add_child(event_label)
+
+
+func _add_chain_explosion_panel() -> void:
+	if not _battle.has_method("viewer_chain_explosion_state"): return
+	var divider := HSeparator.new(); _orders.add_child(divider)
+	var title := Label.new(); title.name = "ChainExplosionTitle"; title.text = "연쇄 폭발 작전 · 연합 특수작전 자산"; title.add_theme_color_override("font_color", Color("f0b36e")); _orders.add_child(title)
+	var state: Dictionary = _battle.viewer_chain_explosion_state(_viewer_faction_id)
+	if not bool(state.get("revealed", false)):
+		var hidden := Label.new(); hidden.name = "ChainExplosionHidden"; hidden.text = "현재 viewer에 공개된 작전 정보 없음"; hidden.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(hidden); return
+	var status := String(state.get("status", "unknown")); var status_label := Label.new(); status_label.name = "ChainExplosionStatus"; status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status_label.text = {"idle":"미준비", "staged":"준비 완료 · 턴 판정에서 최종 조건 재검사", "disrupted":"방해됨 · 조건 재확보 후 다음 유비 명령 턴에 재시도", "triggered":"발동 확정 · 확률 판정 없음 · 취소 불가"}.get(status, status)
+	status_label.add_theme_color_override("font_color", Color("a8d9bd") if status != "disrupted" else Color("ffb18e")); _orders.add_child(status_label)
+	if status == "triggered":
+		var pending := Label.new(); pending.name = "ChainExplosionEffectsPending"; pending.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; pending.text = "후속 효과 판정 대기: %s\n일반 승리 판정 대기" % _effect_intents_text(state.get("effect_intents", [])); _orders.add_child(pending)
+		var locked := _button("발동 확정 · 취소 불가", "ChainExplosionLocked", 340); locked.disabled = true; _orders.add_child(locked); return
+	if _viewer_faction_id != "liu_bei":
+		var allied := Label.new(); allied.text = String(state.get("allied_operation_label", "연합 작전 상태만 공개")); allied.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(allied); return
+	var confirmed: Array = []
+	for value in _battle.visible_contacts("liu_bei").get("contacts", []):
+		if value is Dictionary and String(value.get("state", "")) == "confirmed" and String(value.get("disposition", "")) == "hostile": confirmed.append(value)
+	if confirmed.size() == 1: _chain_contact_id = String(confirmed[0].get("contact_id", ""))
+	for index in range(confirmed.size()):
+		var contact_id := String(confirmed[index].get("contact_id", "")); var pick := _button(("● " if contact_id == _chain_contact_id else "○ ") + "확인 접촉 %d 작전 목표" % (index + 1), "ChainTarget%d" % (index + 1), 340); pick.pressed.connect(_on_chain_contact_selected.bind(contact_id)); _orders.add_child(pick)
+	var readiness: Dictionary = _battle.chain_explosion_readiness(_chain_contact_id)
+	if bool(readiness.get("ok", false)):
+		if _chain_contact_id.is_empty(): _chain_contact_id = String(readiness.get("contact_id", ""))
+		for value in readiness.get("conditions", []):
+			if not value is Dictionary: continue
+			var condition: Dictionary = value; var row := Label.new(); row.name = "ChainCondition_%s" % String(condition.get("id", "")); row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; row.text = "%s %s%s" % ["충족" if bool(condition.get("met", false)) else "미충족", String(condition.get("label", "조건")), _chain_condition_evidence(condition)]; row.add_theme_color_override("font_color", Color("83d8a2") if bool(condition.get("met", false)) else Color("ef9b8f")); _orders.add_child(row)
+	var actions := HBoxContainer.new(); actions.add_theme_constant_override("separation", 7); _orders.add_child(actions)
+	var stage := _button("작전 준비·발동 예약", "StageChainExplosion", 205); stage.disabled = not bool(state.get("can_stage", false)) or not bool(readiness.get("ready", false)); stage.pressed.connect(_on_stage_chain_explosion.bind(readiness)); actions.add_child(stage)
+	var cancel := _button("준비 취소", "CancelChainExplosion", 128); cancel.disabled = not bool(state.get("can_cancel", false)); cancel.pressed.connect(_on_cancel_chain_explosion); actions.add_child(cancel)
+	var note := Label.new(); note.name = "ChainExplosionBoundary"; note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; note.text = "발동 전에는 이동·진형·탐지·요격으로 방해될 수 있습니다. 발동 뒤에는 취소할 수 없으며 후속 효과와 일반 승리는 아직 판정하지 않습니다."; note.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(note)
+
+
+func _on_chain_contact_selected(contact_id: String) -> void:
+	if _battle == null or _battle.phase() != "liu_command": return
+	_chain_contact_id = contact_id; _refresh()
+
+
+func _on_stage_chain_explosion(readiness: Dictionary) -> void:
+	if _battle == null or _battle.phase() != "liu_command" or not bool(readiness.get("ready", false)): return
+	_set_receipt(_battle.stage_chain_explosion(String(readiness.get("detachment_id", "")), String(readiness.get("contact_id", "")))); _refresh()
+
+
+func _on_cancel_chain_explosion() -> void:
+	if _battle == null or _battle.phase() != "liu_command": return
+	_set_receipt(_battle.cancel_chain_explosion()); _refresh()
+
+
+func _chain_condition_evidence(condition: Dictionary) -> String:
+	if condition.has("distance") and condition.get("distance") != null: return " · 거리 %.1f / 최대 %.1f" % [float(condition.distance), float(condition.get("maximum_range", 0))]
+	if condition.has("formation_id") and not String(condition.formation_id).is_empty(): return " · %s" % String(condition.formation_id)
+	if not condition.get("zone_ids", []).is_empty(): return " · 구역 %s · 방향 편차 %.1f°" % [_id_list_text(condition.zone_ids), float(condition.get("deviation_deg", 0))]
+	if int(condition.get("blocking_evidence_count", 0)) > 0: return " · 차단 증거 %d건" % int(condition.blocking_evidence_count)
+	return ""
+
+
+func _effect_intents_text(values: Array) -> String:
+	var labels: Array[String] = []
+	for value in values: labels.append(String({"reactor_chain_blast":"반응로 연쇄 유폭", "morale_shock":"사기 충격", "sensor_disruption":"센서 장애", "temporary_terrain_hazard":"임시 지형 위험"}.get(String(value), value)))
+	return "없음" if labels.is_empty() else ", ".join(labels)
 
 
 func _add_ai_decision_panel() -> void:

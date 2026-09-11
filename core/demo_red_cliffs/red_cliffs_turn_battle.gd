@@ -13,6 +13,7 @@ const PhaseLedger := preload("res://core/demo_red_cliffs/red_cliffs_phase_ledger
 const FogOfWar := preload("res://core/demo_red_cliffs/red_cliffs_fog_of_war.gd")
 const TerrainResolver := preload("res://core/demo_red_cliffs/red_cliffs_terrain_resolver.gd")
 const AiPlanner := preload("res://core/demo_red_cliffs/red_cliffs_ai_planner.gd")
+const ChainExplosion := preload("res://core/demo_red_cliffs/red_cliffs_chain_explosion.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
 	"weapon_fire", "damage", "casualties", "victory"
@@ -28,6 +29,7 @@ var _phase_ledger
 var _fog
 var _terrain
 var _ai_planner
+var _chain_explosion
 var _viewer_receipts_by_turn: Dictionary = {}
 var _viewer_phase_ledgers_by_turn: Dictionary = {}
 
@@ -72,6 +74,8 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	for posture in ai_planner.rules_snapshot().postures.values():
 		if not formation_ids.has(String(posture.formation_id)) or not preset_ids.has(String(posture.weapon_preset_id)):
 			return _error("AI 자세가 미지 진형 또는 무기 프리셋을 참조합니다.")
+	var chain_explosion = ChainExplosion.new(); var chain_result: Dictionary = chain_explosion.initialize(setup)
+	if not chain_result.ok: return chain_result
 	_movement = movement
 	_interception = interception
 	_formation = formation
@@ -81,6 +85,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	_fog = fog
 	_terrain = terrain
 	_ai_planner = ai_planner
+	_chain_explosion = chain_explosion
 	_viewer_receipts_by_turn = {}
 	_viewer_phase_ledgers_by_turn = {}
 	_state = {
@@ -97,6 +102,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 		"combat_resource_state": _combat_resources.initial_state(),
 		"last_resource_recovery_events": [],
 		"last_resource_recovery_turn": 0,
+		"chain_explosion_state": _chain_explosion.initial_state(),
 		"phase_ledgers": {},
 		"command_draft": {},
 		"turn_log": [_new_turn_log(1)],
@@ -175,9 +181,79 @@ func scheduled_resource_preview(viewer_faction_id: String) -> Dictionary:
 		turn(), int(_state.last_resource_recovery_turn))
 
 
+func chain_explosion_readiness(contact_id_value: String = "") -> Dictionary:
+	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
+	var receipt: Dictionary = _chain_explosion_readiness_internal(contact_id_value)
+	if receipt.ok:
+		receipt.erase("target_squadron_id")
+		receipt.conditions = _public_chain_conditions(receipt.conditions)
+	return receipt
+
+
+func _chain_explosion_readiness_internal(contact_id_value: String = "") -> Dictionary:
+	var rules: Dictionary = _chain_explosion.rules_snapshot(); var source_id := String(rules.allied_operation_detachment.host_squadron_id)
+	var contacts: Array = visible_contacts("liu_bei").contacts; var selected := {}
+	for value in contacts:
+		if value is Dictionary and String(value.get("state", "")) == "confirmed" and String(value.get("disposition", "")) == "hostile":
+			if contact_id_value.is_empty() or String(value.contact_id) == contact_id_value: selected = value.duplicate(true); break
+	if selected.is_empty(): selected = {"contact_id": contact_id_value, "state": "undetected"}
+	else: selected["target_squadron_id"] = _target_id_for_contact("liu_bei", String(selected.contact_id))
+	var receipt: Dictionary = _chain_explosion.readiness("liu_bei", _state.chain_explosion_state, source_id,
+		selected, _state.live_navigation, _state.formation_state)
+	if receipt.ok: receipt["detachment_id"] = String(rules.allied_operation_detachment.id)
+	return receipt
+
+
+func stage_chain_explosion(detachment_id: String, contact_id_value: String) -> Dictionary:
+	if phase() != "liu_command": return _error("연쇄 폭발 작전은 유비 명령 단계에서만 준비할 수 있습니다.")
+	var rules: Dictionary = _chain_explosion.rules_snapshot()
+	if detachment_id != String(rules.allied_operation_detachment.id): return _error("미지 연합 특수작전 분견대입니다.")
+	var readiness: Dictionary = _chain_explosion_readiness_internal(contact_id_value)
+	if not readiness.ok: return readiness
+	var staged: Dictionary = _chain_explosion.stage(_state.chain_explosion_state, readiness, turn())
+	if not staged.ok: return staged
+	_state.chain_explosion_state = staged.state.duplicate(true)
+	return {"ok": true, "errors": [], "state": viewer_chain_explosion_state("liu_bei"), "idempotent": bool(staged.get("idempotent", false))}
+
+
+func cancel_chain_explosion() -> Dictionary:
+	if phase() != "liu_command": return _error("연쇄 폭발 작전은 유비 명령 단계에서만 취소할 수 있습니다.")
+	var cancelled: Dictionary = _chain_explosion.cancel(_state.chain_explosion_state)
+	if not cancelled.ok: return cancelled
+	_state.chain_explosion_state = cancelled.state.duplicate(true)
+	return {"ok": true, "errors": [], "state": viewer_chain_explosion_state("liu_bei")}
+
+
+func viewer_chain_explosion_state(viewer_faction_id: String) -> Dictionary:
+	if not _faction_ids().has(viewer_faction_id): return _error("미지 관측 세력입니다: %s" % viewer_faction_id)
+	var state: Dictionary = _state.chain_explosion_state; var status := String(state.status)
+	if viewer_faction_id == "cao_cao" and status != "triggered":
+		return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "status": "unknown", "revealed": false, "can_stage": false, "can_cancel": false}
+	var result := {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "status": status, "revealed": true,
+		"can_stage": viewer_faction_id == "liu_bei" and phase() == "liu_command" and ["idle", "disrupted"].has(status),
+		"can_cancel": viewer_faction_id == "liu_bei" and phase() == "liu_command" and status == "staged",
+		"irreversible": status == "triggered"}
+	if viewer_faction_id == "liu_bei":
+		var visible_order: Dictionary = state.staged_order.duplicate(true); visible_order.erase("target_squadron_id")
+		result["staged_order"] = visible_order
+		var visible_evaluation: Dictionary = state.last_evaluation.duplicate(true); visible_evaluation.erase("target_squadron_id")
+		visible_evaluation["conditions"] = _public_chain_conditions(visible_evaluation.get("conditions", []))
+		result["last_evaluation"] = visible_evaluation
+	if viewer_faction_id == "sun_quan": result["allied_operation_label"] = "연합 폭발정 분견대"
+	if status == "triggered":
+		result["triggered_turn"] = int(state.triggered_turn)
+		result["effect_intents"] = state.trigger_event.get("effect_intents", []).duplicate()
+		result["effects_pending"] = state.trigger_event.get("effects_pending", []).duplicate()
+	return result
+
+
 func visible_contacts(viewer_faction_id: String) -> Dictionary:
 	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
-	var result: Dictionary = _interception.visible_contacts(viewer_faction_id, _state.detection_state, _state.live_navigation)
+	return _visible_contacts_from(viewer_faction_id, _state.detection_state, _state.live_navigation)
+
+
+func _visible_contacts_from(viewer_faction_id: String, detection: Dictionary, navigation: Dictionary) -> Dictionary:
+	var result: Dictionary = _interception.visible_contacts(viewer_faction_id, detection, navigation)
 	if not result.ok: return result
 	for contact in result.contacts:
 		var target_id := _target_id_for_contact(viewer_faction_id, String(contact.contact_id))
@@ -294,6 +370,7 @@ func viewer_snapshot(viewer_faction_id: String) -> Dictionary:
 		"resource_recovery_events": _combat_resources.visible_events(viewer_faction_id,
 			{"recovery_events": _state.last_resource_recovery_events}).events,
 		"tactical_events": visible_tactical_events(viewer_faction_id).events,
+		"chain_explosion": viewer_chain_explosion_state(viewer_faction_id),
 		"prompt_policy": prompt_policy() if viewer_faction_id == "sun_quan" else {}}
 
 
@@ -563,6 +640,23 @@ func resolve_turn() -> Dictionary:
 	var resource_result: Dictionary = _combat_resources.resolve_shots(all_authorized,
 		resource_base_state, turn())
 	if not resource_result.ok: return resource_result
+	var chain_result := {"ok": true, "state": _state.chain_explosion_state.duplicate(true), "events": []}
+	if String(_state.chain_explosion_state.status) == "staged":
+		var final_contacts: Dictionary = _visible_contacts_from("liu_bei", interception_result.detection_state, movement_result.live_navigation)
+		if not final_contacts.ok: return final_contacts
+		var staged_contact_id := String(_state.chain_explosion_state.staged_order.contact_id)
+		var final_contact := _contact_by_id(final_contacts.contacts, staged_contact_id)
+		if final_contact.is_empty(): final_contact = {"contact_id": staged_contact_id, "state": "undetected"}
+		elif String(final_contact.get("state", "")) == "confirmed":
+			final_contact["target_squadron_id"] = String(_state.chain_explosion_state.staged_order.target_squadron_id)
+		var source_id := String(_state.chain_explosion_state.staged_order.source_squadron_id)
+		var authorized_interceptions := _events_with_outcome(resource_result.authorized_events, "shot_authorized")
+		var final_readiness: Dictionary = _chain_explosion.readiness("liu_bei", _state.chain_explosion_state,
+			source_id, final_contact, movement_result.live_navigation, formation_result.formation_state,
+			authorized_interceptions)
+		if not final_readiness.ok: return final_readiness
+		chain_result = _chain_explosion.resolve_staged(_state.chain_explosion_state, final_readiness, turn())
+		if not chain_result.ok: return chain_result
 	var receipt := {
 		"ok": true,
 		"turn": turn(),
@@ -573,6 +667,7 @@ func resolve_turn() -> Dictionary:
 		"formation_events": formation_result.formation_events.duplicate(true),
 		"formation_modifier_snapshots": formation_result.modifier_snapshots.duplicate(true),
 		"weapon_allocation_events": weapon_result.weapon_allocation_events.duplicate(true),
+		"chain_explosion_events": chain_result.events.duplicate(true),
 		"path_intersection_events": interception_result.path_intersection_events.duplicate(true),
 		"detection_events": interception_result.detection_events.duplicate(true),
 		"opportunity_fire_events": _events_with_outcome(resource_result.authorized_events, "shot_authorized"),
@@ -601,6 +696,7 @@ func resolve_turn() -> Dictionary:
 		visible.events.append_array(resource_visible.events)
 		var fog_visible: Dictionary = _fog.visible_events(faction_id, receipt)
 		visible.events.append_array(fog_visible.events)
+		visible.events.append_array(_visible_chain_explosion_events(faction_id, receipt.chain_explosion_events))
 		visible.events.sort_custom(func(a, b): return String(a.get("event_id", "")) < String(b.get("event_id", "")))
 		visible["turn"] = turn()
 		var viewer_ledger: Dictionary = _phase_ledger.build_viewer(turn(),
@@ -613,6 +709,7 @@ func resolve_turn() -> Dictionary:
 	_state.formation_state = formation_result.formation_state.duplicate(true)
 	_state.weapon_allocation_state = weapon_result.weapon_allocation_state.duplicate(true)
 	_state.combat_resource_state = resource_result.resource_state.duplicate(true)
+	_state.chain_explosion_state = chain_result.state.duplicate(true)
 	_state.last_resource_recovery_events = recovery_events.duplicate(true)
 	if turn() >= 2: _state.last_resource_recovery_turn = turn()
 	_state.phase_ledgers[turn()] = ledger.duplicate(true)
@@ -835,7 +932,7 @@ func _viewer_ledger_receipt(faction_id: String, receipt: Dictionary, visible_eve
 		"victory_check_required": bool(receipt.victory_check_required),
 		"formation_events": [], "weapon_allocation_events": [], "resource_recovery_events": [],
 		"movement_events": [], "terrain_events": [], "path_intersection_events": [], "detection_events": [],
-		"opportunity_fire_events": [], "estimated_fire_events": [], "estimated_fire_suppressed_events": [],
+		"chain_explosion_events": [], "opportunity_fire_events": [], "estimated_fire_events": [], "estimated_fire_suppressed_events": [],
 		"resource_consumption_events": [], "suppressed_fire_events": []}
 	for source in ["formation_events", "weapon_allocation_events", "resource_recovery_events",
 			"movement_events", "terrain_events", "resource_consumption_events", "suppressed_fire_events"]:
@@ -851,8 +948,45 @@ func _viewer_ledger_receipt(faction_id: String, receipt: Dictionary, visible_eve
 		elif event_type == "shot_authorized": source = "opportunity_fire_events"
 		elif event_type == "estimated_fire_authorized": source = "estimated_fire_events"
 		elif event_type == "estimated_fire_suppressed": source = "estimated_fire_suppressed_events"
+		elif ["chain_explosion_disrupted", "chain_explosion_triggered"].has(event_type): source = "chain_explosion_events"
 		if not source.is_empty(): safe[source].append(value.duplicate(true))
 	return safe
+
+
+func _visible_chain_explosion_events(viewer_faction_id: String, events: Array) -> Array:
+	var result: Array = []
+	for value in events:
+		if not value is Dictionary: continue
+		var event: Dictionary = value; var event_type := String(event.event_type)
+		if viewer_faction_id == "cao_cao" and event_type != "chain_explosion_triggered": continue
+		if viewer_faction_id == "liu_bei":
+			result.append({"event_id": String(event.event_id), "event_type": event_type, "turn": int(event.turn),
+				"contact_id": String(_state.chain_explosion_state.staged_order.get("contact_id", "")),
+				"conditions": _public_chain_conditions(event.conditions), "retry_allowed_from_turn": int(event.get("retry_allowed_from_turn", 0)),
+				"irreversible": bool(event.get("irreversible", false)), "effect_intents": event.get("effect_intents", []).duplicate(),
+				"effects_pending": event.get("effects_pending", []).duplicate()})
+		elif viewer_faction_id == "sun_quan":
+			result.append({"event_id": String(event.event_id), "event_type": event_type, "turn": int(event.turn),
+				"own_detachment_involved": true, "irreversible": bool(event.get("irreversible", false)),
+				"effect_intents": event.get("effect_intents", []).duplicate(), "effects_pending": event.get("effects_pending", []).duplicate()})
+		elif viewer_faction_id == "cao_cao":
+			result.append({"event_id": String(event.event_id), "event_type": event_type, "turn": int(event.turn),
+				"own_target_squadron_id": String(event.target_squadron_id), "irreversible": true,
+				"effect_intents": event.effect_intents.duplicate(), "effects_pending": event.effects_pending.duplicate()})
+	return result
+
+
+func _public_chain_conditions(values: Array) -> Array:
+	var result: Array = []
+	for value in values:
+		if not value is Dictionary: continue
+		var condition: Dictionary = value.duplicate(true)
+		condition.erase("formation_id")
+		var blocking_ids: Array = condition.get("blocking_event_ids", [])
+		if not blocking_ids.is_empty(): condition["blocking_evidence_count"] = blocking_ids.size()
+		condition.erase("blocking_event_ids")
+		result.append(condition)
+	return result
 
 
 func _decorate_terrain_events(events: Array) -> Array:

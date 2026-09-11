@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-chain-explosion-v1",
+  "statement": "적벽 데모의 SF 화공 대응 연쇄 폭발 작전 조건 규칙이다. 수치는 역사적 사실이 아닌 normal-demo 밸런스이며 구체 피해·사기·센서 장애·승패는 후속 효과 판정까지 생성하지 않는다.",
+  "operator_faction_id": "liu_bei",
+  "allied_asset_faction_id": "sun_quan",
+  "target_faction_id": "cao_cao",
+  "allied_operation_detachment": {"id": "CHAIN-DET-01", "host_squadron_id": "RC-SUN-SQ-01", "payload_platform_id": "SHP-08", "payload_equipment_id": "FAST-EQ-TORPEDO", "minimum_available_payloads": 1, "modeling_boundary": "allied_special_operation_payload_not_a_new_ship_type_or_squadron"},
+  "dense_formation_ids": ["FRM-02", "FRM-03", "FRM-04"],
+  "dispersed_formation_ids": ["FRM-05", "FRM-06", "FRM-07"],
+  "maximum_range": 240,
+  "flow": {"terrain_zone_id": "TRN-NEBULA-01", "direction": [1, 0], "maximum_deviation_deg": 60, "require_segment_intersection": true},
+  "evaluation_timing": "after_resolution_start_formation_movement_detection_before_barrage_ledger",
+  "activation_policy": "all_conditions_true_and_user_staged_then_probability_free_irreversible",
+  "interference": {
+    "formation_dispersion": "dense condition becomes false",
+    "explosion_boat_interception": "interception screen may block the operation route; no craft destruction is created",
+    "detection_disruption": "confirmed contact loss blocks activation",
+    "range_exit": "distance above maximum blocks activation"
+  },
+  "effect_intents": ["reactor_chain_blast", "morale_shock", "sensor_disruption", "temporary_terrain_hazard"],
+  "effects_pending": ["damage", "morale", "sensor_disruption", "terrain_effect", "casualties", "victory"]
+}
