@@ -53,8 +53,8 @@
       "demo_roster": [
         {"id": "CHR-0128", "name": "유비", "command": 82, "level": 8},
         {"id": "CHR-0134", "name": "제갈량", "command": 96, "level": 9},
-        {"id": "CHR-0137", "name": "조운", "command": 91, "level": 8},
-        {"id": "CHR-0129", "name": "관우", "command": 95, "level": 9}
+        {"id": "CHR-0136", "name": "조운", "command": 91, "level": 8},
+        {"id": "CHR-0107", "name": "관우", "command": 95, "level": 9}
       ]
     },
     {
@@ -63,7 +63,7 @@
       "inventory": {"SHP-01": 3, "SHP-02": 3, "SHP-03": 8, "SHP-04": 14, "SHP-05": 5, "SHP-06": 6, "SHP-07": 12, "SHP-08": 24},
       "demo_roster": [
         {"id": "CHR-0211", "name": "주유", "command": 97, "level": 9},
-        {"id": "CHR-0206", "name": "노숙", "command": 85, "level": 8},
+        {"id": "CHR-0186", "name": "노숙", "command": 85, "level": 8},
         {"id": "CHR-0194", "name": "손권", "command": 81, "level": 8}
       ]
     },
@@ -73,8 +73,8 @@
       "inventory": {"SHP-01": 4, "SHP-02": 5, "SHP-03": 12, "SHP-04": 20, "SHP-05": 8, "SHP-06": 8, "SHP-07": 16, "SHP-08": 30},
       "demo_roster": [
         {"id": "CHR-0034", "name": "조조", "command": 96, "level": 10},
-        {"id": "CHR-0041", "name": "조인", "command": 90, "level": 9},
-        {"id": "CHR-0038", "name": "하후돈", "command": 89, "level": 9}
+        {"id": "CHR-0033", "name": "조인", "command": 90, "level": 9},
+        {"id": "CHR-0043", "name": "하후돈", "command": 89, "level": 9}
       ]
     }
   ],

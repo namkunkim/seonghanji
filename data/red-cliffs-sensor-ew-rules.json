@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-sensor-ew-v1",
+  "statement": "편성·장수 지력·진형 기반 탐지는 적벽 보통 난이도 데모 수치이며 역사적 사실이 아니다.",
+  "ship_sensor_points": {"SHP-01": 3, "SHP-02": 1, "SHP-03": 1, "SHP-04": 1, "SHP-05": 2, "SHP-06": 8, "SHP-07": 2, "SHP-08": 0},
+  "ship_ew_points": {"SHP-01": 1, "SHP-02": 0, "SHP-03": 0, "SHP-04": 0, "SHP-05": 1, "SHP-06": 3, "SHP-07": 0, "SHP-08": 0},
+  "fast_equipment_sensor_points": {"FAST-EQ-INTERCEPT": 1, "FAST-EQ-TORPEDO": 0, "FAST-EQ-RECON": 6, "FAST-EQ-RESCUE": 2},
+  "fast_equipment_ew_points": {"FAST-EQ-INTERCEPT": 0, "FAST-EQ-TORPEDO": 0, "FAST-EQ-RECON": 1, "FAST-EQ-RESCUE": 1},
+  "intelligence_bands": [
+    {"min": 0, "max": 49, "sensor_points": 0},
+    {"min": 50, "max": 69, "sensor_points": 6},
+    {"min": 70, "max": 84, "sensor_points": 12},
+    {"min": 85, "max": 94, "sensor_points": 16},
+    {"min": 95, "max": 100, "sensor_points": 20}
+  ],
+  "distance_penalty": {"units_per_point": 25, "rounding": "floor_nonnegative"},
+  "thresholds": {"confirmed": 37, "estimated": 15},
+  "score_formula": "score=round_half_up(ship_sensor*(100+formation_detection_percent)/100)+intelligence_band_sensor-target_ew-floor(distance/units_per_point)+terrain_modifier",
+  "threshold_policy": "score_gte_confirmed_then_confirmed; else_score_gte_estimated_then_estimated; else_undetected; exact_tie_is_in_range",
+  "multi_observer_merge": "state_rank_desc; last_seen_turn_desc; margin_desc; observer_squadron_id_asc",
+  "formation_profile": "normal-demo-formation-v1",
+  "character_source": "res://data/characters.json#stats.지력; assigned_commander_id_and_name_exact",
+  "terrain": {"status": "pending_neutral", "modifier_points": 0, "rules_pending": ["terrain_detection"], "label": "지형 보정 대기(중립)"}
+}

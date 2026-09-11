@@ -62,11 +62,11 @@ func _test_real_viewer_feed_and_fire() -> void:
 	_ok(not contacts[0].has("target_squadron_id") and not JSON.stringify(contacts).contains("RC-CAO-SQ-01"), "estimated contact hides raw enemy id")
 	var fire_count := 0
 	for event in events: fire_count += 1 if event.event_type == "shot_authorized" else 0
-	_eq(fire_count, 0, "estimated-only contact cannot authorize opportunity fire")
+	_eq(fire_count, 1, "target viewer receives redacted incoming fire independent of its estimated contact")
 	var view := View.new(); view.configure(battle, int(setup.get("formation_revision",0)), JSON.stringify(setup)); root.add_child(view); await process_frame; await process_frame
 	var all_text := _visible_text(view)
 	_ok(all_text.contains("추정 접촉") and all_text.contains("실제 위치와 다를 수 있음"), "estimated/stale uncertainty copy visible")
-	_ok(not all_text.contains("사격 1 · 승인"), "estimated-only contact does not fabricate fire feedback")
+	_ok(all_text.contains("피격 경보") and not all_text.contains("사격 1 · 승인"), "target sees redacted incoming warning without enemy fire geometry")
 	_ok(not all_text.contains("RC-CAO-SQ-01") and not all_text.contains("조조 중군 전대"), "unknown/estimated enemy identity absent from UI")
 	_ok(not all_text.contains("격침") and not all_text.contains("승자"), "no fabricated damage or winner")
 	var map = view.find_child("AppliedSquadronMap", true, false); var intel: Dictionary = map.intelligence_state_for_test()

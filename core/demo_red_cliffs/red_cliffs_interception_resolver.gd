@@ -5,6 +5,7 @@ extends RefCounted
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
 const WeaponAllocation := preload("res://core/demo_red_cliffs/red_cliffs_weapon_allocation.gd")
 const FogOfWar := preload("res://core/demo_red_cliffs/red_cliffs_fog_of_war.gd")
+const DetectionResolver := preload("res://core/demo_red_cliffs/red_cliffs_detection_resolver.gd")
 const RULES_PATH := "res://data/red-cliffs-interception-rules.json"
 const STATE_RANK := {"undetected": 0, "lost": 1, "estimated": 2, "confirmed": 3}
 
@@ -12,6 +13,7 @@ var _setup: Dictionary = {}
 var _rules: Dictionary = {}
 var _weapon_control
 var _fog
+var _detection_resolver
 
 
 func initialize(applied_setup: Dictionary) -> Dictionary:
@@ -24,10 +26,13 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not weapon_result.ok: return weapon_result
 	var fog = FogOfWar.new(); var fog_result: Dictionary = fog.initialize(setup_result.setup)
 	if not fog_result.ok: return fog_result
+	var detection_resolver = DetectionResolver.new(); var detection_result: Dictionary = detection_resolver.initialize(setup_result.setup)
+	if not detection_result.ok: return detection_result
 	_setup = setup_result.setup.duplicate(true)
 	_rules = rules_result.rules.duplicate(true)
 	_weapon_control = weapon_control
 	_fog = fog
+	_detection_resolver = detection_resolver
 	return _ok()
 
 
@@ -41,7 +46,7 @@ func initial_detection_state() -> Dictionary:
 			if not _hostile(String(observer.faction_id), String(target.faction_id)): continue
 			var key := _contact_key(String(observer.id), String(target.id))
 			result[key] = {"observer_squadron_id": String(observer.id), "target_squadron_id": String(target.id),
-				"state": "undetected", "last_known_position": null, "last_seen_turn": 0}
+				"state": "undetected", "last_known_position": null, "last_seen_turn": 0, "detection_margin": -999999, "detection_rationale": {}}
 			result[key].merge(_fog.initial_contact_fields())
 	return result
 
@@ -60,20 +65,22 @@ func weapon_capabilities() -> Dictionary:
 
 
 func resolve(movement_events: Array, live_navigation: Dictionary, prior_detection: Dictionary,
-		turn_number: int, weapon_policy: Dictionary = {}) -> Dictionary:
+		turn_number: int, weapon_policy: Dictionary = {}, formation_state: Dictionary = {}) -> Dictionary:
 	if _setup.is_empty(): return _error("요격 판정기가 초기화되지 않았습니다.")
 	var checked: Dictionary = _validate_inputs(movement_events, live_navigation, prior_detection, turn_number)
 	if not checked.ok: return checked
 	var event_by_squad: Dictionary = checked.event_by_squad
 	var detection: Dictionary = prior_detection.duplicate(true)
 	var intersection_events: Array = _resolve_intersections(event_by_squad, turn_number)
-	var detection_events: Array = _resolve_detection(event_by_squad, detection, turn_number)
+	var active_formation: Dictionary = formation_state.duplicate(true) if not formation_state.is_empty() else _detection_resolver.initial_formation_state()
+	var detection_result: Dictionary = _resolve_detection(event_by_squad, detection, turn_number, active_formation)
+	if not detection_result.ok: return detection_result
 	var active_policy: Dictionary = weapon_policy.duplicate(true) if not weapon_policy.is_empty() else _weapon_control.interception_policy(_weapon_control.initial_state())
 	var policy_check := _validate_weapon_policy(active_policy)
 	if not policy_check.ok: return policy_check
 	var fire_events: Array = _resolve_opportunity_fire(event_by_squad, detection, turn_number, active_policy)
 	return {"ok": true, "errors": [], "path_intersection_events": intersection_events,
-		"detection_events": detection_events, "opportunity_fire_events": fire_events,
+		"detection_events": detection_result.events, "opportunity_fire_events": fire_events,
 		"detection_state": detection}
 
 
@@ -107,6 +114,7 @@ func visible_contacts(viewer_faction_id: String, detection_state: Dictionary,
 			"error_radius": int(row.get("error_radius", 0)),
 			"expires_after_turn": int(row.get("expires_after_turn", 0)),
 			"stale": state != "confirmed",
+			"detection_rationale": row.get("detection_rationale", {}).duplicate(true),
 			"source_observer_squadron_id": String(row.get("observer_squadron_id", ""))}
 		if state == "confirmed": contact["target_squadron_id"] = target_id
 		contacts.append(contact)
@@ -132,7 +140,8 @@ func visible_tactical_events(viewer_faction_id: String, raw_receipt: Dictionary,
 		events.append({"event_id": String(row.event_id), "event_type": "detection", "observer_squadron_id": observer_id,
 			"contact_id": _contact_id(viewer_faction_id, String(row.target_squadron_id)), "previous_state": String(row.previous_state),
 			"state": String(row.state), "last_known_position": row.last_known_position.duplicate() if row.last_known_position is Array else null,
-			"last_seen_turn": int(row.last_seen_turn), "stale": String(row.state) != "confirmed"})
+			"last_seen_turn": int(row.last_seen_turn), "stale": String(row.state) != "confirmed",
+			"detection_rationale": row.get("detection_rationale", {}).duplicate(true)})
 	for value in raw_receipt.get("opportunity_fire_events", []):
 		var row: Dictionary = value; var shooter := String(row.shooter_squadron_id); var target := String(row.target_squadron_id)
 		var shooter_own := String(_find_squad(shooter).faction_id) == viewer_faction_id
@@ -193,26 +202,36 @@ func _resolve_intersections(event_by_squad: Dictionary, turn_number: int) -> Arr
 	return result
 
 
-func _resolve_detection(event_by_squad: Dictionary, detection: Dictionary, turn_number: int) -> Array:
+func _resolve_detection(event_by_squad: Dictionary, detection: Dictionary, turn_number: int,
+		formation_state: Dictionary) -> Dictionary:
 	var result: Array = []; var keys: Array = detection.keys(); keys.sort()
 	for key_value in keys:
 		var key := String(key_value); var row: Dictionary = detection[key]
 		var observer_id := String(row.observer_squadron_id); var target_id := String(row.target_squadron_id)
-		var observer := _find_squad(observer_id); var ranges := _detection_ranges(observer)
 		var closest := _closest_paths(_event_path(event_by_squad[observer_id]), _event_path(event_by_squad[target_id]))
-		var distance := float(closest.distance); var previous := String(row.state); var state := "undetected"
-		if distance <= float(ranges.confirmed_range): state = "confirmed"
-		elif distance <= float(ranges.estimated_range): state = "estimated"
+		var distance := float(closest.distance); var previous := String(row.state)
+		var evaluated: Dictionary = _detection_resolver.evaluate(observer_id, target_id, distance, formation_state)
+		if not evaluated.ok: return evaluated
+		var state := String(evaluated.state)
 		var observed = closest.point_b.duplicate() if state != "undetected" else null
 		row = _fog.transition(row, state, observed, turn_number)
+		var rationale: Dictionary = evaluated.viewer_basis.duplicate(true)
+		if String(row.state) != state:
+			rationale.result_state = String(row.state)
+			rationale.reason_code = "contact_memory_%s" % String(row.state)
+			rationale.reason_label = "마지막 확인 정보 유지" if String(row.state) == "estimated" else "마지막 확인 정보 신선도 저하"
+		row.detection_rationale = rationale
+		row.detection_margin = int(evaluated.margin)
 		detection[key] = row
 		result.append({"event_id": _event_id("DET", turn_number, observer_id, target_id), "turn": turn_number,
 			"observer_squadron_id": observer_id, "target_squadron_id": target_id,
 			"previous_state": previous, "state": String(row.state), "minimum_distance": distance,
 			"last_known_position": row.last_known_position.duplicate() if row.last_known_position is Array else null,
 			"last_seen_turn": int(row.last_seen_turn), "staleness_turns": int(row.staleness_turns),
-			"confidence_basis_points": int(row.confidence_basis_points), "error_radius": int(row.error_radius)})
-	return result
+			"confidence_basis_points": int(row.confidence_basis_points), "error_radius": int(row.error_radius),
+			"detection_evaluation": evaluated.authoritative.duplicate(true),
+			"detection_rationale": rationale.duplicate(true)})
+	return {"ok": true, "errors": [], "events": result}
 
 
 func _resolve_opportunity_fire(event_by_squad: Dictionary, detection: Dictionary,
@@ -359,12 +378,6 @@ func _closest_segments(a0: Vector2, a1: Vector2, b0: Vector2, b1: Vector2) -> Di
 	return {"distance": best_distance, "point_a": [best_pair[0].x, best_pair[0].y], "point_b": [best_pair[1].x, best_pair[1].y]}
 
 
-func _detection_ranges(squad: Dictionary) -> Dictionary:
-	# G4-03 deliberately uses one demo contact boundary. Ship sensors, EW,
-	# commander skill and terrain modifiers remain a G5 resolver concern.
-	return _rules.detection_ranges
-
-
 func _validate_weapon_policy(policy: Dictionary) -> Dictionary:
 	if policy.size() != _operational_ids().size(): return _error("모든 operational 전대의 무기 정책이 필요합니다.")
 	var canonical: Dictionary = _weapon_control.interception_policy(_weapon_control.initial_state())
@@ -391,6 +404,7 @@ func _contact_precedes(a: Dictionary, b: Dictionary) -> bool:
 	var rank_a := int(STATE_RANK.get(String(a.state), 0)); var rank_b := int(STATE_RANK.get(String(b.state), 0))
 	if rank_a != rank_b: return rank_a > rank_b
 	if int(a.last_seen_turn) != int(b.last_seen_turn): return int(a.last_seen_turn) > int(b.last_seen_turn)
+	if int(a.get("detection_margin", -999999)) != int(b.get("detection_margin", -999999)): return int(a.get("detection_margin", -999999)) > int(b.get("detection_margin", -999999))
 	return String(a.observer_squadron_id) < String(b.observer_squadron_id)
 
 
@@ -462,7 +476,7 @@ func _load_rules() -> Dictionary:
 	if not _positive_number(parsed.get("intersection_epsilon")): return _error("교차 epsilon은 양수여야 합니다.")
 	if String(parsed.get("intersection_policy", "")) != "actual_reached_polyline_only; hostile_only; endpoint_and_collinear_overlap_count; one_event_per_pair_per_turn": return _error("교차 판정 정책이 지원 계약과 다릅니다.")
 	if String(parsed.get("opportunity_fire_policy", "")) != "confirmed_target_enters_range_and_arc_while_target_moves; one_authorization_per_shooter_target_turn": return _error("기회 사격 정책이 지원 계약과 다릅니다.")
-	for key in ["hostile_faction_pairs", "detection_ranges", "weapon_control_profile"]:
+	for key in ["hostile_faction_pairs", "detection_modifier_profile", "weapon_control_profile"]:
 		if not parsed.has(key): return _error("요격 규칙 필수 항목 누락: %s" % key)
 	if not parsed.hostile_faction_pairs is Array or parsed.hostile_faction_pairs.size() != 2: return _error("적대 세력 쌍은 유비-조조, 손권-조조여야 합니다.")
 	var hostile_keys: Array = []
@@ -471,7 +485,7 @@ func _load_rules() -> Dictionary:
 		var ids := [String(pair[0]), String(pair[1])]; ids.sort(); hostile_keys.append("|".join(ids))
 	hostile_keys.sort()
 	if hostile_keys != ["cao_cao|liu_bei", "cao_cao|sun_quan"]: return _error("적대 세력 쌍이 지원 계약과 다릅니다.")
-	if not parsed.detection_ranges is Dictionary or not _positive_number(parsed.detection_ranges.get("estimated_range")) or not _positive_number(parsed.detection_ranges.get("confirmed_range")) or float(parsed.detection_ranges.confirmed_range) > float(parsed.detection_ranges.estimated_range): return _error("데모 탐지 범위가 잘못되었습니다.")
+	if String(parsed.detection_modifier_profile) != "normal-demo-sensor-ew-v1": return _error("탐지 보정 규칙 연결이 잘못되었습니다.")
 	if String(parsed.weapon_control_profile) != "normal-demo-weapon-allocation-v1": return _error("무기 제어 규칙 연결이 잘못되었습니다.")
 	return {"ok": true, "errors": [], "rules": parsed.duplicate(true)}
 

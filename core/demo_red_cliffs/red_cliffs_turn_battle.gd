@@ -13,7 +13,7 @@ const PhaseLedger := preload("res://core/demo_red_cliffs/red_cliffs_phase_ledger
 const FogOfWar := preload("res://core/demo_red_cliffs/red_cliffs_fog_of_war.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
-	"weapon_fire", "damage", "casualties", "victory"
+	"terrain_detection", "weapon_fire", "damage", "casualties", "victory"
 ]
 
 var _state: Dictionary = {}
@@ -487,7 +487,7 @@ func resolve_turn() -> Dictionary:
 	if not movement_result.ok: return movement_result
 	var interception_result: Dictionary = _interception.resolve(movement_result.events,
 		movement_result.live_navigation, _state.detection_state, turn(),
-		_weapon_control.interception_policy(weapon_result.weapon_allocation_state))
+		_weapon_control.interception_policy(weapon_result.weapon_allocation_state), formation_result.formation_state)
 	if not interception_result.ok: return interception_result
 	var decorated: Dictionary = _formation.decorate_shot_events(interception_result.opportunity_fire_events,
 		formation_result.formation_state, movement_result.live_navigation)

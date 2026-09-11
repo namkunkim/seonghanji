@@ -91,8 +91,7 @@ func _test_draft_edit_submit_and_live_redraw() -> void:
 	_ok(not event.is_empty() and float(event.actual_distance) > 0, "movement receipt recorded")
 	_eq(view.find_child("AppliedSquadronMap", true, false).marker_local_position("RC-LIU-SQ-01"), view.find_child("AppliedSquadronMap", true, false).battle_to_local(event.to), "map redraw uses live position")
 	_ok(view.find_child("TurnLedger", true, false).text.contains("판정 확정"), "viewer-redacted resolution visible in ledger")
-	for name in ["Disabled탐지"]:
-		var control: Button = view.find_child(name, true, false); _ok(control != null and control.disabled, "%s remains disabled" % name)
+	var detection_auto: Button = view.find_child("DetectionAutomatic", true, false); _ok(detection_auto != null and detection_auto.disabled, "detection automatic indicator remains non-command")
 	view.free()
 
 func _event(events: Array, id: String) -> Dictionary:

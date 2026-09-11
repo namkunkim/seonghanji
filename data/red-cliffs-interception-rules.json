@@ -7,6 +7,6 @@
   "intersection_policy": "actual_reached_polyline_only; hostile_only; endpoint_and_collinear_overlap_count; one_event_per_pair_per_turn",
   "opportunity_fire_policy": "confirmed_target_enters_range_and_arc_while_target_moves; one_authorization_per_shooter_target_turn",
   "hostile_faction_pairs": [["liu_bei", "cao_cao"], ["sun_quan", "cao_cao"]],
-  "detection_ranges": {"estimated_range": 280, "confirmed_range": 180},
+  "detection_modifier_profile": "normal-demo-sensor-ew-v1",
   "weapon_control_profile": "normal-demo-weapon-allocation-v1"
 }

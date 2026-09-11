@@ -126,18 +126,18 @@ func _test_detection_estimated_lost_last_known() -> void:
 	var moved: Dictionary = movement.resolve_orders(orders, navigation)
 	var result: Dictionary = interception.resolve(moved.events, moved.live_navigation, detection, 1)
 	var contact := _contact(result.detection_state, "RC-LIU-SQ-01", "RC-CAO-SQ-01")
-	_eq(contact.state, "estimated", "enemy entering estimated-only band is estimated")
+	_eq(contact.state, "confirmed", "G5 sensor score confirms the close path point")
 	_eq(contact.last_known_position, [291.0, 100.0], "estimated contact stores actual last-known at observation time")
 	_eq(contact.last_seen_turn, 1, "estimated contact stores last-seen turn")
 	var estimated_public: Dictionary = interception.visible_contacts("liu_bei", result.detection_state, moved.live_navigation).contacts[0]
-	_ok(estimated_public.stale and not estimated_public.has("target_squadron_id"), "estimated public contact is stale last-known without exact identity")
+	_ok(not estimated_public.stale and estimated_public.has("target_squadron_id"), "confirmed public contact exposes current identified contact")
 
 	navigation = moved.live_navigation; detection = result.detection_state; orders = _holds(setup)
 	_set_move(orders, "RC-CAO-SQ-01", [[500, 100]], 0)
 	moved = movement.resolve_orders(orders, navigation)
 	result = interception.resolve(moved.events, moved.live_navigation, detection, 2)
 	contact = _contact(result.detection_state, "RC-LIU-SQ-01", "RC-CAO-SQ-01")
-	_eq(contact.state, "estimated", "contact remains estimated while in estimated band")
+	_eq(contact.state, "confirmed", "contact remains confirmed at the same close path point")
 	_eq(contact.last_known_position, [291.0, 100.0], "last-known does not advance past the observed path point")
 	navigation = moved.live_navigation; detection = result.detection_state; orders = _holds(setup)
 	_set_move(orders, "RC-CAO-SQ-01", [[500, 100]], 0)
@@ -152,14 +152,14 @@ func _test_detection_estimated_lost_last_known() -> void:
 	result = interception.resolve(moved.events, moved.live_navigation, detection, 4)
 	contact = _contact(result.detection_state, "RC-LIU-SQ-01", "RC-CAO-SQ-01")
 	_eq(contact.state, "estimated", "G5 memory keeps age-1 contact estimated outside sensor range")
-	_eq(contact.last_known_position, [350.0, 100.0], "lost contact retains last-known rather than current exact position")
-	_eq(contact.last_seen_turn, 3, "lost contact retains last-seen turn")
+	_eq(contact.last_known_position, [409.0, 100.0], "estimated contact advances only to the observed actual path point")
+	_eq(contact.last_seen_turn, 4, "estimated contact refreshes last-seen turn")
 	var visible: Dictionary = interception.visible_contacts("liu_bei", result.detection_state, moved.live_navigation)
 	var public_contact: Dictionary = visible.contacts[0]
 	_ok(public_contact.stale and public_contact.state == "estimated", "remembered public contact is marked stale")
 	_ok(not public_contact.has("target_squadron_id"), "lost contact does not reveal exact enemy squadron ID")
-	_eq(public_contact.display_position, [350.0, 100.0], "remembered contact displays only last-known position")
-	_eq(public_contact.last_known_position, [350.0, 100.0], "lost public contact exposes only last-known position")
+	_eq(public_contact.display_position, [409.0, 100.0], "estimated contact displays only last-known position")
+	_eq(public_contact.last_known_position, [409.0, 100.0], "estimated public contact exposes only last-known position")
 
 
 func _test_shot_authorized_entry_arc_and_seed() -> void:

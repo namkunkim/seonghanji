@@ -205,8 +205,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 		var resource_ids: Array = viewer.get("own_combat_resources", {}).keys(); resource_ids.sort()
 		if not resource_ids.is_empty(): _add_combat_resource_panel(String(resource_ids[0]))
 		_add_phase_ledger()
-		for future in ["탐지"]:
-			var disabled_empty := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled_empty.disabled = true; _orders.add_child(disabled_empty)
+		var detection_auto_empty := _button("탐지 · 자동 코어 판정 · 수동 조작 없음", "DetectionAutomatic", 340); detection_auto_empty.disabled = true; _orders.add_child(detection_auto_empty)
 		return
 	var squad := _find_squad(snapshot, _selected_squadron_id)
 	var selected := Label.new(); selected.text = "선택: %s" % String(squad.get("name", _selected_squadron_id)); selected.add_theme_color_override("font_color", Color("f0cf7e")); _orders.add_child(selected)
@@ -234,8 +233,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	_add_intelligence_panel()
 	_add_estimated_fire_editor()
 	_add_phase_ledger()
-	for future in ["탐지"]:
-		var disabled := _button("%s · 후속 기능 · 현재 사용 불가" % future, "Disabled%s" % future, 340); disabled.disabled = true; _orders.add_child(disabled)
+	var detection_auto := _button("탐지 · 자동 코어 판정 · 수동 조작 없음", "DetectionAutomatic", 340); detection_auto.disabled = true; _orders.add_child(detection_auto)
 
 
 func _rebuild_log() -> void:
@@ -408,12 +406,18 @@ func _add_intelligence_panel() -> void:
 		if state in ["estimated", "lost"]:
 			contact_label.text = _estimated_contact_text(contact)
 		else: contact_label.text = "● 확인 접촉 · 현재 위치 재확인"
+		if contact.get("detection_rationale") is Dictionary:
+			contact_label.name = "DetectionRationaleContact"
+			contact_label.text += "\n" + _detection_rationale_text(contact.detection_rationale)
 		_orders.add_child(contact_label)
 	var events_result: Dictionary = _battle.visible_tactical_events(_viewer_faction_id); var events: Array = events_result.get("events", [])
 	for index in range(events.size()):
 		var event: Dictionary = events[index]; var event_label := Label.new(); event_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var kind := String(event.get("event_type", event.get("type", "전술 이벤트")))
-		if kind == "resource_consumed":
+		if kind == "detection" and event.get("detection_rationale") is Dictionary:
+			event_label.name = "DetectionRationaleEvent"
+			event_label.text = "탐지 판정 · %s" % _detection_rationale_text(event.detection_rationale)
+		elif kind == "resource_consumed":
 			event_label.text = "자원 소모 · %s · 비용 %s\n%s" % [_weapon_name(String(event.get("weapon_id", ""))), _resource_cost_text(event.get("cost", {})), _resource_transition_text(event.get("before", {}), event.get("after", {}), String(event.get("weapon_id", "")))]
 		elif kind == "fire_suppressed":
 			event_label.text = "사격 억제 · %s · %s" % [_weapon_name(String(event.get("weapon_id", ""))), String(event.get("reason_label", "코어 자원 조건 미충족"))]
@@ -477,6 +481,11 @@ func _sector_label(sector: String) -> String:
 func _estimated_contact_text(contact: Dictionary) -> String:
 	var position: Array = contact.get("last_known_position", [0, 0])
 	return "△ %s · 마지막 확인 (%.1f, %.1f) T%d · 경과 %d턴 · 신뢰 %d bp · 오차 반경 %d · T%d 뒤 만료 · 실제 위치와 다를 수 있음" % ["소실 접촉(stale)" if String(contact.get("state", "")) == "lost" else "추정 접촉", float(position[0]), float(position[1]), int(contact.get("last_seen_turn", 0)), int(contact.get("staleness_turns", 0)), int(contact.get("confidence_basis_points", 0)), int(contact.get("error_radius", 0)), int(contact.get("expires_after_turn", 0))]
+
+
+func _detection_rationale_text(rationale: Dictionary) -> String:
+	var own: Dictionary = rationale.get("own_sensor_breakdown", {})
+	return "근거: %s · 내 함선 센서 %d → 진형 적용 %d · 지휘 %s(%s) %+d · 관측 진형 %s 탐지 %s · 적 EW 수치 비공개 · %s · %s" % [String(rationale.get("reason_label", "코어 판정")), int(own.get("ship_sensor_points", 0)), int(own.get("formation_adjusted_sensor_points", 0)), String(own.get("commander_name", "미상")), String(own.get("intelligence_band", "미상")), int(own.get("intelligence_sensor_points", 0)), String(rationale.get("observer_formation_id", "미상")), _signed_percent(int(rationale.get("observer_formation_detection_percent", 0))), String(rationale.get("terrain_label", "지형 보정 G5-03 대기(중립)")), "rules_pending: %s" % ", ".join(rationale.get("rules_pending", []))]
 
 
 func _add_estimated_fire_editor() -> void:

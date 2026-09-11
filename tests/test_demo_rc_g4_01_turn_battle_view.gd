@@ -54,8 +54,7 @@ func _test_view_flow() -> void:
 	_ok(tactical_map != null and tactical_map.marker_local_position("RC-LIU-SQ-01") != Vector2.ZERO, "live tactical squadron markers visible")
 	_ok(view.find_child("FormationOrderPicker", true, false) != null, "G4-04 formation command is active")
 	_ok(view.find_child("WeaponPresetPicker", true, false) != null, "G4-05 weapon allocation command is active")
-	for name in ["Disabled탐지"]:
-		var control: Button = view.find_child(name, true, false); _ok(control != null and control.disabled, "%s disabled" % name)
+	var detection_auto: Button = view.find_child("DetectionAutomatic", true, false); _ok(detection_auto != null and detection_auto.disabled, "detection remains automatic and non-command")
 	var first_digest: String = battle.digest(); view.call("_on_primary"); await _settle()
 	_eq(battle.phase(), "sun_control_prompt", "Liu HOLD opens prompt")
 	_ok(view.find_child("SunControlPrompt", true, false).visible, "Sun prompt visible exactly once")
