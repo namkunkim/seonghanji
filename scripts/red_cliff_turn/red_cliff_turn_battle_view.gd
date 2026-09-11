@@ -209,6 +209,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	if _selected_squadron_id.is_empty():
 		var empty := Label.new(); empty.text = "현재 편집 가능한 전대가 없습니다."; _orders.add_child(empty)
 		_add_intelligence_panel()
+		_add_command_penalty_results()
 		_add_chain_explosion_panel()
 		_add_ai_decision_panel()
 		var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id) if _battle.has_method("viewer_snapshot") else {}
@@ -221,6 +222,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	var squad := _find_squad(snapshot, _selected_squadron_id)
 	var selected := Label.new(); selected.text = "선택: %s" % String(squad.get("name", _selected_squadron_id)); selected.add_theme_color_override("font_color", Color("f0cf7e")); _orders.add_child(selected)
 	_add_fast_craft_applied_loadout(squad)
+	_add_command_penalty_status()
 	var action_row := HBoxContainer.new(); _orders.add_child(action_row)
 	var hold := _button("대기 HOLD", "SetOrderHold", 165); hold.pressed.connect(_on_set_hold); action_row.add_child(hold)
 	var move := _button("이동 MOVE", "ArmOrderMove", 165); move.pressed.connect(_on_arm_move); action_row.add_child(move)
@@ -244,6 +246,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	_update_preview_text(order)
 	_add_terrain_panel()
 	_add_intelligence_panel()
+	_add_command_penalty_results()
 	_add_chain_explosion_panel()
 	_add_ai_decision_panel()
 	_add_estimated_fire_editor()
@@ -258,6 +261,41 @@ func _add_fast_craft_applied_loadout(squad: Dictionary) -> void:
 	var label := Label.new(); label.name = "AppliedFastCraftLoadout"; label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.text = "고속정 임무 편성 · 전투 중 불변\n%d척 · %s · 적용 비용 %d\n전투 중 장비 변경·보급·귀환·구조 결과는 후속 기능" % [int(component.get("count", 0)), _fast_equipment_label(String(component.get("mission_equipment_id", ""))), int(squad.get("declared_total_cost", 0))]
 	label.add_theme_color_override("font_color", Color("eac77e")); _orders.add_child(label)
+
+
+func _add_command_penalty_status() -> void:
+	if _selected_squadron_id.is_empty() or not _battle.has_method("viewer_command_penalty_metrics"): return
+	var receipt: Dictionary = _battle.viewer_command_penalty_metrics(_viewer_faction_id, _selected_squadron_id)
+	if not bool(receipt.get("ok", false)): return
+	var label := Label.new(); label.name = "CommandPenaltyLiveStatus"; label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.text = "지휘 한도 실제 적용 · 단계 %d\n기동 %s · 명중 %s · 진형변경 %s\n수동·AI 명령 공통 코어 영수증" % [int(receipt.get("penalty_tier", 0)), _signed_percent(int(receipt.get("mobility_percent", 0))), _signed_percent(int(receipt.get("accuracy_percent", 0))), _signed_percent(int(receipt.get("formation_change_percent", 0)))]
+	label.add_theme_color_override("font_color", Color("ffc987") if int(receipt.get("penalty_tier", 0)) > 0 else Color("9edbb8")); _orders.add_child(label)
+
+
+func _add_command_penalty_results() -> void:
+	if not _battle.has_method("viewer_phase") or not _battle.has_method("visible_tactical_events"): return
+	var contact: Dictionary = _battle.viewer_phase(_viewer_faction_id, "contact")
+	if bool(contact.get("ok", false)):
+		for ledger_event in contact.get("phase", {}).get("events", []):
+			if not ledger_event is Dictionary or String(ledger_event.get("source", "")) != "formation_events": continue
+			var payload: Dictionary = ledger_event.get("payload", {}); var penalty: Dictionary = payload.get("command_penalty", {})
+			if penalty.is_empty(): continue
+			var label := Label.new(); label.name = "CommandPenaltyFormationResult_%s" % String(payload.get("squadron_id", "")); label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			if bool(payload.get("changed", false)):
+				label.text = "진형 명령 결과 · %s · 변경\n변경 턴 유효 %.0f%% · 유지 다음 턴 100%% · 코어 적용" % [String(payload.get("squadron_id", "")), float(int(penalty.get("modifier_effectiveness_basis_points", 10000))) / 100.0]
+			else:
+				label.text = "진형 명령 결과 · %s · 유지\n유지 턴 유효 100%% · 코어 적용" % String(payload.get("squadron_id", ""))
+			label.add_theme_color_override("font_color", Color("e8c779")); _orders.add_child(label)
+	var tactical: Dictionary = _battle.visible_tactical_events(_viewer_faction_id)
+	var accuracy_index := 0
+	for value in tactical.get("events", []):
+		if not value is Dictionary: continue
+		var event: Dictionary = value; var penalty: Dictionary = event.get("command_penalty", {})
+		if not penalty.has("accuracy_basis_points"): continue
+		accuracy_index += 1
+		var kind := String(event.get("event_type", event.get("outcome", ""))); var label := Label.new(); label.name = "CommandPenaltyAccuracyResult_%d" % accuracy_index; label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.text = "%s 자기 사격 · 지휘 명중 %.0f%% · 자원 소모 전 실제 적용\n명중·피해 결과는 후속 판정" % ["추정" if kind.contains("estimated") else "실제", float(int(penalty.accuracy_basis_points)) / 100.0]
+		label.add_theme_color_override("font_color", Color("e8c779")); _orders.add_child(label)
 
 
 func _fast_equipment_label(equipment_id: String) -> String:

@@ -4,14 +4,10 @@ extends RefCounted
 ## DEMO-RC-G6-01 — 고속정 전대와 요격·뇌격·정찰·구조 임무 장비·코스트.
 ## apply()가 반환한 applied_setup이 전투 시작 뒤 불변 loadout의 권위 입력이다.
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
+const Draft := preload("res://core/demo_red_cliffs/red_cliffs_formation_draft.gd")
 const RULES_PATH := "res://data/red-cliffs-fast-craft-rules.json"
 const MISSIONS := {"intercept": "FAST-EQ-INTERCEPT", "torpedo": "FAST-EQ-TORPEDO", "recon": "FAST-EQ-RECON", "rescue": "FAST-EQ-RESCUE"}
 const BASING_MODES := ["independent", "carrier", "base"]
-const PENALTY_APPLICATION := {
-	"mobility_percent": "active_g4_movement",
-	"accuracy_percent": "pending_battle_consumer",
-	"formation_change_percent": "pending_battle_consumer",
-}
 var _rules: Dictionary = {}; var _historical: Dictionary = {}; var _applied: Dictionary = {}; var _draft: Dictionary = {}
 
 func initialize(applied_setup: Dictionary) -> Dictionary:
@@ -53,7 +49,7 @@ func catalog() -> Dictionary:
 		"interceptor_ship_type_id": "SHP-07", "category_contract": _rules.category_contract.duplicate(true),
 		"ship_costs": ship_costs, "missions": missions, "deployment_kinds": ["independent", "fleet"],
 		"basing_modes": _rules.basing_modes.duplicate(true), "basing_contract": _rules.basing_contract.duplicate(true),
-		"penalty_application": PENALTY_APPLICATION.duplicate(true),
+		"penalty_application": Draft.PENALTY_APPLICATION.duplicate(true),
 		"out_of_scope": _rules.out_of_scope.duplicate()}
 
 func historical_snapshot() -> Dictionary: return _historical.duplicate(true)
@@ -152,14 +148,14 @@ func squadron_summary(squadron_id: String) -> Dictionary:
 	var squad := _find_squad(_draft, squadron_id)
 	if squad.is_empty() or not _pure(squad): return _error("미지 고속정 전대입니다: %s" % squadron_id)
 	var row: Dictionary = squad.composition[0]; var equipment := _equipment(_draft, String(row.mission_equipment_id)); var commander := _commander(_draft, String(squad.faction_id), String(squad.commander.id))
-	var base := _base_cost(_draft); var total := int(row.count) * (base + int(equipment.unit_cost)); var metric := _metrics(total, int(commander.command)); var historical := _historical_loadout(squadron_id)
+	var base := _base_cost(_draft); var total := int(row.count) * (base + int(equipment.unit_cost)); var metric := _metrics(squadron_id); var historical := _historical_loadout(squadron_id)
 	return {"ok": true, "errors": [], "squadron_id": squadron_id, "faction_id": String(squad.faction_id), "name": String(squad.name), "commander": commander.duplicate(true),
 		"ship_type_id": Setup.FAST_CRAFT_ID, "equipment_id": String(row.mission_equipment_id), "mission_id": _mission_id(String(row.mission_equipment_id)), "count": int(row.count),
 		"base_unit_cost": base, "equipment_unit_cost": int(equipment.unit_cost), "total_unit_cost": base + int(equipment.unit_cost), "subtotal_cost": total,
 		"historical": not historical.is_empty(), "historical_count": int(historical.get("count", 0)), "historical_total_cost": int(historical.get("declared_historical_cost", 0)),
 		"deployment": squad.deployment.duplicate(true), "basing_mode": String(squad.get("fast_craft_basing", "independent")), "recommended_cost": metric.recommended_cost, "over_ratio_basis_points": metric.over_ratio_basis_points,
-		"penalty_tier": metric.penalty_tier, "penalties": metric.penalties.duplicate(true), "penalty_application": PENALTY_APPLICATION.duplicate(true),
-		"pending_penalties": ["accuracy_percent", "formation_change_percent"] if metric.penalty_tier > 0 else [], "over_cap_warning": metric.over_cap_warning}
+		"penalty_tier": metric.penalty_tier, "penalties": metric.penalties.duplicate(true), "penalty_application": Draft.PENALTY_APPLICATION.duplicate(true),
+		"pending_penalties": [], "over_cap_warning": metric.over_cap_warning}
 
 func faction_summary(faction_id: String) -> Dictionary:
 	var faction := _faction(_draft, faction_id); if faction.is_empty(): return _error("미지 세력입니다: %s" % faction_id)
@@ -270,11 +266,13 @@ func _recalculate_declared(setup: Dictionary, squad: Dictionary) -> void:
 		cost += int(row.get("count", 0)) * unit
 	squad.declared_total_cost = cost
 
-func _metrics(total: int, command: int) -> Dictionary:
-	var rules: Dictionary = _draft.command_limit_rules; var recommended := int(rules.recommended_base_cost) + command * int(rules.recommended_cost_per_command); var excess := maxi(0, total - recommended)
-	var ratio := 0 if excess == 0 else int(floor(float(excess) * 10000.0 / float(recommended) + 0.5)); var tier := 0 if excess == 0 else mini(int(ceili(float(excess * 4) / float(recommended))), int(rules.max_penalty_tier))
-	return {"recommended_cost": recommended, "over_ratio_basis_points": ratio, "penalty_tier": tier, "over_cap_warning": tier > 0,
-		"penalties": {"mobility_percent": -tier * int(rules.penalty_per_tier.mobility_percent), "accuracy_percent": -tier * int(rules.penalty_per_tier.accuracy_percent), "formation_change_percent": -tier * int(rules.penalty_per_tier.formation_change_percent)}}
+func _metrics(squadron_id: String) -> Dictionary:
+	var authority: Dictionary = Draft.new(_draft).squadron_metrics(squadron_id)
+	var ratio := int(floor(float(authority.over_ratio) * 10000.0 + 0.5))
+	return {"recommended_cost": int(authority.recommended_cost), "over_ratio_basis_points": ratio,
+		"penalty_tier": int(authority.penalty_tier), "over_cap_warning": bool(authority.warning),
+		"penalties": {"mobility_percent": int(authority.mobility_percent), "accuracy_percent": int(authority.accuracy_percent),
+			"formation_change_percent": int(authority.formation_change_percent)}}
 
 func _editable(id: String) -> Dictionary:
 	var squad := _find_squad(_draft, id); if squad.is_empty() or not _pure(squad): return _error("미지 고속정 전대입니다: %s" % id)

@@ -352,6 +352,9 @@ func _build_summary_panel(snapshot: Dictionary) -> Control:
 	var metric_label := Label.new(); metric_label.name = "CommandMetrics"; metric_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	metric_label.text = "현재 / 권장 비용  %d / %d\n초과율  %.1f%%  ·  단계 %d\n기동 %d%%  ·  명중 %d%%  ·  진형변경 %d%%" % [int(metrics.get("total_cost", 0)), int(metrics.get("recommended_cost", 0)), float(metrics.get("over_ratio", 0.0)) * 100.0, int(metrics.get("penalty_tier", 0)), int(metrics.get("mobility_percent", 0)), int(metrics.get("accuracy_percent", 0)), int(metrics.get("formation_change_percent", 0))]
 	metric_label.add_theme_font_size_override("font_size", 15); metric_label.add_theme_color_override("font_color", Color("ffc987") if metrics.get("warning", false) else Color("9edbb8")); stack.add_child(metric_label)
+	var application := Label.new(); application.name = "CommandPenaltyApplication"; application.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	application.text = _penalty_application_text(metrics.get("penalty_application", {}), metrics.get("pending_penalties", []))
+	application.add_theme_color_override("font_color", Color("a8d9bd")); stack.add_child(application)
 	stack.add_child(HSeparator.new())
 	var inventory_scroll := ScrollContainer.new(); inventory_scroll.name = "InventoryScroll"; inventory_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL; inventory_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED; stack.add_child(inventory_scroll)
 	var inventory_rows := VBoxContainer.new(); inventory_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL; inventory_scroll.add_child(inventory_rows)
@@ -365,6 +368,16 @@ func _build_summary_panel(snapshot: Dictionary) -> Control:
 	if not bool(inventory_receipt.get("ok", false)):
 		var unavailable := Label.new(); unavailable.text = " · ".join(inventory_receipt.get("errors", [])); unavailable.add_theme_color_override("font_color", Color("ff9b91")); inventory_rows.add_child(unavailable)
 	return panel
+
+
+func _penalty_application_text(application, pending) -> String:
+	if not application is Dictionary: return "적용 상태 · 코어 영수증 없음"
+	var labels := {"mobility_percent":"기동(이동)", "accuracy_percent":"명중(자원 소모 전)", "formation_change_percent":"진형 변경(해결 시작)"}
+	var parts: Array[String] = []
+	for key in ["mobility_percent", "accuracy_percent", "formation_change_percent"]:
+		var state := String(application.get(key, "unavailable")); var active: bool = state.begins_with("active_") and not pending.has(key)
+		parts.append("%s %s" % [String(labels[key]), "실제 적용" if active else "미적용"])
+	return "적용 상태 · %s\n수동 명령과 AI 명령이 같은 코어 판정을 사용합니다." % " · ".join(parts)
 
 
 func _select_faction(faction_id: String) -> void:

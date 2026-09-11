@@ -170,6 +170,8 @@ func visible_tactical_events(viewer_faction_id: String, raw_receipt: Dictionary,
 				visible_event["resource_reservation"] = row.resource_reservation.duplicate(true)
 			if row.get("terrain_weapon_modifier") is Dictionary:
 				visible_event["terrain_weapon_modifier"] = row.terrain_weapon_modifier.duplicate(true)
+			if row.get("command_penalty") is Dictionary:
+				visible_event["command_penalty"] = row.command_penalty.duplicate(true)
 		# Formation/sector detail is exact tactical information. A shooter already
 		# has the confirmed contact required to authorize the shot; a target only
 		# receives this detail when its own contact on the shooter is confirmed.

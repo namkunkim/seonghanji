@@ -147,6 +147,14 @@ func formation_state() -> Dictionary:
 	return _state.get("formation_state", {}).duplicate(true)
 
 
+func viewer_command_penalty_metrics(viewer_faction_id: String, squadron_id: String) -> Dictionary:
+	if _state.is_empty() or not ["liu_bei", "sun_quan", "cao_cao"].has(viewer_faction_id):
+		return {"ok": false, "errors": ["명령 불이익 조회 입력이 잘못되었습니다."]}
+	if _squadron_faction_id(squadron_id) != viewer_faction_id:
+		return {"ok": false, "errors": ["자기 전대의 명령 불이익만 조회할 수 있습니다."]}
+	return _formation.command_penalty_metrics(squadron_id).duplicate(true)
+
+
 func allowed_formations() -> Array:
 	if _state.is_empty(): return []
 	return _formation.allowed_formations()
@@ -637,7 +645,9 @@ func resolve_turn() -> Dictionary:
 		estimated_suppressed.append_array(estimated_result.suppressed_events)
 	var all_authorized: Array = decorated.events.duplicate(true)
 	all_authorized.append_array(estimated_events)
-	var resource_result: Dictionary = _combat_resources.resolve_shots(all_authorized,
+	var accuracy_result: Dictionary = _formation.apply_accuracy_penalty(all_authorized, turn())
+	if not accuracy_result.ok: return accuracy_result
+	var resource_result: Dictionary = _combat_resources.resolve_shots(accuracy_result.eligible_events,
 		resource_base_state, turn())
 	if not resource_result.ok: return resource_result
 	var chain_result := {"ok": true, "state": _state.chain_explosion_state.duplicate(true), "events": []}

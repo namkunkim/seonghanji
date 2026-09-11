@@ -3,10 +3,12 @@ extends RefCounted
 
 ## DEMO-RC-G4-04 — 진형 명령, 방향 sector와 결과 전 보정 snapshot의 코어 권위.
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
+const Draft := preload("res://core/demo_red_cliffs/red_cliffs_formation_draft.gd")
 const RULES_PATH := "res://data/red-cliffs-formation-rules.json"
 
 var _setup: Dictionary = {}
 var _rules: Dictionary = {}
+var _draft
 
 
 func initialize(applied_setup: Dictionary) -> Dictionary:
@@ -16,6 +18,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not loaded.ok: return loaded
 	_setup = checked.setup.duplicate(true)
 	_rules = loaded.rules.duplicate(true)
+	_draft = Draft.new(_setup)
 	return _ok()
 
 
@@ -37,7 +40,7 @@ func initial_state() -> Dictionary:
 	for squad in _operational_squadrons():
 		result[String(squad.id)] = {"squadron_id": String(squad.id),
 			"faction_id": String(squad.faction_id), "formation_id": String(squad.formation_id),
-			"effective_turn": 0, "source": "applied_g3_setup"}
+			"modifier_effectiveness_basis_points": 10000, "effective_turn": 0, "source": "applied_g3_setup"}
 	return result
 
 
@@ -46,6 +49,17 @@ func validate_order(squadron_id: String, formation_id: String) -> Dictionary:
 	if not _operational_ids().has(squadron_id): return _error("미지 또는 비가동 전대입니다: %s" % squadron_id)
 	if not _rules.formations.has(formation_id): return _error("허용되지 않은 진형입니다: %s" % formation_id)
 	return _ok()
+
+
+func command_penalty_metrics(squadron_id: String) -> Dictionary:
+	if _draft == null: return _error("진형 판정기가 초기화되지 않았습니다.")
+	var metrics: Dictionary = _draft.squadron_metrics(squadron_id)
+	if metrics.is_empty(): return _error("미지 전대입니다: %s" % squadron_id)
+	return {"ok": true, "errors": [], "squadron_id": squadron_id,
+		"total_cost": int(metrics.total_cost), "recommended_cost": int(metrics.recommended_cost),
+		"penalty_tier": int(metrics.penalty_tier), "mobility_percent": int(metrics.mobility_percent),
+		"accuracy_percent": int(metrics.accuracy_percent), "formation_change_percent": int(metrics.formation_change_percent),
+		"penalty_application": metrics.penalty_application.duplicate(true), "pending_penalties": metrics.pending_penalties.duplicate()}
 
 
 func resolve_orders(formation_orders: Array, prior_state: Dictionary, turn_number: int) -> Dictionary:
@@ -69,15 +83,44 @@ func resolve_orders(formation_orders: Array, prior_state: Dictionary, turn_numbe
 	var next := prior_state.duplicate(true); var events: Array = []
 	for order in normalized:
 		var squadron_id := String(order.squadron_id); var previous := String(next[squadron_id].formation_id)
+		var requested := String(order.formation_id); var metrics := command_penalty_metrics(squadron_id)
+		if not metrics.ok: return metrics
+		var change_requested := previous != requested
+		var effectiveness := clampi(10000 + int(metrics.formation_change_percent) * 100, 0, 10000) if change_requested else 10000
 		next[squadron_id] = {"squadron_id": squadron_id, "faction_id": String(_find_squad(squadron_id).faction_id),
-			"formation_id": String(order.formation_id), "effective_turn": turn_number,
+			"formation_id": requested, "modifier_effectiveness_basis_points": effectiveness, "effective_turn": turn_number,
 			"source": "resolution_start"}
-		events.append({"event_type": "formation_applied", "turn": turn_number,
+		events.append({"event_id": "CMD-FORM-%02d-%s" % [turn_number, squadron_id],
+			"event_type": "formation_applied", "turn": turn_number,
 			"squadron_id": squadron_id, "previous_formation_id": previous,
-			"formation_id": String(order.formation_id), "changed": previous != String(order.formation_id),
+			"requested_formation_id": requested, "formation_id": requested, "changed": change_requested,
+			"command_penalty": {"penalty_tier": int(metrics.penalty_tier), "formation_change_percent": int(metrics.formation_change_percent),
+				"modifier_effectiveness_basis_points": effectiveness, "change_turn_only": change_requested},
 			"application_timing": String(_rules.application_timing)})
 	return {"ok": true, "errors": [], "formation_state": next, "formation_events": events,
 		"modifier_snapshots": modifier_snapshots(next)}
+
+
+func apply_accuracy_penalty(events: Array, turn_number: int) -> Dictionary:
+	if _draft == null or turn_number < 1: return _error("명중 불이익 판정 입력이 잘못되었습니다.")
+	for value in events:
+		if not value is Dictionary: return _error("사격 이벤트는 객체여야 합니다.")
+	var ordered: Array = events.duplicate(true)
+	ordered.sort_custom(func(a, b): return String(a.get("event_id", "")) < String(b.get("event_id", "")))
+	var eligible: Array = []; var seen := {}
+	for value in ordered:
+		var event: Dictionary = value.duplicate(true); var event_id := String(event.get("event_id", "")); var shooter_id := String(event.get("shooter_squadron_id", ""))
+		if event_id.is_empty() or seen.has(event_id) or int(event.get("turn", 0)) != turn_number or not ["shot_authorized", "estimated_fire_authorized"].has(String(event.get("outcome", ""))): return _error("명중 불이익 사격 이벤트가 잘못되었습니다.")
+		seen[event_id] = true
+		var metrics := command_penalty_metrics(shooter_id); if not metrics.ok: return metrics
+		var effectiveness := clampi(10000 + int(metrics.accuracy_percent) * 100, 0, 10000)
+		var penalty := {"penalty_tier": int(metrics.penalty_tier), "accuracy_percent": int(metrics.accuracy_percent),
+			"accuracy_basis_points": effectiveness, "applied": true,
+			"result_contract": "authorized_fire_accuracy_input_only; hit_and_damage_pending"}
+		event["command_penalty"] = penalty
+		eligible.append(event)
+	return {"ok": true, "errors": [], "eligible_events": eligible, "suppressed_events": [],
+		"result_pending": ["hit", "damage", "casualties", "victory"]}
 
 
 func modifier_snapshots(formation_state: Dictionary) -> Dictionary:
@@ -87,8 +130,10 @@ func modifier_snapshots(formation_state: Dictionary) -> Dictionary:
 		var formation_id := String(formation_state[squadron_id].get("formation_id", ""))
 		if not _rules.formations.has(formation_id): continue
 		var row: Dictionary = _rules.formations[formation_id]
+		var effectiveness := int(formation_state[squadron_id].get("modifier_effectiveness_basis_points", 10000))
 		result[squadron_id] = {"squadron_id": String(squadron_id), "formation_id": formation_id,
-			"name": String(row.name), "role": String(row.role), "modifiers": _modifier_values(row)}
+			"name": String(row.name), "role": String(row.role), "modifier_effectiveness_basis_points": effectiveness,
+			"base_modifiers": _modifier_values(row), "modifiers": _scaled_modifiers(_modifier_values(row), effectiveness)}
 	return result
 
 
@@ -139,6 +184,16 @@ func decorate_shot_events(events: Array, formation_state: Dictionary, live_navig
 func _modifier_values(row: Dictionary) -> Dictionary:
 	return {"mobility_percent": int(row.mobility_percent), "detection_percent": int(row.detection_percent),
 		"fire_percent": int(row.fire_percent), "defense_percent": int(row.defense_percent)}
+
+
+func _scaled_modifiers(base: Dictionary, effectiveness_basis_points: int) -> Dictionary:
+	var result := {}
+	for key in ["mobility_percent", "detection_percent", "fire_percent", "defense_percent"]:
+		var value := int(base.get(key, 0)); var scaled := float(value * effectiveness_basis_points) / 10000.0
+		# Round toward zero so a partial change never reverses or amplifies either a
+		# positive bonus or a negative trade-off.
+		result[key] = int(floor(scaled)) if scaled >= 0.0 else int(ceil(scaled))
+	return result
 
 
 func _load_rules() -> Dictionary:

@@ -25,7 +25,7 @@ func _run() -> void:
 
 func _setup(cao_position: Array) -> Dictionary:
 	var loaded := Setup.load_default(); _ok(loaded.ok, "setup loads"); var setup: Dictionary = loaded.setup.duplicate(true)
-	var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 800], "RC-SUN-SQ-01": [100, 700], "RC-CAO-SQ-01": cao_position}
+	var positions := {"RC-LIU-SQ-01": [100, 100], "RC-LIU-SQ-02": [100, 800], "RC-LIU-FC-01": [1600, 900], "RC-SUN-SQ-01": [100, 700], "RC-CAO-SQ-01": cao_position}
 	for squad in setup.squadrons:
 		squad.initial_position = positions[String(squad.id)].duplicate()
 		if squad.id == "RC-CAO-SQ-01": squad.initial_facing_deg = 180

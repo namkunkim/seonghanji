@@ -3,6 +3,11 @@ extends RefCounted
 
 ## DEMO-RC-G3-01 — 비용 기반 전대·함대 편성 편집기 (Phase A core reducer).
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
+const PENALTY_APPLICATION := {
+	"mobility_percent": "active_g4_movement",
+	"accuracy_percent": "active_pre_resource_accuracy_snapshot",
+	"formation_change_percent": "active_resolution_start_modifier_effectiveness",
+}
 
 var _historical: Dictionary = {}
 var _applied: Dictionary = {}
@@ -188,7 +193,8 @@ func squadron_metrics(squadron_id: String) -> Dictionary:
 	var penalty: Dictionary = rules.penalty_per_tier
 	return {"total_cost": total, "recommended_cost": recommended, "over_ratio": ratio, "penalty_tier": tier,
 		"mobility_percent": -tier * int(penalty.mobility_percent), "accuracy_percent": -tier * int(penalty.accuracy_percent),
-		"formation_change_percent": -tier * int(penalty.formation_change_percent), "warning": tier > 0}
+		"formation_change_percent": -tier * int(penalty.formation_change_percent), "warning": tier > 0,
+		"penalty_application": PENALTY_APPLICATION.duplicate(true), "pending_penalties": []}
 
 
 func summary() -> Dictionary:
