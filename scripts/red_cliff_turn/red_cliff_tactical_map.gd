@@ -25,6 +25,7 @@ var _contacts_by_target: Dictionary = {}
 var _contacts_by_id: Dictionary = {}
 var _selected_contact_id := ""
 var _fire_events: Array = []
+var _terrain_zones: Array = []
 var _mode := Mode.SELECT
 var _zoom := 1.0
 var _pan := Vector2.ZERO
@@ -76,6 +77,15 @@ func set_intelligence(viewer_faction_id: String, contacts: Array, fire_events: A
 func set_selected_contact(contact_id: String) -> void:
 	_selected_contact_id = contact_id if _contacts_by_id.has(contact_id) else ""
 	queue_redraw()
+
+
+func set_terrain_zones(zones: Array) -> void:
+	_terrain_zones = zones.duplicate(true)
+	queue_redraw()
+
+
+func terrain_zones_for_test() -> Array:
+	return _terrain_zones.duplicate(true)
 
 
 func clear_intelligence() -> void:
@@ -204,6 +214,7 @@ func _draw() -> void:
 	for index in range(1, 5):
 		var y := rect.position.y + rect.size.y * float(index) / 5.0
 		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.16, 0.31, 0.38, 0.45), 1.0)
+	_draw_terrain_zones()
 	_draw_route()
 	_draw_fire_events()
 	_draw_opaque_contacts()
@@ -218,6 +229,29 @@ func _draw() -> void:
 			draw_circle(p, MARKER_RADIUS + (4.0 if id == _selected_id else 0.0), color, false, 3.0); draw_circle(p, 7.0, color, true)
 		var label := "추정 접촉 · 마지막 확인 T%d · 실제 위치와 다를 수 있음" % int(descriptor.get("last_seen_turn", 0)) if contact_state in ["estimated", "lost"] else (("◆ " if bool(squad.get("flagship", false)) else "") + String(squad.get("name", id)) + (" · 확인 접촉" if contact_state == "confirmed" else ""))
 		draw_string(get_theme_default_font(), p + Vector2(24, -9), label, HORIZONTAL_ALIGNMENT_LEFT, 150, 14, color)
+
+
+func _draw_terrain_zones() -> void:
+	for value in _terrain_zones:
+		if not value is Dictionary: continue
+		var zone: Dictionary = value
+		var shape = zone.get("shape", {})
+		if not shape is Dictionary or String(shape.get("kind", "")) != "rect": continue
+		var start := battle_to_local([shape.get("x", 0), shape.get("y", 0)])
+		var finish := battle_to_local([float(shape.get("x", 0)) + float(shape.get("width", 0)), float(shape.get("y", 0)) + float(shape.get("height", 0))])
+		var zone_rect := Rect2(start, finish - start).abs()
+		var terrain_type := String(zone.get("terrain_type", ""))
+		var fill: Color = {
+			"nebula": Color(0.47, 0.32, 0.62, 0.22),
+			"debris": Color(0.62, 0.49, 0.25, 0.20),
+			"planet_shadow": Color(0.23, 0.38, 0.53, 0.25),
+		}.get(terrain_type, Color(0.45, 0.45, 0.45, 0.18))
+		var stroke := Color(fill.r, fill.g, fill.b, 0.85)
+		draw_rect(zone_rect, fill, true)
+		draw_rect(zone_rect, stroke, false, 2.0)
+		var type_label: String = {"nebula":"성운", "debris":"잔해 지대", "planet_shadow":"행성 그림자"}.get(terrain_type, "지형")
+		var label := "%s · %s" % [type_label, String(zone.get("name", zone.get("zone_id", "")))]
+		draw_string(get_theme_default_font(), zone_rect.position + Vector2(8, 19), label, HORIZONTAL_ALIGNMENT_LEFT, maxf(40.0, zone_rect.size.x - 16.0), 13, stroke)
 
 
 func _draw_route() -> void:

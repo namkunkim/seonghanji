@@ -4,11 +4,13 @@ extends RefCounted
 ## DEMO-RC-G4-02 — 자유 좌표·다중 경유점·방향 이동 판정의 단일 권위.
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
 const Draft := preload("res://core/demo_red_cliffs/red_cliffs_formation_draft.gd")
+const Terrain := preload("res://core/demo_red_cliffs/red_cliffs_terrain_resolver.gd")
 const RULES_PATH := "res://data/red-cliffs-movement-rules.json"
 
 var _setup: Dictionary = {}
 var _rules: Dictionary = {}
 var _draft
+var _terrain
 
 
 func initialize(applied_setup: Dictionary) -> Dictionary:
@@ -20,6 +22,9 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	_setup = setup_result.setup.duplicate(true)
 	_rules = rules_result.rules.duplicate(true)
 	_draft = Draft.new(_setup)
+	var terrain = Terrain.new(); var terrain_result: Dictionary = terrain.initialize(_setup)
+	if not terrain_result.ok: return terrain_result
+	_terrain = terrain
 	return _ok()
 
 
@@ -83,14 +88,15 @@ func movement_preview(squadron_id: String, waypoints: Array, facing_deg, live_na
 			heading_found = true
 		total_distance += cursor.distance_to(target)
 		cursor = target
-	var movement := _follow_waypoints(current_row.position, waypoints, int(speed.effective_speed))
+	var movement: Dictionary = _terrain.follow_waypoints(current_row.position, waypoints, int(speed.effective_speed))
 	var eta_turns := int(ceil(total_distance / float(speed.effective_speed))) if total_distance > 0.0 else 0
 	return {"ok": true, "errors": [], "waypoints": waypoints.duplicate(true), "max_waypoints": max_waypoints,
 		"heading_deg": heading_deg, "facing_deg": float(facing_deg), "total_distance": total_distance,
 		"movement_budget": int(speed.effective_speed), "within_budget": total_distance <= float(speed.effective_speed),
 		"eta_turns": eta_turns, "predicted_position": movement.to.duplicate(),
 		"path_complete": bool(movement.path_complete), "remaining_distance": float(movement.remaining_distance),
-		"effective_speed": int(speed.effective_speed)}
+		"effective_speed": int(speed.effective_speed), "terrain_segments": movement.terrain_segments.duplicate(true),
+		"terrain_events": movement.terrain_events.duplicate(true)}
 
 
 func resolve_orders(orders: Array, live_navigation: Dictionary) -> Dictionary:
@@ -125,7 +131,7 @@ func resolve_orders(orders: Array, live_navigation: Dictionary) -> Dictionary:
 			return int(a.speed.effective_speed) > int(b.speed.effective_speed)
 		return String(a.order.squadron_id) < String(b.order.squadron_id))
 	var next_navigation := live_navigation.duplicate(true)
-	var events: Array = []
+	var events: Array = []; var terrain_events: Array = []
 	for index in range(rows.size()):
 		var row: Dictionary = rows[index]
 		var order: Dictionary = row.order
@@ -133,13 +139,18 @@ func resolve_orders(orders: Array, live_navigation: Dictionary) -> Dictionary:
 		var current: Dictionary = next_navigation[squadron_id]
 		var from: Array = current.position.duplicate()
 		if String(order.action) == "hold":
+			var hold_effects: Dictionary = _terrain.point_effects(from)
 			events.append({"squadron_id": squadron_id, "action": "hold", "order_index": index,
 				"from": from, "to": from.duplicate(), "requested_waypoints": [], "reached_waypoints": [],
 				"actual_distance": 0.0, "remaining_distance": 0.0, "path_complete": true,
 				"from_facing_deg": float(current.facing_deg), "facing_deg": float(current.facing_deg),
-				"base_speed": int(row.speed.base_speed), "effective_speed": int(row.speed.effective_speed)})
+				"base_speed": int(row.speed.base_speed), "effective_speed": int(row.speed.effective_speed),
+				"terrain_segments": [{"from": from.duplicate(), "to": from.duplicate(), "length": 0.0,
+					"zone_ids": hold_effects.zone_ids.duplicate(), "effects": hold_effects.duplicate(true)}], "terrain_budget_applied": false})
+			if not hold_effects.zone_ids.is_empty(): terrain_events.append({"event_type": "terrain_stay", "squadron_id": squadron_id,
+				"position": from.duplicate(), "active_zone_ids": hold_effects.zone_ids.duplicate(), "traversal_length": 0.0})
 			continue
-		var movement := _follow_waypoints(from, order.waypoints, int(row.speed.effective_speed))
+		var movement: Dictionary = _terrain.follow_waypoints(from, order.waypoints, int(row.speed.effective_speed))
 		current.position = movement.to.duplicate()
 		current.facing_deg = float(order.facing_deg)
 		events.append({"squadron_id": squadron_id, "action": "move", "order_index": index,
@@ -148,8 +159,11 @@ func resolve_orders(orders: Array, live_navigation: Dictionary) -> Dictionary:
 			"actual_distance": movement.actual_distance, "remaining_distance": movement.remaining_distance,
 			"path_complete": movement.path_complete, "from_facing_deg": float(current.facing_deg),
 			"facing_deg": float(order.facing_deg),
-			"base_speed": int(row.speed.base_speed), "effective_speed": int(row.speed.effective_speed)})
-	return {"ok": true, "errors": [], "events": events, "live_navigation": next_navigation}
+			"base_speed": int(row.speed.base_speed), "effective_speed": int(row.speed.effective_speed),
+			"terrain_segments": movement.terrain_segments.duplicate(true), "terrain_budget_applied": true})
+		for terrain_event in movement.terrain_events:
+			var decorated: Dictionary = terrain_event.duplicate(true); decorated["squadron_id"] = squadron_id; terrain_events.append(decorated)
+	return {"ok": true, "errors": [], "events": events, "terrain_events": terrain_events, "live_navigation": next_navigation}
 
 
 func _follow_waypoints(from: Array, waypoints: Array, budget: int) -> Dictionary:

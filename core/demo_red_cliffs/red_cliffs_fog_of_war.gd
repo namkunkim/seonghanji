@@ -3,10 +3,12 @@ extends RefCounted
 
 ## DEMO-RC-G5-01 — contact 수명과 실제 위치를 쓰지 않는 추정 사격 권위.
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
+const Terrain := preload("res://core/demo_red_cliffs/red_cliffs_terrain_resolver.gd")
 const RULES_PATH := "res://data/red-cliffs-fog-of-war-rules.json"
 
 var _setup: Dictionary = {}
 var _rules: Dictionary = {}
+var _terrain
 
 
 func initialize(applied_setup: Dictionary) -> Dictionary:
@@ -14,7 +16,9 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not checked.ok: return _error("유효한 G3 적용 편성이 필요합니다.")
 	var loaded := _load_rules()
 	if not loaded.ok: return loaded
-	_setup = checked.setup.duplicate(true); _rules = loaded.rules.duplicate(true)
+	var terrain = Terrain.new(); var terrain_result: Dictionary = terrain.initialize(checked.setup)
+	if not terrain_result.ok: return terrain_result
+	_setup = checked.setup.duplicate(true); _rules = loaded.rules.duplicate(true); _terrain = terrain
 	return _ok()
 
 
@@ -103,6 +107,7 @@ func authorize_orders(orders: Array, shooter_faction_id: String, live_navigation
 			"error_radius": int(order.error_radius), "error_offset": order.error_offset.duplicate(),
 			"selected_weapon_id": String(selected.weapon_id), "selected_platform_id": String(selected.platform_id),
 			"allocation_basis_points": int(selected.allocation_basis_points),
+			"terrain_weapon_modifier": selected.terrain_weapon_modifier.duplicate(true),
 			"fire_control_snapshot": {"hold_fire": false, "allocations": weapon_policy[shooter_id].allocations.duplicate(true),
 				"selected_weapon_id": String(selected.weapon_id), "selected_platform_id": String(selected.platform_id),
 				"selected_allocation_basis_points": int(selected.allocation_basis_points),
@@ -129,8 +134,11 @@ func _select_weapon(aim_position: Array, navigation: Dictionary, policy: Diction
 	var delta := absf(wrapf(bearing - facing, -180.0, 180.0)); var eligible: Array = []
 	for value in policy.capabilities:
 		var capability: Dictionary = value; var weapon_id := String(capability.weapon_id); var allocation := int(policy.allocations.get(weapon_id, 0))
-		if allocation > 0 and distance <= float(capability.range) and delta <= float(capability.arc_deg) * 0.5 + 0.000001:
-			var row: Dictionary = capability.duplicate(true); row.allocation_basis_points = allocation; eligible.append(row)
+		var terrain_effect: Dictionary = _terrain.weapon_effect(navigation.position, aim_position, "sealed_estimated_aim")
+		var effective_range := int(floor(float(int(capability.range) * int(terrain_effect.range_basis_points) + 5000) / 10000.0))
+		var effective_arc := clampf(float(capability.arc_deg) + float(terrain_effect.arc_delta_deg), 0.0, 360.0)
+		if allocation > 0 and distance <= float(effective_range) and delta <= effective_arc * 0.5 + 0.000001:
+			var row: Dictionary = capability.duplicate(true); row.allocation_basis_points = allocation; row.range = effective_range; row.arc_deg = effective_arc; row.terrain_weapon_modifier = terrain_effect; eligible.append(row)
 	eligible.sort_custom(func(a, b):
 		if int(a.allocation_basis_points) != int(b.allocation_basis_points): return int(a.allocation_basis_points) > int(b.allocation_basis_points)
 		return String(a.weapon_id) < String(b.weapon_id))

@@ -37,7 +37,7 @@ func _test_viewer_safe_rationale_and_g5_01_regression() -> void:
 	_ok(text.contains(String(rationale.reason_label)) and text.contains("내 함선 센서 %d" % int(own.ship_sensor_points)) and text.contains("진형 적용 %d" % int(own.formation_adjusted_sensor_points)), "core reason and own sensor summary visible")
 	_ok(text.contains(String(own.commander_name)) and text.contains(String(own.intelligence_band)) and text.contains("%+d" % int(own.intelligence_sensor_points)), "own commander intelligence band visible")
 	_ok(text.contains(String(rationale.observer_formation_id)) and text.contains("%+d%%" % int(rationale.observer_formation_detection_percent)), "own formation modifier visible")
-	_ok(text.contains(String(rationale.terrain_label)) and text.contains("terrain_detection"), "terrain is explicit G5-03 pending neutral")
+	_ok(text.contains(String(rationale.terrain_label)) and text.contains("내 지형") and not text.contains("terrain_detection"), "terrain rationale follows active G5-03 viewer contract")
 	var public_json := JSON.stringify(contact)
 	for forbidden in ["target_ew_points", "distance_penalty", "confirmed_range", "estimated_range", "target_formation", "target_commander"]: _ok(not public_json.contains(forbidden), "viewer omits %s" % forbidden)
 	_ok(not text.contains("정확 거리") and not text.contains("임계값"), "UI does not expose distance or threshold")

@@ -168,6 +168,7 @@ func _rebuild_map(snapshot: Dictionary) -> void:
 	if _battle.has_method("viewer_snapshot"):
 		var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id)
 		_map.configure(setup.get("battlefield_bounds", [0, 0, 1600, 900]), viewer.get("own_squadrons", []), viewer.get("own_navigation", {}))
+		_map.set_terrain_zones(viewer.get("terrain_zones", []))
 		_map.set_intelligence(_viewer_faction_id, viewer.get("contacts", []), viewer.get("tactical_events", []))
 		var selectable_contacts: Array[String] = []
 		for value in viewer.get("contacts", []):
@@ -203,6 +204,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 		_add_intelligence_panel()
 		var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id) if _battle.has_method("viewer_snapshot") else {}
 		var resource_ids: Array = viewer.get("own_combat_resources", {}).keys(); resource_ids.sort()
+		_add_terrain_panel(String(resource_ids[0]) if not resource_ids.is_empty() else "")
 		if not resource_ids.is_empty(): _add_combat_resource_panel(String(resource_ids[0]))
 		_add_phase_ledger()
 		var detection_auto_empty := _button("탐지 · 자동 코어 판정 · 수동 조작 없음", "DetectionAutomatic", 340); detection_auto_empty.disabled = true; _orders.add_child(detection_auto_empty)
@@ -230,6 +232,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	var clear := _button("경유점 전체 초기화", "ClearWaypoints", 340); clear.disabled = action != "move"; clear.pressed.connect(_clear_waypoints); _orders.add_child(clear)
 	_preview_text = Label.new(); _preview_text.name = "MovementPreview"; _preview_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; _orders.add_child(_preview_text)
 	_update_preview_text(order)
+	_add_terrain_panel()
 	_add_intelligence_panel()
 	_add_estimated_fire_editor()
 	_add_phase_ledger()
@@ -385,11 +388,41 @@ func _update_preview_text(order: Dictionary) -> void:
 	var preview: Dictionary = _battle.movement_preview(_selected_squadron_id, order.get("waypoints", []), order.get("facing_deg", 0))
 	if not bool(preview.get("ok", false)):
 		_preview_text.text = "이동 미리보기 오류: %s" % " · ".join(preview.get("errors", [])); return
-	_preview_text.text = "거리 %.1f / 이번 턴 예산 %d · ETA %d턴\n예상 도달 (%.1f, %.1f) · %s\n%s" % [float(preview.total_distance), int(preview.movement_budget), int(preview.eta_turns), float(preview.predicted_position[0]), float(preview.predicted_position[1]), "이번 턴 도달" if bool(preview.path_complete) else "예산 밖 경로 있음", "초록 실선: 이번 턴 · 주황 점선: 이후 턴"]
+	_preview_text.text = "거리 %.1f / 이번 턴 예산 %d · ETA %d턴\n예상 도달 (%.1f, %.1f) · %s\n%s%s" % [float(preview.total_distance), int(preview.movement_budget), int(preview.eta_turns), float(preview.predicted_position[0]), float(preview.predicted_position[1]), "이번 턴 도달" if bool(preview.path_complete) else "예산 밖 경로 있음", "초록 실선: 이번 턴 · 주황 점선: 이후 턴", _terrain_preview_text(preview)]
 
 
 func _on_interaction_rejected(message: String) -> void:
 	_last_error = message; _refresh()
+
+
+func _add_terrain_panel(squadron_id: String = "") -> void:
+	if not _battle.has_method("viewer_snapshot"): return
+	if squadron_id.is_empty(): squadron_id = _selected_squadron_id
+	var viewer: Dictionary = _battle.viewer_snapshot(_viewer_faction_id)
+	var title := Label.new(); title.name = "TerrainPanelTitle"; title.text = "전장 지형 · 공개 2D 구역 / 내 전대 효과"; title.add_theme_color_override("font_color", Color("9fd4e2")); _orders.add_child(title)
+	var zone_names := {}
+	for value in viewer.get("terrain_zones", []):
+		if value is Dictionary: zone_names[String(value.get("zone_id", ""))] = String(value.get("name", value.get("zone_id", "")))
+	var membership: Dictionary = viewer.get("own_terrain_membership", {}).get(squadron_id, {})
+	var active_ids: Array = membership.get("zone_ids", [])
+	var active_names: Array[String] = []
+	for zone_id in active_ids: active_names.append(String(zone_names.get(String(zone_id), zone_id)))
+	var current := Label.new(); current.name = "OwnTerrainMembership"; current.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if squadron_id.is_empty(): current.text = "직접 지휘 전대를 선택하면 현재 지형 효과를 표시합니다."
+	elif active_ids.is_empty(): current.text = "현재 위치: 지형 구역 밖 · 코어 판정"
+	else: current.text = "현재 위치: %s · 이동 비용 %d bp · 내 탐지 %s · 은폐 %+d · 코어 공개값" % [", ".join(active_names), int(membership.get("movement_cost_basis_points", 10000)), _signed_percent(int(membership.get("observer_sensor_percent", 0))), int(membership.get("target_concealment_points", 0))]
+	_orders.add_child(current)
+	var note := Label.new(); note.name = "TerrainPrivacyNote"; note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; note.text = "적의 지형 교차·체류·효과는 표시하지 않습니다. 경계 포함과 중첩 적용은 코어 결과만 따릅니다."; note.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(note)
+
+
+func _terrain_preview_text(preview: Dictionary) -> String:
+	var lines: Array[String] = []
+	for index in range(preview.get("terrain_segments", []).size()):
+		var segment: Dictionary = preview.terrain_segments[index]
+		if segment.get("zone_ids", []).is_empty(): continue
+		var effects: Dictionary = segment.get("effects", {})
+		lines.append("구간 %d 지형 %s · 이동 비용 %d bp · 내 탐지 %s · 은폐 %+d" % [index + 1, ", ".join(segment.get("zone_ids", [])), int(effects.get("movement_cost_basis_points", 10000)), _signed_percent(int(effects.get("observer_sensor_percent", 0))), int(effects.get("target_concealment_points", 0))])
+	return "" if lines.is_empty() else "\n코어 지형 미리보기\n" + "\n".join(lines)
 
 
 func _add_intelligence_panel() -> void:
@@ -417,6 +450,12 @@ func _add_intelligence_panel() -> void:
 		if kind == "detection" and event.get("detection_rationale") is Dictionary:
 			event_label.name = "DetectionRationaleEvent"
 			event_label.text = "탐지 판정 · %s" % _detection_rationale_text(event.detection_rationale)
+		elif kind == "terrain_transition":
+			event_label.name = "OwnTerrainTransition"
+			event_label.text = "내 전대 지형 이동 · 진입 %s · 이탈 %s · 현재 %s · 코어 판정" % [_id_list_text(event.get("entered_zone_ids", [])), _id_list_text(event.get("exited_zone_ids", [])), _id_list_text(event.get("active_zone_ids", []))]
+		elif kind == "terrain_membership":
+			event_label.name = "OwnTerrainBoundaryTouch"
+			event_label.text = "내 전대 지형 경계 접촉 · %s · %s · 코어 판정" % [String(event.get("zone_id", "")), String(event.get("membership", ""))]
 		elif kind == "resource_consumed":
 			event_label.text = "자원 소모 · %s · 비용 %s\n%s" % [_weapon_name(String(event.get("weapon_id", ""))), _resource_cost_text(event.get("cost", {})), _resource_transition_text(event.get("before", {}), event.get("after", {}), String(event.get("weapon_id", "")))]
 		elif kind == "fire_suppressed":
@@ -434,10 +473,11 @@ func _add_intelligence_panel() -> void:
 			else:
 				var fire_control: Dictionary = event.get("fire_control_snapshot", {})
 				var eligibility: Dictionary = fire_control.get("eligibility", {})
+				var terrain_weapon := _terrain_weapon_text(event.get("terrain_weapon_modifier", {}))
 				var weapon_summary := "내 무기 정보 없음"
 				if not fire_control.is_empty():
 					weapon_summary = "%s · 배분 %s · 코어 적격 사거리 %.1f / 사격각 %.1f°" % [_weapon_name(String(fire_control.get("selected_weapon_id", ""))), _bps_text(int(fire_control.get("selected_allocation_basis_points", 0))), float(eligibility.get("range", 0)), float(eligibility.get("arc_deg", 0))]
-				event_label.text = "사격 %d · 승인 · 거리 %.1f/사거리 %.1f · 방위 %.1f° · 사격각 %.1f° · %s · 표적 %s · 내 화력 %s · 명중/피해 판정 후속" % [index + 1, float(event.get("distance", 0)), float(event.get("range", 0)), float(event.get("bearing_deg", 0)), float(event.get("arc_deg", 0)), weapon_summary, _sector_label(String(modifier.get("target_sector", "indeterminate"))), _signed_percent(int(modifier.get("own_fire_percent", 0)))]
+				event_label.text = "사격 %d · 승인 · 거리 %.1f/사거리 %.1f · 방위 %.1f° · 사격각 %.1f° · %s · 표적 %s · 내 화력 %s%s · 명중/피해 판정 후속" % [index + 1, float(event.get("distance", 0)), float(event.get("range", 0)), float(event.get("bearing_deg", 0)), float(event.get("arc_deg", 0)), weapon_summary, _sector_label(String(modifier.get("target_sector", "indeterminate"))), _signed_percent(int(modifier.get("own_fire_percent", 0))), terrain_weapon]
 		else: event_label.text = "%d. %s · 코어 판정" % [index + 1, kind]
 		_orders.add_child(event_label)
 
@@ -485,7 +525,16 @@ func _estimated_contact_text(contact: Dictionary) -> String:
 
 func _detection_rationale_text(rationale: Dictionary) -> String:
 	var own: Dictionary = rationale.get("own_sensor_breakdown", {})
-	return "근거: %s · 내 함선 센서 %d → 진형 적용 %d · 지휘 %s(%s) %+d · 관측 진형 %s 탐지 %s · 적 EW 수치 비공개 · %s · %s" % [String(rationale.get("reason_label", "코어 판정")), int(own.get("ship_sensor_points", 0)), int(own.get("formation_adjusted_sensor_points", 0)), String(own.get("commander_name", "미상")), String(own.get("intelligence_band", "미상")), int(own.get("intelligence_sensor_points", 0)), String(rationale.get("observer_formation_id", "미상")), _signed_percent(int(rationale.get("observer_formation_detection_percent", 0))), String(rationale.get("terrain_label", "지형 보정 G5-03 대기(중립)")), "rules_pending: %s" % ", ".join(rationale.get("rules_pending", []))]
+	return "근거: %s · 내 함선 센서 %d → 진형 적용 %d · 지휘 %s(%s) %+d · 관측 진형 %s 탐지 %s · 내 지형 %s / 센서 %s · 적 EW·적 지형 수치 비공개 · %s · %s" % [String(rationale.get("reason_label", "코어 판정")), int(own.get("ship_sensor_points", 0)), int(own.get("formation_adjusted_sensor_points", 0)), String(own.get("commander_name", "미상")), String(own.get("intelligence_band", "미상")), int(own.get("intelligence_sensor_points", 0)), String(rationale.get("observer_formation_id", "미상")), _signed_percent(int(rationale.get("observer_formation_detection_percent", 0))), _id_list_text(own.get("own_terrain_zone_ids", [])), _signed_percent(int(own.get("own_terrain_sensor_percent", 0))), String(rationale.get("terrain_label", "지형 보정 코어 판정")), "rules_pending: %s" % ", ".join(rationale.get("rules_pending", []))]
+
+
+func _terrain_weapon_text(value) -> String:
+	if not value is Dictionary or value.is_empty(): return ""
+	return " · 지형 무기 보정: %s · 사거리 %d bp · 사격각 %+d° · %s" % [_id_list_text(value.get("zone_ids", [])), int(value.get("range_basis_points", 10000)), int(value.get("arc_delta_deg", 0)), "봉인 추정 조준선" if String(value.get("target_source", "")) == "sealed_estimated_aim" else "실제 도달선"]
+
+
+func _id_list_text(values: Array) -> String:
+	return "없음" if values.is_empty() else ", ".join(values)
 
 
 func _add_estimated_fire_editor() -> void:

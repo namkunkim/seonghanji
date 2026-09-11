@@ -4,22 +4,25 @@ extends RefCounted
 ## DEMO-RC-G5-02 — 구조화 편성·장수 지력·진형 탐지 보정 권위.
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
 const Formation := preload("res://core/demo_red_cliffs/red_cliffs_formation_resolver.gd")
+const Terrain := preload("res://core/demo_red_cliffs/red_cliffs_terrain_resolver.gd")
 const RULES_PATH := "res://data/red-cliffs-sensor-ew-rules.json"
 const CHARACTERS_PATH := "res://data/characters.json"
-var _setup: Dictionary = {}; var _rules: Dictionary = {}; var _characters: Dictionary = {}; var _formation
+var _setup: Dictionary = {}; var _rules: Dictionary = {}; var _characters: Dictionary = {}; var _formation; var _terrain
 
 func initialize(applied_setup: Dictionary) -> Dictionary:
 	var checked := Setup.validate_document(applied_setup); if not checked.ok: return _error("유효한 G3 적용 편성이 필요합니다.")
 	var loaded := _load_rules(); if not loaded.ok: return loaded
 	var characters := _load_characters(checked.setup); if not characters.ok: return characters
 	var formation = Formation.new(); var formation_result: Dictionary = formation.initialize(checked.setup); if not formation_result.ok: return formation_result
-	_setup = checked.setup.duplicate(true); _rules = loaded.rules.duplicate(true); _characters = characters.characters.duplicate(true); _formation = formation
+	var terrain = Terrain.new(); var terrain_result: Dictionary = terrain.initialize(checked.setup); if not terrain_result.ok: return terrain_result
+	_setup = checked.setup.duplicate(true); _rules = loaded.rules.duplicate(true); _characters = characters.characters.duplicate(true); _formation = formation; _terrain = terrain
 	return _ok()
 
 func rules_snapshot() -> Dictionary: return _rules.duplicate(true)
 func initial_formation_state() -> Dictionary: return _formation.initial_state()
 
-func evaluate(observer_squadron_id: String, target_squadron_id: String, distance: float, formation_state: Dictionary) -> Dictionary:
+func evaluate(observer_squadron_id: String, target_squadron_id: String, distance: float, formation_state: Dictionary,
+		observer_position = null, target_position = null) -> Dictionary:
 	if not is_finite(distance) or distance < 0.0: return _error("탐지 거리는 0 이상의 유한값이어야 합니다.")
 	var observer := _find_squad(observer_squadron_id); var target := _find_squad(target_squadron_id)
 	if observer.is_empty() or target.is_empty() or String(observer.faction_id) == String(target.faction_id): return _error("탐지 observer-target 쌍이 잘못되었습니다.")
@@ -29,20 +32,25 @@ func evaluate(observer_squadron_id: String, target_squadron_id: String, distance
 	var target_ew := _composition_points(target, _rules.ship_ew_points, _rules.fast_equipment_ew_points)
 	var commander_id := String(observer.commander.id); var intelligence := int(_characters[commander_id].stats["지력"]); var intelligence_points := _intelligence_points(intelligence)
 	var formation_id := String(snapshots[observer_squadron_id].formation_id); var formation_percent := int(snapshots[observer_squadron_id].modifiers.detection_percent)
-	var adjusted_sensor := _percent_round_half_up(ship_sensor, formation_percent); var distance_penalty := int(floor(distance / float(_rules.distance_penalty.units_per_point)))
-	var score := adjusted_sensor + intelligence_points - target_ew - distance_penalty
+	var observer_terrain: Dictionary = _terrain.point_effects(observer_position) if observer_position is Array else _terrain.point_effects([-9999, -9999])
+	var target_terrain: Dictionary = _terrain.point_effects(target_position) if target_position is Array else _terrain.point_effects([-9999, -9999])
+	var total_sensor_percent := formation_percent + int(observer_terrain.observer_sensor_percent)
+	var adjusted_sensor := _percent_round_half_up(ship_sensor, total_sensor_percent); var distance_penalty := int(floor(distance / float(_rules.distance_penalty.units_per_point)))
+	var effective_target_ew := target_ew + int(target_terrain.target_concealment_points)
+	var score := adjusted_sensor + intelligence_points - effective_target_ew - distance_penalty
 	var state := "confirmed" if score >= int(_rules.thresholds.confirmed) else ("estimated" if score >= int(_rules.thresholds.estimated) else "undetected")
 	var threshold := int(_rules.thresholds.confirmed) if state == "confirmed" else int(_rules.thresholds.estimated); var margin := score - threshold
 	var labels := {"confirmed": "센서 점수가 확인 임계 이상", "estimated": "센서 점수가 추정 임계 이상", "undetected": "센서 점수가 추정 임계 미만"}
 	var own_breakdown := {"ship_sensor_points": ship_sensor, "formation_adjusted_sensor_points": adjusted_sensor, "commander_id": commander_id,
-		"commander_name": String(_characters[commander_id].name), "intelligence_band": _intelligence_band_label(intelligence), "intelligence_sensor_points": intelligence_points}
+		"commander_name": String(_characters[commander_id].name), "intelligence_band": _intelligence_band_label(intelligence), "intelligence_sensor_points": intelligence_points,
+		"own_terrain_zone_ids": observer_terrain.zone_ids.duplicate(), "own_terrain_sensor_percent": int(observer_terrain.observer_sensor_percent)}
 	return {"ok": true, "errors": [], "state": state, "margin": margin,
 		"authoritative": {"observer_squadron_id": observer_squadron_id, "target_squadron_id": target_squadron_id, "distance": distance,
-			"own_sensor_breakdown": own_breakdown.duplicate(true), "target_ew_points": target_ew, "distance_penalty": distance_penalty,
+			"own_sensor_breakdown": own_breakdown.duplicate(true), "target_ew_points": target_ew, "target_terrain_concealment_points": int(target_terrain.target_concealment_points), "distance_penalty": distance_penalty,
 			"score": score, "margin": margin, "formation_id": formation_id, "formation_detection_percent": formation_percent, "terrain_modifier_points": 0},
 		"viewer_basis": {"result_state": state, "reason_code": "%s_score_gate" % state, "reason_label": labels[state],
 			"observer_formation_id": formation_id, "observer_formation_detection_percent": formation_percent, "own_sensor_breakdown": own_breakdown,
-			"terrain_status": "pending_neutral", "terrain_label": String(_rules.terrain.label), "rules_pending": ["terrain_detection"]}}
+			"terrain_status": "active_normal_demo", "terrain_label": String(_rules.terrain.label), "rules_pending": []}}
 
 func _percent_round_half_up(value: int, percent: int) -> int: return int(floor(float(value * (100 + percent) + 50) / 100.0))
 
@@ -110,7 +118,7 @@ func _load_rules() -> Dictionary:
 	if String(parsed.get("threshold_policy", "")) != "score_gte_confirmed_then_confirmed; else_score_gte_estimated_then_estimated; else_undetected; exact_tie_is_in_range" or String(parsed.get("multi_observer_merge", "")) != "state_rank_desc; last_seen_turn_desc; margin_desc; observer_squadron_id_asc": return _error("탐지 동률·병합 정책이 잘못되었습니다.")
 	if String(parsed.get("formation_profile", "")) != "normal-demo-formation-v1" or String(parsed.get("character_source", "")) != "res://data/characters.json#stats.지력; assigned_commander_id_and_name_exact": return _error("진형·장수 정본 연결이 잘못되었습니다.")
 	var terrain = parsed.get("terrain", {})
-	if not terrain is Dictionary or String(terrain.get("status", "")) != "pending_neutral" or int(terrain.get("modifier_points", -1)) != 0 or terrain.get("rules_pending") != ["terrain_detection"] or String(terrain.get("label", "")) != "지형 보정 대기(중립)": return _error("지형 중립 pending 계약이 잘못되었습니다.")
+	if not terrain is Dictionary or String(terrain.get("status", "")) != "active_normal_demo" or int(terrain.get("modifier_points", -1)) != 0 or terrain.get("rules_pending") != [] or String(terrain.get("label", "")) != "적벽 전용 지형 보정 적용": return _error("지형 적용 계약이 잘못되었습니다.")
 	return {"ok": true, "errors": [], "rules": parsed.duplicate(true)}
 
 func _bounded_intelligence(value) -> bool: return _nonnegative_integer(value) and int(value) <= 100

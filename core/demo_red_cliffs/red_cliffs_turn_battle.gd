@@ -11,9 +11,10 @@ const WeaponAllocation := preload("res://core/demo_red_cliffs/red_cliffs_weapon_
 const CombatResources := preload("res://core/demo_red_cliffs/red_cliffs_combat_resources.gd")
 const PhaseLedger := preload("res://core/demo_red_cliffs/red_cliffs_phase_ledger.gd")
 const FogOfWar := preload("res://core/demo_red_cliffs/red_cliffs_fog_of_war.gd")
+const TerrainResolver := preload("res://core/demo_red_cliffs/red_cliffs_terrain_resolver.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
-	"terrain_detection", "weapon_fire", "damage", "casualties", "victory"
+	"weapon_fire", "damage", "casualties", "victory"
 ]
 
 var _state: Dictionary = {}
@@ -24,6 +25,7 @@ var _weapon_control
 var _combat_resources
 var _phase_ledger
 var _fog
+var _terrain
 var _viewer_receipts_by_turn: Dictionary = {}
 var _viewer_phase_ledgers_by_turn: Dictionary = {}
 
@@ -59,6 +61,8 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	var fog = FogOfWar.new()
 	var fog_result: Dictionary = fog.initialize(setup)
 	if not fog_result.ok: return fog_result
+	var terrain = TerrainResolver.new(); var terrain_result: Dictionary = terrain.initialize(setup)
+	if not terrain_result.ok: return terrain_result
 	_movement = movement
 	_interception = interception
 	_formation = formation
@@ -66,6 +70,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	_combat_resources = combat_resources
 	_phase_ledger = phase_ledger
 	_fog = fog
+	_terrain = terrain
 	_viewer_receipts_by_turn = {}
 	_viewer_phase_ledgers_by_turn = {}
 	_state = {
@@ -159,6 +164,17 @@ func visible_contacts(viewer_faction_id: String) -> Dictionary:
 	return _interception.visible_contacts(viewer_faction_id, _state.detection_state, _state.live_navigation)
 
 
+func terrain_zones() -> Array:
+	return [] if _state.is_empty() else _terrain.visible_zones()
+
+
+func own_terrain_membership(viewer_faction_id: String) -> Dictionary:
+	if not _faction_ids().has(viewer_faction_id): return _error("미지 관측 세력입니다: %s" % viewer_faction_id)
+	var result := {}
+	for squadron_id in _operational_squadron_ids(viewer_faction_id): result[squadron_id] = _terrain.point_effects(_state.live_navigation[squadron_id].position)
+	return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "membership": result}
+
+
 func visible_tactical_events(viewer_faction_id: String, turn_number: int = 0) -> Dictionary:
 	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
 	var wanted_turn := turn() if turn_number <= 0 else turn_number
@@ -237,6 +253,7 @@ func viewer_snapshot(viewer_faction_id: String) -> Dictionary:
 		"own_weapon_allocation_state": _own_weapon_allocation_state(viewer_faction_id),
 		"weapon_categories": weapon_categories(), "weapon_presets": weapon_presets(),
 		"own_combat_resources": visible_combat_resources(viewer_faction_id).resource_state,
+		"terrain_zones": terrain_zones(), "own_terrain_membership": own_terrain_membership(viewer_faction_id).membership,
 		"resource_recovery_events": _combat_resources.visible_events(viewer_faction_id,
 			{"recovery_events": _state.last_resource_recovery_events}).events,
 		"tactical_events": visible_tactical_events(viewer_faction_id).events,
@@ -510,6 +527,7 @@ func resolve_turn() -> Dictionary:
 		"status": "orders_committed",
 		"rules_pending": RULES_PENDING.duplicate(),
 		"movement_events": movement_result.events.duplicate(true),
+		"terrain_events": _decorate_terrain_events(movement_result.terrain_events),
 		"formation_events": formation_result.formation_events.duplicate(true),
 		"formation_modifier_snapshots": formation_result.modifier_snapshots.duplicate(true),
 		"weapon_allocation_events": weapon_result.weapon_allocation_events.duplicate(true),
@@ -531,6 +549,8 @@ func resolve_turn() -> Dictionary:
 		var faction_id := String(faction.id)
 		var visible: Dictionary = _interception.visible_tactical_events(faction_id, receipt, interception_result.detection_state)
 		if not visible.ok: return visible
+		for terrain_event in receipt.terrain_events:
+			if _squadron_faction_id(String(terrain_event.squadron_id)) == faction_id: visible.events.append(terrain_event.duplicate(true))
 		var resource_visible: Dictionary = _combat_resources.visible_events(faction_id,
 			{"consumption_events": receipt.resource_consumption_events,
 			"suppressed_fire_events": receipt.suppressed_fire_events,
@@ -731,11 +751,11 @@ func _viewer_ledger_receipt(faction_id: String, receipt: Dictionary, visible_eve
 	var safe := {"turn": int(receipt.turn), "rules_pending": receipt.rules_pending.duplicate(),
 		"victory_check_required": bool(receipt.victory_check_required),
 		"formation_events": [], "weapon_allocation_events": [], "resource_recovery_events": [],
-		"movement_events": [], "path_intersection_events": [], "detection_events": [],
+		"movement_events": [], "terrain_events": [], "path_intersection_events": [], "detection_events": [],
 		"opportunity_fire_events": [], "estimated_fire_events": [], "estimated_fire_suppressed_events": [],
 		"resource_consumption_events": [], "suppressed_fire_events": []}
 	for source in ["formation_events", "weapon_allocation_events", "resource_recovery_events",
-			"movement_events", "resource_consumption_events", "suppressed_fire_events"]:
+			"movement_events", "terrain_events", "resource_consumption_events", "suppressed_fire_events"]:
 		for value in receipt.get(source, []):
 			if value is Dictionary:
 				var squadron_id := String(value.get("squadron_id", ""))
@@ -750,6 +770,15 @@ func _viewer_ledger_receipt(faction_id: String, receipt: Dictionary, visible_eve
 		elif event_type == "estimated_fire_suppressed": source = "estimated_fire_suppressed_events"
 		if not source.is_empty(): safe[source].append(value.duplicate(true))
 	return safe
+
+
+func _decorate_terrain_events(events: Array) -> Array:
+	var result: Array = []
+	for index in range(events.size()):
+		var row: Dictionary = events[index].duplicate(true); row["turn"] = turn()
+		row["event_id"] = "TRN-%02d-%03d-%s" % [turn(), index + 1, JSON.stringify(row).sha256_text().substr(0, 10)]
+		result.append(row)
+	return result
 
 
 func _squadron_faction_id(squadron_id: String) -> String:

@@ -6,6 +6,7 @@ const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
 const WeaponAllocation := preload("res://core/demo_red_cliffs/red_cliffs_weapon_allocation.gd")
 const FogOfWar := preload("res://core/demo_red_cliffs/red_cliffs_fog_of_war.gd")
 const DetectionResolver := preload("res://core/demo_red_cliffs/red_cliffs_detection_resolver.gd")
+const TerrainResolver := preload("res://core/demo_red_cliffs/red_cliffs_terrain_resolver.gd")
 const RULES_PATH := "res://data/red-cliffs-interception-rules.json"
 const STATE_RANK := {"undetected": 0, "lost": 1, "estimated": 2, "confirmed": 3}
 
@@ -14,6 +15,7 @@ var _rules: Dictionary = {}
 var _weapon_control
 var _fog
 var _detection_resolver
+var _terrain
 
 
 func initialize(applied_setup: Dictionary) -> Dictionary:
@@ -28,11 +30,14 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not fog_result.ok: return fog_result
 	var detection_resolver = DetectionResolver.new(); var detection_result: Dictionary = detection_resolver.initialize(setup_result.setup)
 	if not detection_result.ok: return detection_result
+	var terrain = TerrainResolver.new(); var terrain_result: Dictionary = terrain.initialize(setup_result.setup)
+	if not terrain_result.ok: return terrain_result
 	_setup = setup_result.setup.duplicate(true)
 	_rules = rules_result.rules.duplicate(true)
 	_weapon_control = weapon_control
 	_fog = fog
 	_detection_resolver = detection_resolver
+	_terrain = terrain
 	return _ok()
 
 
@@ -163,6 +168,8 @@ func visible_tactical_events(viewer_faction_id: String, raw_receipt: Dictionary,
 				visible_event["fire_control_snapshot"] = row.fire_control_snapshot.duplicate(true)
 			if row.get("resource_reservation") is Dictionary:
 				visible_event["resource_reservation"] = row.resource_reservation.duplicate(true)
+			if row.get("terrain_weapon_modifier") is Dictionary:
+				visible_event["terrain_weapon_modifier"] = row.terrain_weapon_modifier.duplicate(true)
 		# Formation/sector detail is exact tactical information. A shooter already
 		# has the confirmed contact required to authorize the shot; a target only
 		# receives this detail when its own contact on the shooter is confirmed.
@@ -210,7 +217,8 @@ func _resolve_detection(event_by_squad: Dictionary, detection: Dictionary, turn_
 		var observer_id := String(row.observer_squadron_id); var target_id := String(row.target_squadron_id)
 		var closest := _closest_paths(_event_path(event_by_squad[observer_id]), _event_path(event_by_squad[target_id]))
 		var distance := float(closest.distance); var previous := String(row.state)
-		var evaluated: Dictionary = _detection_resolver.evaluate(observer_id, target_id, distance, formation_state)
+		var evaluated: Dictionary = _detection_resolver.evaluate(observer_id, target_id, distance, formation_state,
+			closest.point_a, closest.point_b)
 		if not evaluated.ok: return evaluated
 		var state := String(evaluated.state)
 		var observed = closest.point_b.duplicate() if state != "undetected" else null
@@ -258,11 +266,17 @@ func _resolve_opportunity_fire(event_by_squad: Dictionary, detection: Dictionary
 		for value in weapon_policy[shooter_id].capabilities:
 			var capability: Dictionary = value; var weapon_id := String(capability.weapon_id)
 			var allocation := int(weapon_policy[shooter_id].allocations.get(weapon_id, 0))
-			if allocation <= 0 or float(closest.distance) > float(capability.range) or angle_delta > float(capability.arc_deg) * 0.5 + 0.000001: continue
-			if initial_distance <= float(capability.range) and initial_delta <= float(capability.arc_deg) * 0.5 + 0.000001: continue
+			var terrain_effect: Dictionary = _terrain.weapon_effect(closest.point_a, closest.point_b, "actual_reached_position")
+			var effective_range := int(floor(float(int(capability.range) * int(terrain_effect.range_basis_points) + 5000) / 10000.0))
+			var effective_arc := clampf(float(capability.arc_deg) + float(terrain_effect.arc_delta_deg), 0.0, 360.0)
+			if allocation <= 0 or float(closest.distance) > float(effective_range) or angle_delta > effective_arc * 0.5 + 0.000001: continue
+			var initial_effect: Dictionary = _terrain.weapon_effect(shooter_event.from, target_event.from, "actual_reached_position")
+			var initial_range := int(floor(float(int(capability.range) * int(initial_effect.range_basis_points) + 5000) / 10000.0))
+			var initial_arc := clampf(float(capability.arc_deg) + float(initial_effect.arc_delta_deg), 0.0, 360.0)
+			if initial_distance <= float(initial_range) and initial_delta <= initial_arc * 0.5 + 0.000001: continue
 			eligible.append({"weapon_id": weapon_id, "allocation_basis_points": allocation,
 				"platform_id": String(capability.get("platform_id", "")),
-				"range": int(capability.range), "arc_deg": float(capability.arc_deg)})
+				"range": effective_range, "arc_deg": effective_arc, "terrain_weapon_modifier": terrain_effect})
 		if eligible.is_empty(): continue
 		eligible.sort_custom(func(a, b):
 			if int(a.allocation_basis_points) != int(b.allocation_basis_points): return int(a.allocation_basis_points) > int(b.allocation_basis_points)
@@ -274,6 +288,7 @@ func _resolve_opportunity_fire(event_by_squad: Dictionary, detection: Dictionary
 			"selected_weapon_id": String(capability.weapon_id),
 			"selected_platform_id": String(capability.platform_id),
 			"allocation_basis_points": int(capability.allocation_basis_points),
+			"terrain_weapon_modifier": capability.terrain_weapon_modifier.duplicate(true),
 			"movement_order_index": int(event_by_squad[shooter_id].order_index)})
 	candidates.sort_custom(func(a, b):
 		if int(a.movement_order_index) != int(b.movement_order_index): return int(a.movement_order_index) < int(b.movement_order_index)

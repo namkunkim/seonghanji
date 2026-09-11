@@ -98,6 +98,7 @@ func _event_type(source: String, payload: Dictionary) -> String:
 	if source == "estimated_fire_events": return "estimated_fire_authorized"
 	if source == "estimated_fire_suppressed_events": return "estimated_fire_suppressed"
 	if source == "path_intersection_events": return "path_intersection"
+	if source == "terrain_events": return String(payload.get("event_type", "terrain_transition"))
 	if source == "detection_events": return "detection"
 	if source == "resolution_boundary": return "resolution_boundary"
 	return source.trim_suffix("_events")
@@ -119,6 +120,7 @@ func _validate_payload(source: String, payload: Dictionary, turn_number: int) ->
 	var allowed := {
 		"formation_events": ["formation_applied"], "weapon_allocation_events": ["weapon_allocation_applied"],
 		"resource_recovery_events": ["resource_recovered"], "movement_events": ["movement_hold", "movement_move"],
+		"terrain_events": ["terrain_transition", "terrain_membership", "terrain_stay"],
 		"path_intersection_events": ["path_intersection"], "detection_events": ["detection"],
 		"opportunity_fire_events": ["shot_authorized"], "estimated_fire_events": ["estimated_fire_authorized"],
 		"estimated_fire_suppressed_events": ["estimated_fire_suppressed"], "resource_consumption_events": ["resource_consumed"],

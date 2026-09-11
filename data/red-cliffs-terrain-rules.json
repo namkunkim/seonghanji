@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-terrain-v1",
+  "statement": "적벽 데모 전용 2D 전장 지형 게임 수치이며 data/terrain_v4.json과 독립적이다.",
+  "epsilon": 0.001,
+  "boundary_policy": "inclusive_with_epsilon; segment_clip_entry_exit; zero_length_samples_point",
+  "same_turn_order": "movement_budget_then_detection_then_weapon_eligibility_then_phase_ledger",
+  "numeric_policy": "integer_basis_points_and_half_up_modifiers; deterministic_float_geometry_epsilon_0.001",
+  "stacking": {"zone_order": "zone_id_asc", "movement": "max_cost_basis_points_no_duplicate_distance", "sensor": "additive_percent_clamp_minus60_plus30", "concealment": "additive_points", "weapon_range": "segment_membership_zone_id_asc_sequential_half_up_basis_points", "weapon_arc": "segment_membership_additive_degrees_clamp_0_360"},
+  "zones": [
+    {"id": "TRN-NEBULA-01", "type": "nebula", "name": "적운 성운", "shape": {"kind": "rect", "x": 600, "y": 50, "width": 120, "height": 120}, "effects": {"movement_cost_basis_points": 13333, "observer_sensor_percent": -20, "target_concealment_points": 8, "weapon_range_basis_points": 8500, "weapon_arc_delta_deg": -10}},
+    {"id": "TRN-DEBRIS-01", "type": "debris", "name": "파쇄 잔해대", "shape": {"kind": "rect", "x": 680, "y": 100, "width": 140, "height": 120}, "effects": {"movement_cost_basis_points": 15385, "observer_sensor_percent": -5, "target_concealment_points": 3, "weapon_range_basis_points": 9000, "weapon_arc_delta_deg": -5}},
+    {"id": "TRN-SHADOW-01", "type": "planet_shadow", "name": "행성 그림자", "shape": {"kind": "rect", "x": 1250, "y": 300, "width": 180, "height": 180}, "effects": {"movement_cost_basis_points": 11111, "observer_sensor_percent": -15, "target_concealment_points": 12, "weapon_range_basis_points": 8000, "weapon_arc_delta_deg": -15}}
+  ]
+}
