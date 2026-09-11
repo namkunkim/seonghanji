@@ -10,11 +10,21 @@
     "distinction": "고속정은 임무장비 1종을 탑재하는 소형 전투정이고, 요격함은 독립 고속 전투함이다. 두 함종의 재고와 비용은 합산하지 않는다."
   },
   "mission_equipment": [
-    {"mission_id": "intercept", "equipment_id": "FAST-EQ-INTERCEPT", "label": "요격", "eligible_ship_type_ids": ["SHP-08"]},
-    {"mission_id": "torpedo", "equipment_id": "FAST-EQ-TORPEDO", "label": "뇌격", "eligible_ship_type_ids": ["SHP-08"]},
-    {"mission_id": "recon", "equipment_id": "FAST-EQ-RECON", "label": "정찰", "eligible_ship_type_ids": ["SHP-08"]},
-    {"mission_id": "rescue", "equipment_id": "FAST-EQ-RESCUE", "label": "구조", "eligible_ship_type_ids": ["SHP-08"]}
+    {"mission_id": "intercept", "equipment_id": "FAST-EQ-INTERCEPT", "label": "요격", "eligible_ship_type_ids": ["SHP-08"], "supported_tactical_mission_ids": ["intercept", "escort"]},
+    {"mission_id": "torpedo", "equipment_id": "FAST-EQ-TORPEDO", "label": "뇌격", "eligible_ship_type_ids": ["SHP-08"], "supported_tactical_mission_ids": ["torpedo", "strike"]},
+    {"mission_id": "recon", "equipment_id": "FAST-EQ-RECON", "label": "정찰", "eligible_ship_type_ids": ["SHP-08"], "supported_tactical_mission_ids": ["recon", "liaison"]},
+    {"mission_id": "rescue", "equipment_id": "FAST-EQ-RESCUE", "label": "구조", "eligible_ship_type_ids": ["SHP-08"], "supported_tactical_mission_ids": ["rescue", "liaison"]}
   ],
+  "tactical_missions": [
+    {"mission_id": "escort", "label": "호위"},
+    {"mission_id": "intercept", "label": "요격"},
+    {"mission_id": "liaison", "label": "연락"},
+    {"mission_id": "recon", "label": "정찰"},
+    {"mission_id": "rescue", "label": "구조"},
+    {"mission_id": "strike", "label": "기습"},
+    {"mission_id": "torpedo", "label": "뇌격"}
+  ],
+  "tactical_mission_contract": "equipment is immutable after battle initialization; mission changes only select an allowlisted tactical intent; mission effects and outcomes are pending after G6-02",
   "basing_modes": ["independent", "carrier", "base"],
   "basing_contract": {
     "independent": "독립 전장 배치",
@@ -28,5 +38,5 @@
   "inventory_policy": "applied setup faction inventory minus all setup squadron assignments; preparation may create or delete user fast-craft squadrons from remaining same-faction stock; cross-faction transfer forbidden",
   "cost_policy": "per craft subtotal=(setup SHP-08 base unit cost+selected setup mission-equipment unit cost)*count; historical cost is the declared normal-demo baseline",
   "command_limit_source": "applied_setup.command_limit_rules_and_faction_demo_roster",
-  "out_of_scope": ["in_battle_equipment_change", "tactical_mission_change", "fuel", "ammo_resupply", "automatic_return", "drift", "rescue_result", "capture_result"]
+  "out_of_scope": ["in_battle_equipment_change", "tactical_mission_effect", "fuel", "ammo_resupply", "automatic_return", "drift", "rescue_result", "capture_result"]
 }

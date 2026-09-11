@@ -199,12 +199,18 @@ func _validate_rules(raw, setup: Dictionary) -> Dictionary:
 	var seen := {}
 	for value in raw.mission_equipment:
 		var mission_id := String(value.get("mission_id", "")); var equipment_id := String(value.get("equipment_id", ""))
-		if not MISSIONS.has(mission_id) or equipment_id != String(MISSIONS[mission_id]) or seen.has(equipment_id) or value.get("eligible_ship_type_ids") != [Setup.FAST_CRAFT_ID]: return _error("고속정 임무장비 적격성 집합이 잘못되었습니다.")
+		if not MISSIONS.has(mission_id) or equipment_id != String(MISSIONS[mission_id]) or seen.has(equipment_id) or value.get("eligible_ship_type_ids") != [Setup.FAST_CRAFT_ID] or not value.get("supported_tactical_mission_ids") is Array or value.supported_tactical_mission_ids.size() < 2: return _error("고속정 임무장비 적격성 집합이 잘못되었습니다.")
 		seen[equipment_id] = true
+	if not raw.get("tactical_missions") is Array or raw.tactical_missions.size() != 7 or String(raw.get("tactical_mission_contract", "")).is_empty(): return _error("고속정 전술 임무 규칙이 누락되었습니다.")
+	var tactical_ids: Array = raw.tactical_missions.map(func(row): return String(row.get("mission_id", ""))); tactical_ids.sort()
+	if tactical_ids != ["escort", "intercept", "liaison", "recon", "rescue", "strike", "torpedo"]: return _error("고속정 전술 임무 ID가 잘못되었습니다.")
+	for value in raw.mission_equipment:
+		for tactical_id in value.supported_tactical_mission_ids:
+			if not tactical_ids.has(String(tactical_id)): return _error("장비가 미지 전술 임무를 지원합니다.")
 	if seen.size() != 4 or raw.get("historical_squadron_ids") != ["RC-LIU-FC-01"] or not raw.get("historical_loadouts") is Array or raw.historical_loadouts.size() != 1: return _error("역사 기본 고속정 전대 계약이 잘못되었습니다.")
 	if not raw.get("basing_modes") is Array or raw.basing_modes != BASING_MODES: return _error("고속정 운용 기반 3종 계약이 잘못되었습니다.")
 	if not raw.get("basing_contract") is Dictionary or not BASING_MODES.all(func(id): return not String(raw.basing_contract.get(id, "")).is_empty()): return _error("고속정 운용 기반 설명이 누락되었습니다.")
-	var expected_out_of_scope := ["in_battle_equipment_change", "tactical_mission_change", "fuel", "ammo_resupply", "automatic_return", "drift", "rescue_result", "capture_result"]
+	var expected_out_of_scope := ["in_battle_equipment_change", "tactical_mission_effect", "fuel", "ammo_resupply", "automatic_return", "drift", "rescue_result", "capture_result"]
 	if not raw.get("out_of_scope") is Array or raw.out_of_scope != expected_out_of_scope: return _error("후속 G6 범위 경계가 누락되었습니다.")
 	_rules = raw.duplicate(true); var result := _validate_contract(setup, true); _rules = {}
 	return result

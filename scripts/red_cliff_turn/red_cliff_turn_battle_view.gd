@@ -208,6 +208,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	var heading := Label.new(); heading.text = "%s · %s" % [FACTION_NAMES.get(faction_id, "자동 처리"), "직접 명령" if not faction_id.is_empty() else "입력 잠김"]; heading.add_theme_font_size_override("font_size", 17); _orders.add_child(heading)
 	if _selected_squadron_id.is_empty():
 		var empty := Label.new(); empty.text = "현재 편집 가능한 전대가 없습니다."; _orders.add_child(empty)
+		_add_fast_craft_mission_overview()
 		_add_intelligence_panel()
 		_add_command_penalty_results()
 		_add_chain_explosion_panel()
@@ -222,6 +223,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	var squad := _find_squad(snapshot, _selected_squadron_id)
 	var selected := Label.new(); selected.text = "선택: %s" % String(squad.get("name", _selected_squadron_id)); selected.add_theme_color_override("font_color", Color("f0cf7e")); _orders.add_child(selected)
 	_add_fast_craft_applied_loadout(squad)
+	_add_fast_craft_mission_editor(squad)
 	_add_command_penalty_status()
 	var action_row := HBoxContainer.new(); _orders.add_child(action_row)
 	var hold := _button("대기 HOLD", "SetOrderHold", 165); hold.pressed.connect(_on_set_hold); action_row.add_child(hold)
@@ -259,8 +261,88 @@ func _add_fast_craft_applied_loadout(squad: Dictionary) -> void:
 	if composition.size() != 1 or not composition[0] is Dictionary or String(composition[0].get("ship_type_id", "")) != "SHP-08": return
 	var component: Dictionary = composition[0]
 	var label := Label.new(); label.name = "AppliedFastCraftLoadout"; label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.text = "고속정 임무 편성 · 전투 중 불변\n%d척 · %s · 적용 비용 %d\n전투 중 장비 변경·보급·귀환·구조 결과는 후속 기능" % [int(component.get("count", 0)), _fast_equipment_label(String(component.get("mission_equipment_id", ""))), int(squad.get("declared_total_cost", 0))]
+	label.text = "고속정 장비 · 전투 중 불변\n%d척 · %s · 적용 비용 %d\n장비는 바꾸지 않고 지원 범위 안의 전술 임무만 변경합니다." % [int(component.get("count", 0)), _fast_equipment_label(String(component.get("mission_equipment_id", ""))), int(squad.get("declared_total_cost", 0))]
 	label.add_theme_color_override("font_color", Color("eac77e")); _orders.add_child(label)
+
+
+func _add_fast_craft_mission_editor(squad: Dictionary) -> void:
+	if not _battle.has_method("viewer_fast_craft_missions"): return
+	var receipt: Dictionary = _battle.viewer_fast_craft_missions(_viewer_faction_id)
+	if not bool(receipt.get("ok", false)): return
+	var squadron_id := String(squad.get("id", "")); var status: Dictionary = {}
+	for value in receipt.get("statuses", []):
+		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: status = value; break
+	if status.is_empty(): return
+	_add_fast_craft_mission_panel(status, receipt, false)
+
+
+func _add_fast_craft_mission_overview() -> void:
+	if not _battle.has_method("viewer_fast_craft_missions"): return
+	var receipt: Dictionary = _battle.viewer_fast_craft_missions(_viewer_faction_id)
+	if not bool(receipt.get("ok", false)) or receipt.get("statuses", []).is_empty(): return
+	var overview := Label.new(); overview.name = "FastCraftMissionOverview"; overview.text = "자기 고속정 전대 · 전술 임무"; overview.add_theme_color_override("font_color", Color("f0cf7e")); _orders.add_child(overview)
+	for value in receipt.get("statuses", []):
+		if value is Dictionary: _add_fast_craft_mission_panel(value, receipt, true)
+
+
+func _add_fast_craft_mission_panel(status: Dictionary, receipt: Dictionary, show_identity: bool) -> void:
+	var squadron_id := String(status.get("squadron_id", ""))
+	var active_mission_id := String(status.get("mission_id", ""))
+	var display_mission_id := String(status.get("display_mission_id", active_mission_id))
+	var draft_mission_id := String(status.get("draft_mission_id", ""))
+	var queued: Dictionary = {}
+	for value in receipt.get("queued", []):
+		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: queued = value; break
+	var application := String(status.get("application", "read_only"))
+	var editable := bool(status.get("can_change", false))
+	var can_cancel := bool(status.get("can_cancel", false))
+	var change_reason := String(status.get("change_reason", ""))
+	var mode_label: String = String({"immediate":"현재 턴 즉시 적용", "next_turn_queue":"다음 턴 예약", "read_only":"읽기 전용"}.get(application, "읽기 전용"))
+	var title := Label.new(); title.name = "FastCraftMissionTitle_%s" % squadron_id if show_identity else "FastCraftMissionTitle"; title.text = "%s전술 임무 · %s" % ["%s · " % squadron_id if show_identity else "", mode_label]; title.add_theme_color_override("font_color", Color("9fd4e2")); _orders.add_child(title)
+	var state := Label.new(); state.name = "FastCraftMissionState"; state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var draft_text := "\n이번 명령 초안 %s · 제출 시 원자 적용" % _fast_mission_label(draft_mission_id, receipt) if not draft_mission_id.is_empty() else ""
+	state.text = "%s활성 %s · %d턴부터 · %s%s\n지원 임무 %s%s%s" % ["불변 장비 %s\n" % _fast_equipment_label(String(status.get("equipment_id", ""))) if show_identity else "", _fast_mission_label(active_mission_id, receipt), int(status.get("effective_turn", 0)), String(status.get("source", "")), draft_text, _fast_mission_list(status.get("supported_mission_ids", []), receipt), "\n다음 턴 예약 %s · %d턴 적용" % [_fast_mission_label(String(queued.get("mission_id", "")), receipt), int(queued.get("effective_turn", 0))] if not queued.is_empty() else "", "\n변경 불가 · %s" % _fast_mission_change_reason(change_reason) if not change_reason.is_empty() else ""]
+	_orders.add_child(state)
+	var buttons := HBoxContainer.new(); buttons.name = "FastCraftMissionButtons_%s" % squadron_id if show_identity else "FastCraftMissionButtons"; buttons.add_theme_constant_override("separation", 5); _orders.add_child(buttons)
+	for mission_id in status.get("supported_mission_ids", []):
+		var id := String(mission_id); var button_name := "FastTacticalMission_%s_%s" % [squadron_id, id] if show_identity else "FastTacticalMission_%s" % id; var button := _button(_fast_mission_label(id, receipt), button_name, 120)
+		button.disabled = not editable or id == display_mission_id or not queued.is_empty(); button.pressed.connect(_on_fast_craft_mission.bind(squadron_id, id)); buttons.add_child(button)
+	var cancel_name := "CancelFastCraftMissionQueue_%s" % squadron_id if show_identity else "CancelFastCraftMissionQueue"; var cancel := _button("다음 턴 예약 취소", cancel_name, 175); cancel.disabled = not can_cancel or queued.is_empty(); cancel.pressed.connect(_on_cancel_fast_craft_mission.bind(squadron_id)); _orders.add_child(cancel)
+	var latest: Dictionary = {}
+	for value in receipt.get("events", []):
+		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: latest = value
+	if not latest.is_empty():
+		var event := Label.new(); event.name = "FastCraftMissionLastEvent"; event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _fast_mission_event_text(latest, receipt); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
+	var boundary := Label.new(); boundary.name = "FastCraftMissionBoundary"; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "현재 턴 명령 중에는 즉시 적용, 판정 중 요청은 다음 턴 예약입니다. 임무 효과·연료·보급·귀환·표류·구조·나포 결과는 G6-03 이후입니다."; boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+
+
+func _on_fast_craft_mission(squadron_id: String, mission_id: String) -> void:
+	_set_receipt(_battle.set_fast_craft_mission(_viewer_faction_id, squadron_id, mission_id)); _refresh()
+
+
+func _on_cancel_fast_craft_mission(squadron_id: String) -> void:
+	_set_receipt(_battle.cancel_queued_fast_craft_mission(_viewer_faction_id, squadron_id)); _refresh()
+
+
+func _fast_mission_label(mission_id: String, receipt: Dictionary) -> String:
+	for value in receipt.get("tactical_missions", []):
+		if value is Dictionary and String(value.get("mission_id", "")) == mission_id: return String(value.get("label", mission_id))
+	return mission_id
+
+
+func _fast_mission_list(mission_ids, receipt: Dictionary) -> String:
+	var labels: Array[String] = []
+	for value in mission_ids: labels.append(_fast_mission_label(String(value), receipt))
+	return " · ".join(labels)
+
+
+func _fast_mission_event_text(event: Dictionary, receipt: Dictionary) -> String:
+	var status := String(event.get("status", "")); var labels := {"immediate":"명령 초안 즉시 반영", "applied":"제출 적용", "queued":"다음 턴 예약", "promoted":"예약 승격", "cancelled":"예약 취소"}
+	return "%s · %s → %s · 요청 %d턴 / 적용 %d턴" % [String(labels.get(status, status)), _fast_mission_label(String(event.get("previous_mission_id", "")), receipt), _fast_mission_label(String(event.get("mission_id", "")), receipt), int(event.get("requested_turn", 0)), int(event.get("effective_turn", 0))]
+
+
+func _fast_mission_change_reason(reason: String) -> String:
+	return String({"queue_already_exists":"이미 다음 턴 예약이 있어 먼저 취소해야 합니다.", "turn_limit_no_next_turn":"20턴 판정 중에는 적용할 다음 턴이 없습니다."}.get(reason, reason))
 
 
 func _add_command_penalty_status() -> void:
@@ -629,6 +711,12 @@ func _add_ai_decision_panel() -> void:
 		if intent.has("confidence_basis_points"): row.text += " · 공개 신뢰 %d bp" % int(intent.confidence_basis_points)
 		if intent.has("reserve_basis_points"): row.text += " · 내 자원 여유 %d bp" % int(intent.reserve_basis_points)
 		_orders.add_child(row)
+	var mission_receipt: Dictionary = _battle.viewer_fast_craft_missions(_viewer_faction_id) if _battle.has_method("viewer_fast_craft_missions") else {}
+	for value in decision.get("fast_craft_mission_orders", []):
+		if not value is Dictionary: continue
+		var mission_row := Label.new(); mission_row.name = "AiFastCraftMissionRow"; mission_row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		mission_row.text = "%s · 전술 임무 %s · 동일 코어 validator 통과" % [String(value.get("squadron_id", "내 고속정 전대")), _fast_mission_label(String(value.get("mission_id", "")), mission_receipt)]
+		_orders.add_child(mission_row)
 	var privacy := Label.new(); privacy.name = "AiDecisionPrivacy"; privacy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; privacy.text = "타 세력의 숨겨진 표적·명령·자원·능력치 및 AI 후보·점수·임계값은 표시하지 않습니다."; privacy.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(privacy)
 
 

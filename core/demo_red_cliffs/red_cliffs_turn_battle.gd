@@ -14,6 +14,7 @@ const FogOfWar := preload("res://core/demo_red_cliffs/red_cliffs_fog_of_war.gd")
 const TerrainResolver := preload("res://core/demo_red_cliffs/red_cliffs_terrain_resolver.gd")
 const AiPlanner := preload("res://core/demo_red_cliffs/red_cliffs_ai_planner.gd")
 const ChainExplosion := preload("res://core/demo_red_cliffs/red_cliffs_chain_explosion.gd")
+const FastCraftMission := preload("res://core/demo_red_cliffs/red_cliffs_fast_craft_mission.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := [
 	"weapon_fire", "damage", "casualties", "victory"
@@ -30,6 +31,7 @@ var _fog
 var _terrain
 var _ai_planner
 var _chain_explosion
+var _fast_craft_mission
 var _viewer_receipts_by_turn: Dictionary = {}
 var _viewer_phase_ledgers_by_turn: Dictionary = {}
 
@@ -76,6 +78,8 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 			return _error("AI 자세가 미지 진형 또는 무기 프리셋을 참조합니다.")
 	var chain_explosion = ChainExplosion.new(); var chain_result: Dictionary = chain_explosion.initialize(setup)
 	if not chain_result.ok: return chain_result
+	var fast_craft_mission = FastCraftMission.new(); var mission_result: Dictionary = fast_craft_mission.initialize(setup)
+	if not mission_result.ok: return mission_result
 	_movement = movement
 	_interception = interception
 	_formation = formation
@@ -86,6 +90,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	_terrain = terrain
 	_ai_planner = ai_planner
 	_chain_explosion = chain_explosion
+	_fast_craft_mission = fast_craft_mission
 	_viewer_receipts_by_turn = {}
 	_viewer_phase_ledgers_by_turn = {}
 	_state = {
@@ -103,6 +108,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 		"last_resource_recovery_events": [],
 		"last_resource_recovery_turn": 0,
 		"chain_explosion_state": _chain_explosion.initial_state(),
+		"fast_craft_mission_state": _fast_craft_mission.initial_state(),
 		"phase_ledgers": {},
 		"command_draft": {},
 		"turn_log": [_new_turn_log(1)],
@@ -391,6 +397,51 @@ func command_draft() -> Dictionary:
 	return _state.get("command_draft", {}).duplicate(true)
 
 
+func viewer_fast_craft_missions(viewer_faction_id: String) -> Dictionary:
+	if _state.is_empty() or not ["liu_bei", "sun_quan", "cao_cao"].has(viewer_faction_id): return _error("미지 관측 세력입니다.")
+	var visible: Dictionary = _fast_craft_mission.visible(viewer_faction_id, _state.fast_craft_mission_state)
+	var immediate := current_direct_faction_id() == viewer_faction_id
+	var late_phase := ["sun_control_prompt", "resolution", "victory_check"].has(phase()) and _late_fast_craft_mission_editable(viewer_faction_id)
+	var queued_mode := late_phase and turn() < MAX_TURNS
+	for status in visible.statuses:
+		var squadron_id := String(status.squadron_id)
+		var has_queue: bool = _state.fast_craft_mission_state.next_turn_queue.has(squadron_id)
+		status["application"] = "immediate" if immediate else ("next_turn_queue" if queued_mode else "read_only")
+		status["can_change"] = immediate or queued_mode and not has_queue
+		status["can_cancel"] = queued_mode and has_queue
+		status["change_reason"] = "turn_limit_no_next_turn" if late_phase and turn() >= MAX_TURNS else ("queue_already_exists" if queued_mode and has_queue else "")
+	visible["turn"] = turn(); visible["phase"] = phase()
+	return visible
+
+
+func set_fast_craft_mission(requesting_faction_id: String, squadron_id: String, mission_id: String) -> Dictionary:
+	if _state.is_empty() or phase() == "turn_limit_reached": return _error("현재 단계에서는 전술 임무를 변경할 수 없습니다.")
+	var faction_id := _squadron_faction_id(squadron_id); var application := ""
+	if requesting_faction_id != faction_id: return _error("다른 세력의 고속정 전술 임무를 변경할 수 없습니다.")
+	if current_direct_faction_id() == faction_id and requesting_faction_id == current_direct_faction_id():
+		application = "immediate"
+	elif ["sun_control_prompt", "resolution", "victory_check"].has(phase()) and _late_fast_craft_mission_editable(requesting_faction_id) and turn() < MAX_TURNS:
+		application = "next_turn_queue"
+	else: return _error("현재 직접 지휘하거나 다음 턴 예약할 수 있는 세력이 아닙니다.")
+	var changed: Dictionary = _fast_craft_mission.request(_state.fast_craft_mission_state, squadron_id, mission_id, turn(), application)
+	if not changed.ok: return changed
+	_state.fast_craft_mission_state = changed.state.duplicate(true)
+	if application == "immediate":
+		if _state.fast_craft_mission_state.current_turn_draft.has(squadron_id): _state.command_draft.fast_craft_mission_orders[squadron_id] = {"squadron_id": squadron_id, "mission_id": mission_id}
+		else: _state.command_draft.fast_craft_mission_orders.erase(squadron_id)
+	return {"ok": true, "errors": [], "application": application, "event": changed.event.duplicate(true)}
+
+
+func cancel_queued_fast_craft_mission(requesting_faction_id: String, squadron_id: String) -> Dictionary:
+	var faction_id := _squadron_faction_id(squadron_id)
+	if requesting_faction_id != faction_id: return _error("다른 세력의 다음 턴 전술 임무 요청을 취소할 수 없습니다.")
+	if not ["sun_control_prompt", "resolution", "victory_check"].has(phase()) or not _late_fast_craft_mission_editable(requesting_faction_id): return _error("현재 단계에서는 다음 턴 요청을 취소할 수 없습니다.")
+	var changed: Dictionary = _fast_craft_mission.cancel_queue(_state.fast_craft_mission_state, squadron_id, turn())
+	if not changed.ok: return changed
+	_state.fast_craft_mission_state = changed.state.duplicate(true)
+	return {"ok": true, "errors": [], "event": changed.event.duplicate(true)}
+
+
 func current_direct_faction_id() -> String:
 	if phase() == "liu_command": return "liu_bei"
 	if phase() == "sun_command": return "sun_quan"
@@ -533,10 +584,15 @@ func submit_liu_orders(orders: Array) -> Dictionary:
 	var checked := _validate_orders("liu_bei", orders)
 	if not bool(checked.get("ok", false)): return checked
 	var before_ai_state := _state.duplicate(true)
+	var mission_orders := _submitted_fast_craft_mission_orders("liu_bei")
+	var mission_commit: Dictionary = _fast_craft_mission.commit_draft(_state.fast_craft_mission_state, "liu_bei", mission_orders, turn())
+	if not mission_commit.ok: return mission_commit
+	_state.fast_craft_mission_state = mission_commit.state.duplicate(true)
 	_current_log()["liu_orders"] = checked.orders.duplicate(true)
 	_current_log()["liu_formation_orders"] = _submitted_formation_orders("liu_bei")
 	_current_log()["liu_weapon_allocation_orders"] = _submitted_weapon_orders("liu_bei")
 	_current_log()["liu_estimated_fire_orders"] = _submitted_estimated_fire_orders("liu_bei")
+	_current_log()["liu_fast_craft_mission_orders"] = mission_orders
 	_state.command_draft = {}
 	if bool(_state.sun_prompt_policy.current_turn_enabled):
 		_state.phase = "sun_control_prompt"
@@ -590,10 +646,15 @@ func submit_sun_orders(orders: Array) -> Dictionary:
 	var checked := _validate_orders("sun_quan", orders)
 	if not bool(checked.get("ok", false)): return checked
 	var before_ai_state := _state.duplicate(true)
+	var mission_orders := _submitted_fast_craft_mission_orders("sun_quan")
+	var mission_commit: Dictionary = _fast_craft_mission.commit_draft(_state.fast_craft_mission_state, "sun_quan", mission_orders, turn())
+	if not mission_commit.ok: return mission_commit
+	_state.fast_craft_mission_state = mission_commit.state.duplicate(true)
 	_current_log()["sun_orders"] = checked.orders.duplicate(true)
 	_current_log()["sun_formation_orders"] = _submitted_formation_orders("sun_quan")
 	_current_log()["sun_weapon_allocation_orders"] = _submitted_weapon_orders("sun_quan")
 	_current_log()["sun_estimated_fire_orders"] = _submitted_estimated_fire_orders("sun_quan")
+	_current_log()["sun_fast_craft_mission_orders"] = mission_orders
 	_state.command_draft = {}
 	var prepared := _prepare_ai_faction("cao_cao")
 	if not prepared.ok: _state = before_ai_state; return prepared
@@ -676,6 +737,7 @@ func resolve_turn() -> Dictionary:
 		"terrain_events": _decorate_terrain_events(movement_result.terrain_events),
 		"formation_events": formation_result.formation_events.duplicate(true),
 		"formation_modifier_snapshots": formation_result.modifier_snapshots.duplicate(true),
+		"fast_craft_mission_events": _state.fast_craft_mission_state.events_by_turn.get(turn(), []).duplicate(true),
 		"weapon_allocation_events": weapon_result.weapon_allocation_events.duplicate(true),
 		"chain_explosion_events": chain_result.events.duplicate(true),
 		"path_intersection_events": interception_result.path_intersection_events.duplicate(true),
@@ -739,6 +801,9 @@ func continue_turn() -> Dictionary:
 	if phase() != "victory_check":
 		return _error("턴 판정 뒤 외부 승리 확인 경계에서만 다음 턴으로 진행할 수 있습니다.")
 	_state.current_turn = turn() + 1
+	var promoted: Dictionary = _fast_craft_mission.promote(_state.fast_craft_mission_state, turn())
+	if not promoted.ok: return promoted
+	_state.fast_craft_mission_state = promoted.state.duplicate(true)
 	_state.sun_prompt_policy.current_turn_enabled = bool(_state.sun_prompt_policy.enabled)
 	_state.sun_prompt_policy.effective_turn = turn()
 	_state.last_resource_recovery_events = []
@@ -793,10 +858,27 @@ func _prepare_ai_faction(faction_id: String) -> Dictionary:
 	_current_log()["%s_formation_orders" % prefix] = plan.formation_orders.duplicate(true)
 	_current_log()["%s_weapon_allocation_orders" % prefix] = weapon_orders
 	_current_log()["%s_estimated_fire_orders" % prefix] = estimated_orders
+	var mission_orders: Array = []; var changed_mission_orders: Array = []; var mission_working_state: Dictionary = _state.fast_craft_mission_state.duplicate(true)
+	for squadron_id in _state.fast_craft_mission_state.active.keys():
+		var mission_row: Dictionary = _state.fast_craft_mission_state.active[squadron_id]
+		if String(mission_row.faction_id) != faction_id: continue
+		var selected: Dictionary = _fast_craft_mission.ai_mission(mission_working_state, String(squadron_id), turn())
+		if not selected.ok: return selected
+		mission_orders.append({"squadron_id": String(squadron_id), "mission_id": String(selected.mission_id), "source": String(selected.source)})
+		if String(mission_row.mission_id) != String(selected.mission_id):
+			var requested: Dictionary = _fast_craft_mission.request(mission_working_state, String(squadron_id), String(selected.mission_id), turn(), "immediate")
+			if not requested.ok: return requested
+			mission_working_state = requested.state.duplicate(true); changed_mission_orders.append({"squadron_id": String(squadron_id), "mission_id": String(selected.mission_id)})
+	var committed_missions: Dictionary = _fast_craft_mission.commit_draft(mission_working_state, faction_id, changed_mission_orders, turn())
+	if not committed_missions.ok: return committed_missions
+	_state.fast_craft_mission_state = committed_missions.state.duplicate(true)
+	mission_orders.sort_custom(func(a, b): return String(a.squadron_id) < String(b.squadron_id))
+	_current_log()["%s_fast_craft_mission_orders" % prefix] = mission_orders
 	_current_log()["%s_ai_decision" % prefix] = {"source": String(plan.source), "posture": String(plan.posture),
 		"intents": plan.intents.duplicate(true), "orders": plan.orders.duplicate(true),
 		"formation_orders": plan.formation_orders.duplicate(true), "weapon_allocation_orders": weapon_orders.duplicate(true),
 		"estimated_fire_orders": estimated_orders.duplicate(true)}
+	_current_log()["%s_ai_decision" % prefix]["fast_craft_mission_orders"] = mission_orders.duplicate(true)
 	return _ok()
 
 
@@ -875,6 +957,14 @@ func _submitted_weapon_orders(faction_id: String) -> Array:
 	var draft: Dictionary = _state.get("command_draft", {})
 	if String(draft.get("faction_id", "")) != faction_id: return _current_weapon_orders(faction_id)
 	var result: Array = draft.get("weapon_allocation_orders", {}).values()
+	result.sort_custom(func(a, b): return String(a.squadron_id) < String(b.squadron_id))
+	return result.duplicate(true)
+
+
+func _submitted_fast_craft_mission_orders(faction_id: String) -> Array:
+	var draft: Dictionary = _state.get("command_draft", {})
+	if String(draft.get("faction_id", "")) != faction_id: return []
+	var result: Array = draft.get("fast_craft_mission_orders", {}).values()
 	result.sort_custom(func(a, b): return String(a.squadron_id) < String(b.squadron_id))
 	return result.duplicate(true)
 
@@ -1056,7 +1146,13 @@ func _begin_command_draft(faction_id: String) -> void:
 		weapon_orders[squadron_id] = {"squadron_id": squadron_id,
 			"allocations": weapon_row.allocations.duplicate(true), "hold_fire": bool(weapon_row.hold_fire)}
 	_state.command_draft = {"faction_id": faction_id, "orders": orders, "formation_orders": formation_orders,
-		"weapon_allocation_orders": weapon_orders, "estimated_fire_orders": estimated_fire_orders}
+		"weapon_allocation_orders": weapon_orders, "estimated_fire_orders": estimated_fire_orders, "fast_craft_mission_orders": {}}
+
+
+func _late_fast_craft_mission_editable(faction_id: String) -> bool:
+	if faction_id == "liu_bei": return true
+	if faction_id != "sun_quan": return false
+	return String(_current_log().get("sun_control_decision", {}).get("control", "")) == "manual"
 
 
 func _command_draft_access(squadron_id: String) -> Dictionary:
@@ -1081,16 +1177,19 @@ func _new_turn_log(turn_number: int) -> Dictionary:
 		"liu_formation_orders": [],
 		"liu_weapon_allocation_orders": [],
 		"liu_estimated_fire_orders": [],
+		"liu_fast_craft_mission_orders": [],
 		"sun_control_decision": {},
 		"sun_orders": [],
 		"sun_formation_orders": [],
 		"sun_weapon_allocation_orders": [],
 		"sun_estimated_fire_orders": [],
+		"sun_fast_craft_mission_orders": [],
 		"sun_ai_decision": {},
 		"cao_orders": [],
 		"cao_formation_orders": [],
 		"cao_weapon_allocation_orders": [],
 		"cao_estimated_fire_orders": [],
+		"cao_fast_craft_mission_orders": [],
 		"cao_ai_decision": {},
 		"resolution_receipt": {},
 		"victory_check_required": false,
