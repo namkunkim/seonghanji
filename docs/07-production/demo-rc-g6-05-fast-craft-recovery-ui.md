@@ -25,7 +25,7 @@ UI는 `viewer_state`를 `확인` 또는 `추정`으로 명시한다. 적 관측 
 
 정상 보급함의 근접만으로 나포가 발생하지 않는다. 내부 `_apply_authoritative_supply_capture` fixture는 `authority=G8-00`, `status=authorized_capture`인 권위 intent만 수용한다. 성공 시 해당 SHP-05 source는 활성 G6-03 보급 영역에서 원자 제거되고 `capacity_squadrons_per_turn=0`, `captor_gain=0`으로 표시된다. 같은 턴 refill에서 제외되며 captor에게 재고나 신규 source를 주지 않는다.
 
-실제 damage/boarding trigger는 G8-00, 나포 재고·수리·재사용은 G6-06 이후 경계다. 화면은 `Control` 기반 2D 전용이며 G6-04의 공통 라벨 충돌 회피를 재사용한다.
+실제 damage/boarding trigger는 G8-00 경계다. 나포 즉시 잔여 재고 폐기·captor gain 0과 손상 처리량·거점 재적재는 G6-06에서 구현했으며, 포획 보급함의 수리·재사용은 허용하지 않는다. 화면은 `Control` 기반 2D 전용이며 G6-04의 공통 라벨 충돌 회피를 재사용한다.
 
 ## 검증
 

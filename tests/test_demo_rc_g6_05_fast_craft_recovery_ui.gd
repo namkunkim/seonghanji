@@ -103,7 +103,7 @@ func _test_drift_lock_and_authoritative_supply_capture() -> void:
 	var disabled: Label = view.find_child("CapturedSupplyDisabled_%s" % String(source.source_id), true, false)
 	_ok(disabled != null and disabled.text.contains("처리량 0/턴") and disabled.text.contains("captor gain 0") and disabled.text.contains("같은 턴 보급 제외"), "captured supply source is read-only and grants nothing")
 	var boundary: Label = view.find_child("FastCraftRecoveryBoundary", true, false)
-	_ok(boundary != null and boundary.text.contains("수동 구조·나포 버튼 없음") and boundary.text.contains("G8-00") and boundary.text.contains("G6-06"), "manual-action and future-scope boundaries are explicit")
+	_ok(boundary != null and boundary.text.contains("수동 구조·나포 버튼 없음") and boundary.text.contains("G8-00") and boundary.text.contains("남은 물자는 즉시 폐기") and boundary.text.contains("보급 기능·재고를 획득하지 않습니다"), "manual-action, authority, and captured-inventory boundaries are explicit")
 	var forbidden_buttons := view.find_children("*", "Button", true, false).filter(func(node): return String(node.text).contains("구조") or String(node.text).contains("나포"))
 	_eq(forbidden_buttons.size(), 0, "no manual rescue or capture button exists")
 	if DisplayServer.get_name() != "headless":

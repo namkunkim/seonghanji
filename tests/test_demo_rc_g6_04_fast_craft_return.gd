@@ -29,7 +29,7 @@ func _test_scope_contract()->void:
 	_ok(rules is Dictionary,"fast-craft rules parse")
 	var excluded:Array=rules.get("out_of_scope",[])
 	_ok(not excluded.has("automatic_return"),"implemented automatic return is not out of scope")
-	_eq(excluded,["in_battle_equipment_change","non_rescue_tactical_mission_effect","supply_source_stock","supply_source_damage","base_reloading"],"remaining deferred mission and G6-06 effects stay out of scope")
+	_eq(excluded,["in_battle_equipment_change","non_rescue_tactical_mission_effect","actual_damage_trigger","actual_destroy_trigger","actual_boarding_trigger","post_battle_captured_ship_reuse"],"remaining mission, G8 triggers, and post-battle reuse stay out of scope")
 func _test_threshold_tie_retarget_and_risk()->void:
 	var x:=_systems();var sources:=[{"source_id":"SRC-B","faction_id":"liu_bei","position":[320,720]},{"source_id":"SRC-A","faction_id":"liu_bei","position":[120,720]}]
 	# Both sources are exactly 100 distance from the craft; stable ID breaks tie.
