@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "profile_id": "normal-demo-chain-explosion-v1",
-  "statement": "적벽 데모의 SF 화공 대응 연쇄 폭발 작전 조건 규칙이다. 수치는 역사적 사실이 아닌 normal-demo 밸런스이며 구체 피해·사기·센서 장애·승패는 후속 효과 판정까지 생성하지 않는다.",
+  "statement": "적벽 데모의 SF 화공 대응 연쇄 폭발 작전 조건 규칙이다. 발동 event는 G8-00 전투 효과 reducer가 같은 턴 피해·사기와 다음 턴 센서·임시 지형을 적용하며 장수 사상과 승패만 후속 판정에 남긴다.",
   "operator_faction_id": "liu_bei",
   "allied_asset_faction_id": "sun_quan",
   "target_faction_id": "cao_cao",
@@ -19,5 +19,5 @@
     "range_exit": "distance above maximum blocks activation"
   },
   "effect_intents": ["reactor_chain_blast", "morale_shock", "sensor_disruption", "temporary_terrain_hazard"],
-  "effects_pending": ["damage", "morale", "sensor_disruption", "terrain_effect", "casualties", "victory"]
+  "effects_pending": ["commander_casualties", "victory"]
 }

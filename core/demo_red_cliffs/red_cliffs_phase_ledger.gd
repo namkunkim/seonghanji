@@ -44,7 +44,7 @@ func build(turn_number: int, receipt: Dictionary) -> Dictionary:
 			"status": _status(events, pending), "events": events, "pending": pending})
 	var ledger := {"ok": true, "errors": [], "turn": turn_number, "profile_id": String(_rules.profile_id),
 		"phase_order": _rules.phase_order.duplicate(), "phases": phases,
-		"result_contract": {"hit": "pending", "damage": "pending", "casualties": "pending", "victory": "pending"}}
+		"result_contract": {"hit": "resolved", "damage": "resolved", "ship_losses": "resolved", "morale": "resolved", "sensor_disruption": "resolved", "temporary_terrain": "resolved", "commander_casualties": "pending", "victory": "pending_G8_01"}}
 	ledger["turn_digest"] = _digest(ledger)
 	return ledger
 
@@ -123,6 +123,7 @@ func _validate_payload(source: String, payload: Dictionary, turn_number: int) ->
 		"terrain_events": ["terrain_transition", "terrain_membership", "terrain_stay"],
 		"path_intersection_events": ["path_intersection"], "detection_events": ["detection"],
 		"chain_explosion_events": ["chain_explosion_disrupted", "chain_explosion_triggered"],
+		"combat_effect_events": ["shot_effect_resolved", "chain_effects_applied", "squadron_effect_applied", "temporary_terrain_created"],
 		"opportunity_fire_events": ["shot_authorized"], "estimated_fire_events": ["estimated_fire_authorized"],
 		"estimated_fire_suppressed_events": ["estimated_fire_suppressed"], "resource_consumption_events": ["resource_consumed"],
 		"suppressed_fire_events": ["fire_suppressed"], "resolution_boundary": ["resolution_boundary"]}
@@ -170,7 +171,7 @@ func _load_rules() -> Dictionary:
 		var phase_id := String(parsed.phase_order[index]); var row = parsed.phases.get(phase_id)
 		if not row is Dictionary or String(row.get("name", "")) != names[index] or not row.get("sources") is Array or not row.get("pending") is Array: return _error("5단계 정의가 잘못되었습니다: %s" % phase_id)
 	if String(parsed.get("event_id_policy", "")) != "LED-turn-phase_order-source_order-event_order-sha256_payload" or String(parsed.get("digest_policy", "")) != "sha256_canonical_json_without_turn_digest": return _error("원장 ID/digest 정책이 잘못되었습니다.")
-	if parsed.get("forbidden_outcomes") != ["hit", "damage", "casualties", "winner"]: return _error("금지 결과 계약이 잘못되었습니다.")
+	if parsed.get("forbidden_outcomes") != ["winner"]: return _error("금지 결과 계약이 잘못되었습니다.")
 	return {"ok": true, "errors": [], "rules": parsed.duplicate(true)}
 
 

@@ -62,7 +62,7 @@ func effective_speed(squadron_id: String) -> Dictionary:
 		"effective_speed": adjusted}
 
 
-func movement_preview(squadron_id: String, waypoints: Array, facing_deg, live_navigation: Dictionary) -> Dictionary:
+func movement_preview(squadron_id: String, waypoints: Array, facing_deg, live_navigation: Dictionary, temporary_zones: Array = []) -> Dictionary:
 	if _setup.is_empty(): return _error("이동 판정기가 초기화되지 않았습니다.")
 	if not live_navigation.has(squadron_id): return _error("전대 live 위치가 없습니다: %s" % squadron_id)
 	var max_waypoints := int(_rules.get("max_waypoints", 5))
@@ -88,7 +88,7 @@ func movement_preview(squadron_id: String, waypoints: Array, facing_deg, live_na
 			heading_found = true
 		total_distance += cursor.distance_to(target)
 		cursor = target
-	var movement: Dictionary = _terrain.follow_waypoints(current_row.position, waypoints, int(speed.effective_speed))
+	var movement: Dictionary = _terrain.follow_waypoints(current_row.position, waypoints, int(speed.effective_speed), temporary_zones)
 	var eta_turns := int(ceil(total_distance / float(speed.effective_speed))) if total_distance > 0.0 else 0
 	return {"ok": true, "errors": [], "waypoints": waypoints.duplicate(true), "max_waypoints": max_waypoints,
 		"heading_deg": heading_deg, "facing_deg": float(facing_deg), "total_distance": total_distance,
@@ -99,7 +99,7 @@ func movement_preview(squadron_id: String, waypoints: Array, facing_deg, live_na
 		"terrain_events": movement.terrain_events.duplicate(true)}
 
 
-func resolve_orders(orders: Array, live_navigation: Dictionary) -> Dictionary:
+func resolve_orders(orders: Array, live_navigation: Dictionary, temporary_zones: Array = []) -> Dictionary:
 	if _setup.is_empty(): return _error("이동 판정기가 초기화되지 않았습니다.")
 	var navigation_check := _validate_navigation(live_navigation)
 	if not navigation_check.ok: return navigation_check
@@ -117,7 +117,7 @@ func resolve_orders(orders: Array, live_navigation: Dictionary) -> Dictionary:
 		elif String(order.get("action", "")) == "move":
 			if order.size() != 4 or not order.has("waypoints") or not order.has("facing_deg") or not order.waypoints is Array:
 				return _error("move 명령에는 waypoints와 facing_deg가 필요합니다.")
-			var preview := movement_preview(squadron_id, order.waypoints, order.facing_deg, live_navigation)
+			var preview := movement_preview(squadron_id, order.waypoints, order.facing_deg, live_navigation, temporary_zones)
 			if not preview.ok: return preview
 		else:
 			return _error("hold 또는 move 명령만 허용합니다.")
@@ -139,7 +139,7 @@ func resolve_orders(orders: Array, live_navigation: Dictionary) -> Dictionary:
 		var current: Dictionary = next_navigation[squadron_id]
 		var from: Array = current.position.duplicate()
 		if String(order.action) == "hold":
-			var hold_effects: Dictionary = _terrain.point_effects(from)
+			var hold_effects: Dictionary = _terrain.point_effects(from, temporary_zones)
 			events.append({"squadron_id": squadron_id, "action": "hold", "order_index": index,
 				"from": from, "to": from.duplicate(), "requested_waypoints": [], "reached_waypoints": [],
 				"actual_distance": 0.0, "remaining_distance": 0.0, "path_complete": true,
@@ -150,7 +150,7 @@ func resolve_orders(orders: Array, live_navigation: Dictionary) -> Dictionary:
 			if not hold_effects.zone_ids.is_empty(): terrain_events.append({"event_type": "terrain_stay", "squadron_id": squadron_id,
 				"position": from.duplicate(), "active_zone_ids": hold_effects.zone_ids.duplicate(), "traversal_length": 0.0})
 			continue
-		var movement: Dictionary = _terrain.follow_waypoints(from, order.waypoints, int(row.speed.effective_speed))
+		var movement: Dictionary = _terrain.follow_waypoints(from, order.waypoints, int(row.speed.effective_speed), temporary_zones)
 		current.position = movement.to.duplicate()
 		current.facing_deg = float(order.facing_deg)
 		events.append({"squadron_id": squadron_id, "action": "move", "order_index": index,

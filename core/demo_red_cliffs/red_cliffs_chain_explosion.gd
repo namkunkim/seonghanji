@@ -16,7 +16,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not parsed.get("dense_formation_ids") is Array or not parsed.get("dispersed_formation_ids") is Array or float(parsed.get("maximum_range", 0)) <= 0 or not parsed.get("flow") is Dictionary: return _error("연쇄 폭발 조건 스키마가 잘못되었습니다.")
 	if parsed.dense_formation_ids != ["FRM-02", "FRM-03", "FRM-04"] or parsed.dispersed_formation_ids != ["FRM-05", "FRM-06", "FRM-07"]: return _error("밀집·분산 진형 집합이 잘못되었습니다.")
 	if parsed.get("effect_intents") != ["reactor_chain_blast", "morale_shock", "sensor_disruption", "temporary_terrain_hazard"] \
-			or parsed.get("effects_pending") != ["damage", "morale", "sensor_disruption", "terrain_effect", "casualties", "victory"]: return _error("연쇄 폭발 효과 intent·pending 경계가 잘못되었습니다.")
+			or parsed.get("effects_pending") != ["commander_casualties", "victory"]: return _error("연쇄 폭발 효과 intent·pending 경계가 잘못되었습니다.")
 	var detachment: Dictionary = parsed.get("allied_operation_detachment", {}); var asset := _find_squad(checked.setup, String(detachment.get("host_squadron_id", "")))
 	if String(detachment.get("id", "")) != "CHAIN-DET-01" or int(detachment.get("minimum_available_payloads", 0)) < 1 or String(detachment.get("modeling_boundary", "")) != "allied_special_operation_payload_not_a_new_ship_type_or_squadron": return _error("연합 특수작전 payload 경계가 잘못되었습니다.")
 	if asset.is_empty() or String(asset.faction_id) != "sun_quan" or _component_count(asset, String(detachment.payload_platform_id), String(detachment.payload_equipment_id)) < int(detachment.minimum_available_payloads): return _error("연합 폭발정 분견대 payload가 역사 데모 편성과 일치하지 않습니다.")

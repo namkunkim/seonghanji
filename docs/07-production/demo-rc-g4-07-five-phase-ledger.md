@@ -19,7 +19,7 @@
 
 1. 접적: 코어가 공개한 회복, 진형·무기 적용, 이동, 경로 교차, 탐지 event
 2. 포화: `shot_authorized`와 자기 자원 event. 실제 발사·명중을 뜻하지 않는다.
-3. 교전: 코어 `pending`
+3. 교전: G8-00 이후 코어가 공개한 실제 combat effect event 또는 가시 이벤트 없음
 4. 강습: 코어 `pending`
 5. 결착: `victory_check_required`와 pending. winner를 만들지 않는다.
 
@@ -45,7 +45,7 @@
 - [x] 자동 전체와 단계별 조회가 같은 digest를 유지한다.
 - [x] digest는 viewer 원문의 전체 문자열이며 UI에서 계산하지 않는다.
 - [x] 적 resource reservation과 opaque identity가 viewer 원장/UI에 노출되지 않는다.
-- [x] hit/damage/casualty/winner를 만들거나 표시하지 않는다.
+- [x] 이 작업 당시에는 hit/damage/casualty/winner를 만들지 않았고, G8-00 이후 실제 combat effect는 코어 viewer 원장만 표시한다. winner는 계속 G8-01 pending이다.
 - [x] 1600×900에서 5단계 버튼, digest, 스크롤, 하단 CTA가 겹치지 않는다.
 - [x] 기존 이동·접촉·진형·무기·자원 UI 회귀가 녹색이다.
 - [x] 제품 코드의 3D 참조가 0이다.
@@ -72,6 +72,7 @@
 
 ## 한계와 후속
 
+- G8-00에서 일반 사격과 연쇄 폭발의 실제 피해·사기·센서·임시 지형 효과가 원장에 연결되었다. 장수 casualty와 winner는 여전히 후속 범위다.
 - P1 잔여 없음.
 - P2: 실제 OS 물리 입력·스크린리더·고 DPI는 자동 Control/GPU 시험 범위 밖이다.
 - P2: 이벤트가 매우 많은 턴의 검색·접기·가상화는 후속 로그 탐색 개선 대상이다.

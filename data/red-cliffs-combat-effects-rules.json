@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-combat-effects-v1",
+  "statement": "DEMO-RC-G8-00 normal-demo 수치다. 원본 applied setup/composition은 불변이며 별도 effect state만 변한다. 승인 사격은 event_id 오름차순 stable SHA-256 roll로 명중을 정하고 같은 턴 일반 사격과 연쇄 폭발은 pre-damage snapshot에서 산출한 뒤 target별 합산한다. 실제 함선 손실만 확정하며 장수 부상·전사·포로와 최종 승패는 후속 G8-01/G8-03 경계다.",
+  "hull_points_per_ship_unit_cost_point": 10,
+  "maximum_hull_policy": "sum(original ship count * setup ship_type.unit_cost * hull_points_per_ship_unit_cost_point); mission equipment cost is excluded",
+  "hit": {
+    "base_accuracy_basis_points": {"intercept": 8000, "line_fire": 7000, "artillery": 6500, "torpedo": 6000},
+    "impact_radius": {"intercept": 35, "line_fire": 25, "artillery": 55, "torpedo": 45},
+    "minimum_basis_points": 1000,
+    "maximum_basis_points": 9500,
+    "roll_policy": "sha256(profile_id|turn|event_id)_first_8_hex_mod_10000; hit_if_roll_lt_accuracy",
+    "accuracy_policy": "clamp(base+(shooter_fire_percent-target_total_defense_percent)*100,min,max), then multiply command_accuracy_basis_points half_up; allocation is already consumed by weapon selection and is not applied twice; estimated additionally requires sealed aim within weapon impact radius of actual core target position and multiplies confidence half_up"
+  },
+  "damage_points": {"intercept": 70, "line_fire": 100, "artillery": 140, "torpedo": 180},
+  "hull_bands_basis_points": {"operational_min": 7500, "moderate_damage_min": 4000, "heavy_damage_min": 1, "destroyed": 0},
+  "ship_loss_policy": "floor(total_original_ships*cumulative_hull_loss/maximum_hull); monotonic; cap overkill at current hull; allocate cumulative losses by ship_type_id ascending while preserving immutable original composition",
+  "supply_ship_status_policy": "G6-06 is squadron-level: apply the squadron hull damage band to every surviving SHP-05; SHP-05 removed by deterministic composition casualty allocation is destroyed; never infer per-ship hull",
+  "morale": {
+    "maximum_basis_points": 10000,
+    "normal_hit_minimum_loss_basis_points": 300,
+    "normal_hit_damage_ratio_divisor": 5,
+    "ship_loss_penalty_each_basis_points": 200,
+    "chain_shock_basis_points": 3500,
+    "bands_basis_points": {"steady_min": 6000, "shaken_min": 3000, "retreating_min": 1, "surrendered": 0},
+    "shaken_contract": "actions remain available and already-authorized current-turn actions are never retroactively cancelled",
+    "retreating_contract": "from next command can_attack=false and can_change_mission=false; forced_retreat=true; actual exit movement and victory consequence are G8-03",
+    "surrendered_contract": "terminal; commander_captivity_and_victory_pending"
+  },
+  "chain_explosion": {
+    "reactor_damage_percent_of_pre_damage_maximum_hull": 40,
+    "sensor_modifier_percent": -40,
+    "sensor_active_from_turn_offset": 1,
+    "sensor_duration_turns": 2,
+    "temporary_terrain": {
+      "name": "반응로 연쇄 유폭 지대",
+      "width": 160,
+      "height": 160,
+      "active_from_turn_offset": 1,
+      "duration_turns": 2,
+      "effects": {"movement_cost_basis_points": 15000, "observer_sensor_percent": -15, "target_concealment_points": 8, "weapon_range_basis_points": 8500, "weapon_arc_delta_deg": -10}
+    }
+  },
+  "resolution_order": "resource_authorized_shots_then_chain_trigger_then_atomic_pre_damage_target_aggregate_then_supply_ship_status_sync_then_outbound_supply_then_phase_ledger_then_victory_inputs",
+  "replay_policy": "processed shot and chain trigger event IDs are unique forever; duplicate, malformed, or wrong-turn batch rejects without mutation",
+  "result_contract": {"hit": "resolved", "damage": "resolved", "ship_losses": "resolved", "morale": "resolved", "sensor_disruption": "resolved", "temporary_terrain": "resolved", "commander_casualties": "pending", "victory": "pending_G8_01"}
+}

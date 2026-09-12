@@ -166,7 +166,7 @@ func _test_battle_draft_timing_persistence_parity_and_redaction() -> void:
 	_eq(battle.weapon_allocation_state()["RC-LIU-SQ-01"].allocations, before_live, "draft does not mutate live allocation")
 	_ok(battle.submit_command_draft().ok and battle.submit_sun_control_choice("ai").ok, "Liu submit and AI path")
 	var first: Dictionary = battle.resolve_turn(); _ok(first.ok, "weapon orders apply at resolve start")
-	_ok(first.rules_pending.has("weapon_fire"), "actual weapon fire remains pending")
+	_ok(first.rules_pending == ["commander_casualties", "victory"] and first.has("combat_effect_events"), "authorized weapon fire reaches actual G8 effects")
 	_eq(battle.weapon_allocation_state()["RC-LIU-SQ-01"].allocations.line_fire, 4321, "allocation applied")
 	_ok(battle.weapon_allocation_state()["RC-LIU-SQ-01"].hold_fire, "hold-fire applied")
 	_eq(first.weapon_allocation_events.size(), 5, "AI and player share complete resolver including fast craft")

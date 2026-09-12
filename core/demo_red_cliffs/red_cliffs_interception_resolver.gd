@@ -70,7 +70,7 @@ func weapon_capabilities() -> Dictionary:
 
 
 func resolve(movement_events: Array, live_navigation: Dictionary, prior_detection: Dictionary,
-		turn_number: int, weapon_policy: Dictionary = {}, formation_state: Dictionary = {}) -> Dictionary:
+		turn_number: int, weapon_policy: Dictionary = {}, formation_state: Dictionary = {}, sensor_effects: Dictionary = {}, temporary_zones: Array = []) -> Dictionary:
 	if _setup.is_empty(): return _error("요격 판정기가 초기화되지 않았습니다.")
 	var checked: Dictionary = _validate_inputs(movement_events, live_navigation, prior_detection, turn_number)
 	if not checked.ok: return checked
@@ -78,12 +78,12 @@ func resolve(movement_events: Array, live_navigation: Dictionary, prior_detectio
 	var detection: Dictionary = prior_detection.duplicate(true)
 	var intersection_events: Array = _resolve_intersections(event_by_squad, turn_number)
 	var active_formation: Dictionary = formation_state.duplicate(true) if not formation_state.is_empty() else _detection_resolver.initial_formation_state()
-	var detection_result: Dictionary = _resolve_detection(event_by_squad, detection, turn_number, active_formation)
+	var detection_result: Dictionary = _resolve_detection(event_by_squad, detection, turn_number, active_formation, sensor_effects, temporary_zones)
 	if not detection_result.ok: return detection_result
 	var active_policy: Dictionary = weapon_policy.duplicate(true) if not weapon_policy.is_empty() else _weapon_control.interception_policy(_weapon_control.initial_state())
 	var policy_check := _validate_weapon_policy(active_policy)
 	if not policy_check.ok: return policy_check
-	var fire_events: Array = _resolve_opportunity_fire(event_by_squad, detection, turn_number, active_policy)
+	var fire_events: Array = _resolve_opportunity_fire(event_by_squad, detection, turn_number, active_policy, temporary_zones)
 	return {"ok": true, "errors": [], "path_intersection_events": intersection_events,
 		"detection_events": detection_result.events, "opportunity_fire_events": fire_events,
 		"detection_state": detection}
@@ -212,7 +212,7 @@ func _resolve_intersections(event_by_squad: Dictionary, turn_number: int) -> Arr
 
 
 func _resolve_detection(event_by_squad: Dictionary, detection: Dictionary, turn_number: int,
-		formation_state: Dictionary) -> Dictionary:
+		formation_state: Dictionary, sensor_effects: Dictionary = {}, temporary_zones: Array = []) -> Dictionary:
 	var result: Array = []; var keys: Array = detection.keys(); keys.sort()
 	for key_value in keys:
 		var key := String(key_value); var row: Dictionary = detection[key]
@@ -220,7 +220,7 @@ func _resolve_detection(event_by_squad: Dictionary, detection: Dictionary, turn_
 		var closest := _closest_paths(_event_path(event_by_squad[observer_id]), _event_path(event_by_squad[target_id]))
 		var distance := float(closest.distance); var previous := String(row.state)
 		var evaluated: Dictionary = _detection_resolver.evaluate(observer_id, target_id, distance, formation_state,
-			closest.point_a, closest.point_b)
+			closest.point_a, closest.point_b, int(sensor_effects.get(observer_id, 0)), temporary_zones)
 		if not evaluated.ok: return evaluated
 		var state := String(evaluated.state)
 		var observed = closest.point_b.duplicate() if state != "undetected" else null
@@ -245,7 +245,7 @@ func _resolve_detection(event_by_squad: Dictionary, detection: Dictionary, turn_
 
 
 func _resolve_opportunity_fire(event_by_squad: Dictionary, detection: Dictionary,
-		turn_number: int, weapon_policy: Dictionary) -> Array:
+		turn_number: int, weapon_policy: Dictionary, temporary_zones: Array = []) -> Array:
 	var candidates: Array = []
 	for key_value in detection.keys():
 		var contact: Dictionary = detection[key_value]
@@ -268,11 +268,11 @@ func _resolve_opportunity_fire(event_by_squad: Dictionary, detection: Dictionary
 		for value in weapon_policy[shooter_id].capabilities:
 			var capability: Dictionary = value; var weapon_id := String(capability.weapon_id)
 			var allocation := int(weapon_policy[shooter_id].allocations.get(weapon_id, 0))
-			var terrain_effect: Dictionary = _terrain.weapon_effect(closest.point_a, closest.point_b, "actual_reached_position")
+			var terrain_effect: Dictionary = _terrain.weapon_effect(closest.point_a, closest.point_b, "actual_reached_position", temporary_zones)
 			var effective_range := int(floor(float(int(capability.range) * int(terrain_effect.range_basis_points) + 5000) / 10000.0))
 			var effective_arc := clampf(float(capability.arc_deg) + float(terrain_effect.arc_delta_deg), 0.0, 360.0)
 			if allocation <= 0 or float(closest.distance) > float(effective_range) or angle_delta > effective_arc * 0.5 + 0.000001: continue
-			var initial_effect: Dictionary = _terrain.weapon_effect(shooter_event.from, target_event.from, "actual_reached_position")
+			var initial_effect: Dictionary = _terrain.weapon_effect(shooter_event.from, target_event.from, "actual_reached_position", temporary_zones)
 			var initial_range := int(floor(float(int(capability.range) * int(initial_effect.range_basis_points) + 5000) / 10000.0))
 			var initial_arc := clampf(float(capability.arc_deg) + float(initial_effect.arc_delta_deg), 0.0, 360.0)
 			if initial_distance <= float(initial_range) and initial_delta <= initial_arc * 0.5 + 0.000001: continue
