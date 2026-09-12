@@ -210,7 +210,7 @@ func _validate_rules(raw, setup: Dictionary) -> Dictionary:
 	if seen.size() != 4 or raw.get("historical_squadron_ids") != ["RC-LIU-FC-01"] or not raw.get("historical_loadouts") is Array or raw.historical_loadouts.size() != 1: return _error("역사 기본 고속정 전대 계약이 잘못되었습니다.")
 	if not raw.get("basing_modes") is Array or raw.basing_modes != BASING_MODES: return _error("고속정 운용 기반 3종 계약이 잘못되었습니다.")
 	if not raw.get("basing_contract") is Dictionary or not BASING_MODES.all(func(id): return not String(raw.basing_contract.get(id, "")).is_empty()): return _error("고속정 운용 기반 설명이 누락되었습니다.")
-	var expected_out_of_scope := ["in_battle_equipment_change", "tactical_mission_effect", "drift", "rescue_result", "capture_result", "supply_source_stock", "supply_source_damage", "base_reloading"]
+	var expected_out_of_scope := ["in_battle_equipment_change", "non_rescue_tactical_mission_effect", "supply_source_stock", "supply_source_damage", "base_reloading"]
 	if not raw.get("out_of_scope") is Array or raw.out_of_scope != expected_out_of_scope: return _error("후속 G6 범위 경계가 누락되었습니다.")
 	_rules = raw.duplicate(true); var result := _validate_contract(setup, true); _rules = {}
 	return result

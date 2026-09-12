@@ -28,6 +28,7 @@ var _fire_events: Array = []
 var _terrain_zones: Array = []
 var _fast_craft_supply_sources: Array = []
 var _fast_craft_return_statuses: Array = []
+var _fast_craft_recovery: Dictionary = {}
 var _map_label_rects: Array[Rect2] = []
 var _mode := Mode.SELECT
 var _zoom := 1.0
@@ -107,6 +108,15 @@ func set_fast_craft_returns(receipt: Dictionary) -> void:
 
 func fast_craft_return_statuses_for_test() -> Array:
 	return _fast_craft_return_statuses.duplicate(true)
+
+
+func set_fast_craft_recovery(receipt: Dictionary) -> void:
+	_fast_craft_recovery = receipt.duplicate(true) if bool(receipt.get("ok", false)) else {}
+	queue_redraw()
+
+
+func fast_craft_recovery_for_test() -> Dictionary:
+	return _fast_craft_recovery.duplicate(true)
 
 
 func clear_intelligence() -> void:
@@ -239,6 +249,7 @@ func _draw() -> void:
 	_draw_terrain_zones()
 	_draw_fast_craft_supply_sources()
 	_draw_fast_craft_return_routes()
+	_draw_fast_craft_recovery()
 	_draw_route()
 	_draw_fire_events()
 	_draw_opaque_contacts()
@@ -313,6 +324,48 @@ func _draw_fast_craft_return_routes() -> void:
 
 func _fast_return_status_label(status: String) -> String:
 	return String({"normal":"귀환 예측", "early_return":"조기 귀환", "forced_return":"비상 강제귀환", "stranded_risk":"도달 불가 위험"}.get(status, status))
+
+
+func _draw_fast_craft_recovery() -> void:
+	for value in _fast_craft_recovery.get("disabled_supply_sources", []):
+		if not value is Dictionary: continue
+		var disabled: Dictionary = value; var position = disabled.get("position", [])
+		if not position is Array or position.size() != 2: continue
+		var point := battle_to_local(position); var color := Color("ef6c75")
+		draw_line(point + Vector2(-13, -13), point + Vector2(13, 13), color, 4.0)
+		draw_line(point + Vector2(-13, 13), point + Vector2(13, -13), color, 4.0)
+		_draw_map_label(point, "보급 무력화 · %s · 0/턴" % String(disabled.get("source_id", "")), color, 13, 210.0, Vector2(20, -12))
+	for value in _fast_craft_recovery.get("statuses", []):
+		if not value is Dictionary: continue
+		var status: Dictionary = value; var incident := String(status.get("status", "active"))
+		if incident in ["active", "depleted_docked"]: continue
+		var position = status.get("display_position", [])
+		if (not position is Array or position.size() != 2) and _navigation.has(String(status.get("squadron_id", ""))): position = _navigation[String(status.squadron_id)].get("position", [])
+		if not position is Array or position.size() != 2: continue
+		var point := battle_to_local(position); var viewer_state := String(status.get("viewer_state", "own")); var color := Color("e0b66d") if viewer_state == "estimated" else (Color("ef6c75") if incident == "captured" else Color("f0a45f"))
+		draw_circle(point, MARKER_RADIUS + 10.0, color, false, 3.0)
+		if incident == "drifting": draw_circle(point, MARKER_RADIUS + 16.0, color, false, 2.0)
+		var route = status.get("rescue_route", [])
+		if route is Array and route.size() >= 2:
+			for index in range(route.size() - 1):
+				if route[index] is Array and route[index + 1] is Array: draw_dashed_line(battle_to_local(route[index]), battle_to_local(route[index + 1]), Color("74d9b0"), 3.0, 8.0)
+		var prefix := "추정 · " if viewer_state == "estimated" else ("확인 · " if viewer_state == "confirmed" else "")
+		_draw_map_label(point, "%s%s" % [prefix, _fast_recovery_status_label(incident)], color, 13, 145.0, Vector2(24, 18))
+	for value in _fast_craft_recovery.get("events", []):
+		if not value is Dictionary: continue
+		var event: Dictionary = value; var responder_route = event.get("responder_route", []); var target_route = event.get("target_route", [])
+		if target_route is Array and target_route.size() >= 2:
+			for index in range(target_route.size() - 1):
+				if target_route[index] is Array and target_route[index + 1] is Array: draw_dashed_line(battle_to_local(target_route[index]), battle_to_local(target_route[index + 1]), Color("f0a45f"), 3.0, 8.0)
+		if responder_route is Array and responder_route.size() >= 2:
+			for index in range(responder_route.size() - 1):
+				if responder_route[index] is Array and responder_route[index + 1] is Array: draw_dashed_line(battle_to_local(responder_route[index]), battle_to_local(responder_route[index + 1]), Color("74d9b0"), 3.0, 8.0)
+		var target = event.get("position", [])
+		if target is Array and target.size() == 2 and ((responder_route is Array and not responder_route.is_empty()) or (target_route is Array and not target_route.is_empty())): _draw_map_label(battle_to_local(target), "%s · 자동 판정" % _fast_recovery_status_label(String(event.get("status", ""))), Color("74d9b0"), 13, 155.0, Vector2(24, 44))
+
+
+func _fast_recovery_status_label(status: String) -> String:
+	return String({"drifting":"연료 0 · 표류", "rescued":"구조 완료", "captured":"나포됨", "rescue_assigned":"구조 배정", "rescue_in_progress":"구조 진행"}.get(status, status))
 
 
 func _draw_map_label(anchor: Vector2, label: String, color: Color, font_size: int, width: float, preferred_offset: Vector2) -> void:

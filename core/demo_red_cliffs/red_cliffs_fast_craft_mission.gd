@@ -31,7 +31,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 
 func catalog() -> Dictionary:
 	return {"ok": true, "errors": [], "tactical_missions": _rules.get("tactical_missions", []).duplicate(true),
-		"equipment_allowlists": _equipment_allowlists(), "result_pending": ["mission_effect", "fuel", "resupply", "return", "drift", "rescue_result", "capture_result"]}
+		"equipment_allowlists": _equipment_allowlists(), "result_pending": ["non_rescue_mission_effect"]}
 
 
 func initial_state() -> Dictionary:
@@ -156,7 +156,7 @@ func _event(status: String, squadron_id: String, faction_id: String, previous: S
 	return {"event_id": "FC-MISSION-%06d" % serial, "serial": serial, "event_type": "fast_craft_mission_change",
 		"status": status, "squadron_id": squadron_id, "faction_id": faction_id, "previous_mission_id": previous,
 		"mission_id": requested, "requested_turn": requested_turn, "effective_turn": effective_turn,
-		"result_pending": ["mission_effect", "fuel", "resupply", "return", "drift", "rescue_result", "capture_result"]}
+		"result_pending": ["non_rescue_mission_effect"]}
 
 
 func _append_event(state: Dictionary, turn_number: int, event: Dictionary) -> void:

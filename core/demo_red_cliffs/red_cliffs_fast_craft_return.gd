@@ -53,10 +53,11 @@ func cancel_early(return_state: Dictionary, status_row: Dictionary, turn_number:
 	var next := return_state.duplicate(true); next.early_return_intents.erase(String(status_row.squadron_id)); next.destinations.erase(String(status_row.squadron_id))
 	var event := _event(next,"early_cancelled",status_row,turn_number); _append(next,turn_number,event); return {"ok":true,"errors":[],"state":next,"event":event}
 
-func plan(return_state: Dictionary, supply_state: Dictionary, sources: Array, navigation: Dictionary, speeds: Dictionary, turn_number: int) -> Dictionary:
+func plan(return_state: Dictionary, supply_state: Dictionary, sources: Array, navigation: Dictionary, speeds: Dictionary, turn_number: int, excluded_squadron_ids: Array = []) -> Dictionary:
 	var next := return_state.duplicate(true); var overrides := {}; var statuses: Array = []; var events: Array = []; var ids: Array = supply_state.resources.keys(); ids.sort()
 	for sid_value in ids:
-		var sid := String(sid_value); var row: Dictionary = status(sid,next,supply_state,sources,navigation,int(speeds.get(sid,0))); if not row.ok: return row
+		var sid := String(sid_value); if excluded_squadron_ids.has(sid): continue
+		var row: Dictionary = status(sid,next,supply_state,sources,navigation,int(speeds.get(sid,0))); if not row.ok: return row
 		statuses.append(row.duplicate(true)); if not ["forced_return","early_return","stranded_risk"].has(String(row.status)): continue
 		if String(row.status) == "stranded_risk": events.append(_event(next,"stranded_risk",row,turn_number)); continue
 		var previous := String(next.destinations.get(sid,{}).get("source_id","")); next.destinations[sid] = {"source_id":String(row.nearest_source_id),"selected_turn":turn_number}

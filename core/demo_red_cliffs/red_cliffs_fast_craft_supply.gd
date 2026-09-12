@@ -26,9 +26,10 @@ func initial_state(navigation: Dictionary) -> Dictionary:
 		if not source.is_empty(): queue[sid] = _queue_row(sid, String(squad.faction_id), String(source.source_id), 1, 0)
 	return {"resources": resources, "queue": queue, "events_by_turn": {}, "next_event_serial": 1}
 
-func source_zones(navigation: Dictionary) -> Array:
+func source_zones(navigation: Dictionary, disabled_source_ids: Array = []) -> Array:
 	var sources: Array = []
 	for base in _rules.friendly_bases:
+		if disabled_source_ids.has(String(base.source_id)): continue
 		sources.append({"source_id": String(base.source_id), "source_type": "friendly_base", "faction_id": String(base.faction_id),
 			"position": base.position.duplicate(), "radius": int(_rules.source_types.friendly_base.radius), "capacity_squadrons_per_turn": int(_rules.source_types.friendly_base.capacity_squadrons_per_turn)})
 	for squad in _setup.squadrons:
@@ -37,12 +38,13 @@ func source_zones(navigation: Dictionary) -> Array:
 			var rule: Dictionary = _rules.source_types[source_type]; var count := 0
 			for row in squad.composition:
 				if String(row.ship_type_id) == String(rule.ship_type_id): count += int(row.count)
-			if count > 0: sources.append({"source_id": "%s-%s" % [source_type.to_upper(), String(squad.id)], "source_type": source_type,
+			var source_id := "%s-%s" % [source_type.to_upper(), String(squad.id)]
+			if count > 0 and not disabled_source_ids.has(source_id): sources.append({"source_id": source_id, "source_type": source_type,
 				"faction_id": String(squad.faction_id), "provider_squadron_id": String(squad.id), "position": navigation[String(squad.id)].position.duplicate(), "radius": int(rule.radius),
 				"capacity_squadrons_per_turn": count * int(rule.capacity_per_ship)})
 	sources.sort_custom(func(a, b): return String(a.source_id) < String(b.source_id)); return sources
 
-func resolve(state: Dictionary, prior_navigation: Dictionary, live_navigation: Dictionary, movement_events: Array, turn_number: int) -> Dictionary:
+func resolve(state: Dictionary, prior_navigation: Dictionary, live_navigation: Dictionary, movement_events: Array, turn_number: int, disabled_source_ids: Array = [], ineligible_squadron_ids: Array = []) -> Dictionary:
 	if turn_number < 1: return _error("보급 판정 턴이 잘못되었습니다.")
 	var movement_seen := {}
 	for value in movement_events:
@@ -51,13 +53,19 @@ func resolve(state: Dictionary, prior_navigation: Dictionary, live_navigation: D
 		if movement_id.is_empty() or movement_seen.has(movement_id) or not (actual is int or actual is float) or not is_finite(float(actual)) or float(actual) < 0.0: return _error("실제 이동 거리 원장이 잘못되었습니다.")
 		movement_seen[movement_id] = true
 	var next := state.duplicate(true); next.resources = _sorted_dictionary(next.get("resources", {})); next.queue = _sorted_dictionary(next.get("queue", {}))
-	var events: Array = []; var sources := source_zones(live_navigation); var ids: Array = next.resources.keys(); ids.sort()
+	var events: Array = []; var sources := source_zones(live_navigation, disabled_source_ids); var ids: Array = next.resources.keys(); ids.sort()
 	for sid_value in ids:
 		var sid := String(sid_value); var resource: Dictionary = next.resources[sid]
 		if not prior_navigation.has(sid) or not live_navigation.has(sid): return _error("고속정 이동 결과가 누락되었습니다: %s" % sid)
+		if ineligible_squadron_ids.has(sid):
+			var unavailable: Dictionary = next.queue.get(sid, {})
+			if not unavailable.is_empty(): events.append(_event(next, "interrupted", sid, String(resource.faction_id), String(unavailable.source_id), turn_number, "recovery_locked")); next.queue.erase(sid)
+			continue
 		var current: Array = live_navigation[sid].position
 		var moved := _actual_moved(sid, movement_events)
 		var source := _source_at(String(resource.faction_id), current, sources); var old: Dictionary = next.queue.get(sid, {})
+		if not old.is_empty() and disabled_source_ids.has(String(old.source_id)):
+			events.append(_event(next, "interrupted", sid, String(resource.faction_id), String(old.source_id), turn_number, "source_captured")); next.queue.erase(sid); old = {}
 		if source.is_empty():
 			if not old.is_empty(): events.append(_event(next, "interrupted", sid, String(resource.faction_id), String(old.source_id), turn_number, "left_zone")); next.queue.erase(sid)
 			continue
@@ -95,13 +103,13 @@ func resolve(state: Dictionary, prior_navigation: Dictionary, live_navigation: D
 	for event in events: _append_event(next, turn_number, event)
 	return {"ok": true, "errors": [], "state": next, "events": events, "sources": sources, "completed_squadron_ids":completed_squadron_ids}
 
-func visible(viewer_faction_id: String, state: Dictionary, navigation: Dictionary) -> Dictionary:
+func visible(viewer_faction_id: String, state: Dictionary, navigation: Dictionary, disabled_source_ids: Array = []) -> Dictionary:
 	var resources: Array = []; var queue: Array = []; var events: Array = []; var sources: Array = []
 	for row in state.resources.values():
 		if String(row.faction_id) == viewer_faction_id: resources.append(row.duplicate(true))
 	for row in state.queue.values():
 		if String(row.faction_id) == viewer_faction_id: queue.append(row.duplicate(true))
-	for source in source_zones(navigation):
+	for source in source_zones(navigation, disabled_source_ids):
 		if _friendly(viewer_faction_id, String(source.faction_id)): sources.append(source.duplicate(true))
 	var turns: Array = state.events_by_turn.keys(); turns.sort()
 	for event_turn in turns:

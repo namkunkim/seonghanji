@@ -87,7 +87,7 @@ func _test_forced_and_stranded_warnings() -> void:
 	var risk: Dictionary = battle.viewer_fast_craft_returns("liu_bei").statuses[0]; _eq(risk.status, "stranded_risk", "unreachable fixture is core-classified risk only")
 	state = view.find_child("FastCraftReturnState", true, false)
 	_ok(state.text.contains("도달 가능한 아군 보급원이 없습니다") and state.text.contains("필요 산출 불가") and state.text.contains("예상 산출 불가"), "unreachable warning avoids fabricated route metrics")
-	var boundary: Label = view.find_child("FastCraftReturnBoundary", true, false); _ok(boundary.text.contains("G6-05") and boundary.text.contains("표류·파괴·나포"), "G6-05 outcome boundary stays explicit")
+	var boundary: Label = view.find_child("FastCraftReturnBoundary", true, false); _ok(boundary.text.contains("G6-05") and boundary.text.contains("표류·구조·나포"), "G6-05 outcome boundary stays explicit")
 	view.free()
 
 func _test_viewer_boundary() -> void:

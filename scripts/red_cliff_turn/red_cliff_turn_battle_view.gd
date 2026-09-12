@@ -178,15 +178,17 @@ func _rebuild_map(snapshot: Dictionary) -> void:
 		_map.set_terrain_zones(viewer.get("terrain_zones", []))
 		_map.set_fast_craft_supply(_battle.viewer_fast_craft_supply(_viewer_faction_id) if _battle.has_method("viewer_fast_craft_supply") else {})
 		_map.set_fast_craft_returns(_battle.viewer_fast_craft_returns(_viewer_faction_id) if _battle.has_method("viewer_fast_craft_returns") else {})
+		_map.set_fast_craft_recovery(_battle.viewer_fast_craft_recovery(_viewer_faction_id) if _battle.has_method("viewer_fast_craft_recovery") else {})
 		_map.set_intelligence(_viewer_faction_id, viewer.get("contacts", []), viewer.get("tactical_events", []))
 		var selectable_contacts: Array[String] = []
 		for value in viewer.get("contacts", []):
 			if String(value.get("state", "")) == "estimated": selectable_contacts.append(String(value.get("contact_id", "")))
 		if not selectable_contacts.has(_selected_contact_id): _selected_contact_id = ""
 		_map.set_selected_contact(_selected_contact_id)
-	else: _map.clear_intelligence(); _map.set_fast_craft_supply({}); _map.set_fast_craft_returns({})
+	else: _map.clear_intelligence(); _map.set_fast_craft_supply({}); _map.set_fast_craft_returns({}); _map.set_fast_craft_recovery({})
 	var editable := _editable_squadron_ids(snapshot)
-	if not editable.has(_selected_squadron_id): _selected_squadron_id = editable[0] if not editable.is_empty() else ""
+	var selectable := _selectable_squadron_ids(snapshot)
+	if not selectable.has(_selected_squadron_id): _selected_squadron_id = selectable[0] if not selectable.is_empty() else ""
 	var mode := TacticalMap.Mode.ADD_WAYPOINT if _move_armed else TacticalMap.Mode.SELECT
 	_map.set_interaction(editable, _selected_squadron_id, mode)
 	var order_result: Dictionary = _battle.command_order(_selected_squadron_id) if not _selected_squadron_id.is_empty() else {}
@@ -199,8 +201,8 @@ func _rebuild_map(snapshot: Dictionary) -> void:
 
 func _rebuild_squad_list(snapshot: Dictionary) -> void:
 	_clear(_squad_list)
-	for id in _editable_squadron_ids(snapshot):
-		var squad := _find_squad(snapshot, id); var button := _button(("● " if id == _selected_squadron_id else "○ ") + String(squad.get("name", id)), "Select_%s" % id, 185)
+	for id in _selectable_squadron_ids(snapshot):
+		var squad := _find_squad(snapshot, id); var locked := bool(_fast_craft_recovery_status(id).get("command_locked", false)); var button := _button(("● " if id == _selected_squadron_id else "○ ") + String(squad.get("name", id)) + (" · 잠금" if locked else ""), "Select_%s" % id, 185)
 		button.pressed.connect(_select_squadron.bind(id)); _squad_list.add_child(button)
 
 
@@ -212,6 +214,7 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 		var empty := Label.new(); empty.text = "현재 편집 가능한 전대가 없습니다."; _orders.add_child(empty)
 		_add_fast_craft_mission_overview()
 		_add_intelligence_panel()
+		_add_fast_craft_recovery_observations()
 		_add_command_penalty_results()
 		_add_chain_explosion_panel()
 		_add_ai_decision_panel()
@@ -250,12 +253,14 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	_update_preview_text(order)
 	_add_terrain_panel()
 	_add_intelligence_panel()
+	_add_fast_craft_recovery_observations(false)
 	_add_command_penalty_results()
 	_add_chain_explosion_panel()
 	_add_ai_decision_panel()
 	_add_estimated_fire_editor()
 	_add_phase_ledger()
 	var detection_auto := _button("탐지 · 자동 코어 판정 · 수동 조작 없음", "DetectionAutomatic", 340); detection_auto.disabled = true; _orders.add_child(detection_auto)
+	_apply_fast_craft_recovery_command_lock()
 
 
 func _add_fast_craft_applied_loadout(squad: Dictionary) -> void:
@@ -299,6 +304,9 @@ func _add_fast_craft_mission_panel(status: Dictionary, receipt: Dictionary, show
 	var editable := bool(status.get("can_change", false))
 	var can_cancel := bool(status.get("can_cancel", false))
 	var change_reason := String(status.get("change_reason", ""))
+	var recovery_status := _fast_craft_recovery_status(squadron_id)
+	if bool(recovery_status.get("command_locked", false)):
+		editable = false; can_cancel = false; change_reason = "recovery_command_lock"
 	var mode_label: String = String({"immediate":"현재 턴 즉시 적용", "next_turn_queue":"다음 턴 예약", "read_only":"읽기 전용"}.get(application, "읽기 전용"))
 	var title := Label.new(); title.name = "FastCraftMissionTitle_%s" % squadron_id if show_identity else "FastCraftMissionTitle"; title.text = "%s전술 임무 · %s" % ["%s · " % squadron_id if show_identity else "", mode_label]; title.add_theme_color_override("font_color", Color("9fd4e2")); _orders.add_child(title)
 	var state := Label.new(); state.name = "FastCraftMissionState"; state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -345,7 +353,7 @@ func _fast_mission_event_text(event: Dictionary, receipt: Dictionary) -> String:
 
 
 func _fast_mission_change_reason(reason: String) -> String:
-	return String({"queue_already_exists":"이미 다음 턴 예약이 있어 먼저 취소해야 합니다.", "turn_limit_no_next_turn":"20턴 판정 중에는 적용할 다음 턴이 없습니다."}.get(reason, reason))
+	return String({"queue_already_exists":"이미 다음 턴 예약이 있어 먼저 취소해야 합니다.", "turn_limit_no_next_turn":"20턴 판정 중에는 적용할 다음 턴이 없습니다.", "recovery_command_lock":"표류·구조·나포 상태는 코어가 명령을 잠급니다."}.get(reason, reason))
 
 
 func _add_fast_craft_supply_panel(squadron_id: String, show_identity: bool) -> void:
@@ -379,8 +387,9 @@ func _add_fast_craft_supply_panel(squadron_id: String, show_identity: bool) -> v
 	for index in range(maxi(0, matching_events.size() - 3), matching_events.size()):
 		var event_row: Dictionary = matching_events[index]; var event := Label.new(); event.name = "FastCraftSupplyLatest%s" % suffix if index == matching_events.size() - 1 else "FastCraftSupplyEvent%s_%d" % [suffix, int(event_row.get("serial", index))]; event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _fast_supply_event_text(event_row); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
 	var priority := Label.new(); priority.name = "FastCraftSupplyPriority%s" % suffix; priority.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; priority.text = "자동 처리 우선순위 · %s" % _fast_supply_priority_text(receipt.get("priority", [])); _orders.add_child(priority)
-	var boundary := Label.new(); boundary.name = "FastCraftSupplyBoundary%s" % suffix; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "보급 영역·대기열·정박·처리량은 코어 자동 판정입니다. 수동 보급 명령은 없습니다. 비상 귀환 계획은 아래 패널에 표시하며 실제 표류·파괴·나포는 G6-05 이후입니다. %s" % String(receipt.get("inventory_contract", "")); boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+	var boundary := Label.new(); boundary.name = "FastCraftSupplyBoundary%s" % suffix; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "보급 영역·대기열·정박·처리량은 코어 자동 판정입니다. 수동 보급 명령은 없습니다. 비상 귀환과 표류·구조·나포 상태는 아래 패널에 표시합니다. %s" % String(receipt.get("inventory_contract", "")); boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
 	_add_fast_craft_return_panel(squadron_id, show_identity)
+	_add_fast_craft_recovery_panel(squadron_id, show_identity)
 
 
 func _fast_supply_source_label(source: Dictionary) -> String:
@@ -443,7 +452,7 @@ func _add_fast_craft_return_panel(squadron_id: String, show_identity: bool) -> v
 		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: events.append(value)
 	for index in range(maxi(0, events.size() - 3), events.size()):
 		var row: Dictionary = events[index]; var event := Label.new(); event.name = "FastCraftReturnLatest%s" % suffix if index == events.size() - 1 else "FastCraftReturnEvent%s_%d" % [suffix, int(row.get("serial", index))]; event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _fast_return_event_text(row); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
-	var boundary := Label.new(); boundary.name = "FastCraftReturnBoundary%s" % suffix; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "목적지는 매 턴 코어가 도달 가능한 가장 가까운 아군 보급원으로 재탐색합니다. 실제 표류·파괴·나포 판정은 G6-05에서 다룹니다."; boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+	var boundary := Label.new(); boundary.name = "FastCraftReturnBoundary%s" % suffix; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "목적지는 매 턴 코어가 도달 가능한 가장 가까운 아군 보급원으로 재탐색합니다. 표류·구조·나포 자동 판정은 아래 G6-05 읽기 전용 카드에 표시합니다."; boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
 
 
 func _on_request_fast_craft_return(squadron_id: String) -> void:
@@ -484,6 +493,86 @@ func _fast_return_event_text(event: Dictionary) -> String:
 		return "귀환 연료 소비 · T%d · 실제 이동 %.1f · 연료 %d→%d bp (-%d)" % [int(event.get("turn", 0)), float(event.get("actual_distance", 0.0)), int(event.get("fuel_before_basis_points", 0)), int(event.get("fuel_after_basis_points", 0)), int(event.get("fuel_used_basis_points", 0))]
 	var label: String = {"early_requested":"조기 귀환 요청", "early_cancelled":"조기 귀환 취소", "retargeted":"목적지 재탐색", "fuel_consumed":"귀환 연료 소비", "forced_return":"강제귀환 전환", "stranded_risk":"도달 불가 위험"}.get(status, status)
 	var text := "%s · T%d · %s · 필요 %d / 예비 %d bp · ETA %d턴" % [label, int(event.get("turn", 0)), String(event.get("nearest_source_id", event.get("source_id", ""))), int(event.get("required_fuel_basis_points", 0)), int(event.get("reserve_fuel_basis_points", 0)), int(event.get("eta_turns", 0))]
+	return text
+
+
+func _fast_craft_recovery_status(squadron_id: String) -> Dictionary:
+	if not _battle.has_method("viewer_fast_craft_recovery"): return {}
+	var receipt: Dictionary = _battle.viewer_fast_craft_recovery(_viewer_faction_id)
+	if not bool(receipt.get("ok", false)): return {}
+	for value in receipt.get("statuses", []):
+		if value is Dictionary and String(value.get("squadron_id", "")) == squadron_id: return value
+	return {}
+
+
+func _add_fast_craft_recovery_panel(squadron_id: String, show_identity: bool) -> void:
+	if not _battle.has_method("viewer_fast_craft_recovery"): return
+	var receipt: Dictionary = _battle.viewer_fast_craft_recovery(_viewer_faction_id); var status := _fast_craft_recovery_status(squadron_id)
+	if not bool(receipt.get("ok", false)) or status.is_empty(): return
+	var suffix := "_%s" % squadron_id if show_identity else ""; var incident := String(status.get("status", "active")); var locked := bool(status.get("command_locked", false))
+	var title := Label.new(); title.name = "FastCraftRecoveryTitle%s" % suffix; title.text = "%s표류·구조·나포 · 자동 판정 · 읽기 전용" % ("%s · " % squadron_id if show_identity else ""); title.add_theme_color_override("font_color", Color("ef7b79") if locked else Color("a8d9bd")); _orders.add_child(title)
+	var state := Label.new(); state.name = "FastCraftRecoveryState%s" % suffix; state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	state.text = "상태 %s · 연료 %d bp · %s\n이동 %s · 공격 %s · 임무 변경 %s" % [_fast_recovery_status_label(incident), int(status.get("fuel_basis_points", 0)), "명령 잠금" if locked else "명령 가능", "가능" if bool(status.get("can_move", false)) else "잠금", "가능" if bool(status.get("can_attack", false)) else "잠금", "가능" if bool(status.get("can_change_mission", false)) else "잠금"]
+	if incident == "drifting": state.text += "\n경고 · 연료 0 표류 T%d · 방향 %s · 코어 자동 이동" % [int(status.get("drift_started_turn", 0)), _fast_recovery_vector_text(status.get("drift_vector", []))]
+	if not String(status.get("responder_squadron_id", "")).is_empty(): state.text += "\n응답 전대 %s · %s" % [String(status.responder_squadron_id), _fast_recovery_responder_label(String(status.get("responder_type", "")))]
+	_orders.add_child(state)
+	var events: Array = []
+	for value in receipt.get("events", []):
+		if value is Dictionary and (String(value.get("target_squadron_id", "")) == squadron_id or String(value.get("responder_squadron_id", "")) == squadron_id): events.append(value)
+	for index in range(maxi(0, events.size() - 3), events.size()):
+		var row: Dictionary = events[index]; var event := Label.new(); event.name = "FastCraftRecoveryLatest%s" % suffix if index == events.size() - 1 else "FastCraftRecoveryEvent%s_%d" % [suffix, int(row.get("serial", index))]; event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _fast_recovery_event_text(row); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
+	var boundary := Label.new(); boundary.name = "FastCraftRecoveryBoundary%s" % suffix; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "수동 구조·나포 버튼 없음 · 직접 지휘와 AI가 동일 코어 판정을 사용합니다. 정상 보급함 근접은 나포가 아니며 실제 damage/boarding trigger는 G8-00 권위입니다. 나포 재고·재사용은 G6-06 이후입니다."; boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+	_add_disabled_supply_rows(receipt)
+
+
+func _add_fast_craft_recovery_observations(include_disabled := true) -> void:
+	if not _battle.has_method("viewer_fast_craft_recovery"): return
+	var receipt: Dictionary = _battle.viewer_fast_craft_recovery(_viewer_faction_id)
+	if not bool(receipt.get("ok", false)): return
+	for value in receipt.get("statuses", []):
+		if not value is Dictionary or String(value.get("viewer_state", "own")) == "own": continue
+		var row: Dictionary = value; var label := Label.new(); label.name = "FastCraftRecoveryObservation_%s" % String(row.get("contact_id", "unknown")); label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.text = "%s 접촉 · %s · %s" % ["확인" if String(row.viewer_state) == "confirmed" else "추정", String(row.get("contact_id", "식별 정보 비공개")), _fast_recovery_status_label(String(row.get("status", "unknown")))]; label.add_theme_color_override("font_color", Color("ef9f80") if String(row.viewer_state) == "confirmed" else Color("e0b66d")); _orders.add_child(label)
+	if include_disabled: _add_disabled_supply_rows(receipt)
+
+
+func _add_disabled_supply_rows(receipt: Dictionary) -> void:
+	for value in receipt.get("disabled_supply_sources", []):
+		if not value is Dictionary: continue
+		var row: Dictionary = value; var disabled := Label.new(); disabled.name = "CapturedSupplyDisabled_%s" % String(row.get("source_id", "")); disabled.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; disabled.text = "나포 보급함 무력화 · %s · 처리량 %d/턴 · captor gain %d\nG8-00 authoritative capture intent · 같은 턴 보급 제외" % [String(row.get("source_id", "")), int(row.get("capacity_squadrons_per_turn", 0)), int(row.get("captor_gain", 0))]; disabled.add_theme_color_override("font_color", Color("ef6c75")); _orders.add_child(disabled)
+
+
+func _apply_fast_craft_recovery_command_lock() -> void:
+	var status := _fast_craft_recovery_status(_selected_squadron_id)
+	if not bool(status.get("command_locked", false)): return
+	var prefixes := ["SetOrder", "ArmOrder", "AddCoordinate", "DeleteWaypoint", "ClearWaypoints", "FastTacticalMission", "CancelFastCraft", "RequestFastCraft", "HoldFire", "ResumeFire", "ApplyWeapon", "SetEstimatedFire", "ClearEstimatedFire", "StageChainExplosion", "CancelChainExplosion"]
+	for node in _orders.find_children("*", "Button", true, false):
+		for prefix in prefixes:
+			if String(node.name).begins_with(prefix): node.disabled = true; break
+	for node in _orders.find_children("*", "SpinBox", true, false): node.editable = false
+	for node_name in ["FormationOrderPicker", "WeaponPresetPicker"]:
+		var picker = _orders.find_child(node_name, true, false)
+		if picker != null: picker.disabled = true
+
+
+func _fast_recovery_status_label(status: String) -> String:
+	return String({"active":"정상", "depleted_docked":"연료 고갈·정박", "drifting":"연료 0 · 표류", "rescued":"구조 완료", "captured":"나포됨", "unknown":"상태 미확인"}.get(status, status))
+
+
+func _fast_recovery_vector_text(vector) -> String:
+	return "(%.2f, %.2f)" % [float(vector[0]), float(vector[1])] if vector is Array and vector.size() == 2 else "비공개"
+
+
+func _fast_recovery_responder_label(kind: String) -> String:
+	return String({"rescue_fast_craft":"구조 임무 고속정", "capture_unit":"나포 대응 전대"}.get(kind, "코어 응답 전대"))
+
+
+func _fast_recovery_event_text(event: Dictionary) -> String:
+	var status := String(event.get("status", "")); var label: String = {"drifting":"표류 시작", "rescued":"구조 완료", "captured":"나포됨", "supply_source_captured":"보급함 나포·무력화"}.get(status, status)
+	var text := "%s · T%d" % [label, int(event.get("turn", 0))]
+	if not String(event.get("responder_squadron_id", "")).is_empty(): text += " · 응답 %s" % String(event.responder_squadron_id)
+	if float(event.get("contact_progress", -1.0)) >= 0.0: text += " · 접촉 진행 %.1f" % float(event.contact_progress)
+	if event.has("source_id"): text += " · %s · 처리 0/턴 · captor gain %d" % [String(event.source_id), int(event.get("captor_gain", 0))]
 	return text
 
 
@@ -590,6 +679,13 @@ func _set_receipt(receipt: Dictionary) -> void:
 
 
 func _editable_squadron_ids(snapshot: Dictionary) -> Array[String]:
+	var result := _selectable_squadron_ids(snapshot)
+	for index in range(result.size() - 1, -1, -1):
+		if bool(_fast_craft_recovery_status(result[index]).get("command_locked", false)): result.remove_at(index)
+	return result
+
+
+func _selectable_squadron_ids(snapshot: Dictionary) -> Array[String]:
 	var result: Array[String] = []; var direct: String = _battle.current_direct_faction_id()
 	if direct.is_empty(): return result
 	for value in snapshot.get("applied_setup", {}).get("squadrons", []):
@@ -605,7 +701,7 @@ func _find_squad(snapshot: Dictionary, id: String) -> Dictionary:
 
 
 func _select_squadron(id: String) -> void:
-	if not _editable_squadron_ids(_battle.snapshot()).has(id):
+	if not _selectable_squadron_ids(_battle.snapshot()).has(id):
 		_last_error = "현재 단계에서 직접 지휘할 수 없는 전대입니다."; _refresh(); return
 	_selected_squadron_id = id; _move_armed = false; _last_error = ""; _refresh()
 
@@ -675,6 +771,9 @@ func _update_preview_text(order: Dictionary) -> void:
 	var preview: Dictionary = _battle.movement_preview(_selected_squadron_id, order.get("waypoints", []), order.get("facing_deg", 0))
 	if not bool(preview.get("ok", false)):
 		_preview_text.text = "이동 미리보기 오류: %s" % " · ".join(preview.get("errors", [])); return
+	if bool(preview.get("fuel_limited", false)):
+		_preview_text.text = "연료 제한 · 요청 거리 %.1f → 예상 실제 %.1f / 최대 %.1f · 가용 연료 %d bp\n예상 정지 (%.1f, %.1f) · 경로 미완료 · ETA 산출 불가\n코어 fuel clamp · 실제 판정과 동일%s" % [float(preview.get("requested_total_distance", 0.0)), float(preview.get("predicted_actual_distance", 0.0)), float(preview.get("maximum_fuel_distance", 0.0)), int(preview.get("available_fuel_basis_points", 0)), float(preview.predicted_position[0]), float(preview.predicted_position[1]), _terrain_preview_text(preview)]
+		return
 	_preview_text.text = "거리 %.1f / 이번 턴 예산 %d · ETA %d턴\n예상 도달 (%.1f, %.1f) · %s\n%s%s" % [float(preview.total_distance), int(preview.movement_budget), int(preview.eta_turns), float(preview.predicted_position[0]), float(preview.predicted_position[1]), "이번 턴 도달" if bool(preview.path_complete) else "예산 밖 경로 있음", "초록 실선: 이번 턴 · 주황 점선: 이후 턴", _terrain_preview_text(preview)]
 
 

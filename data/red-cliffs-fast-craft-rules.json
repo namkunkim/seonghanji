@@ -24,7 +24,7 @@
     {"mission_id": "strike", "label": "기습"},
     {"mission_id": "torpedo", "label": "뇌격"}
   ],
-  "tactical_mission_contract": "equipment is immutable after battle initialization; mission changes only select an allowlisted tactical intent; mission effects and outcomes are pending after G6-02",
+  "tactical_mission_contract": "equipment is immutable after battle initialization; mission changes only select an allowlisted tactical intent; rescue is consumed by G6-05 while other mission effects remain pending",
   "supply_contract": {
     "resource_scale": "basis_points",
     "initial_fuel_basis_points": 6000,
@@ -53,6 +53,21 @@
     "fuel_consumption_timing": "actual_movement_distance_after_movement_before_end_turn_supply",
     "unreachable_contract": "stranded_risk_warning_only; zero_fuel_drift_is_G6-05"
   },
+  "recovery_contract": {
+    "fuel_distance_divisor": 10,
+    "passive_drift_distance": 40,
+    "contact_radius": 40,
+    "contact_eligibility": "drift_started_turn_before_current_turn",
+    "contact_priority": ["first_radius_entry_progress_ascending", "actual_distance_ascending", "rescue_before_capture", "responder_squadron_id_ascending"],
+    "target_priority": ["drift_started_turn_ascending", "target_squadron_id_ascending"],
+    "responder_capacity_per_turn": 1,
+    "rescue_eligibility": "FAST-EQ-RESCUE_and_active_rescue_mission_and_friendly_or_allied_non_drifting",
+    "capture_eligibility": "enemy_operational_non_drifting",
+    "terminal_contract": "rescued_or_captured_removed_from_commands_and_combat; no_refuel_no_rearm_no_owner_transfer_no_battle_reuse",
+    "supply_capture_contract": "G8-00_authorized_capture_only; disable_exact_SUPPLY_SHIP_source_immediately; carrier_and_base_unchanged; captor_gain_zero; inventory_pending_G6-06",
+    "turn_limit_contract": "turn20_records_resolution; no_turn21_drift",
+    "result_pending": ["winner", "damage", "casualties", "supply_stock", "supply_damage", "base_reloading"]
+  },
   "basing_modes": ["independent", "carrier", "base"],
   "basing_contract": {
     "independent": "독립 전장 배치",
@@ -66,5 +81,5 @@
   "inventory_policy": "applied setup faction inventory minus all setup squadron assignments; preparation may create or delete user fast-craft squadrons from remaining same-faction stock; cross-faction transfer forbidden",
   "cost_policy": "per craft subtotal=(setup SHP-08 base unit cost+selected setup mission-equipment unit cost)*count; historical cost is the declared normal-demo baseline",
   "command_limit_source": "applied_setup.command_limit_rules_and_faction_demo_roster",
-  "out_of_scope": ["in_battle_equipment_change", "tactical_mission_effect", "drift", "rescue_result", "capture_result", "supply_source_stock", "supply_source_damage", "base_reloading"]
+  "out_of_scope": ["in_battle_equipment_change", "non_rescue_tactical_mission_effect", "supply_source_stock", "supply_source_damage", "base_reloading"]
 }

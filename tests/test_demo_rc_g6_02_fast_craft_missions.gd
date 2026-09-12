@@ -33,7 +33,7 @@ func _test_rules_and_reducer() -> void:
 	_eq(catalog.equipment_allowlists["FAST-EQ-TORPEDO"], ["torpedo", "strike"], "torpedo equipment allowlist")
 	_eq(catalog.equipment_allowlists["FAST-EQ-RECON"], ["recon", "liaison"], "recon equipment allowlist")
 	_eq(catalog.equipment_allowlists["FAST-EQ-RESCUE"], ["rescue", "liaison"], "rescue equipment allowlist")
-	_eq(catalog.result_pending, ["mission_effect", "fuel", "resupply", "return", "drift", "rescue_result", "capture_result"], "G6-03+ outcomes stay pending")
+	_eq(catalog.result_pending, ["non_rescue_mission_effect"], "only non-rescue tactical mission effects stay pending after G6-05")
 	var state: Dictionary = resolver.initial_state(); var original := JSON.stringify(state)
 	_eq(resolver.ai_mission(state, "RC-LIU-FC-01", 1).mission_id, "recon", "AI turn-one policy deterministically selects first allowlisted mission")
 	_eq(resolver.ai_mission(state, "RC-LIU-FC-01", 2).mission_id, "liaison", "AI turn-two policy deterministically selects second allowlisted mission")

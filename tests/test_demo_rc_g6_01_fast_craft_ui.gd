@@ -54,7 +54,7 @@ func _test_editor() -> void:
 	var battle = Battle.new(); _ok(battle.initialize(applied[0].applied_setup).ok, "applied setup initializes battle")
 	var battle_view := BattleView.new(); battle_view.configure(battle, int(applied[0].formation_revision), String(applied[0].digest)); root.add_child(battle_view); await _settle()
 	var select_fast: Button = battle_view.find_child("Select_RC-LIU-FC-01", true, false); _ok(select_fast != null, "actual Liu fast craft squadron is selectable in battle"); select_fast.pressed.emit(); await _settle()
-	var immutable: Label = battle_view.find_child("AppliedFastCraftLoadout", true, false); _ok(immutable != null and immutable.text.contains("전투 중 불변") and immutable.text.contains("뇌격 장비") and immutable.text.contains("후속 기능"), "battle shows applied loadout as immutable without future results")
+	var immutable: Label = battle_view.find_child("AppliedFastCraftLoadout", true, false); _ok(immutable != null and immutable.text.contains("전투 중 불변") and immutable.text.contains("뇌격 장비") and immutable.text.contains("지원 범위 안의 전술 임무만 변경"), "battle shows immutable loadout with the G6-02 mission boundary")
 	editor._equipment_changed("FAST-EQ-RESCUE"); await _settle(); var battle_fast: Dictionary = battle.snapshot().applied_setup.squadrons.filter(func(row): return row.id == "RC-LIU-FC-01")[0]; _ok(battle_fast.composition[0].mission_equipment_id == "FAST-EQ-TORPEDO", "preparation draft changes cannot mutate active battle loadout")
 	battle_view.free(); editor.free()
 
