@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "profile_id": "S5-02-visible-fleet-3d-v1",
+  "source_project": "C:\\WorkSpace\\Re_Legend_of_the_Galactic_Heroes",
+  "ownership": "user-owned",
+  "usage_restriction": "none-confirmed-by-user",
+  "material_policy": "preserve embedded PBR; no runtime material override",
+  "orientation": {
+    "source_forward": "-X",
+    "runtime_forward": "-Z",
+    "model_yaw_degrees": -90,
+    "aft": "+Z",
+    "battle_plane": "X,Z",
+    "battle_facing_zero": "+X"
+  },
+  "fleet_visual_scale": 0.3333333333,
+  "lod_policy": "Godot generated mesh LOD; deterministic representative sampling when the exact visible total exceeds the scene budget",
+  "sampling_cap": 204,
+  "ship_type_mapping": {
+    "SHP-01": {"label": "강습모함", "kind": "model", "asset": "models/assault_carrier.glb", "display_scale": 1.55},
+    "SHP-02": {"label": "공성함", "kind": "model", "asset": "models/siege_ship.glb", "display_scale": 1.55},
+    "SHP-03": {"label": "포격함", "kind": "model", "asset": "models/artillery_ship.glb", "display_scale": 1.60},
+    "SHP-04": {"label": "전열함", "kind": "model", "asset": "models/line_ship.glb", "display_scale": 1.10},
+    "SHP-05": {"label": "보급함", "kind": "model", "asset": "models/supply_repair_ship.glb", "display_scale": 1.45},
+    "SHP-06": {"label": "전자전함", "kind": "model", "asset": "models/electronic_warfare_ship.glb", "display_scale": 1.50},
+    "SHP-07": {"label": "요격함", "kind": "model", "asset": "models/interceptor_ship.glb", "display_scale": 0.90},
+    "SHP-08": {"label": "고속정", "kind": "procedural_small_craft_glyph", "asset": "", "display_scale": 0.36}
+  },
+  "assets": [
+    {"path": "models/line_ship.glb", "source": "assets/models/user_ver3_runtime/전열함.glb", "size_bytes": 4973672, "sha256": "CBDDD8ECF70F3CC8358AAB8A85DC27080736B33B3A063486F0327C068D98B08C"},
+    {"path": "models/artillery_ship.glb", "source": "assets/models/user_ver3_runtime/화력함.glb", "size_bytes": 12102416, "sha256": "FC32B5C4CEEBA37270BED72DF8969CE3A3680B4C7384B30770DBA9D6B368ADC8"},
+    {"path": "models/siege_ship.glb", "source": "assets/models/user_ver3_runtime/공성함.glb", "size_bytes": 10687832, "sha256": "C7C4E70DA2C0C472EC9FE1A27EDF2BAFAE30824F96903774525D349C007F6242"},
+    {"path": "models/supply_repair_ship.glb", "source": "assets/models/user_ver3_runtime/보급_수리함.glb", "size_bytes": 9936408, "sha256": "1B119787BE80B2D957E5AAA300FDA304FB8BECD33694EB13AD17275972616EBE"},
+    {"path": "models/electronic_warfare_ship.glb", "source": "assets/models/user_ver3_runtime/전자전함.glb", "size_bytes": 11017976, "sha256": "30037452465D5027A432193891FB0791A791AF01410062F5D8DB3B490025CB30"},
+    {"path": "models/interceptor_ship.glb", "source": "assets/models/user_ver3_runtime/호위함.glb", "size_bytes": 10256668, "sha256": "C2437332E6010BAD6F918057E92230DC9A67CC54824B43E61BA0BCF6A8934AAC"},
+    {"path": "models/assault_carrier.glb", "source": "assets/models/user_ver3_runtime/항모.glb", "size_bytes": 11060572, "sha256": "3D8544B255E43CA42AF1C2CB094034B12227C2724910C19B81E9B7FC2F60CD0E"},
+    {"path_glob": "models/*_Image_[0-2].jpg", "source_glob": "assets/models/user_ver3_runtime/*_Image_[0-2].jpg", "file_count": 21, "size_bytes_total": 55641303, "aggregate_manifest_sha256": "08AB8F405B644467DB2FE5705595FA74B723595D547DB13EFC233E09D33AFB54", "aggregate_contract": "SHA256 of sorted UTF-8 rows name|size_bytes|file_sha256"},
+    {"path": "backgrounds/red_cliffs_starfield_v1.png", "source": "assets/backgrounds/red_cliffs_starfield_v1.png", "size_bytes": 2234367, "sha256": "0C9C3A34DAA3662F9C86035577A73F4E8D09CBD732DD072B5E9A35675EF8D243"}
+  ]
+}

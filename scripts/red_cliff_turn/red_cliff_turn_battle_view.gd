@@ -18,6 +18,7 @@ const PHASE_LABELS := {
 const FACTION_NAMES := {"liu_bei": "유비군", "sun_quan": "손권군", "cao_cao": "조조군"}
 const FACTION_COLORS := {"liu_bei": Color("63c58a"), "sun_quan": Color("df7d72"), "cao_cao": Color("69add5")}
 const TacticalMap := preload("res://scripts/red_cliff_turn/red_cliff_tactical_map.gd")
+const VisibleFleet3D := preload("res://scripts/red_cliff_turn/visible_fleet_3d/red_cliff_visible_fleet_3d.gd")
 
 var _battle
 var _applied_revision := 0
@@ -28,6 +29,10 @@ var _header: Label
 var _phase_text: Label
 var _steps: VBoxContainer
 var _map
+var _visible_fleet_3d
+var _visual_split: HSplitContainer
+var _visible_fleet_toggle: Button
+var _visible_fleet_expanded := false
 var _orders: VBoxContainer
 var _log: RichTextLabel
 var _status: Label
@@ -100,8 +105,12 @@ func _build() -> void:
 	for row in [["선택", "MapModeSelect", 0], ["경유점 추가", "MapModeAdd", 1], ["지도 이동", "MapModePan", 2]]:
 		var mode_button := _button(row[0], row[1], 112); mode_button.pressed.connect(_on_map_mode.bind(row[2])); map_tools.add_child(mode_button)
 	var reset_camera := _button("보기 초기화", "ResetMapCamera", 110); reset_camera.pressed.connect(func(): _map.reset_camera()); map_tools.add_child(reset_camera)
+	_visible_fleet_toggle = _button("3D 크게 보기", "ToggleVisibleFleet3D", 125); _visible_fleet_toggle.pressed.connect(_toggle_visible_fleet_3d); map_tools.add_child(_visible_fleet_toggle)
 	_map_mode_text = Label.new(); _map_mode_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map_mode_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT; _map_mode_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER; map_tools.add_child(_map_mode_text)
-	_map = TacticalMap.new(); _map.name = "AppliedSquadronMap"; _map.size_flags_vertical = Control.SIZE_EXPAND_FILL; _map.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map.squadron_selected.connect(_on_map_squadron_selected); _map.contact_selected.connect(_on_map_contact_selected); _map.waypoint_requested.connect(_on_waypoint_requested); _map.interaction_rejected.connect(_on_interaction_rejected); map_panel.get_meta("stack").add_child(_map)
+	_visual_split = HSplitContainer.new(); _visual_split.name = "BattlefieldVisualizationSplit"; _visual_split.size_flags_vertical = Control.SIZE_EXPAND_FILL; _visual_split.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _visual_split.resized.connect(_apply_visible_fleet_split); map_panel.get_meta("stack").add_child(_visual_split)
+	_map = TacticalMap.new(); _map.name = "AppliedSquadronMap"; _map.custom_minimum_size.x = 280; _map.size_flags_vertical = Control.SIZE_EXPAND_FILL; _map.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map.squadron_selected.connect(_on_map_squadron_selected); _map.contact_selected.connect(_on_map_contact_selected); _map.waypoint_requested.connect(_on_waypoint_requested); _map.interaction_rejected.connect(_on_interaction_rejected); _visual_split.add_child(_map); _map.custom_minimum_size.x = 280
+	_visible_fleet_3d = VisibleFleet3D.new(); _visible_fleet_3d.name = "RedCliffVisibleFleet3D"; _visible_fleet_3d.custom_minimum_size.x = 280; _visible_fleet_3d.size_flags_vertical = Control.SIZE_EXPAND_FILL; _visible_fleet_3d.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _visual_split.add_child(_visible_fleet_3d)
+	_apply_visible_fleet_split.call_deferred()
 	var order_panel := _panel("이동 명령 초안", 405); body.add_child(order_panel)
 	var order_scroll := ScrollContainer.new(); order_scroll.name = "MovementOrderScroll"; order_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL; order_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED; order_panel.get_meta("stack").add_child(order_scroll)
 	_orders = VBoxContainer.new(); _orders.name = "CurrentFactionOrders"; _orders.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _orders.add_theme_constant_override("separation", 6); order_scroll.add_child(_orders)
@@ -197,6 +206,8 @@ func _rebuild_map(snapshot: Dictionary) -> void:
 	if String(order.get("action", "")) == "move": preview = _battle.movement_preview(_selected_squadron_id, order.get("waypoints", []), order.get("facing_deg", 0))
 	_map.set_route(order, preview)
 	_map_mode_text.text = "모드: %s" % ("경유점 추가" if _move_armed else "선택")
+	var projection: Dictionary = _battle.viewer_3d_projection(_viewer_faction_id) if _battle.has_method("viewer_3d_projection") else {"ok": false, "errors": ["S5-02 viewer projection unavailable"]}
+	_visible_fleet_3d.configure(projection, _selected_squadron_id)
 
 
 func _rebuild_squad_list(snapshot: Dictionary) -> void:
@@ -856,6 +867,21 @@ func _on_map_mode(mode: int) -> void:
 	_map_mode_text.text = "모드: %s" % ("지도 이동" if mode == TacticalMap.Mode.PAN else "선택")
 
 
+func _toggle_visible_fleet_3d() -> void:
+	_visible_fleet_expanded = not _visible_fleet_expanded
+	_apply_visible_fleet_split()
+
+
+func _apply_visible_fleet_split() -> void:
+	if _visual_split == null: return
+	if _map != null: _map.custom_minimum_size.x = 280
+	var map_ratio := 1.0 / 3.0 if _visible_fleet_expanded else 2.0 / 3.0
+	_visual_split.split_offset = int(maxf(0.0, _visual_split.size.x) * (map_ratio - 0.5))
+	if _visible_fleet_toggle != null: _visible_fleet_toggle.text = "2D 중심으로" if _visible_fleet_expanded else "3D 크게 보기"
+	if _visible_fleet_3d != null and _visible_fleet_3d.has_method("request_render_once"):
+		_visible_fleet_3d.call_deferred("request_render_once")
+
+
 func _on_arm_move() -> void:
 	if _selected_squadron_id.is_empty() or not _editable_squadron_ids(_battle.snapshot()).has(_selected_squadron_id): return
 	_move_armed = true; _last_error = ""; _refresh()
@@ -1359,6 +1385,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if visible and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		if _battle != null and _battle.phase() == "sun_control_prompt":
 			_last_error = "손권군 제어 방식을 선택해야 합니다. Esc로 닫을 수 없습니다."; _refresh()
+		elif _visible_fleet_expanded:
+			_visible_fleet_expanded = false; _apply_visible_fleet_split()
 		else: close_requested.emit()
 		get_viewport().set_input_as_handled()
 

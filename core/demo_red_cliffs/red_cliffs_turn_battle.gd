@@ -22,6 +22,8 @@ const SupplyInventory := preload("res://core/demo_red_cliffs/red_cliffs_supply_i
 const CombatEffects := preload("res://core/demo_red_cliffs/red_cliffs_combat_effects.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := ["commander_casualties", "victory"]
+const THREE_D_PROJECTION_PROFILE_ID := "S5-02"
+const THREE_D_EVENT_ORDERING := "turn_event_id_event_type_ascending"
 
 var _state: Dictionary = {}
 var _movement
@@ -337,6 +339,104 @@ func viewer_combat_effects(viewer_faction_id: String) -> Dictionary:
 	var result: Dictionary = _combat_effects.visible(viewer_faction_id, _state.combat_effect_state, sealed_contacts, turn())
 	result["phase"] = phase()
 	return result
+
+
+## S5-02 — 적벽 실제 3D 전투 증거창 통합.
+##
+## This projection deliberately composes only existing viewer-redacted APIs.
+## It never returns the authoritative snapshot, live navigation, or resolution
+## receipt, so an observed contact remains an opaque display proxy in 3D.
+func viewer_3d_projection(viewer_faction_id: String) -> Dictionary:
+	var viewer: Dictionary = viewer_snapshot(viewer_faction_id)
+	if not bool(viewer.get("ok", false)): return viewer
+	var effects: Dictionary = viewer_combat_effects(viewer_faction_id)
+	if not bool(effects.get("ok", false)): return effects
+	var tactical: Dictionary = visible_tactical_events(viewer_faction_id)
+	if not bool(tactical.get("ok", false)): return tactical
+
+	var effect_by_squadron := {}
+	for value in effects.get("own_squadrons", []):
+		if value is Dictionary:
+			effect_by_squadron[String(value.get("squadron_id", ""))] = value
+	var own_squadrons: Array = []
+	for value in viewer.get("own_squadrons", []):
+		if not value is Dictionary: continue
+		var squadron_id := String(value.get("id", ""))
+		var navigation: Dictionary = viewer.get("own_navigation", {}).get(squadron_id, {})
+		var effect: Dictionary = effect_by_squadron.get(squadron_id, {})
+		own_squadrons.append({
+			"squadron_id": squadron_id,
+			"faction_id": String(value.get("faction_id", "")),
+			"name": String(value.get("name", squadron_id)),
+			"flagship": bool(value.get("flagship", false)),
+			"position": navigation.get("position", []).duplicate(true),
+			"facing_deg": float(navigation.get("facing_deg", 0.0)),
+			"formation_id": String(value.get("formation_id", "")),
+			"composition_current": effect.get("composition_current", []).duplicate(true),
+			"hull": effect.get("hull", {}).duplicate(true),
+			"morale": effect.get("morale", {}).duplicate(true),
+			"sensor": effect.get("sensor", {}).duplicate(true),
+			"capabilities": effect.get("capabilities", {}).duplicate(true),
+		})
+	own_squadrons.sort_custom(func(a, b): return String(a.squadron_id) < String(b.squadron_id))
+
+	var contacts: Array = []
+	for value in effects.get("contacts", []):
+		if not value is Dictionary: continue
+		var state := String(value.get("state", ""))
+		if not ["confirmed", "estimated"].has(state): continue
+		contacts.append({
+			"contact_id": String(value.get("contact_id", "")),
+			"state": state,
+			"display_position": value.get("display_position", null).duplicate(true) if value.get("display_position", null) is Array else null,
+			"effect_band": String(value.get("effect_band", "")),
+			"damage_label": String(value.get("damage_label", "")),
+			"morale_label": String(value.get("morale_label", "")),
+			"sensor_label": String(value.get("sensor_label", "")),
+		})
+	contacts.sort_custom(func(a, b): return String(a.contact_id) < String(b.contact_id))
+
+	var events: Array = []
+	var seen_event_ids := {}
+	for source in [tactical.get("events", []), effects.get("events", [])]:
+		if not source is Array: continue
+		for value in source:
+			if not value is Dictionary: continue
+			var event: Dictionary = value.duplicate(true)
+			var event_id := String(event.get("event_id", ""))
+			if event_id.is_empty() or seen_event_ids.has(event_id): continue
+			seen_event_ids[event_id] = true
+			if not event.has("turn"): event["turn"] = int(tactical.get("turn", viewer.get("turn", 0)))
+			events.append(event)
+	events.sort_custom(_three_d_event_precedes)
+	for index in range(events.size()):
+		events[index]["visual_order"] = index
+		events[index]["visual_seed"] = _three_d_visual_seed(viewer_faction_id, int(events[index].get("turn", 0)),
+			String(events[index].get("event_id", "")), String(events[index].get("event_type", "")))
+
+	var ledger_projection := {"available": false}
+	var ledger: Dictionary = viewer_phase_ledger(viewer_faction_id)
+	if bool(ledger.get("ok", false)):
+		ledger_projection = {"available": true, "turn": int(ledger.get("turn", 0)),
+			"profile_id": String(ledger.get("profile_id", "")), "turn_digest": String(ledger.get("turn_digest", "")),
+			"phase_order": ledger.get("phase_order", []).duplicate(true)}
+	var result := {
+		"ok": true,
+		"errors": [],
+		"profile_id": THREE_D_PROJECTION_PROFILE_ID,
+		"viewer_faction_id": viewer_faction_id,
+		"turn": int(viewer.get("turn", 0)),
+		"phase": String(viewer.get("phase", "")),
+		"battlefield_bounds": viewer.get("battlefield_bounds", []).duplicate(true),
+		"own_squadrons": own_squadrons,
+		"contacts": contacts,
+		"terrain_zones": viewer.get("terrain_zones", []).duplicate(true),
+		"events": events,
+		"event_ordering": THREE_D_EVENT_ORDERING,
+		"ledger": ledger_projection,
+	}
+	result["visual_seed"] = _three_d_visual_seed(viewer_faction_id, int(result.turn), "projection", String(result.phase))
+	return result.duplicate(true)
 
 
 func visible_tactical_events(viewer_faction_id: String, turn_number: int = 0) -> Dictionary:
@@ -1054,6 +1154,16 @@ func resolve_turn() -> Dictionary:
 		var faction_id := String(faction.id)
 		var visible: Dictionary = _interception.visible_tactical_events(faction_id, receipt, interception_result.detection_state)
 		if not visible.ok: return visible
+		# Expose only the viewer's resolved endpoints, never the authoritative
+		# movement receipt with its resolver budgets and route internals.
+		for movement_event in movement_result.events:
+			if movement_event is Dictionary and String(movement_event.get("action", "")) == "move":
+				var moving_id := String(movement_event.get("squadron_id", ""))
+				if _squadron_faction_id(moving_id) == faction_id:
+					visible.events.append({"event_id": "MOVE-%02d-%s" % [turn(), moving_id],
+						"event_type": "movement_resolved", "turn": turn(), "own_squadron_id": moving_id,
+						"from": movement_event.get("from", []).duplicate(true),
+						"to": movement_event.get("to", []).duplicate(true)})
 		for terrain_event in receipt.terrain_events:
 			if _squadron_faction_id(String(terrain_event.squadron_id)) == faction_id: visible.events.append(terrain_event.duplicate(true))
 		var resource_visible: Dictionary = _combat_resources.visible_events(faction_id,
@@ -1442,6 +1552,18 @@ func _target_id_for_contact(viewer_faction_id: String, contact_id_value: String)
 		if _squadron_faction_id(String(squadron_id)) == viewer_faction_id: continue
 		if _fog.contact_id(viewer_faction_id, String(squadron_id)) == contact_id_value: return String(squadron_id)
 	return ""
+
+
+func _three_d_event_precedes(a: Dictionary, b: Dictionary) -> bool:
+	var a_turn := int(a.get("turn", 0)); var b_turn := int(b.get("turn", 0))
+	if a_turn != b_turn: return a_turn < b_turn
+	var a_id := String(a.get("event_id", "")); var b_id := String(b.get("event_id", ""))
+	if a_id != b_id: return a_id < b_id
+	return String(a.get("event_type", "")) < String(b.get("event_type", ""))
+
+
+func _three_d_visual_seed(viewer_faction_id: String, turn_number: int, identity: String, kind: String) -> String:
+	return ("%s|%s|%d|%s|%s" % [THREE_D_PROJECTION_PROFILE_ID, viewer_faction_id, turn_number, identity, kind]).sha256_text()
 
 
 func _sealed_visible_contacts(viewer_faction_id: String, detection: Dictionary, navigation: Dictionary) -> Array:
