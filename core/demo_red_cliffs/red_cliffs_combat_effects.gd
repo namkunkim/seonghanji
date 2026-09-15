@@ -158,10 +158,16 @@ func victory_inputs(state: Dictionary, turn_number: int) -> Dictionary:
 	var factions := {}; var ids: Array = state.squadrons.keys(); ids.sort()
 	for id in ids:
 		var row: Dictionary = state.squadrons[id]; var faction_id := String(row.faction_id)
-		if not factions.has(faction_id): factions[faction_id] = {"maximum_hull_points":0,"remaining_hull_points":0,"original_ship_count":0,"remaining_ship_count":0,"morale_basis_points_total":0,"operational_squadron_count":0}
-		var total: Dictionary = factions[faction_id]; total.maximum_hull_points += int(row.maximum_hull_points); total.remaining_hull_points += int(row.hull_points); total.original_ship_count += _ship_total(row.original_composition); total.remaining_ship_count += _ship_total(row.current_composition); total.morale_basis_points_total += int(row.morale_basis_points)
+		if not factions.has(faction_id): factions[faction_id] = {"maximum_hull_points":0,"remaining_hull_points":0,"original_ship_count":0,"remaining_ship_count":0,"original_cost":0,"remaining_cost":0,"morale_basis_points_total":0,"operational_squadron_count":0,"squadron_count":0,"surrendered_squadron_count":0}
+		var total: Dictionary = factions[faction_id]; total.maximum_hull_points += int(row.maximum_hull_points); total.remaining_hull_points += int(row.hull_points); total.original_ship_count += _ship_total(row.original_composition); total.remaining_ship_count += _ship_total(row.current_composition); total.original_cost += _composition_cost(row.original_composition); total.remaining_cost += _composition_cost(row.current_composition); total.morale_basis_points_total += int(row.morale_basis_points); total.squadron_count += 1
 		if bool(row.capabilities.operational): total.operational_squadron_count += 1
+		if bool(row.capabilities.surrendered): total.surrendered_squadron_count += 1
 	return {"turn":turn_number,"factions":factions,"commander_casualties_pending":true,"victory_status":"pending_G8_01","winner_present":false}
+
+func _composition_cost(composition: Array) -> int:
+	var total := 0
+	for row in composition: total += int(row.get("count", 0)) * int(_ship_costs.get(String(row.get("ship_type_id", "")), 0))
+	return total
 
 func visible(viewer_faction_id: String, state: Dictionary, contacts: Array, turn_number: int) -> Dictionary:
 	var own: Array = []; var public_contacts: Array = []; var target_to_contact := {}; var contact_states := {}

@@ -14,6 +14,7 @@ const PHASE_LABELS := {
 	"resolution": "명령 원장 판정",
 	"victory_check": "승리 조건 판정 대기",
 	"turn_limit_reached": "20턴 결과 판정 대기",
+	"battle_concluded": "전투 승패 확정",
 }
 const FACTION_NAMES := {"liu_bei": "유비군", "sun_quan": "손권군", "cao_cao": "조조군"}
 const FACTION_COLORS := {"liu_bei": Color("63c58a"), "sun_quan": Color("df7d72"), "cao_cao": Color("69add5")}
@@ -813,8 +814,11 @@ func _status_for_phase(phase: String) -> String:
 	if phase == "liu_command": return "유비군 전대별 HOLD/MOVE 초안을 검토한 뒤 제출합니다."
 	if phase == "sun_control_prompt": return "손권군 제어 방식을 선택해야 계속할 수 있습니다."
 	if phase == "sun_command": return "손권군 전대별 HOLD/MOVE 초안을 검토한 뒤 제출합니다."
-	if phase == "victory_check": return "진형·이동·경로 교차·탐지·기회 사격 판정이 확정되었습니다. 명중·피해·승패는 후속 구현 대기입니다."
+	if phase == "victory_check": return "피해·사기와 기본 승리 조건을 확인했습니다. 다음 턴을 시작할 수 있습니다."
 	if phase == "turn_limit_reached": return "20/20 · 결과 판정 대기. 승자와 피해는 아직 계산하지 않았습니다."
+	if phase == "battle_concluded":
+		var result: Dictionary = _battle.snapshot().get("victory_result", {})
+		return "승패 확정 · %s" % String(result.get("winner_side_id", "결과 미상"))
 	return "AI 명령 및 명령 원장을 처리하는 중입니다."
 
 

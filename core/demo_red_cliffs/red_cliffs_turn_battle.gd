@@ -20,6 +20,7 @@ const FastCraftReturn := preload("res://core/demo_red_cliffs/red_cliffs_fast_cra
 const FastCraftRecovery := preload("res://core/demo_red_cliffs/red_cliffs_fast_craft_recovery.gd")
 const SupplyInventory := preload("res://core/demo_red_cliffs/red_cliffs_supply_inventory.gd")
 const CombatEffects := preload("res://core/demo_red_cliffs/red_cliffs_combat_effects.gd")
+const VictoryResolver := preload("res://core/demo_red_cliffs/red_cliffs_victory_resolver.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := ["commander_casualties", "victory"]
 const THREE_D_PROJECTION_PROFILE_ID := "S5-02"
@@ -42,6 +43,7 @@ var _fast_craft_return
 var _fast_craft_recovery
 var _supply_inventory
 var _combat_effects
+var _victory_resolver
 var _viewer_receipts_by_turn: Dictionary = {}
 var _viewer_phase_ledgers_by_turn: Dictionary = {}
 
@@ -100,6 +102,8 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not inventory_result.ok:return inventory_result
 	var combat_effects=CombatEffects.new();var effects_result:Dictionary=combat_effects.initialize(setup)
 	if not effects_result.ok:return effects_result
+	var victory_resolver = VictoryResolver.new(); var victory_result: Dictionary = victory_resolver.initialize()
+	if not victory_result.ok: return victory_result
 	_movement = movement
 	_interception = interception
 	_formation = formation
@@ -116,6 +120,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	_fast_craft_recovery = fast_craft_recovery
 	_supply_inventory=supply_inventory
 	_combat_effects=combat_effects
+	_victory_resolver=victory_resolver
 	_viewer_receipts_by_turn = {}
 	_viewer_phase_ledgers_by_turn = {}
 	_state = {
@@ -136,6 +141,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 		"fast_craft_mission_state": _fast_craft_mission.initial_state(),
 		"supply_inventory_state":_supply_inventory.initial_state(),
 		"combat_effect_state": _combat_effects.initial_state(),
+		"victory_result": {},
 		"fast_craft_supply_state": {},
 		"fast_craft_return_state": _fast_craft_return.initial_state(),
 		"fast_craft_recovery_state": _fast_craft_recovery.initial_state(),
@@ -1117,6 +1123,8 @@ func resolve_turn() -> Dictionary:
 					stored["combat_resource_before"] = refill.combat_resource_before.duplicate(true)
 					stored["combat_resource_after"] = refill.combat_resource_after.duplicate(true)
 					stored["combat_resource_refill"] = refill.combat_resource_refill.duplicate(true)
+	var victory_result: Dictionary = _victory_resolver.evaluate(effect_result.victory_inputs)
+	if not victory_result.ok: return victory_result
 	var receipt := {
 		"ok": true,
 		"turn": turn(),
@@ -1144,6 +1152,7 @@ func resolve_turn() -> Dictionary:
 		"suppressed_fire_events": resource_result.suppressed_fire_events.duplicate(true),
 		"resource_recovery_events": recovery_events.duplicate(true),
 		"victory_inputs": effect_result.victory_inputs.duplicate(true),
+		"victory_result": victory_result.duplicate(true),
 		"victory_check_required": true,
 	}
 	var ledger: Dictionary = _phase_ledger.build(turn(), receipt)
@@ -1193,6 +1202,7 @@ func resolve_turn() -> Dictionary:
 	_state.combat_resource_state = resource_result.resource_state.duplicate(true)
 	_state.chain_explosion_state = chain_result.state.duplicate(true)
 	_state.combat_effect_state = effect_result.state.duplicate(true)
+	_state.victory_result = victory_result.duplicate(true)
 	_state.fast_craft_supply_state = supply_result.state.duplicate(true)
 	_state.supply_inventory_state=supply_result.inventory_state.duplicate(true)
 	_state.fast_craft_return_state = return_result.state.duplicate(true)
@@ -1206,11 +1216,13 @@ func resolve_turn() -> Dictionary:
 	log.resolution_receipt = receipt.duplicate(true)
 	log.victory_check_required = true
 	_state.resolved = true
-	_state.phase = "turn_limit_reached" if turn() >= MAX_TURNS else "victory_check"
+	_state.phase = "battle_concluded" if bool(victory_result.winner_present) else ("turn_limit_reached" if turn() >= MAX_TURNS else "victory_check")
 	return receipt.duplicate(true)
 
 
 func continue_turn() -> Dictionary:
+	if phase() == "battle_concluded":
+		return _error("전투 승패가 확정되어 다음 턴을 시작할 수 없습니다.")
 	if phase() == "turn_limit_reached":
 		return _error("20턴 제한에 도달했습니다. 후속 승패 비교가 필요하며 다음 턴은 시작할 수 없습니다.")
 	if phase() != "victory_check":

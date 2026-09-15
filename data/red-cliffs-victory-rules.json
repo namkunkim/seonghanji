@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-victory-v1",
+  "statement": "DEMO-RC-G8-01의 매 턴 기본 승패 판정이다. 전투 효과가 만든 비용·사기 입력만 소비하고 이동·탈출·기함 특수 결과와 20턴 비교는 후속 G8-03에 남긴다.",
+  "loss_threshold_basis_points": 7000,
+  "morale_collapse_policy": "all_faction_squadrons_surrendered",
+  "alliance": {"member_faction_ids": ["liu_bei", "sun_quan"], "player_anchor_faction_id": "liu_bei"},
+  "simultaneous_winner_faction_id": "cao_cao",
+  "result_contract": {"commander_casualties": "pending", "victory": "resolved_G8_01_basic", "future_conditions": ["flagship", "escape", "turn_limit"]}
+}
