@@ -42,7 +42,20 @@ func evaluate(victory_inputs: Dictionary) -> Dictionary:
 		defeated[faction_id] = loss_reached or morale_collapsed
 		evidence.append({"faction_id": faction_id, "loss_basis_points": loss_bp, "loss_threshold_reached": loss_reached,
 			"morale_collapsed": morale_collapsed, "surrendered_squadron_count": surrendered_count, "squadron_count": squadron_count})
-	var alliance_defeated: bool = bool(defeated.liu_bei)
+	# DEMO-RC-G8-02: beyond Liu Bei's own terminal condition, the coalition also
+	# falls when its *combined* cost (Liu Bei + Sun Quan) crosses the same loss
+	# threshold, even if neither member alone has. Sun Quan's own defeat flag
+	# (computed above for evidence) never ends the battle by itself.
+	var member_ids: Array = _rules.alliance.member_faction_ids
+	var alliance_original_cost := 0; var alliance_remaining_cost := 0
+	for member_id in member_ids:
+		var member_row: Dictionary = factions[String(member_id)]
+		alliance_original_cost += int(member_row.original_cost); alliance_remaining_cost += int(member_row.remaining_cost)
+	var alliance_loss_bp := int(floor(float((alliance_original_cost - alliance_remaining_cost) * 10000) / float(alliance_original_cost)))
+	var alliance_loss_reached := alliance_loss_bp >= int(_rules.loss_threshold_basis_points)
+	var alliance_evidence := {"member_faction_ids": member_ids.duplicate(), "original_cost": alliance_original_cost,
+		"remaining_cost": alliance_remaining_cost, "loss_basis_points": alliance_loss_bp, "loss_threshold_reached": alliance_loss_reached}
+	var alliance_defeated: bool = bool(defeated.liu_bei) or alliance_loss_reached
 	var cao_defeated: bool = bool(defeated.cao_cao)
 	var winner_faction_id := ""
 	var winner_side_id := ""
@@ -52,12 +65,13 @@ func evaluate(victory_inputs: Dictionary) -> Dictionary:
 	if alliance_defeated and cao_defeated:
 		winner_faction_id = String(_rules.simultaneous_winner_faction_id); winner_side_id = "cao_cao"; reason_codes = ["simultaneous_terminal_conditions_cao_priority"]
 	elif alliance_defeated:
-		winner_faction_id = "cao_cao"; winner_side_id = "cao_cao"; reason_codes = ["liu_bei_terminal_condition"]
+		winner_faction_id = "cao_cao"; winner_side_id = "cao_cao"
+		reason_codes = ["liu_bei_terminal_condition"] if bool(defeated.liu_bei) else ["alliance_combined_loss_threshold"]
 	elif cao_defeated:
 		winner_faction_id = "liu_sun_alliance"; winner_side_id = "liu_sun_alliance"; reason_codes = ["cao_cao_terminal_condition"]
 	return {"ok": true, "errors": [], "turn": int(victory_inputs.get("turn", 0)), "winner_present": not winner_faction_id.is_empty(),
 		"winner_faction_id": winner_faction_id, "winner_side_id": winner_side_id, "reason_codes": reason_codes,
-		"faction_evidence": evidence, "future_conditions_pending": _rules.result_contract.future_conditions.duplicate()}
+		"faction_evidence": evidence, "alliance_evidence": alliance_evidence, "future_conditions_pending": _rules.result_contract.future_conditions.duplicate()}
 
 
 func _ok() -> Dictionary: return {"ok": true, "errors": []}
