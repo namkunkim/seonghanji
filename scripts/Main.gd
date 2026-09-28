@@ -568,7 +568,7 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
         top_h.add_child(b)
 
     for utility_data in [
-        ["red_cliff_demo", "적벽", "결정론적 SCN-03 적벽대전 데모를 시작합니다.", "데모"],
+        ["red_cliff_demo", "적벽", "유비 중심 적벽대전 준비 화면을 시작합니다.", "데모"],
         ["pause", "II", "시간 진행을 일시정지하거나 재개합니다.", "시간"],
         ["speed", "1x", "시간 배속을 1배·2배·4배로 전환합니다.", "배속"],
         ["mail", "✉", "도착한 우편과 소식을 엽니다.", "우편"],
@@ -609,11 +609,12 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
         ["overview", "◎", "01  천하도", Color("65ccff")],
         ["systems", "◇", "02  성역", Color("8fcfff")],
         ["fleets", "▲", "03  함대", Color("80dfff")],
-        ["domestic", "▣", "04  내정", Color("ffd06a")],
-        ["talent", "◆", "05  인재", Color("b8e8ff")],
-        ["diplomacy", "◈", "06  외교", Color("c7a6ff")],
-        ["tech", "✦", "07  기술", Color("76f0dc")],
-        ["records", "≡", "08  기록", Color("9db8c8")]
+        ["ships", "◫", "04  함선", Color("78d9ff")],
+        ["domestic", "▣", "05  내정", Color("ffd06a")],
+        ["talent", "◆", "06  인재", Color("b8e8ff")],
+        ["diplomacy", "◈", "07  외교", Color("c7a6ff")],
+        ["tech", "✦", "08  기술", Color("76f0dc")],
+        ["records", "≡", "09  기록", Color("9db8c8")]
     ]
     for item in items:
         var b: Button = Button.new()

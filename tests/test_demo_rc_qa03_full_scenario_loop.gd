@@ -1,14 +1,21 @@
 extends SceneTree
 
-## DEMO-RC-QA-03 — public playable scenario-loop acceptance.
-## This test deliberately uses only Campaign construction and public commands.
-## It never writes progress, battle state, result, news, fleets, or snapshots.
+## DEMO-RC-QA-03 — full 20-turn loop acceptance: determinism and public
+## rejection boundaries on the canonical G2-G6 turn battle.
+##
+## The superseded SCN-03 preceding-event selection, long-range assembly, and
+## home-map-banner entry are out of scope for this demo and are not driven
+## here (see docs/07-production/demo-rc-completion-review-checklist.md §2).
+## This test uses only the public RedCliffsTurnBattle command API and the
+## real Main product button path; it never writes turn, phase, or resource
+## state directly, and it never injects a winner.
 
 const Harness := preload("res://tests/harness.gd")
+const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
+const Battle := preload("res://core/demo_red_cliffs/red_cliffs_turn_battle.gd")
 
 var _pass := 0
 var _fail := 0
-var _data: GameData
 
 
 func _ok(value: bool, label: String) -> void:
@@ -23,198 +30,102 @@ func _eq(actual, expected, label: String) -> void:
 	_ok(actual == expected, "%s (%s != %s)" % [label, str(actual), str(expected)])
 
 
-func _new_campaign(seed: int) -> Campaign:
-	var campaign := Campaign.scenario_03(_data, seed)
-	# This is the product demo policy, not a scenario-state injection: Main
-	# starts the focused Red-Cliffs demo with unrelated domestic AI disabled.
-	campaign.ai_domestic_enabled = false
-	return campaign
-
-
-func _choose_and_arrive(c: Campaign, event_id: String, choice_id: String) -> void:
-	_ok(not c.issue_scn03_demo_choice(event_id, choice_id).is_empty(),
-		"%s %s public choice accepted" % [event_id, choice_id])
-	_ok(c.issue_scn03_demo_choice(event_id, choice_id).is_empty(),
-		"%s duplicate queued choice rejected" % event_id)
-	c.step()
-
-
-func _choose_historical_path(c: Campaign) -> void:
-	_choose_and_arrive(c, Campaign.SCN03_EVENT03, "direct_annexation")
-	_choose_and_arrive(c, Campaign.SCN03_EVENT04, "ally_with_liu_bei")
-	_choose_and_arrive(c, Campaign.SCN03_EVENT06, "ally_with_sun_quan")
-	_choose_and_arrive(c, Campaign.SCN03_EVENT07, "joint_defense")
-
-
-func _resolve_with_public_controls(c: Campaign, battle_id: String) -> void:
-	var battle: ActiveBattle = c.active_battles[0]
-	while battle.status == ActiveBattle.STATUS_ACTIVE and battle.combat_phase < 2:
-		c.step()
-	while battle.status == ActiveBattle.STATUS_ACTIVE:
-		_ok(not c.issue_red_cliff_player_command(battle_id, "advance_phase").is_empty(),
-			"phase %d public advance accepted" % battle.combat_phase)
-		c.step()
-
-
-func _run() -> void:
-	_data = GameData.load_all()
-	print("DEMO-RC-QA-03 full Red-Cliffs scenario loop")
-	await _test_product_overlay_loop()
-	_test_choices_pending_active_resolved_and_restore()
-	_test_dec01_early_ending_and_restore()
-	_test_determinism_and_invalid_boundaries()
-	print("통과 %d · 실패 %d" % [_pass, _fail])
-	quit(Harness.EXIT_FAIL if _fail > 0 else Harness.EXIT_PASS)
-
-
 func _init() -> void:
 	call_deferred("_run")
 
 
-func _press_product_choice(main, label_prefix: String) -> bool:
-	var list: VBoxContainer = main.find_child("ScenarioChoiceList", true, false)
-	if list == null:
-		return false
-	for child in list.get_children():
-		if child is Button and String(child.text).begins_with(label_prefix):
-			child.pressed.emit()
-			await process_frame
-			return true
-	return false
+func _run() -> void:
+	print("DEMO-RC-QA-03 full 20-turn loop: determinism and boundaries")
+	await _test_product_entry_smoke()
+	_test_full_loop_reaches_limit()
+	_test_determinism()
+	_test_invalid_boundaries()
+	print("통과 %d · 실패 %d" % [_pass, _fail])
+	quit(Harness.EXIT_FAIL if _fail > 0 else Harness.EXIT_PASS)
 
 
-func _test_product_overlay_loop() -> void:
-	print("0. product overlay → selection → occurrence / early restart")
-	get_root().size = Vector2i(1600, 900)
+func _orders(setup: Dictionary, faction_id: String) -> Array:
+	var result: Array = []
+	for squad in setup.get("squadrons", []):
+		if String(squad.get("faction_id", "")) == faction_id and bool(squad.get("operational", true)):
+			result.append({"squadron_id": String(squad.get("id", "")), "action": "hold"})
+	return result
+
+
+func _drive_full_loop(battle, setup: Dictionary) -> void:
+	for turn_number in range(1, 21):
+		var liu_result: Dictionary = battle.submit_liu_orders(_orders(setup, "liu_bei"))
+		_ok(bool(liu_result.get("ok", false)), "turn %d Liu HOLD orders accepted" % turn_number)
+		if turn_number == 1:
+			_ok(bool(battle.submit_sun_control_choice("no", true).get("ok", false)),
+				"turn 1 Sun AI/dont-ask policy accepted")
+		_ok(bool(battle.resolve_turn().get("ok", false)), "turn %d resolves" % turn_number)
+		if turn_number < 20:
+			_ok(bool(battle.continue_turn().get("ok", false)), "turn %d continues" % turn_number)
+
+
+func _test_product_entry_smoke() -> void:
+	print("0. real button entry reaches the turn battle without preceding SCN-03 events")
+	root.size = Vector2i(1600, 900)
 	var main = load("res://scenes/main.tscn").instantiate()
 	root.add_child(main)
 	await process_frame
-	_ok(main._start_red_cliff_demo(), "product demo opens briefing")
 	await process_frame
-	var overlay: Control = main.find_child("RedCliffScenarioOverlay", true, false)
-	_ok(overlay != null and overlay.visible, "briefing overlay is visible")
-	var title: Label = main.find_child("ScenarioTitle", true, false)
-	_ok(title != null and title.text == "적벽 전야",
-		"product briefing does not expose an internal event ID")
-	var continue_button: Button = main.find_child("ScenarioContinue", true, false)
-	_ok(continue_button != null and continue_button.visible, "briefing start is visible and focusable")
-	continue_button.pressed.emit()
+	main.red_cliff_demo_button.pressed.emit()
 	await process_frame
-	_ok(main.campaign.scn03_demo_progression().get("stage", "") == "choice",
-		"briefing start enters the canonical Event 03 choice state")
-	for label in ["직접 병합", "유비 연합", "손권 동맹", "공동 방어"]:
-		_ok(await _press_product_choice(main, label), "mouse-equivalent product choice %s" % label)
-	_ok(main.campaign.scn03_demo_progression().get("stage", "") == "red_cliff_pending",
-		"product choices reach occurrence condition screen")
-	continue_button = main.find_child("ScenarioContinue", true, false)
-	_ok(continue_button != null and continue_button.visible, "product continue is focusable at deployment")
-	continue_button.pressed.emit()
+	main.red_cliff_preparation_view.find_child("StartTurnBattle", true, false).pressed.emit()
 	await process_frame
-	_ok(main.campaign.scn03_demo_progression().get("stage", "") == "active",
-		"product continue reaches existing active battle")
-	_ok(not overlay.visible, "active battle hides scenario overlay")
-	# A new demo owns a fresh Campaign.  The alternative Event 04 is selected
-	# through the same visible product buttons and must never leak old battle/news.
-	_ok(main._start_red_cliff_demo(), "new product demo restarts cleanly")
-	await process_frame
-	continue_button = main.find_child("ScenarioContinue", true, false)
-	continue_button.pressed.emit()
-	await process_frame
-	for label in ["직접 병합", "조조 항복", "손권 동맹", "공동 방어"]:
-		_ok(await _press_product_choice(main, label), "alternate product choice %s" % label)
-	_ok(main.campaign.ended and main.campaign.active_battles.is_empty(), "product DEC-01 has no leaked battle")
-	continue_button = main.find_child("ScenarioContinue", true, false)
-	continue_button.pressed.emit()
-	await process_frame
-	_ok(not main.red_cliff_demo_mode and not overlay.visible, "early ending returns to home without stale overlay")
+	_eq(main.red_cliff_turn_battle_state.get("turn"), 1, "product entry starts directly at turn 1")
+	_eq(main.red_cliff_turn_battle_state.get("phase"), "liu_command",
+		"no preceding briefing/choice stage exists before Liu's first command")
 	main.free()
 
 
-func _test_choices_pending_active_resolved_and_restore() -> void:
-	print("1. public choices → occurrence → active → resolved")
-	var c := _new_campaign(20861)
-	var initial: Dictionary = c.scn03_demo_progression()
-	_eq(initial.get("stage", ""), "briefing", "new demo begins at briefing")
-	_eq(initial.get("player_faction", ""), "손권", "playable faction is projected")
-	_eq(initial.get("current_event", ""), Campaign.SCN03_EVENT03, "first canonical event")
-	_choose_and_arrive(c, Campaign.SCN03_EVENT03, "direct_annexation")
-	var in_choice_save := c.to_save_dict()
-	var in_choice_restore := Campaign.from_save_result(in_choice_save, _data)
-	_eq(in_choice_restore.get("status", ""), Save.STATUS_OK, "choice-stage save restores")
-	_eq(in_choice_restore.get("campaign").scn03_demo_progression().get("current_event", ""), Campaign.SCN03_EVENT04,
-		"restored choice stage is canonical next event")
-	_choose_and_arrive(c, Campaign.SCN03_EVENT04, "ally_with_liu_bei")
-	_choose_and_arrive(c, Campaign.SCN03_EVENT06, "ally_with_sun_quan")
-	_choose_and_arrive(c, Campaign.SCN03_EVENT07, "joint_defense")
-	var progress: Dictionary = c.scn03_demo_progression()
-	_eq(progress.get("stage", ""), "red_cliff_pending", "all historical choices create pending occurrence")
-	_eq(c.active_battles.size(), 1, "one canonical pending battle")
-	_eq(int(c.scenario_event_records.get(Campaign.SCN03_EVENT09, 0)), 1, "Event 09 exactly once")
-	_ok(not c.continue_red_cliff_scenario_demo().is_empty(), "public deployment accepted")
-	var duplicate_deployment: Dictionary = c.continue_red_cliff_scenario_demo()
-	_ok(not bool(duplicate_deployment.get("accepted", false)), "duplicate deployment is not accepted")
-	# The first public continue queues the canonical manifest.  Once its normal
-	# reducer has accepted that command, a second continue emits only the
-	# manifest-derived voyage commands; neither call writes battle state.
-	c.step()
-	_ok(not c.continue_red_cliff_scenario_demo().is_empty(), "accepted manifest emits canonical deployment voyage")
-	c.step()
-	_ok(not bool(c.continue_red_cliff_scenario_demo().get("accepted", false)),
-		"deployment voyage is not duplicated")
-	for _i in range(720):
-		c.step()
-		if c.active_battles[0].status == ActiveBattle.STATUS_ACTIVE:
-			break
-	var battle: ActiveBattle = c.active_battles[0]
-	_eq(battle.status, ActiveBattle.STATUS_ACTIVE, "participants reach active battle through normal commands")
-	_eq(c.scn03_red_cliff_transition_news.size(), 1, "opening news exactly once")
-	var active_restore := Campaign.from_save_result(c.to_save_dict(), _data)
-	_eq(active_restore.get("status", ""), Save.STATUS_OK, "active save restores")
-	_eq(active_restore.get("campaign").digest(), c.digest(), "active replay digest identical")
-	_resolve_with_public_controls(c, Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID)
-	_eq(battle.status, ActiveBattle.STATUS_RESOLVED, "five-phase public battle resolves")
-	_ok(battle.campaign_result_applied, "result projection applied once")
-	_eq(c.scn03_red_cliff_transition_news.filter(func(row): return String(row.get("transition", "")) == Campaign.SCN03_RED_CLIFF_TRANSITION_RESOLVED).size(), 1,
-		"resolved news exactly once")
-	_ok(c.issue_red_cliff_player_command(Campaign.SCN03_RED_CLIFF_PENDING_BATTLE_ID, "advance_phase").is_empty(),
-		"resolved battle rejects re-entry command")
-	var resolved_restore := Campaign.from_save_result(c.to_save_dict(), _data)
-	_eq(resolved_restore.get("status", ""), Save.STATUS_OK, "resolved save restores")
-	_eq(resolved_restore.get("campaign").digest(), c.digest(), "resolved replay digest identical")
+func _test_full_loop_reaches_limit() -> void:
+	print("1. direct driver: full 20-turn loop reaches the pending-result ceiling")
+	var loaded := Setup.load_default()
+	_ok(bool(loaded.get("ok", false)), "setup fixture validates")
+	var setup: Dictionary = loaded.get("setup", {})
+	var battle = Battle.new()
+	_ok(bool(battle.initialize(setup).get("ok", false)), "battle initializes")
+	_drive_full_loop(battle, setup)
+	_eq(battle.phase(), "turn_limit_reached", "20 turns reach turn_limit_reached")
+	for turn_log_row in battle.turn_log():
+		var receipt: Dictionary = turn_log_row.get("resolution_receipt", {})
+		_ok(not receipt.has("winner") and not receipt.has("damage") and not receipt.has("casualties"),
+			"turn log never contains a fabricated winner, damage, or casualties")
 
 
-func _test_dec01_early_ending_and_restore() -> void:
-	print("2. public alternate choice → DEC-01 without battle")
-	var c := _new_campaign(20862)
-	_choose_and_arrive(c, Campaign.SCN03_EVENT03, "direct_annexation")
-	_choose_and_arrive(c, Campaign.SCN03_EVENT04, "surrender_to_cao")
-	_choose_and_arrive(c, Campaign.SCN03_EVENT06, "ally_with_sun_quan")
-	_choose_and_arrive(c, Campaign.SCN03_EVENT07, "joint_defense")
-	_eq(c.scn03_demo_progression().get("stage", ""), "early_ending", "non-occurrence projects early ending")
-	_ok(c.ended, "DEC-01 terminates canonical campaign")
-	_eq(c.end_reason, "DEC-01: 적벽 미발생", "DEC-01 canonical reason")
-	_eq(c.active_battles.size(), 0, "DEC-01 creates no substitute battle")
-	_eq(int(c.scenario_event_records.get(Campaign.SCN03_EVENT09, 0)), 0, "DEC-01 does not fire Event 09")
-	_ok(c.continue_red_cliff_scenario_demo().is_empty(), "ended route cannot deploy battle")
-	var restored := Campaign.from_save_result(c.to_save_dict(), _data)
-	_eq(restored.get("status", ""), Save.STATUS_OK, "early-ending save restores")
-	_eq(restored.get("campaign").end_reason, c.end_reason, "early-ending reason restored")
-	_eq(restored.get("campaign").digest(), c.digest(), "early-ending replay digest identical")
+func _test_determinism() -> void:
+	print("2. same setup and same commands produce identical digests")
+	var loaded := Setup.load_default()
+	var setup: Dictionary = loaded.get("setup", {})
+	var a = Battle.new()
+	a.initialize(setup)
+	_drive_full_loop(a, setup)
+	var b = Battle.new()
+	b.initialize(setup)
+	_drive_full_loop(b, setup)
+	_eq(a.digest(), b.digest(), "identical setup and orders produce the identical final digest")
+	_eq(JSON.stringify(a.turn_log()), JSON.stringify(b.turn_log()), "identical turn logs")
 
 
-func _test_determinism_and_invalid_boundaries() -> void:
-	print("3. deterministic sequence and public rejection boundaries")
-	var a := _new_campaign(20863)
-	var b := _new_campaign(20863)
-	_choose_historical_path(a)
-	_choose_historical_path(b)
-	_eq(a.digest(), b.digest(), "same seed and choices have same digest")
-	_eq(a.world.applied_commands, b.world.applied_commands, "same seed and choices have same command log")
-	_ok(a.issue_scn03_demo_choice(Campaign.SCN03_EVENT03, "direct_annexation").is_empty(),
-		"already-completed event is rejected")
-	_ok(a.issue_scn03_demo_choice(Campaign.SCN03_EVENT07, "not_a_choice").is_empty(),
-		"unknown documented choice is rejected")
-	_ok(a.issue_red_cliff_player_command("BATTLE-RED-CLIFF", "advance_phase").is_empty(),
-		"display battle ID is rejected")
-	_ok(a.issue_red_cliff_player_command("unknown", "advance_phase").is_empty(),
-		"unknown battle ID is rejected")
+func _test_invalid_boundaries() -> void:
+	print("3. public rejection boundaries")
+	var loaded := Setup.load_default()
+	var setup: Dictionary = loaded.get("setup", {})
+	var battle = Battle.new()
+	battle.initialize(setup)
+	_ok(not bool(battle.submit_liu_orders([{"squadron_id": "RC-UNKNOWN", "action": "hold"}]).get("ok", true)),
+		"unknown squadron ID is rejected")
+	_ok(not bool(battle.submit_sun_orders(_orders(setup, "sun_quan")).get("ok", true)),
+		"Sun orders are rejected outside sun_command phase")
+	_ok(not bool(battle.resolve_turn().get("ok", true)), "resolve is rejected before commands are submitted")
+	_ok(not bool(battle.continue_turn().get("ok", true)), "continue is rejected before the turn resolves")
+	_ok(not bool(battle.set_formation_order("RC-LIU-SQ-01", "FRM-UNKNOWN").get("ok", true)),
+		"unknown formation ID is rejected")
+	_drive_full_loop(battle, setup)
+	_ok(not bool(battle.submit_liu_orders(_orders(setup, "liu_bei")).get("ok", true)),
+		"orders are rejected once the 20-turn limit is reached")
+	_ok(not bool(battle.continue_turn().get("ok", true)),
+		"continue is rejected at the 20-turn limit")
