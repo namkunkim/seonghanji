@@ -28,7 +28,9 @@ func _row(original: int, remaining: int, squadron_count := 1, surrendered := 0) 
 
 
 func _inputs(liu: Dictionary, sun: Dictionary, cao: Dictionary) -> Dictionary:
-	return {"turn": 4, "factions": {"liu_bei": liu, "sun_quan": sun, "cao_cao": cao}}
+	return {"turn": 4, "factions": {"liu_bei": liu, "sun_quan": sun, "cao_cao": cao},
+		"flagships": {"liu_bei": {"destroyed": false}, "cao_cao": {"destroyed": false}},
+		"escapes": {"cao_cao": false, "liu_sun_alliance": false}}
 
 
 func _test_combined_alliance_threshold(resolver) -> void:

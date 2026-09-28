@@ -162,7 +162,18 @@ func victory_inputs(state: Dictionary, turn_number: int) -> Dictionary:
 		var total: Dictionary = factions[faction_id]; total.maximum_hull_points += int(row.maximum_hull_points); total.remaining_hull_points += int(row.hull_points); total.original_ship_count += _ship_total(row.original_composition); total.remaining_ship_count += _ship_total(row.current_composition); total.original_cost += _composition_cost(row.original_composition); total.remaining_cost += _composition_cost(row.current_composition); total.morale_basis_points_total += int(row.morale_basis_points); total.squadron_count += 1
 		if bool(row.capabilities.operational): total.operational_squadron_count += 1
 		if bool(row.capabilities.surrendered): total.surrendered_squadron_count += 1
-	return {"turn":turn_number,"factions":factions,"commander_casualties_pending":true,"victory_status":"pending_G8_01","winner_present":false}
+	# DEMO-RC-G8-03: only Liu Bei's and Cao Cao's flagships carry a victory
+	# condition; a flagship squadron missing from state (should not happen once
+	# G3 setup validation passed) is conservatively treated as destroyed.
+	var flagships := {}
+	for squad in _setup.squadrons:
+		var flagship_faction_id := String(squad.get("faction_id", ""))
+		if not bool(squad.get("flagship", false)) or not ["liu_bei", "cao_cao"].has(flagship_faction_id): continue
+		var squadron_id := String(squad.id)
+		var destroyed := true
+		if state.squadrons.has(squadron_id): destroyed = String(state.squadrons[squadron_id].damage_state) == "destroyed"
+		flagships[flagship_faction_id] = {"squadron_id": squadron_id, "destroyed": destroyed}
+	return {"turn":turn_number,"factions":factions,"flagships":flagships,"commander_casualties_pending":true,"victory_status":"pending_G8_01","winner_present":false}
 
 func _composition_cost(composition: Array) -> int:
 	var total := 0

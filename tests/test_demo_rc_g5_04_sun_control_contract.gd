@@ -110,6 +110,7 @@ func _test_twenty_turn_boundary_with_saved_ai_policy() -> void:
 		var receipt: Dictionary = battle.resolve_turn(); _ok(receipt.ok, "turn %d resolves" % turn_number)
 		_ok(not receipt.has("hit") and not receipt.has("damage") and not receipt.has("winner"), "turn %d invents no result" % turn_number)
 		if turn_number < 20: _ok(battle.continue_turn().ok, "turn %d continues" % turn_number)
-	_eq(battle.phase(), "turn_limit_reached", "turn20 reaches explicit limit")
+	# DEMO-RC-G8-03: the 20-turn cost-ratio comparison now always resolves a winner.
+	_eq(battle.phase(), "battle_concluded", "turn20 concludes with a determined result")
 	var final_digest := battle.digest(); _ok(not battle.resolve_turn().ok and not battle.continue_turn().ok, "turn20 cannot resolve or continue twice")
 	_eq(battle.digest(), final_digest, "turn-limit retries are idempotent")

@@ -24,12 +24,14 @@ func _inputs(liu_remaining: int, sun_remaining: int, cao_remaining: int, liu_sur
 	return {"turn": 4, "factions": {
 		"liu_bei": {"original_cost": 100, "remaining_cost": liu_remaining, "squadron_count": 2, "surrendered_squadron_count": liu_surrendered},
 		"sun_quan": {"original_cost": 100, "remaining_cost": sun_remaining, "squadron_count": 1, "surrendered_squadron_count": sun_surrendered},
-		"cao_cao": {"original_cost": 100, "remaining_cost": cao_remaining, "squadron_count": 1, "surrendered_squadron_count": cao_surrendered}}}
+		"cao_cao": {"original_cost": 100, "remaining_cost": cao_remaining, "squadron_count": 1, "surrendered_squadron_count": cao_surrendered}},
+		"flagships": {"liu_bei": {"destroyed": false}, "cao_cao": {"destroyed": false}},
+		"escapes": {"cao_cao": false, "liu_sun_alliance": false}}
 
 
 func _test_deterministic_conditions(resolver) -> void:
 	var normal: Dictionary = resolver.evaluate(_inputs(100, 100, 100))
-	check(normal.ok and not normal.winner_present and normal.future_conditions_pending == ["flagship", "escape", "turn_limit"], "no basic terminal condition remains pending")
+	check(normal.ok and not normal.winner_present and normal.future_conditions_pending == [], "no basic terminal condition remains pending; G8-03 closed the last future_conditions entries")
 	var liu_loss: Dictionary = resolver.evaluate(_inputs(30, 100, 100))
 	check(liu_loss.ok and liu_loss.winner_faction_id == "cao_cao" and liu_loss.reason_codes == ["liu_bei_terminal_condition"], "Liu 70-percent cost loss gives Cao victory")
 	var sun_only: Dictionary = resolver.evaluate(_inputs(100, 30, 100))

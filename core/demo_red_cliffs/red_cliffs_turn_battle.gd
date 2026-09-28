@@ -1123,7 +1123,9 @@ func resolve_turn() -> Dictionary:
 					stored["combat_resource_before"] = refill.combat_resource_before.duplicate(true)
 					stored["combat_resource_after"] = refill.combat_resource_after.duplicate(true)
 					stored["combat_resource_refill"] = refill.combat_resource_refill.duplicate(true)
-	var victory_result: Dictionary = _victory_resolver.evaluate(effect_result.victory_inputs)
+	var enriched_victory_inputs: Dictionary = effect_result.victory_inputs.duplicate(true)
+	enriched_victory_inputs["escapes"] = _escape_status(_victory_resolver.rules_snapshot(), _state.applied_setup, effect_result.state.squadrons, movement_result.live_navigation)
+	var victory_result: Dictionary = _victory_resolver.evaluate(enriched_victory_inputs)
 	if not victory_result.ok: return victory_result
 	var receipt := {
 		"ok": true,
@@ -1151,7 +1153,7 @@ func resolve_turn() -> Dictionary:
 		"resource_consumption_events": resource_result.consumption_events.duplicate(true),
 		"suppressed_fire_events": resource_result.suppressed_fire_events.duplicate(true),
 		"resource_recovery_events": recovery_events.duplicate(true),
-		"victory_inputs": effect_result.victory_inputs.duplicate(true),
+		"victory_inputs": enriched_victory_inputs.duplicate(true),
 		"victory_result": victory_result.duplicate(true),
 		"victory_check_required": true,
 	}
@@ -1525,6 +1527,35 @@ func _public_chain_conditions(values: Array) -> Array:
 		condition.erase("blocking_event_ids")
 		result.append(condition)
 	return result
+
+
+func _escape_status(victory_rules: Dictionary, applied_setup: Dictionary, effect_squadrons: Dictionary, live_navigation: Dictionary) -> Dictionary:
+	var flagship_squadron_ids := {}
+	for squad in applied_setup.get("squadrons", []):
+		if bool(squad.get("flagship", false)): flagship_squadron_ids[String(squad.get("faction_id", ""))] = String(squad.get("id", ""))
+	var cao_arrived := _squadron_arrived(String(flagship_squadron_ids.get("cao_cao", "")), victory_rules.escape_points.cao_cao, effect_squadrons, live_navigation)
+	var liu_flagship_id := String(flagship_squadron_ids.get("liu_bei", ""))
+	var required_ids := _fleet_squadron_ids(liu_flagship_id, applied_setup.get("fleet_groups", []))
+	var alliance_arrived := not required_ids.is_empty()
+	for squadron_id in required_ids:
+		if not _squadron_arrived(String(squadron_id), victory_rules.escape_points.liu_sun_alliance, effect_squadrons, live_navigation): alliance_arrived = false; break
+	return {"cao_cao": cao_arrived, "liu_sun_alliance": alliance_arrived}
+
+
+func _fleet_squadron_ids(flagship_squadron_id: String, fleets: Array) -> Array:
+	if flagship_squadron_id.is_empty(): return []
+	for fleet in fleets:
+		if fleet is Dictionary and String(fleet.get("flagship_squadron_id", "")) == flagship_squadron_id: return fleet.get("squadron_ids", []).duplicate()
+	return []
+
+
+func _squadron_arrived(squadron_id: String, escape_point: Dictionary, effect_squadrons: Dictionary, live_navigation: Dictionary) -> bool:
+	if squadron_id.is_empty() or not effect_squadrons.has(squadron_id) or not live_navigation.has(squadron_id): return false
+	if not bool(effect_squadrons[squadron_id].capabilities.operational): return false
+	var position: Array = live_navigation[squadron_id].get("position", [])
+	if position.size() != 2: return false
+	var here := Vector2(float(position[0]), float(position[1])); var target: Array = escape_point.position
+	return here.distance_to(Vector2(float(target[0]), float(target[1]))) <= float(escape_point.arrival_radius)
 
 
 func _decorate_terrain_events(events: Array) -> Array:

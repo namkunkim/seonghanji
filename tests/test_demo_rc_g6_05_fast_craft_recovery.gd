@@ -131,6 +131,6 @@ func _test_ai_terminal_exclusion()->void:
 	if receipt.ok:_ok(not receipt.opportunity_fire_events.any(func(row):return String(row.get("shooter_squadron_id",""))=="RC-CAO-FC-01" or String(row.get("target_squadron_id",""))=="RC-CAO-FC-01"),"AI terminal craft has no fire endpoint")
 func _test_turn20_boundary_and_snapshot()->void:
 	var loaded:=Setup.load_default();var battle=Battle.new();_ok(battle.initialize(loaded.setup).ok,"turn20 fixture initializes");battle._state.current_turn=20;battle._state.turn_log[0].turn=20;battle._state.live_navigation["RC-LIU-FC-01"].position=[700,700];battle._state.fast_craft_supply_state.resources["RC-LIU-FC-01"].fuel_basis_points=0;battle._state.fast_craft_supply_state.queue.erase("RC-LIU-FC-01")
-	_ok(battle.submit_command_draft().ok and battle.submit_sun_control_choice("ai").ok,"turn20 reaches resolution");var receipt:Dictionary=battle.resolve_turn();_ok(receipt.ok and battle.phase()=="turn_limit_reached","turn20 records recovery before terminal boundary")
+	_ok(battle.submit_command_draft().ok and battle.submit_sun_control_choice("ai").ok,"turn20 reaches resolution");var receipt:Dictionary=battle.resolve_turn();_ok(receipt.ok and battle.phase()=="battle_concluded","turn20 records recovery before the DEMO-RC-G8-03 turn-limit conclusion")
 	_ok(not battle.continue_turn().ok,"turn21 drift cannot execute")
 	var encoded:=JSON.stringify(battle.snapshot().fast_craft_recovery_state);_ok(JSON.parse_string(encoded) is Dictionary,"recovery snapshot is save-serializable primitive state")

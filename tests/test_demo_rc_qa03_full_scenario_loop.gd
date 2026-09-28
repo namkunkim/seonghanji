@@ -82,14 +82,15 @@ func _test_product_entry_smoke() -> void:
 
 
 func _test_full_loop_reaches_limit() -> void:
-	print("1. direct driver: full 20-turn loop reaches the pending-result ceiling")
+	print("1. direct driver: full 20-turn loop reaches a determined result")
 	var loaded := Setup.load_default()
 	_ok(bool(loaded.get("ok", false)), "setup fixture validates")
 	var setup: Dictionary = loaded.get("setup", {})
 	var battle = Battle.new()
 	_ok(bool(battle.initialize(setup).get("ok", false)), "battle initializes")
 	_drive_full_loop(battle, setup)
-	_eq(battle.phase(), "turn_limit_reached", "20 turns reach turn_limit_reached")
+	# DEMO-RC-G8-03: the 20-turn cost-ratio comparison now always resolves a winner.
+	_eq(battle.phase(), "battle_concluded", "20 turns reach battle_concluded")
 	for turn_log_row in battle.turn_log():
 		var receipt: Dictionary = turn_log_row.get("resolution_receipt", {})
 		_ok(not receipt.has("winner") and not receipt.has("damage") and not receipt.has("casualties"),

@@ -9,10 +9,12 @@ extends SceneTree
 ## those signals expose; it never writes turn, phase, winner, damage, or
 ## resource state directly.
 ##
-## Winner/damage/casualties resolution (G8-00/G8-01) is not implemented yet.
-## Until it lands, this test's ceiling is turn 20 reaching "결과 판정 대기"
-## (turn_limit_reached) with no fabricated result. Extend this test's final
-## assertions to cover the result screen once G8-04 ships.
+## Winner/damage/casualties resolution now lands through DEMO-RC-G8-00~03: the
+## per-turn receipt still carries no top-level "winner"/"damage"/"casualties"
+## keys (that remains a real invariant — the computed result lives under
+## victory_result), and turn 20 now concludes the battle via the turn-limit
+## cost-ratio comparison instead of dead-ending pending. Extend this test's
+## final assertions to cover the full result screen once G8-04 ships.
 
 const Harness := preload("res://tests/harness.gd")
 const OUTPUT_DIR := "res://out/demo-rc-qa01-e2e"
@@ -104,7 +106,7 @@ func _run() -> void:
 				# resolves the turn in the same action; no extra press needed.
 				view.find_child("SunAiDontAsk", true, false).pressed.emit()
 				await process_frame
-		var expected_phase := "turn_limit_reached" if turn_number == 20 else "victory_check"
+		var expected_phase := "battle_concluded" if turn_number == 20 else "victory_check"
 		_eq(String(controller.phase()), expected_phase, "turn %d ledger resolves without a fabricated result" % turn_number)
 		var receipt: Dictionary = controller.turn_log()[turn_number - 1].resolution_receipt
 		_ok(not receipt.has("winner") and not receipt.has("damage") and not receipt.has("casualties"),
@@ -113,9 +115,9 @@ func _run() -> void:
 			view.find_child("PrimaryTurnAction", true, false).pressed.emit()
 			await process_frame
 
-	_eq(String(controller.phase()), "turn_limit_reached", "20 turns reach the result-pending ceiling")
+	_eq(String(controller.phase()), "battle_concluded", "20 turns reach a determined result via the turn-limit comparison")
 	_ok(view.find_child("TurnHeader", true, false).text.contains("20/20"), "turn header shows 20/20")
-	_ok(view.find_child("TurnStatus", true, false).text.contains("결과 판정 대기"), "pending-result copy is visible")
+	_ok(view.find_child("TurnStatus", true, false).text.contains("승패 확정"), "concluded-result copy is visible")
 	_ok(view.find_child("PrimaryTurnAction", true, false).disabled, "primary action locks out at the turn limit")
 	await _capture("03-turn-limit-reached")
 

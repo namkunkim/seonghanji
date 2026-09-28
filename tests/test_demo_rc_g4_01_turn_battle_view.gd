@@ -67,7 +67,10 @@ func _test_view_flow() -> void:
 	var receipt: Dictionary = battle.turn_log()[0].resolution_receipt
 	_ok(not receipt.get("rules_pending", []).has("movement") and not receipt.get("movement_events", []).is_empty() \
 		and not receipt.has("winner") and not receipt.has("damage"), "movement resolves while remaining rules stay pending without fake result")
-	_ok(view.find_child("TurnStatus", true, false).text.contains("후속 구현 대기"), "pending victory copy visible")
+	# Pre-existing stale assertion fixed in passing: no production code has ever
+	# emitted "후속 구현 대기" (this predates G8-00/01 wiring the real victory_check
+	# status copy). Assert the actual current copy instead.
+	_ok(view.find_child("TurnStatus", true, false).text.contains("기본 승리 조건을 확인"), "victory-check status copy visible")
 	view.find_child("PrimaryTurnAction", true, false).pressed.emit(); await _settle()
 	_eq(battle.turn(), 2, "next turn increments once")
 	view.find_child("PrimaryTurnAction", true, false).pressed.emit(); await _settle()
@@ -102,9 +105,11 @@ func _test_turn_limit() -> void:
 		battle.resolve_turn()
 		if turn_number < 20: battle.continue_turn()
 	var view := View.new(); view.configure(battle, int(setup.get("formation_revision", 0)), JSON.stringify(setup)); root.add_child(view); await process_frame
-	_eq(battle.phase(), "turn_limit_reached", "turn 20 reaches result pending")
+	# DEMO-RC-G8-03: the 20-turn cost-ratio comparison now always resolves a
+	# winner, so turn 20 concludes the battle instead of dead-ending pending.
+	_eq(battle.phase(), "battle_concluded", "turn 20 concludes with a determined result")
 	_ok(view.find_child("TurnHeader", true, false).text.contains("20/20"), "20/20 visible")
-	_ok(view.find_child("TurnStatus", true, false).text.contains("결과 판정 대기"), "result pending copy visible")
+	_ok(view.find_child("TurnStatus", true, false).text.contains("승패 확정"), "concluded result copy visible")
 	_ok(view.find_child("PrimaryTurnAction", true, false).disabled, "next turn disabled at limit")
 	view.free()
 

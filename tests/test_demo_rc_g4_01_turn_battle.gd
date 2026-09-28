@@ -208,11 +208,18 @@ func _test_twenty_turn_limit() -> void:
 		if turn_number == 1:
 			_ok(battle.submit_sun_control_choice("no", true).ok, "first prompt selects persistent Sun AI policy")
 		_eq(battle.phase(), "resolution", "loop AI resolution phase %d" % turn_number)
-		_ok(battle.resolve_turn().ok, "loop resolution %d" % turn_number)
+		var loop_receipt: Dictionary = battle.resolve_turn(); _ok(loop_receipt.ok, "loop resolution %d" % turn_number)
 		if turn_number < 20:
 			_eq(battle.phase(), "victory_check", "loop victory boundary %d" % turn_number)
 			_ok(battle.continue_turn().ok, "loop continue %d" % turn_number)
-	_eq(battle.phase(), "turn_limit_reached", "turn 20 reaches explicit limit phase")
+		elif turn_number == 20:
+			# DEMO-RC-G8-03: Liu holds position all 20 turns, but Cao's AI still
+			# maneuvers and takes some fire, so Cao's cost ratio ends up below the
+			# alliance's untouched 100% and the alliance wins the turn-limit
+			# comparison (not a tie — Cao is not merely passive here).
+			_ok(loop_receipt.victory_result.winner_present and loop_receipt.victory_result.winner_faction_id == "liu_sun_alliance" \
+				and loop_receipt.victory_result.reason_codes == ["turn_limit_alliance_cost_ratio_higher"], "turn 20 concludes via the 20-turn cost-ratio comparison")
+	_eq(battle.phase(), "battle_concluded", "turn 20 concludes instead of dead-ending at the old pre-G8-03 ceiling")
 	_eq(battle.turn(), 20, "turn limit does not increment to 21")
 	_eq(battle.turn_log().size(), 20, "turn log preserves all 20 turns")
 	_ok(battle.turn_log()[19].victory_check_required, "turn 20 still requires follow-up victory comparison")
