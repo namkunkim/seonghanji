@@ -37,7 +37,7 @@ func _ledger():
 
 
 func _receipt() -> Dictionary:
-	return {"turn": 1, "rules_pending": ["weapon_fire", "damage", "casualties", "victory"],
+	return {"turn": 1, "rules_pending": ["commander_casualties", "victory"],
 		"formation_events": [{"event_type": "formation_applied", "turn": 1, "squadron_id": "SQ-A"}],
 		"weapon_allocation_events": [{"event_type": "weapon_allocation_applied", "turn": 1, "squadron_id": "SQ-A"}],
 		"resource_recovery_events": [],
@@ -45,6 +45,7 @@ func _receipt() -> Dictionary:
 		"path_intersection_events": [],
 		"detection_events": [{"event_id": "DET-1", "turn": 1}],
 		"opportunity_fire_events": [{"event_id": "FIRE-1", "turn": 1, "outcome": "shot_authorized"}],
+		"combat_effect_events": [],
 		"resource_consumption_events": [{"event_type": "resource_consumed", "event_id": "RES-1", "turn": 1, "squadron_id": "SQ-A"}],
 		"suppressed_fire_events": [], "victory_check_required": true}
 
@@ -58,7 +59,7 @@ func _test_phase_order_mapping_digest_and_deep_copy() -> void:
 	_eq(first.phases.size(), 5, "all five phases always present")
 	_eq(first.phases[0].events.size(), 4, "contact maps apply meta movement and detection")
 	_eq(first.phases[1].events.size(), 2, "barrage maps authorization and resource consumption")
-	_eq(first.phases[2].status, "pending", "engagement empty pending explicit")
+	_eq(first.phases[2].status, "empty", "engagement empty after G8-00 resolution")
 	_eq(first.phases[3].status, "pending", "assault empty pending explicit")
 	_eq(first.phases[4].events[0].event_type, "resolution_boundary", "resolution records victory-check boundary")
 	_ok(first.phases[4].events[0].payload.victory_check_required, "resolution boundary requires later victory check")

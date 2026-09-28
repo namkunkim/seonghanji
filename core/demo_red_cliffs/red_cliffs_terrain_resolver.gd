@@ -17,26 +17,26 @@ func visible_zones() -> Array:
 	for zone in _rules.zones: result.append({"zone_id": String(zone.id), "terrain_type": String(zone.type), "name": String(zone.name), "shape": zone.shape.duplicate(true)})
 	return result
 
-func point_effects(point: Array) -> Dictionary:
+func point_effects(point: Array, temporary_zones: Array = []) -> Dictionary:
 	var ids: Array = []
-	for zone in _rules.zones:
+	for zone in _zones(temporary_zones):
 		if _inside(point, zone.shape): ids.append(String(zone.id))
-	ids.sort(); return _stack(ids)
+	ids.sort(); return _stack(ids, temporary_zones)
 
-func weapon_effect(shooter_position: Array, target_or_aim_position: Array, target_source: String = "actual_reached_position") -> Dictionary:
-	var ids := _segment_zone_ids(Vector2(float(shooter_position[0]), float(shooter_position[1])), Vector2(float(target_or_aim_position[0]), float(target_or_aim_position[1])))
+func weapon_effect(shooter_position: Array, target_or_aim_position: Array, target_source: String = "actual_reached_position", temporary_zones: Array = []) -> Dictionary:
+	var ids := _segment_zone_ids(Vector2(float(shooter_position[0]), float(shooter_position[1])), Vector2(float(target_or_aim_position[0]), float(target_or_aim_position[1])), temporary_zones)
 	var range_bps := 10000; var arc_delta := 0
 	for zone_id in ids:
-		var effects: Dictionary = _zone(zone_id).effects
+		var effects: Dictionary = _zone(zone_id, temporary_zones).effects
 		range_bps = int(floor(float(range_bps * int(effects.weapon_range_basis_points) + 5000) / 10000.0))
 		arc_delta += int(effects.weapon_arc_delta_deg)
 	return {"zone_ids": ids, "range_basis_points": range_bps, "arc_delta_deg": arc_delta,
 		"target_source": target_source, "rounding": "zone_id_asc_sequential_half_up"}
 
-func follow_waypoints(from: Array, waypoints: Array, budget: float) -> Dictionary:
+func follow_waypoints(from: Array, waypoints: Array, budget: float, temporary_zones: Array = []) -> Dictionary:
 	var current := Vector2(float(from[0]), float(from[1])); var remaining_budget := budget; var actual := 0.0; var reached: Array = []; var segments: Array = []
 	for waypoint in waypoints:
-		var target := Vector2(float(waypoint[0]), float(waypoint[1])); var interval_rows := _segment_intervals(current, target)
+		var target := Vector2(float(waypoint[0]), float(waypoint[1])); var interval_rows := _segment_intervals(current, target, temporary_zones)
 		var completed := true
 		for interval in interval_rows:
 			var length := float(interval.length); var bps := int(interval.effects.movement_cost_basis_points); var cost := length * float(bps) / 10000.0
@@ -52,13 +52,13 @@ func follow_waypoints(from: Array, waypoints: Array, budget: float) -> Dictionar
 	var remaining_distance := 0.0; var remainder := current
 	for index in range(reached.size(), waypoints.size()):
 		var target := Vector2(float(waypoints[index][0]), float(waypoints[index][1])); remaining_distance += remainder.distance_to(target); remainder = target
-	var terrain_events := _transition_events(segments); terrain_events.append_array(_touch_events(segments))
+	var terrain_events := _transition_events(segments); terrain_events.append_array(_touch_events(segments, temporary_zones))
 	return {"to": [current.x, current.y], "actual_distance": actual, "reached_waypoints": reached, "remaining_distance": remaining_distance,
 		"path_complete": remaining_distance <= 0.000001, "terrain_segments": segments, "terrain_events": terrain_events}
 
-func _segment_intervals(start: Vector2, finish: Vector2) -> Array:
+func _segment_intervals(start: Vector2, finish: Vector2, temporary_zones: Array = []) -> Array:
 	var breaks: Array = [0.0, 1.0]
-	for zone in _rules.zones:
+	for zone in _zones(temporary_zones):
 		var clipped := _clip_rect(start, finish, zone.shape)
 		if clipped.hit: breaks.append(float(clipped.enter)); breaks.append(float(clipped.exit))
 	breaks.sort(); var unique: Array = []
@@ -67,10 +67,10 @@ func _segment_intervals(start: Vector2, finish: Vector2) -> Array:
 	var result: Array = []
 	for index in range(unique.size() - 1):
 		var a := float(unique[index]); var b := float(unique[index + 1]); if b - a <= 0.000001: continue
-		var mid := start.lerp(finish, (a + b) * 0.5); var effects := point_effects([mid.x, mid.y]); var p0 := start.lerp(finish, a); var p1 := start.lerp(finish, b)
+		var mid := start.lerp(finish, (a + b) * 0.5); var effects := point_effects([mid.x, mid.y], temporary_zones); var p0 := start.lerp(finish, a); var p1 := start.lerp(finish, b)
 		result.append({"from": [p0.x, p0.y], "to": [p1.x, p1.y], "length": p0.distance_to(p1), "zone_ids": effects.zone_ids.duplicate(), "effects": effects})
 	if result.is_empty():
-		var effects := point_effects([start.x, start.y]); result.append({"from": [start.x, start.y], "to": [finish.x, finish.y], "length": start.distance_to(finish), "zone_ids": effects.zone_ids.duplicate(), "effects": effects})
+		var effects := point_effects([start.x, start.y], temporary_zones); result.append({"from": [start.x, start.y], "to": [finish.x, finish.y], "length": start.distance_to(finish), "zone_ids": effects.zone_ids.duplicate(), "effects": effects})
 	return result
 
 func _clip_rect(start: Vector2, finish: Vector2, shape: Dictionary) -> Dictionary:
@@ -90,17 +90,17 @@ func _clip_rect(start: Vector2, finish: Vector2, shape: Dictionary) -> Dictionar
 func _inside(point: Array, shape: Dictionary) -> bool:
 	var e := float(_rules.epsilon); return float(point[0]) >= float(shape.x) - e and float(point[0]) <= float(shape.x + shape.width) + e and float(point[1]) >= float(shape.y) - e and float(point[1]) <= float(shape.y + shape.height) + e
 
-func _stack(zone_ids: Array) -> Dictionary:
+func _stack(zone_ids: Array, temporary_zones: Array = []) -> Dictionary:
 	var movement_cost := 10000; var sensor := 0; var concealment := 0
 	for zone_id in zone_ids:
-		var effects: Dictionary = _zone(zone_id).effects; movement_cost = maxi(movement_cost, int(effects.movement_cost_basis_points))
+		var effects: Dictionary = _zone(zone_id, temporary_zones).effects; movement_cost = maxi(movement_cost, int(effects.movement_cost_basis_points))
 		sensor += int(effects.observer_sensor_percent); concealment += int(effects.target_concealment_points)
 	return {"zone_ids": zone_ids.duplicate(), "movement_cost_basis_points": movement_cost, "observer_sensor_percent": clampi(sensor, -60, 30),
 		"target_concealment_points": concealment}
 
-func _segment_zone_ids(start: Vector2, finish: Vector2) -> Array:
+func _segment_zone_ids(start: Vector2, finish: Vector2, temporary_zones: Array = []) -> Array:
 	var ids: Array = []
-	for zone in _rules.zones:
+	for zone in _zones(temporary_zones):
 		if _clip_rect(start, finish, zone.shape).hit: ids.append(String(zone.id))
 	ids.sort(); return ids
 
@@ -112,20 +112,26 @@ func _transition_events(segments: Array) -> Array:
 		previous = current.duplicate()
 	return result
 
-func _touch_events(segments: Array) -> Array:
+func _touch_events(segments: Array, temporary_zones: Array = []) -> Array:
 	var result: Array = []; var seen := {}
 	for index in range(segments.size()):
 		var segment: Dictionary = segments[index]; var start := Vector2(float(segment.from[0]), float(segment.from[1])); var finish := Vector2(float(segment.to[0]), float(segment.to[1]))
-		for zone_id in _segment_zone_ids(start, finish):
+		for zone_id in _segment_zone_ids(start, finish, temporary_zones):
 			if segment.zone_ids.has(zone_id) or seen.has(zone_id): continue
 			seen[zone_id] = true; result.append({"event_type": "terrain_membership", "segment_index": index,
 				"position": segment.to.duplicate(), "zone_id": zone_id, "traversal_length": 0.0, "membership": "boundary_touch"})
 	return result
 
-func _zone(zone_id: String) -> Dictionary:
-	for zone in _rules.zones:
+func _zone(zone_id: String, temporary_zones: Array = []) -> Dictionary:
+	for zone in _zones(temporary_zones):
 		if String(zone.id) == zone_id: return zone
 	return {}
+
+func _zones(temporary_zones: Array) -> Array:
+	var result: Array = _rules.zones.duplicate(true)
+	for value in temporary_zones:
+		if value is Dictionary: result.append({"id":String(value.get("zone_id","")),"shape":value.get("shape",{}).duplicate(true),"effects":value.get("effects",{}).duplicate(true)})
+	result.sort_custom(func(a,b):return String(a.id)<String(b.id));return result
 
 func _load_rules(bounds: Array) -> Dictionary:
 	var file := FileAccess.open(RULES_PATH, FileAccess.READ); if file == null: return _error("적벽 terrain 규칙을 열 수 없습니다.")

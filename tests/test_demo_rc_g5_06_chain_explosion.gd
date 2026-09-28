@@ -80,7 +80,7 @@ func _test_state_machine_atomicity_retry_and_irreversibility() -> void:
 	_ok(not chain.stage(disrupted.state, ready, 2).ok, "same-turn retry rejected")
 	var retry: Dictionary = chain.stage(disrupted.state, ready, 3); _ok(retry.ok and retry.state.status == "staged", "next-turn retry succeeds only after conditions reacquired")
 	var triggered: Dictionary = chain.resolve_staged(retry.state, ready, 3); _ok(triggered.ok and triggered.state.status == "triggered", "probability-free operation triggers")
-	_ok(triggered.events[0].irreversible and triggered.events[0].effect_intents.size() == 4 and triggered.events[0].effects_pending.has("damage"), "trigger emits typed intents and explicit pending effects")
+	_ok(triggered.events[0].irreversible and triggered.events[0].effect_intents.size() == 4 and triggered.events[0].effects_pending == ["commander_casualties", "victory"], "trigger emits typed intents and only post-G8 pending boundaries")
 	_ok(not chain.cancel(triggered.state).ok and not chain.stage(triggered.state, ready, 4).ok, "triggered operation is immutable")
 	var replay: Dictionary = chain.resolve_staged(triggered.state, ready, 4); _ok(replay.ok and replay.events.is_empty() and replay.state == triggered.state, "post-trigger resolve cannot duplicate event")
 	var encoded := JSON.stringify(triggered); _ok(not encoded.contains('"winner"') and not encoded.contains('"damage":'), "state creates no concrete damage or winner")
@@ -98,9 +98,11 @@ func _test_ai_interference_and_hidden_independence() -> void:
 
 func _test_battle_public_api_redaction_and_phase_contract() -> void:
 	var battle_source := FileAccess.get_file_as_string("res://core/demo_red_cliffs/red_cliffs_turn_battle.gd")
-	var resource_gate := battle_source.find("_events_with_outcome(resource_result.authorized_events, \"shot_authorized\")")
+	var resource_gate := battle_source.find("var resource_result: Dictionary = _combat_resources.resolve_shots")
 	var chain_recheck := battle_source.find("var final_readiness: Dictionary = _chain_explosion.readiness", resource_gate)
-	_ok(resource_gate >= 0 and chain_recheck > resource_gate, "chain disruption consumes only post-resource authorized interception evidence")
+	var effect_commit := battle_source.find("var effect_result: Dictionary = _combat_effects.resolve", chain_recheck)
+	var supply_commit := battle_source.find("var supply_result: Dictionary = _fast_craft_supply.resolve", effect_commit)
+	_ok(resource_gate >= 0 and chain_recheck > resource_gate and effect_commit > chain_recheck and supply_commit > effect_commit, "resource-authorized chain recheck and effects precede outbound supply")
 	var battle = Battle.new(); _ok(battle.initialize(_fixture()).ok, "battle initializes for public API")
 	_ok(not battle.chain_explosion_readiness().ready, "turn1 has no preexisting exact detection")
 	_ok(not battle.stage_chain_explosion("CHAIN-DET-01", "missing").ok, "cannot stage without eligible confirmed contact")

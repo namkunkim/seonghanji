@@ -43,7 +43,21 @@
       {"source_id": "RC-BASE-CAO-01", "faction_id": "cao_cao", "position": [1460, 180]}
     ],
     "mutual_supply_alliances": [["liu_bei", "sun_quan"]],
-    "inventory_contract": "normal-demo source capacity authorizes refill up to per-squadron maximum only; source stock, damage and base reload accounting are deferred to G6-06"
+    "inventory_contract": "normal-demo source capacity and G6-06 integrated supply-ship inventory jointly authorize full atomic refill"
+  },
+  "supply_inventory_contract": {
+    "profile_id": "normal-demo-supply-inventory-v1",
+    "per_supply_ship_maximum": {"fuel_basis_points": 10000, "ammo_units": 12, "supply_material_units": 4},
+    "throughput_basis_points": {"operational": 10000, "moderate_damage": 5000, "heavy_damage": 2500},
+    "throughput_scale": 10000,
+    "throughput_credit_policy": "at each turn boundary carry only credit modulo 10000, then add the current weighted rate; unused integer slots never accumulate",
+    "required_base_reload_stationary_turns": 1,
+    "refill_policy": "full_refill_only_atomic; insufficient candidate waits and the next deterministic candidate may be considered",
+    "debit_policy": "fuel=actual fuel granted; ammo=actual G4 ammo plus special granted; supply_materials=1 per completed squadron",
+    "reload_policy": "same-faction friendly base only; provider remains stationary for one full turn; reload occurs after outbound supply and is usable next turn",
+    "destruction_policy": "for d newly destroyed among N previously non-destroyed ships, each remaining stock becomes floor(before*(N-d)/N)",
+    "capture_policy": "remaining stock becomes zero immediately; captor gain is zero; source remains disabled for the battle",
+    "damage_authority": "G8-00 only; authoritative reducers accept current-turn intents only before resolution completes; actual G8 resolver triggers remain deferred"
   },
   "return_contract": {
     "fuel_basis_points_per_distance": 10,
@@ -64,9 +78,9 @@
     "rescue_eligibility": "FAST-EQ-RESCUE_and_active_rescue_mission_and_friendly_or_allied_non_drifting",
     "capture_eligibility": "enemy_operational_non_drifting",
     "terminal_contract": "rescued_or_captured_removed_from_commands_and_combat; no_refuel_no_rearm_no_owner_transfer_no_battle_reuse",
-    "supply_capture_contract": "G8-00_authorized_capture_only; disable_exact_SUPPLY_SHIP_source_immediately; carrier_and_base_unchanged; captor_gain_zero; inventory_pending_G6-06",
+    "supply_capture_contract": "G8-00_authorized_capture_only; atomically_discard_exact_SUPPLY_SHIP_integrated_inventory_and_disable_source; carrier_and_base_unchanged; captor_gain_zero",
     "turn_limit_contract": "turn20_records_resolution; no_turn21_drift",
-    "result_pending": ["winner", "damage", "casualties", "supply_stock", "supply_damage", "base_reloading"]
+    "result_pending": ["winner", "damage", "casualties", "authoritative_damage_and_boarding_triggers"]
   },
   "basing_modes": ["independent", "carrier", "base"],
   "basing_contract": {
@@ -81,5 +95,5 @@
   "inventory_policy": "applied setup faction inventory minus all setup squadron assignments; preparation may create or delete user fast-craft squadrons from remaining same-faction stock; cross-faction transfer forbidden",
   "cost_policy": "per craft subtotal=(setup SHP-08 base unit cost+selected setup mission-equipment unit cost)*count; historical cost is the declared normal-demo baseline",
   "command_limit_source": "applied_setup.command_limit_rules_and_faction_demo_roster",
-  "out_of_scope": ["in_battle_equipment_change", "non_rescue_tactical_mission_effect", "supply_source_stock", "supply_source_damage", "base_reloading"]
+  "out_of_scope": ["in_battle_equipment_change", "non_rescue_tactical_mission_effect", "actual_damage_trigger", "actual_destroy_trigger", "actual_boarding_trigger", "post_battle_captured_ship_reuse"]
 }

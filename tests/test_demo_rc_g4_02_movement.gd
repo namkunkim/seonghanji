@@ -148,7 +148,7 @@ func _test_command_draft_and_live_persistence() -> void:
 	var receipt: Dictionary = battle.resolve_turn()
 	_ok(receipt.ok, "turn resolves movement")
 	_ok(not receipt.rules_pending.has("movement"), "movement removed from pending rule list")
-	_ok(receipt.rules_pending.has("weapon_fire"), "combat rules remain explicitly pending")
+	_ok(receipt.rules_pending == ["commander_casualties", "victory"], "only post-G8 boundaries remain pending")
 	_ok(not receipt.has("winner") and not receipt.has("damage") and not receipt.has("casualties"), "movement resolution invents no combat or result")
 	_eq(battle.live_navigation()["RC-LIU-SQ-01"].position, [450.0, 590.0], "partial live position persists after resolution")
 	_eq(float(battle.live_navigation()["RC-LIU-SQ-01"].facing_deg), 90.0, "live facing persists after resolution")

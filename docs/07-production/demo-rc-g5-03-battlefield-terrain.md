@@ -27,7 +27,7 @@ UI는 AABB를 `battle_to_local()`로 변환해 그릴 뿐이다. 경계 포함, 
 - 사격 이벤트: 자기 전대가 사수일 때만 코어의 지형 사거리 bp·사격각 보정·대상 소스를 표시한다. 추정 사격은 `봉인 추정 조준선`으로 표기한다.
 - 탐지 근거: 자기 observer terrain만 표시하고 적 EW·적 terrain·정확 좌표는 비공개임을 명시한다.
 
-미탐지 적의 위치·경로·zone 교차·체류와 적 효과는 렌더링하지 않는다. estimated fire는 봉인된 aim segment 결과만 소비하며 실제 표적 위치나 zone을 역산하지 않는다. hit, damage, winner는 이 작업 범위가 아니다.
+미탐지 적의 위치·경로·zone 교차·체류와 적 효과는 렌더링하지 않는다. estimated fire는 봉인된 aim segment 결과만 소비하며 실제 표적 위치나 zone을 역산하지 않는다. hit, damage, winner는 이 작업 범위가 아니었다. G8-00은 같은 봉인 경계를 유지한 채 hit/damage와 임시 위험 지대를 후속 권위 상태에 연결했으며 winner는 G8-01에 남긴다.
 
 ## 검증
 

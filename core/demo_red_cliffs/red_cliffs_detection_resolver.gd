@@ -22,7 +22,7 @@ func rules_snapshot() -> Dictionary: return _rules.duplicate(true)
 func initial_formation_state() -> Dictionary: return _formation.initial_state()
 
 func evaluate(observer_squadron_id: String, target_squadron_id: String, distance: float, formation_state: Dictionary,
-		observer_position = null, target_position = null) -> Dictionary:
+		observer_position = null, target_position = null, sensor_effect_percent: int = 0, temporary_zones: Array = []) -> Dictionary:
 	if not is_finite(distance) or distance < 0.0: return _error("탐지 거리는 0 이상의 유한값이어야 합니다.")
 	var observer := _find_squad(observer_squadron_id); var target := _find_squad(target_squadron_id)
 	if observer.is_empty() or target.is_empty() or String(observer.faction_id) == String(target.faction_id): return _error("탐지 observer-target 쌍이 잘못되었습니다.")
@@ -32,9 +32,9 @@ func evaluate(observer_squadron_id: String, target_squadron_id: String, distance
 	var target_ew := _composition_points(target, _rules.ship_ew_points, _rules.fast_equipment_ew_points)
 	var commander_id := String(observer.commander.id); var intelligence := int(_characters[commander_id].stats["지력"]); var intelligence_points := _intelligence_points(intelligence)
 	var formation_id := String(snapshots[observer_squadron_id].formation_id); var formation_percent := int(snapshots[observer_squadron_id].modifiers.detection_percent)
-	var observer_terrain: Dictionary = _terrain.point_effects(observer_position) if observer_position is Array else _terrain.point_effects([-9999, -9999])
-	var target_terrain: Dictionary = _terrain.point_effects(target_position) if target_position is Array else _terrain.point_effects([-9999, -9999])
-	var total_sensor_percent := formation_percent + int(observer_terrain.observer_sensor_percent)
+	var observer_terrain: Dictionary = _terrain.point_effects(observer_position, temporary_zones) if observer_position is Array else _terrain.point_effects([-9999, -9999], temporary_zones)
+	var target_terrain: Dictionary = _terrain.point_effects(target_position, temporary_zones) if target_position is Array else _terrain.point_effects([-9999, -9999], temporary_zones)
+	var total_sensor_percent := formation_percent + int(observer_terrain.observer_sensor_percent) + sensor_effect_percent
 	var adjusted_sensor := _percent_round_half_up(ship_sensor, total_sensor_percent); var distance_penalty := int(floor(distance / float(_rules.distance_penalty.units_per_point)))
 	var effective_target_ew := target_ew + int(target_terrain.target_concealment_points)
 	var score := adjusted_sensor + intelligence_points - effective_target_ew - distance_penalty
@@ -42,7 +42,7 @@ func evaluate(observer_squadron_id: String, target_squadron_id: String, distance
 	var threshold := int(_rules.thresholds.confirmed) if state == "confirmed" else int(_rules.thresholds.estimated); var margin := score - threshold
 	var labels := {"confirmed": "센서 점수가 확인 임계 이상", "estimated": "센서 점수가 추정 임계 이상", "undetected": "센서 점수가 추정 임계 미만"}
 	var own_breakdown := {"ship_sensor_points": ship_sensor, "formation_adjusted_sensor_points": adjusted_sensor, "commander_id": commander_id,
-		"commander_name": String(_characters[commander_id].name), "intelligence_band": _intelligence_band_label(intelligence), "intelligence_sensor_points": intelligence_points,
+		"commander_name": String(_characters[commander_id].name), "intelligence_band": _intelligence_band_label(intelligence), "intelligence_sensor_points": intelligence_points, "combat_effect_sensor_percent":sensor_effect_percent,
 		"own_terrain_zone_ids": observer_terrain.zone_ids.duplicate(), "own_terrain_sensor_percent": int(observer_terrain.observer_sensor_percent)}
 	return {"ok": true, "errors": [], "state": state, "margin": margin,
 		"authoritative": {"observer_squadron_id": observer_squadron_id, "target_squadron_id": target_squadron_id, "distance": distance,

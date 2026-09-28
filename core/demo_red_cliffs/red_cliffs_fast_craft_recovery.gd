@@ -1,7 +1,7 @@
 class_name RedCliffsFastCraftRecovery
 extends RefCounted
 
-## DEMO-RC-G6-05 — 표류·구조·나포와 나포 보급함 무력화.
+## DEMO-RC-G6-05 — 표류·구조·나포와 G6-06 재고 원자 커밋 전 보급함 무력화.
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
 const RULES_PATH := "res://data/red-cliffs-fast-craft-rules.json"
 var _setup: Dictionary = {}
@@ -149,7 +149,7 @@ func apply_authoritative_supply_capture(state: Dictionary, intent: Dictionary, s
 		"target_faction_id": String(source.faction_id), "position": source.position.duplicate(), "captured_turn": turn_number,
 		"status": "captured_disabled", "capacity_squadrons_per_turn": 0, "captor_gain": 0}
 	next.disabled_supply_sources[source_id] = disabled
-	var row := disabled.duplicate(true); row["target_squadron_id"] = String(source.provider_squadron_id); row["responder_squadron_id"] = String(intent.get("responder_squadron_id", "")); row["responder_faction_id"] = String(intent.get("responder_faction_id", "")); row["inventory_disposition"] = "locked_pending_G6-06"
+	var row := disabled.duplicate(true); row["target_squadron_id"] = String(source.provider_squadron_id); row["responder_squadron_id"] = String(intent.get("responder_squadron_id", "")); row["responder_faction_id"] = String(intent.get("responder_faction_id", "")); row["inventory_disposition"] = "pending_atomic_inventory_commit"
 	var event := _event(next, "supply_source_captured", row, turn_number, {"position": source.position.duplicate()})
 	_append(next, turn_number, event)
 	return {"ok": true, "errors": [], "state": next, "event": event}

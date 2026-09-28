@@ -210,7 +210,7 @@ func _test_turn_battle_integration_and_viewer_receipts() -> void:
 	_ok(battle.submit_sun_control_choice("ai").ok, "Sun AI HOLD contract preserved")
 	var receipt: Dictionary = battle.resolve_turn(); _ok(receipt.ok, "integrated tactical resolve succeeds")
 	_ok(not receipt.rules_pending.has("movement") and not receipt.rules_pending.has("detection"), "implemented movement and detection removed from pending")
-	_ok(receipt.rules_pending.has("weapon_fire") and receipt.rules_pending.has("damage") and receipt.rules_pending.has("victory"), "general fire damage and victory remain pending")
+	_ok(receipt.rules_pending == ["commander_casualties", "victory"] and receipt.has("combat_effect_events"), "general fire resolves before commander casualty and victory boundaries")
 	_ok(not receipt.has("damage") and not receipt.has("winner") and not receipt.has("resource_consumption"), "integrated receipt has no fabricated G5 result")
 	var cao_fire := _fire(receipt.opportunity_fire_events, "RC-CAO-SQ-01", "RC-LIU-SQ-01")
 	_ok(not cao_fire.is_empty(), "Cao HOLD can authorize deterministic opportunity shot on moving Liu target")

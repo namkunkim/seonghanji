@@ -20,5 +20,5 @@
   "multi_observer_merge": "state_rank_desc; last_seen_turn_desc; margin_desc; observer_squadron_id_asc",
   "formation_profile": "normal-demo-formation-v1",
   "character_source": "res://data/characters.json#stats.지력; assigned_commander_id_and_name_exact",
-  "terrain": {"status": "pending_neutral", "modifier_points": 0, "rules_pending": ["terrain_detection"], "label": "지형 보정 대기(중립)"}
+  "terrain": {"status": "active_normal_demo", "modifier_points": 0, "rules_pending": [], "label": "적벽 전용 지형 보정 적용"}
 }

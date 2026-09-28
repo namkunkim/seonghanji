@@ -14,10 +14,12 @@ const PHASE_LABELS := {
 	"resolution": "명령 원장 판정",
 	"victory_check": "승리 조건 판정 대기",
 	"turn_limit_reached": "20턴 결과 판정 대기",
+	"battle_concluded": "전투 승패 확정",
 }
 const FACTION_NAMES := {"liu_bei": "유비군", "sun_quan": "손권군", "cao_cao": "조조군"}
 const FACTION_COLORS := {"liu_bei": Color("63c58a"), "sun_quan": Color("df7d72"), "cao_cao": Color("69add5")}
 const TacticalMap := preload("res://scripts/red_cliff_turn/red_cliff_tactical_map.gd")
+const VisibleFleet3D := preload("res://scripts/red_cliff_turn/visible_fleet_3d/red_cliff_visible_fleet_3d.gd")
 
 var _battle
 var _applied_revision := 0
@@ -28,6 +30,10 @@ var _header: Label
 var _phase_text: Label
 var _steps: VBoxContainer
 var _map
+var _visible_fleet_3d
+var _visual_split: HSplitContainer
+var _visible_fleet_toggle: Button
+var _visible_fleet_expanded := false
 var _orders: VBoxContainer
 var _log: RichTextLabel
 var _status: Label
@@ -100,10 +106,14 @@ func _build() -> void:
 	for row in [["선택", "MapModeSelect", 0], ["경유점 추가", "MapModeAdd", 1], ["지도 이동", "MapModePan", 2]]:
 		var mode_button := _button(row[0], row[1], 112); mode_button.pressed.connect(_on_map_mode.bind(row[2])); map_tools.add_child(mode_button)
 	var reset_camera := _button("보기 초기화", "ResetMapCamera", 110); reset_camera.pressed.connect(func(): _map.reset_camera()); map_tools.add_child(reset_camera)
+	_visible_fleet_toggle = _button("3D 크게 보기", "ToggleVisibleFleet3D", 125); _visible_fleet_toggle.pressed.connect(_toggle_visible_fleet_3d); map_tools.add_child(_visible_fleet_toggle)
 	_map_mode_text = Label.new(); _map_mode_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map_mode_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT; _map_mode_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER; map_tools.add_child(_map_mode_text)
-	_map = TacticalMap.new(); _map.name = "AppliedSquadronMap"; _map.size_flags_vertical = Control.SIZE_EXPAND_FILL; _map.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map.squadron_selected.connect(_on_map_squadron_selected); _map.contact_selected.connect(_on_map_contact_selected); _map.waypoint_requested.connect(_on_waypoint_requested); _map.interaction_rejected.connect(_on_interaction_rejected); map_panel.get_meta("stack").add_child(_map)
+	_visual_split = HSplitContainer.new(); _visual_split.name = "BattlefieldVisualizationSplit"; _visual_split.size_flags_vertical = Control.SIZE_EXPAND_FILL; _visual_split.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _visual_split.resized.connect(_apply_visible_fleet_split); map_panel.get_meta("stack").add_child(_visual_split)
+	_map = TacticalMap.new(); _map.name = "AppliedSquadronMap"; _map.custom_minimum_size.x = 280; _map.size_flags_vertical = Control.SIZE_EXPAND_FILL; _map.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _map.squadron_selected.connect(_on_map_squadron_selected); _map.contact_selected.connect(_on_map_contact_selected); _map.waypoint_requested.connect(_on_waypoint_requested); _map.interaction_rejected.connect(_on_interaction_rejected); _visual_split.add_child(_map); _map.custom_minimum_size.x = 280
+	_visible_fleet_3d = VisibleFleet3D.new(); _visible_fleet_3d.name = "RedCliffVisibleFleet3D"; _visible_fleet_3d.custom_minimum_size.x = 280; _visible_fleet_3d.size_flags_vertical = Control.SIZE_EXPAND_FILL; _visible_fleet_3d.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _visual_split.add_child(_visible_fleet_3d)
+	_apply_visible_fleet_split.call_deferred()
 	var order_panel := _panel("이동 명령 초안", 405); body.add_child(order_panel)
-	var order_scroll := ScrollContainer.new(); order_scroll.name = "MovementOrderScroll"; order_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL; order_panel.get_meta("stack").add_child(order_scroll)
+	var order_scroll := ScrollContainer.new(); order_scroll.name = "MovementOrderScroll"; order_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL; order_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED; order_panel.get_meta("stack").add_child(order_scroll)
 	_orders = VBoxContainer.new(); _orders.name = "CurrentFactionOrders"; _orders.size_flags_horizontal = Control.SIZE_EXPAND_FILL; _orders.add_theme_constant_override("separation", 6); order_scroll.add_child(_orders)
 	var footer := HBoxContainer.new(); footer.custom_minimum_size.y = 158; footer.add_theme_constant_override("separation", 10); root_box.add_child(footer)
 	var log_panel := _panel("턴 명령 원장", 850); log_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL; footer.add_child(log_panel)
@@ -197,6 +207,8 @@ func _rebuild_map(snapshot: Dictionary) -> void:
 	if String(order.get("action", "")) == "move": preview = _battle.movement_preview(_selected_squadron_id, order.get("waypoints", []), order.get("facing_deg", 0))
 	_map.set_route(order, preview)
 	_map_mode_text.text = "모드: %s" % ("경유점 추가" if _move_armed else "선택")
+	var projection: Dictionary = _battle.viewer_3d_projection(_viewer_faction_id) if _battle.has_method("viewer_3d_projection") else {"ok": false, "errors": ["S5-02 viewer projection unavailable"]}
+	_visible_fleet_3d.configure(projection, _selected_squadron_id)
 
 
 func _rebuild_squad_list(snapshot: Dictionary) -> void:
@@ -210,6 +222,8 @@ func _rebuild_orders(snapshot: Dictionary, phase: String) -> void:
 	_clear(_orders)
 	var faction_id: String = _battle.current_direct_faction_id()
 	var heading := Label.new(); heading.text = "%s · %s" % [FACTION_NAMES.get(faction_id, "자동 처리"), "직접 명령" if not faction_id.is_empty() else "입력 잠김"]; heading.add_theme_font_size_override("font_size", 17); _orders.add_child(heading)
+	_add_supply_inventory_panel()
+	_add_combat_effects_panel()
 	if _selected_squadron_id.is_empty():
 		var empty := Label.new(); empty.text = "현재 편집 가능한 전대가 없습니다."; _orders.add_child(empty)
 		_add_fast_craft_mission_overview()
@@ -429,6 +443,137 @@ func _fast_supply_event_text(event: Dictionary) -> String:
 	return text
 
 
+func _add_supply_inventory_panel() -> void:
+	if not _battle.has_method("viewer_supply_inventory"): return
+	var receipt: Dictionary = _battle.viewer_supply_inventory(_viewer_faction_id)
+	if not bool(receipt.get("ok", false)): return
+	var title := Label.new(); title.name = "SupplyInventoryTitle"; title.text = "보급함 재고·손상 처리량·거점 재적재 · 자동 판정 · 읽기 전용"; title.add_theme_color_override("font_color", Color("e1c36f")); _orders.add_child(title)
+	for value in receipt.get("providers", []):
+		if value is Dictionary: _add_supply_inventory_provider(value, receipt.get("events", []))
+	var boundary := Label.new(); boundary.name = "SupplyInventoryBoundary"; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	boundary.text = "보급함 간 물자 이전 없음 · 아군 거점에서만 자동 재적재 · 수동 이전·재적재·손상·파괴·나포 조작 없음\n실제 damage/destroy/boarding trigger는 G8-00 권위 입력만 사용합니다."
+	boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+
+
+func _add_supply_inventory_provider(provider: Dictionary, events: Array) -> void:
+	var source_id := String(provider.get("source_id", "")); var inventory: Dictionary = provider.get("inventory", {})
+	var fuel: Dictionary = inventory.get("fuel", {}); var ammo: Dictionary = inventory.get("ammo", {}); var materials: Dictionary = inventory.get("supply_materials", {})
+	var counts: Dictionary = provider.get("ship_status_counts", {}); var reload: Dictionary = provider.get("reload", {})
+	var state := Label.new(); state.name = "SupplyInventoryState_%s" % source_id; state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	state.text = "%s · 전대 %s · %s\n통합 재고 · 함 연료 %d/%d %s · 함 탄약 %d/%d %s · 보급 물자 %d/%d %s\n함선 상태 · 정상 %d · 중파 %d · 대파 %d · 파괴 %d · 나포 %d\n처리율 %d bp/턴 · 이번 턴 잔여 %d전대 · 정상 기준 %d전대/턴 · 자동 보급 %s%s\n거점 재적재 %s · %s · 진행 %d/%d턴" % [source_id, String(provider.get("provider_squadron_id", "")), FACTION_NAMES.get(String(provider.get("faction_id", "")), String(provider.get("faction_id", ""))), int(fuel.get("current", 0)), int(fuel.get("maximum", 0)), String(fuel.get("unit", "")), int(ammo.get("current", 0)), int(ammo.get("maximum", 0)), String(ammo.get("unit", "")), int(materials.get("current", 0)), int(materials.get("maximum", 0)), String(materials.get("unit", "")), int(counts.get("operational", 0)), int(counts.get("moderate_damage", 0)), int(counts.get("heavy_damage", 0)), int(counts.get("destroyed", 0)), int(counts.get("captured", 0)), int(provider.get("effective_throughput_basis_points_per_turn", 0)), int(provider.get("available_capacity_squadrons_this_turn", 0)), int(provider.get("base_capacity_squadrons_per_turn", 0)), "활성" if bool(provider.get("automatic_supply_enabled", false)) else "비활성", " · %s" % _supply_inventory_disabled_reason(String(provider.get("disabled_reason", ""))) if not String(provider.get("disabled_reason", "")).is_empty() else "", _supply_inventory_reload_status(String(reload.get("status", ""))), String(reload.get("base_source_id", "거점 없음")) if not String(reload.get("base_source_id", "")).is_empty() else "거점 없음", int(reload.get("progress_turns", 0)), int(reload.get("required_turns", 0))]
+	state.add_theme_color_override("font_color", Color("e1c36f") if bool(provider.get("automatic_supply_enabled", false)) else Color("ef8a78")); _orders.add_child(state)
+	var matching_events: Array = []
+	for value in events:
+		if value is Dictionary and String(value.get("source_id", "")) == source_id: matching_events.append(value)
+	for index in range(maxi(0, matching_events.size() - 3), matching_events.size()):
+		var row: Dictionary = matching_events[index]; var event := Label.new(); event.name = "SupplyInventoryLatest_%s" % source_id if index == matching_events.size() - 1 else "SupplyInventoryEvent_%s_%d" % [source_id, int(row.get("serial", index))]; event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _supply_inventory_event_text(row); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
+
+
+func _supply_inventory_disabled_reason(reason: String) -> String:
+	return String({"inventory_depleted":"보급 물자 소진", "destroyed":"파괴", "captured":"나포·물자 폐기"}.get(reason, reason))
+
+
+func _supply_inventory_reload_status(status: String) -> String:
+	return String({"idle":"거점 밖", "queued":"자동 대기", "reloaded":"재적재 완료"}.get(status, status))
+
+
+func _supply_inventory_event_text(event: Dictionary) -> String:
+	var status := String(event.get("status", "")); var label: String = {"inventory_consumed":"보급 재고 소모", "base_reloaded":"거점 자동 재적재 완료", "status_applied":"손상·파괴 처리량 변경", "captured_discarded":"나포 즉시 폐기·적 획득 0"}.get(status, status)
+	var text := "%s · T%d · %s" % [label, int(event.get("turn", 0)), String(event.get("source_id", ""))]
+	if event.has("effective_throughput_basis_points_per_turn"): text += " · 처리율 %d bp/턴" % int(event.get("effective_throughput_basis_points_per_turn", 0))
+	if event.has("available_capacity_squadrons_this_turn"): text += " · 이번 턴 잔여 %d전대" % int(event.get("available_capacity_squadrons_this_turn", 0))
+	if event.has("before") and event.has("after"): text += " · %s → %s" % [_supply_inventory_stock_text(event.get("before", {})), _supply_inventory_stock_text(event.get("after", {}))]
+	if event.has("stock_before") and event.has("stock_after"): text += " · 통합 재고 %s → %s" % [_supply_inventory_stock_text(event.get("stock_before", {})), _supply_inventory_stock_text(event.get("stock_after", {}))]
+	if status == "status_applied": text += " · 중파·대파는 재고 유지, 파괴 비율만 손실"
+	if status == "captured_discarded": text += " · 남은 물자 즉시 폐기 · 적 보급 기능·재고 획득 없음"
+	return text
+
+
+func _supply_inventory_stock_text(stock: Dictionary) -> String:
+	return "연료 %d bp·탄약 %d·물자 %d" % [int(stock.get("fuel_basis_points", 0)), int(stock.get("ammo_units", 0)), int(stock.get("supply_material_units", 0))]
+
+
+func _add_combat_effects_panel() -> void:
+	if not _battle.has_method("viewer_combat_effects"): return
+	var receipt: Dictionary = _battle.viewer_combat_effects(_viewer_faction_id)
+	if not bool(receipt.get("ok", false)): return
+	var title := Label.new(); title.name = "CombatEffectsTitle"; title.text = "전투 피해·사기·센서·임시 지형 · 코어 판정 · 읽기 전용"; title.add_theme_color_override("font_color", Color("ef9b8f")); _orders.add_child(title)
+	for value in receipt.get("own_squadrons", []):
+		if value is Dictionary and (_selected_squadron_id.is_empty() or String(value.get("squadron_id", "")) == _selected_squadron_id): _add_own_combat_effect_row(value)
+	for value in receipt.get("contacts", []):
+		if value is Dictionary: _add_observed_combat_effect_row(value)
+	for value in receipt.get("temporary_terrain_zones", []):
+		if value is Dictionary: _add_temporary_terrain_effect_row(value)
+	var events: Array = receipt.get("events", [])
+	for index in range(maxi(0, events.size() - 4), events.size()):
+		if not events[index] is Dictionary: continue
+		var row: Dictionary = events[index]; var event := Label.new(); event.name = "CombatEffectEvent_%s" % String(row.get("event_id", "unknown")); event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _combat_effect_event_text(row); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
+	var victory: Dictionary = receipt.get("victory_boundary", {}); var victory_label := Label.new(); victory_label.name = "CombatEffectsVictoryBoundary"; victory_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	victory_label.text = "G8-01 승패 입력 · %s · 입력 %s · 승자 미확정" % [String(victory.get("status", "pending_G8_01")), "준비" if bool(victory.get("input_ready", false)) else "대기"]
+	victory_label.add_theme_color_override("font_color", Color("e1c36f")); _orders.add_child(victory_label)
+	var privacy := Label.new(); privacy.name = "CombatEffectsPrivacy"; privacy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; privacy.text = "자기 전대는 정확한 상태를, 적은 코어가 공개한 확인·추정 접촉의 관측 등급만 표시합니다. 숨은 전대·실제 위치·정확한 함체·사기·센서 수치는 표시하지 않습니다. 피해·사기·센서·지형을 수동 조작하는 버튼은 없습니다."; privacy.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(privacy)
+
+
+func _add_own_combat_effect_row(row: Dictionary) -> void:
+	var squadron_id := String(row.get("squadron_id", "")); var hull: Dictionary = row.get("hull", {}); var morale: Dictionary = row.get("morale", {}); var sensor: Dictionary = row.get("sensor", {}); var capabilities: Dictionary = row.get("capabilities", {})
+	var sensor_text := "센서 %s · 보정 %s" % [_combat_sensor_status_label(String(sensor.get("status", ""))), _signed_percent(int(sensor.get("modifier_percent", 0)))]
+	if String(sensor.get("status", "")) == "disrupted": sensor_text += " · T%d~T%d" % [int(sensor.get("effective_from_turn", 0)), int(sensor.get("expires_after_turn", 0))]
+	else: sensor_text += " · 적용 중인 장애 없음"
+	var label := Label.new(); label.name = "CombatEffectsOwn_%s" % squadron_id; label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.text = "%s · %s\n함체 %d/%d · 피해 %d · %s · 생존 편성 %s · 누적 사상 %d\n사기 %d/%d · %s · 다음 위험 %d\n%s\n명령 %s · 강제 후퇴 %s · 항복 %s" % [squadron_id, _combat_damage_state_label(String(row.get("damage_state", ""))), int(hull.get("current", 0)), int(hull.get("maximum", 0)), int(hull.get("damage_taken", 0)), _combat_damage_state_label(String(row.get("damage_state", ""))), _combat_composition_text(row.get("composition_current", [])), int(row.get("casualties_total", 0)), int(morale.get("current", 0)), int(morale.get("maximum", 0)), _combat_morale_status_label(String(morale.get("status", ""))), int(morale.get("next_risk_threshold", 0)), sensor_text, "가능" if bool(capabilities.get("can_command", false)) else "잠김", "예" if bool(capabilities.get("forced_retreat", false)) else "아니오", "예" if bool(capabilities.get("surrendered", false)) else "아니오"]
+	label.add_theme_color_override("font_color", Color("ef8a78") if String(row.get("damage_state", "")) in ["heavy_damage", "destroyed"] else Color("a8d9bd")); _orders.add_child(label)
+
+
+func _add_observed_combat_effect_row(row: Dictionary) -> void:
+	var contact_id := String(row.get("contact_id", "")); var position = row.get("display_position", [])
+	var label := Label.new(); label.name = "CombatEffectsContact_%s" % contact_id; label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.text = "%s 접촉 · %s" % ["확인" if String(row.get("state", "")) == "confirmed" else "추정", contact_id]
+	if position is Array and position.size() == 2: label.text += " · 표시 위치 (%.1f, %.1f)" % [float(position[0]), float(position[1])]
+	label.text += "\n%s · %s · %s · %s" % [_combat_effect_band_label(String(row.get("effect_band", ""))), String(row.get("damage_label", "피해 미확인")), String(row.get("morale_label", "사기 미확인")), String(row.get("sensor_label", "센서 미확인"))]
+	label.add_theme_color_override("font_color", Color("ef9f80") if String(row.get("state", "")) == "confirmed" else Color("e0b66d")); _orders.add_child(label)
+
+
+func _add_temporary_terrain_effect_row(row: Dictionary) -> void:
+	var effects: Dictionary = row.get("effects", {}); var label := Label.new(); label.name = "TemporaryTerrainEffect_%s" % String(row.get("zone_id", "")); label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.text = "임시 지형 · %s · %s · T%d~T%d\n이동 %d bp · 탐지 %s · 은폐 %+d · 사거리 %d bp · 사격각 %+.1f°" % [String(row.get("name", row.get("zone_id", ""))), _combat_temporary_terrain_status_label(String(row.get("status", ""))), int(row.get("active_from_turn", 0)), int(row.get("expires_after_turn", 0)), int(effects.get("movement_cost_basis_points", 10000)), _signed_percent(int(effects.get("observer_sensor_percent", 0))), int(effects.get("target_concealment_points", 0)), int(effects.get("weapon_range_basis_points", 10000)), float(effects.get("weapon_arc_delta_deg", 0.0))]
+	label.add_theme_color_override("font_color", Color("d58b65")); _orders.add_child(label)
+
+
+func _combat_effect_event_text(row: Dictionary) -> String:
+	var headline := String(row.get("headline", row.get("event_type", "전투 효과"))); var text := "%s · T%d" % [headline, int(row.get("turn", 0))]
+	if not String(row.get("own_squadron_id", "")).is_empty(): text += " · 내 전대 %s" % String(row.get("own_squadron_id", ""))
+	if not String(row.get("contact_id", "")).is_empty(): text += " · 접촉 %s" % String(row.get("contact_id", ""))
+	var details: Array = row.get("details", []); if not details.is_empty(): text += "\n" + " · ".join(details)
+	return text
+
+
+func _combat_composition_text(values: Array) -> String:
+	var parts: Array[String] = []
+	for value in values:
+		if value is Dictionary: parts.append("%s %d" % [String(value.get("ship_type_id", "")), int(value.get("count", 0))])
+	return "없음" if parts.is_empty() else ", ".join(parts)
+
+
+func _combat_damage_state_label(status: String) -> String:
+	return String({"operational":"정상", "moderate_damage":"중파", "heavy_damage":"대파", "destroyed":"파괴"}.get(status, status))
+
+
+func _combat_morale_status_label(status: String) -> String:
+	return String({"steady":"안정", "shaken":"동요", "retreating":"후퇴", "surrendered":"항복"}.get(status, status))
+
+
+func _combat_sensor_status_label(status: String) -> String:
+	return String({"normal":"정상", "disrupted":"장애"}.get(status, status))
+
+
+func _combat_effect_band_label(band: String) -> String:
+	return String({"intact":"외관 정상", "damaged":"손상 관측", "critical":"심각 손상", "neutralized":"무력화"}.get(band, band))
+
+
+func _combat_temporary_terrain_status_label(status: String) -> String:
+	return String({"scheduled":"적용 예정", "active":"활성"}.get(status, status))
+
+
 func _add_fast_craft_return_panel(squadron_id: String, show_identity: bool) -> void:
 	if not _battle.has_method("viewer_fast_craft_returns"): return
 	var receipt: Dictionary = _battle.viewer_fast_craft_returns(_viewer_faction_id)
@@ -521,7 +666,7 @@ func _add_fast_craft_recovery_panel(squadron_id: String, show_identity: bool) ->
 		if value is Dictionary and (String(value.get("target_squadron_id", "")) == squadron_id or String(value.get("responder_squadron_id", "")) == squadron_id): events.append(value)
 	for index in range(maxi(0, events.size() - 3), events.size()):
 		var row: Dictionary = events[index]; var event := Label.new(); event.name = "FastCraftRecoveryLatest%s" % suffix if index == events.size() - 1 else "FastCraftRecoveryEvent%s_%d" % [suffix, int(row.get("serial", index))]; event.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; event.text = _fast_recovery_event_text(row); event.add_theme_color_override("font_color", Color("a8d9bd")); _orders.add_child(event)
-	var boundary := Label.new(); boundary.name = "FastCraftRecoveryBoundary%s" % suffix; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "수동 구조·나포 버튼 없음 · 직접 지휘와 AI가 동일 코어 판정을 사용합니다. 정상 보급함 근접은 나포가 아니며 실제 damage/boarding trigger는 G8-00 권위입니다. 나포 재고·재사용은 G6-06 이후입니다."; boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
+	var boundary := Label.new(); boundary.name = "FastCraftRecoveryBoundary%s" % suffix; boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; boundary.text = "수동 구조·나포 버튼 없음 · 직접 지휘와 AI가 동일 코어 판정을 사용합니다. 정상 보급함 근접은 나포가 아니며 실제 damage/boarding trigger는 G8-00 권위입니다. 나포 시 남은 물자는 즉시 폐기되며 적은 보급 기능·재고를 획득하지 않습니다."; boundary.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(boundary)
 	_add_disabled_supply_rows(receipt)
 
 
@@ -669,8 +814,11 @@ func _status_for_phase(phase: String) -> String:
 	if phase == "liu_command": return "유비군 전대별 HOLD/MOVE 초안을 검토한 뒤 제출합니다."
 	if phase == "sun_control_prompt": return "손권군 제어 방식을 선택해야 계속할 수 있습니다."
 	if phase == "sun_command": return "손권군 전대별 HOLD/MOVE 초안을 검토한 뒤 제출합니다."
-	if phase == "victory_check": return "진형·이동·경로 교차·탐지·기회 사격 판정이 확정되었습니다. 명중·피해·승패는 후속 구현 대기입니다."
+	if phase == "victory_check": return "피해·사기와 기본 승리 조건을 확인했습니다. 다음 턴을 시작할 수 있습니다."
 	if phase == "turn_limit_reached": return "20/20 · 결과 판정 대기. 승자와 피해는 아직 계산하지 않았습니다."
+	if phase == "battle_concluded":
+		var result: Dictionary = _battle.snapshot().get("victory_result", {})
+		return "승패 확정 · %s" % String(result.get("winner_side_id", "결과 미상"))
 	return "AI 명령 및 명령 원장을 처리하는 중입니다."
 
 
@@ -721,6 +869,21 @@ func _on_map_mode(mode: int) -> void:
 		_on_arm_move(); return
 	_move_armed = false; _map.set_interaction(_editable_squadron_ids(_battle.snapshot()), _selected_squadron_id, mode)
 	_map_mode_text.text = "모드: %s" % ("지도 이동" if mode == TacticalMap.Mode.PAN else "선택")
+
+
+func _toggle_visible_fleet_3d() -> void:
+	_visible_fleet_expanded = not _visible_fleet_expanded
+	_apply_visible_fleet_split()
+
+
+func _apply_visible_fleet_split() -> void:
+	if _visual_split == null: return
+	if _map != null: _map.custom_minimum_size.x = 280
+	var map_ratio := 1.0 / 3.0 if _visible_fleet_expanded else 2.0 / 3.0
+	_visual_split.split_offset = int(maxf(0.0, _visual_split.size.x) * (map_ratio - 0.5))
+	if _visible_fleet_toggle != null: _visible_fleet_toggle.text = "2D 중심으로" if _visible_fleet_expanded else "3D 크게 보기"
+	if _visible_fleet_3d != null and _visible_fleet_3d.has_method("request_render_once"):
+		_visible_fleet_3d.call_deferred("request_render_once")
 
 
 func _on_arm_move() -> void:
@@ -845,7 +1008,8 @@ func _add_intelligence_panel() -> void:
 		elif kind == "chain_explosion_disrupted":
 			event_label.name = "ChainExplosionDisruptedEvent"; event_label.text = "연쇄 폭발 작전 방해 · 조건 재확보 필요 · 턴 %d부터 재시도 가능" % int(event.get("retry_allowed_from_turn", 0))
 		elif kind == "chain_explosion_triggered":
-			event_label.name = "ChainExplosionTriggeredEvent"; event_label.text = "연쇄 폭발 작전 발동 확정 · 확률 판정 없음 · 취소 불가\n후속 효과 판정 대기 · 일반 승리 판정 대기"
+			var chain_state: Dictionary = _battle.viewer_chain_explosion_state(_viewer_faction_id) if _battle.has_method("viewer_chain_explosion_state") else {}
+			event_label.name = "ChainExplosionTriggeredEvent"; event_label.text = "연쇄 폭발 작전 발동 확정 · 확률 판정 없음 · 취소 불가\n%s" % ("후속 효과 적용 완료 · 승패 판정 G8-01 대기" if bool(chain_state.get("effects_resolved", false)) else "후속 효과 판정 대기 · 일반 승리 판정 대기")
 		elif kind == "resource_consumed":
 			event_label.text = "자원 소모 · %s · 비용 %s\n%s" % [_weapon_name(String(event.get("weapon_id", ""))), _resource_cost_text(event.get("cost", {})), _resource_transition_text(event.get("before", {}), event.get("after", {}), String(event.get("weapon_id", "")))]
 		elif kind == "fire_suppressed":
@@ -883,7 +1047,12 @@ func _add_chain_explosion_panel() -> void:
 	status_label.text = {"idle":"미준비", "staged":"준비 완료 · 턴 판정에서 최종 조건 재검사", "disrupted":"방해됨 · 조건 재확보 후 다음 유비 명령 턴에 재시도", "triggered":"발동 확정 · 확률 판정 없음 · 취소 불가"}.get(status, status)
 	status_label.add_theme_color_override("font_color", Color("a8d9bd") if status != "disrupted" else Color("ffb18e")); _orders.add_child(status_label)
 	if status == "triggered":
-		var pending := Label.new(); pending.name = "ChainExplosionEffectsPending"; pending.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; pending.text = "후속 효과 판정 대기: %s\n일반 승리 판정 대기" % _effect_intents_text(state.get("effect_intents", [])); _orders.add_child(pending)
+		var effects := Label.new(); effects.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		if bool(state.get("effects_resolved", false)):
+			effects.name = "ChainExplosionEffectsApplied"; effects.text = "후속 효과 적용 완료: %s\n승패 판정은 G8-01 대기" % _effect_intents_text(state.get("effect_intents", [])); effects.add_theme_color_override("font_color", Color("ef9b8f"))
+		else:
+			effects.name = "ChainExplosionEffectsPending"; effects.text = "후속 효과 판정 대기: %s\n일반 승리 판정 대기" % _effect_intents_text(state.get("effect_intents", []))
+		_orders.add_child(effects)
 		var locked := _button("발동 확정 · 취소 불가", "ChainExplosionLocked", 340); locked.disabled = true; _orders.add_child(locked); return
 	if _viewer_faction_id != "liu_bei":
 		var allied := Label.new(); allied.text = String(state.get("allied_operation_label", "연합 작전 상태만 공개")); allied.add_theme_color_override("font_color", Color("92aab4")); _orders.add_child(allied); return
@@ -1220,6 +1389,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if visible and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		if _battle != null and _battle.phase() == "sun_control_prompt":
 			_last_error = "손권군 제어 방식을 선택해야 합니다. Esc로 닫을 수 없습니다."; _refresh()
+		elif _visible_fleet_expanded:
+			_visible_fleet_expanded = false; _apply_visible_fleet_split()
 		else: close_requested.emit()
 		get_viewport().set_input_as_handled()
 

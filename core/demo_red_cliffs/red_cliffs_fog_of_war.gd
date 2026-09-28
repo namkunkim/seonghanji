@@ -83,7 +83,7 @@ func make_order(viewer_faction_id: String, shooter_squadron_id: String, contact:
 
 
 func authorize_orders(orders: Array, shooter_faction_id: String, live_navigation: Dictionary,
-		weapon_policy: Dictionary, turn_number: int) -> Dictionary:
+		weapon_policy: Dictionary, turn_number: int, temporary_zones: Array = []) -> Dictionary:
 	var events: Array = []; var suppressed: Array = []; var seen := {}
 	var sorted := orders.duplicate(true); sorted.sort_custom(func(a, b): return String(a.get("squadron_id", "")) < String(b.get("squadron_id", "")))
 	for value in sorted:
@@ -96,7 +96,7 @@ func authorize_orders(orders: Array, shooter_faction_id: String, live_navigation
 		if not live_navigation.has(shooter_id) or not weapon_policy.has(shooter_id): return _error("추정 사격 shooter 상태가 누락되었습니다: %s" % shooter_id)
 		if bool(weapon_policy[shooter_id].hold_fire):
 			suppressed.append(_suppressed(order, turn_number, "hold_fire", "사격 보류")); continue
-		var selected := _select_weapon(order.aim_position, live_navigation[shooter_id], weapon_policy[shooter_id])
+		var selected := _select_weapon(order.aim_position, live_navigation[shooter_id], weapon_policy[shooter_id], temporary_zones)
 		if selected.is_empty(): suppressed.append(_suppressed(order, turn_number, "weapon_ineligible", "추정 좌표에 적격 무기 없음")); continue
 		var event_id := _event_id(turn_number, shooter_id, String(order.contact_id))
 		events.append({"event_id": event_id, "event_type": "estimated_fire_authorized", "outcome": "estimated_fire_authorized",
@@ -127,14 +127,14 @@ func visible_events(viewer_faction_id: String, receipt: Dictionary) -> Dictionar
 	return {"ok": true, "errors": [], "viewer_faction_id": viewer_faction_id, "events": events}
 
 
-func _select_weapon(aim_position: Array, navigation: Dictionary, policy: Dictionary) -> Dictionary:
+func _select_weapon(aim_position: Array, navigation: Dictionary, policy: Dictionary, temporary_zones: Array = []) -> Dictionary:
 	var vector := Vector2(float(aim_position[0]) - float(navigation.position[0]), float(aim_position[1]) - float(navigation.position[1]))
 	var distance := vector.length(); var facing := float(navigation.facing_deg)
 	var bearing := facing if distance <= 0.000001 else fposmod(rad_to_deg(atan2(vector.y, vector.x)), 360.0)
 	var delta := absf(wrapf(bearing - facing, -180.0, 180.0)); var eligible: Array = []
 	for value in policy.capabilities:
 		var capability: Dictionary = value; var weapon_id := String(capability.weapon_id); var allocation := int(policy.allocations.get(weapon_id, 0))
-		var terrain_effect: Dictionary = _terrain.weapon_effect(navigation.position, aim_position, "sealed_estimated_aim")
+		var terrain_effect: Dictionary = _terrain.weapon_effect(navigation.position, aim_position, "sealed_estimated_aim", temporary_zones)
 		var effective_range := int(floor(float(int(capability.range) * int(terrain_effect.range_basis_points) + 5000) / 10000.0))
 		var effective_arc := clampf(float(capability.arc_deg) + float(terrain_effect.arc_delta_deg), 0.0, 360.0)
 		if allocation > 0 and distance <= float(effective_range) and delta <= effective_arc * 0.5 + 0.000001:
