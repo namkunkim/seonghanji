@@ -609,12 +609,11 @@ func _build_ui(galaxy: Dictionary, systems: Array) -> void:
         ["overview", "◎", "01  천하도", Color("65ccff")],
         ["systems", "◇", "02  성역", Color("8fcfff")],
         ["fleets", "▲", "03  함대", Color("80dfff")],
-        ["ships", "◫", "04  함선", Color("78d9ff")],
-        ["domestic", "▣", "05  내정", Color("ffd06a")],
-        ["talent", "◆", "06  인재", Color("b8e8ff")],
-        ["diplomacy", "◈", "07  외교", Color("c7a6ff")],
-        ["tech", "✦", "08  기술", Color("76f0dc")],
-        ["records", "≡", "09  기록", Color("9db8c8")]
+        ["domestic", "▣", "04  내정", Color("ffd06a")],
+        ["talent", "◆", "05  인재", Color("b8e8ff")],
+        ["diplomacy", "◈", "06  외교", Color("c7a6ff")],
+        ["tech", "✦", "07  기술", Color("76f0dc")],
+        ["records", "≡", "08  기록", Color("9db8c8")]
     ]
     for item in items:
         var b: Button = Button.new()
