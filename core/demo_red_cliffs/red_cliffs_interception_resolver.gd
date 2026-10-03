@@ -70,7 +70,8 @@ func weapon_capabilities() -> Dictionary:
 
 
 func resolve(movement_events: Array, live_navigation: Dictionary, prior_detection: Dictionary,
-		turn_number: int, weapon_policy: Dictionary = {}, formation_state: Dictionary = {}, sensor_effects: Dictionary = {}, temporary_zones: Array = []) -> Dictionary:
+		turn_number: int, weapon_policy: Dictionary = {}, formation_state: Dictionary = {}, sensor_effects: Dictionary = {}, temporary_zones: Array = [],
+		current_compositions: Dictionary = {}) -> Dictionary:
 	if _setup.is_empty(): return _error("요격 판정기가 초기화되지 않았습니다.")
 	var checked: Dictionary = _validate_inputs(movement_events, live_navigation, prior_detection, turn_number)
 	if not checked.ok: return checked
@@ -80,8 +81,8 @@ func resolve(movement_events: Array, live_navigation: Dictionary, prior_detectio
 	var active_formation: Dictionary = formation_state.duplicate(true) if not formation_state.is_empty() else _detection_resolver.initial_formation_state()
 	var detection_result: Dictionary = _resolve_detection(event_by_squad, detection, turn_number, active_formation, sensor_effects, temporary_zones)
 	if not detection_result.ok: return detection_result
-	var active_policy: Dictionary = weapon_policy.duplicate(true) if not weapon_policy.is_empty() else _weapon_control.interception_policy(_weapon_control.initial_state())
-	var policy_check := _validate_weapon_policy(active_policy)
+	var active_policy: Dictionary = weapon_policy.duplicate(true) if not weapon_policy.is_empty() else _weapon_control.interception_policy(_weapon_control.initial_state(), current_compositions)
+	var policy_check := _validate_weapon_policy(active_policy, current_compositions)
 	if not policy_check.ok: return policy_check
 	var fire_events: Array = _resolve_opportunity_fire(event_by_squad, detection, turn_number, active_policy, temporary_zones)
 	return {"ok": true, "errors": [], "path_intersection_events": intersection_events,
@@ -395,9 +396,10 @@ func _closest_segments(a0: Vector2, a1: Vector2, b0: Vector2, b1: Vector2) -> Di
 	return {"distance": best_distance, "point_a": [best_pair[0].x, best_pair[0].y], "point_b": [best_pair[1].x, best_pair[1].y]}
 
 
-func _validate_weapon_policy(policy: Dictionary) -> Dictionary:
+func _validate_weapon_policy(policy: Dictionary, current_compositions: Dictionary = {}) -> Dictionary:
 	if policy.size() != _operational_ids().size(): return _error("모든 operational 전대의 무기 정책이 필요합니다.")
-	var canonical: Dictionary = _weapon_control.interception_policy(_weapon_control.initial_state())
+	# A6: 권위 capability는 현재(피해 반영) 편성 기준이다.
+	var canonical: Dictionary = _weapon_control.interception_policy(_weapon_control.initial_state(), current_compositions)
 	for squadron_id in _operational_ids():
 		if not policy.has(squadron_id) or not policy[squadron_id] is Dictionary: return _error("무기 정책이 누락되었습니다: %s" % squadron_id)
 		var row: Dictionary = policy[squadron_id]

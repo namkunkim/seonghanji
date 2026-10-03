@@ -150,7 +150,8 @@ func _test_command_draft_and_live_persistence() -> void:
 	_ok(not receipt.rules_pending.has("movement"), "movement removed from pending rule list")
 	_ok(receipt.rules_pending == ["commander_casualties", "victory"], "only post-G8 boundaries remain pending")
 	_ok(not receipt.has("winner") and not receipt.has("damage") and not receipt.has("casualties"), "movement resolution invents no combat or result")
-	_eq(battle.live_navigation()["RC-LIU-SQ-01"].position, [450.0, 590.0], "partial live position persists after resolution")
+	# V-73 A5: 해결 이동은 현재 진형(FRM-01 어린진 +5%)을 반영한다 — 예산 floor(140×1.05)=147 → 310+147=457.
+	_eq(battle.live_navigation()["RC-LIU-SQ-01"].position, [457.0, 590.0], "partial live position persists after resolution")
 	_eq(float(battle.live_navigation()["RC-LIU-SQ-01"].facing_deg), 90.0, "live facing persists after resolution")
 	_ok(battle.set_sun_prompt_enabled(false).ok, "AI prompt policy is scheduled for the next turn")
 	_ok(battle.continue_turn().ok, "next turn opens")

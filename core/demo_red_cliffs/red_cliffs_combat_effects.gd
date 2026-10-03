@@ -154,6 +154,22 @@ func terminal_ids(state: Dictionary) -> Array:
 		if not bool(state.squadrons[id].capabilities.operational): result.append(String(id))
 	result.sort(); return result
 
+# A5·A6 (V-73): current_composition은 함종별 합산이라 mission_equipment_id가 없다.
+# 무기 능력 산출용으로 setup 성분 모양(장비 포함)에 생존 척수를 setup 순서대로 되돌려 붙인다.
+func current_compositions(state: Dictionary) -> Dictionary:
+	var result := {}
+	for squad in _setup.squadrons:
+		var squadron_id := String(squad.id)
+		if not state.get("squadrons", {}).has(squadron_id): result[squadron_id] = squad.composition.duplicate(true); continue
+		var surviving := {}
+		for value in state.squadrons[squadron_id].current_composition: surviving[String(value.ship_type_id)] = int(surviving.get(String(value.ship_type_id), 0)) + int(value.count)
+		var rows: Array = []
+		for component in squad.composition:
+			var ship_id := String(component.ship_type_id); var count := mini(int(component.count), int(surviving.get(ship_id, 0)))
+			surviving[ship_id] = int(surviving.get(ship_id, 0)) - count
+			var row: Dictionary = component.duplicate(true); row.count = count; rows.append(row)
+		result[squadron_id] = rows
+	return result
 func victory_inputs(state: Dictionary, turn_number: int) -> Dictionary:
 	var factions := {}; var ids: Array = state.squadrons.keys(); ids.sort()
 	for id in ids:
