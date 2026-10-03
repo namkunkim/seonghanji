@@ -559,7 +559,8 @@ func movement_preview(squadron_id: String, waypoints: Array, facing_deg) -> Dict
 	if _state.is_empty(): return _error("턴 전투가 초기화되지 않았습니다.")
 	if _recovery_locked(squadron_id): return _error("표류·구조·나포 상태 전대는 이동을 미리 볼 수 없습니다.")
 	var temporary_zones: Array = _combat_effects.active_temporary_zones(_state.combat_effect_state, turn())
-	var requested: Dictionary = _movement.movement_preview(squadron_id, waypoints, facing_deg, _state.live_navigation, temporary_zones)
+	var formation_mobility := _planned_formation_mobility(squadron_id)
+	var requested: Dictionary = _movement.movement_preview(squadron_id, waypoints, facing_deg, _state.live_navigation, temporary_zones, formation_mobility)
 	if not requested.ok: return requested
 	var resources: Dictionary = _state.get("fast_craft_supply_state", {}).get("resources", {})
 	if not resources.has(squadron_id): return requested
@@ -580,7 +581,7 @@ func movement_preview(squadron_id: String, waypoints: Array, facing_deg) -> Dict
 		predicted["terrain_segments"] = []
 		predicted["terrain_events"] = []
 	else:
-		predicted = _movement.movement_preview(squadron_id, effective_waypoints, facing_deg, _state.live_navigation, temporary_zones)
+		predicted = _movement.movement_preview(squadron_id, effective_waypoints, facing_deg, _state.live_navigation, temporary_zones, formation_mobility)
 		if not predicted.ok: return predicted
 	var predicted_actual_distance: float = 0.0
 	for segment in predicted.get("terrain_segments", []): predicted_actual_distance += float(segment.get("length", 0.0))
@@ -640,7 +641,7 @@ func viewer_fast_craft_returns(viewer_faction_id: String) -> Dictionary:
 		_fast_craft_recovery.disabled_source_ids(_state.fast_craft_recovery_state),_state.supply_inventory_state)
 	for squadron_id in _state.fast_craft_supply_state.resources.keys():
 		if _recovery_locked(String(squadron_id)): continue
-		var speed: Dictionary = _movement.effective_speed(String(squadron_id)); if not speed.ok: return speed
+		var speed: Dictionary = _movement.effective_speed(String(squadron_id), _planned_formation_mobility(String(squadron_id))); if not speed.ok: return speed
 		var row: Dictionary = _fast_craft_return.status(String(squadron_id),_state.fast_craft_return_state,_state.fast_craft_supply_state,sources,_state.live_navigation,int(speed.effective_speed)); if not row.ok:return row
 		statuses.append(row)
 	var visible: Dictionary = _fast_craft_return.visible(viewer_faction_id,_state.fast_craft_return_state,statuses); visible["turn"]=turn();visible["phase"]=phase();return visible
@@ -974,8 +975,10 @@ func resolve_turn() -> Dictionary:
 	formation_orders.append_array(_current_log().cao_formation_orders)
 	var formation_result: Dictionary = _formation.resolve_orders(formation_orders, _state.formation_state, turn())
 	if not formation_result.ok: return formation_result
+	var formation_mobility: Dictionary = _formation.mobility_percents(formation_result.formation_state)
+	var current_compositions: Dictionary = _combat_effects.current_compositions(_state.combat_effect_state)
 	var return_speeds := {}; for squadron_id in _state.fast_craft_supply_state.resources.keys():
-		var speed:Dictionary=_movement.effective_speed(String(squadron_id));if not speed.ok:return speed
+		var speed:Dictionary=_movement.effective_speed(String(squadron_id),int(formation_mobility.get(String(squadron_id),0)));if not speed.ok:return speed
 		return_speeds[squadron_id]=int(speed.effective_speed)
 	var disabled_supply_sources:Array=_fast_craft_recovery.disabled_source_ids(_state.fast_craft_recovery_state)
 	disabled_supply_sources.append_array(_combat_effects.terminal_ids(_state.combat_effect_state))
@@ -989,14 +992,15 @@ func resolve_turn() -> Dictionary:
 		var weapon_sid:=String(weapon_orders[index].squadron_id)
 		if return_result.overrides.has(weapon_sid) or _fast_craft_recovery.combat_locked_ids(_state.fast_craft_recovery_state).has(weapon_sid) or _combat_effects.attack_locked_ids(_state.combat_effect_state).has(weapon_sid):
 			weapon_orders[index]=weapon_orders[index].duplicate(true);weapon_orders[index]["hold_fire"]=true
-	var weapon_result: Dictionary = _weapon_control.resolve_orders(weapon_orders, _state.weapon_allocation_state, turn())
+	weapon_orders = _weapon_control.conform_orders(weapon_orders, current_compositions)
+	var weapon_result: Dictionary = _weapon_control.resolve_orders(weapon_orders, _state.weapon_allocation_state, turn(), current_compositions)
 	if not weapon_result.ok: return weapon_result
 	for index in range(orders.size()):
 		var sid:String=String(orders[index].squadron_id)
 		if return_result.overrides.has(sid):orders[index]=return_result.overrides[sid].duplicate(true)
 	var prepared_recovery_orders:Dictionary=_fast_craft_recovery.prepare_orders(_state.fast_craft_recovery_state,_state.fast_craft_supply_state,orders,_state.live_navigation)
 	if not prepared_recovery_orders.ok:return prepared_recovery_orders
-	var movement_result: Dictionary = _movement.resolve_orders(prepared_recovery_orders.orders, _state.live_navigation, temporary_zones)
+	var movement_result: Dictionary = _movement.resolve_orders(prepared_recovery_orders.orders, _state.live_navigation, temporary_zones, formation_mobility)
 	if not movement_result.ok: return movement_result
 	var fuel_result:Dictionary=_fast_craft_return.consume_fuel(_state.fast_craft_supply_state,movement_result.events,turn())
 	if not fuel_result.ok:return fuel_result
@@ -1015,8 +1019,8 @@ func resolve_turn() -> Dictionary:
 	terminal_ids.append_array(_combat_effects.terminal_ids(_state.combat_effect_state))
 	var interception_result: Dictionary = _interception.resolve(movement_result.events,
 		movement_result.live_navigation, _state.detection_state, turn(),
-		_weapon_control.interception_policy(weapon_result.weapon_allocation_state), formation_result.formation_state,
-		combat_sensor_effects, temporary_zones)
+		_weapon_control.interception_policy(weapon_result.weapon_allocation_state, current_compositions), formation_result.formation_state,
+		combat_sensor_effects, temporary_zones, current_compositions)
 	if not interception_result.ok: return interception_result
 	interception_result.path_intersection_events=interception_result.path_intersection_events.filter(func(event):return not terminal_ids.has(String(event.get("squadron_a_id",""))) and not terminal_ids.has(String(event.get("squadron_b_id",""))))
 	interception_result.detection_events=interception_result.detection_events.filter(func(event):return not terminal_ids.has(String(event.get("observer_squadron_id",""))) and not terminal_ids.has(String(event.get("target_squadron_id",""))))
@@ -1030,7 +1034,7 @@ func resolve_turn() -> Dictionary:
 	var estimated_events: Array = []; var estimated_suppressed: Array = []
 	for faction_id in ["liu_bei", "sun_quan", "cao_cao"]:
 		var estimated_result: Dictionary = _fog.authorize_orders(_estimated_orders_from_log(faction_id), faction_id,
-			movement_result.live_navigation, _weapon_control.interception_policy(weapon_result.weapon_allocation_state), turn(), temporary_zones)
+			movement_result.live_navigation, _weapon_control.interception_policy(weapon_result.weapon_allocation_state, current_compositions), turn(), temporary_zones)
 		if not estimated_result.ok: return estimated_result
 		estimated_events.append_array(estimated_result.estimated_fire_events)
 		estimated_suppressed.append_array(estimated_result.suppressed_events)
@@ -1078,6 +1082,10 @@ func resolve_turn() -> Dictionary:
 	var effect_result: Dictionary = _combat_effects.resolve(_state.combat_effect_state, effect_shot_events,
 		triggered_chain_events, movement_result.live_navigation, sealed_targets, turn())
 	if not effect_result.ok: return effect_result
+	# A6: 같은 턴 사격은 피해 전 편성으로 이미 산출했다. 다음 턴 초안은 피해 반영 편성에서 시작한다.
+	var capability_result: Dictionary = _weapon_control.refresh_capabilities(weapon_result.weapon_allocation_state,
+		_combat_effects.current_compositions(effect_result.state), turn())
+	if not capability_result.ok: return capability_result
 	var inventory_before_supply: Dictionary = _state.supply_inventory_state.duplicate(true)
 	var inventory_status_events: Array = []
 	for status_row in effect_result.supply_ship_statuses:
@@ -1220,7 +1228,7 @@ func resolve_turn() -> Dictionary:
 	_state.live_navigation = movement_result.live_navigation.duplicate(true)
 	_state.detection_state = interception_result.detection_state.duplicate(true)
 	_state.formation_state = formation_result.formation_state.duplicate(true)
-	_state.weapon_allocation_state = weapon_result.weapon_allocation_state.duplicate(true)
+	_state.weapon_allocation_state = capability_result.weapon_allocation_state.duplicate(true)
 	_state.combat_resource_state = resource_result.resource_state.duplicate(true)
 	_state.chain_explosion_state = chain_result.state.duplicate(true)
 	_state.combat_effect_state = effect_result.state.duplicate(true)
@@ -1237,6 +1245,7 @@ func resolve_turn() -> Dictionary:
 	_viewer_phase_ledgers_by_turn[turn()] = next_viewer_ledgers.duplicate(true)
 	var log := _current_log()
 	log.resolution_receipt = receipt.duplicate(true)
+	log.weapon_capability_events = capability_result.weapon_capability_events.duplicate(true)
 	log.victory_check_required = true
 	_state.resolved = true
 	_state.phase = "battle_concluded" if bool(victory_result.winner_present) else ("turn_limit_reached" if turn() >= MAX_TURNS else "victory_check")
@@ -1692,9 +1701,20 @@ func _late_fast_craft_mission_editable(faction_id: String) -> bool:
 
 
 func _return_status(squadron_id:String)->Dictionary:
-	var speed:Dictionary=_movement.effective_speed(squadron_id);if not speed.ok:return speed
+	var speed:Dictionary=_movement.effective_speed(squadron_id,_planned_formation_mobility(squadron_id));if not speed.ok:return speed
 	return _fast_craft_return.status(squadron_id,_state.fast_craft_return_state,_state.fast_craft_supply_state,
 		_fast_craft_supply.source_zones(_state.live_navigation,_fast_craft_recovery.disabled_source_ids(_state.fast_craft_recovery_state),_state.supply_inventory_state),_state.live_navigation,int(speed.effective_speed))
+
+
+## A5: 계획 단계의 이동 미리보기는 해결 시작에 적용될 진형으로 본다 — 해당 세력의 초안이
+## 열려 있으면 초안 진형(변경 효율 포함), 아니면 현재 적용 진형.
+func _planned_formation_mobility(squadron_id: String) -> int:
+	if not _state.formation_state.has(squadron_id): return 0
+	var requested := String(_state.formation_state[squadron_id].formation_id)
+	var draft_order = _state.get("command_draft", {}).get("formation_orders", {}).get(squadron_id)
+	if draft_order is Dictionary: requested = String(draft_order.get("formation_id", requested))
+	var planned: Dictionary = _formation.planned_mobility_percent(squadron_id, requested, _state.formation_state)
+	return int(planned.mobility_percent) if planned.ok else 0
 
 
 func _command_draft_access(squadron_id: String) -> Dictionary:
@@ -1739,6 +1759,7 @@ func _new_turn_log(turn_number: int) -> Dictionary:
 		"cao_fast_craft_mission_orders": [],
 		"cao_ai_decision": {},
 		"resolution_receipt": {},
+		"weapon_capability_events": [],
 		"victory_check_required": false,
 	}
 

@@ -49,7 +49,10 @@ func initial_navigation() -> Dictionary:
 	return result
 
 
-func effective_speed(squadron_id: String) -> Dictionary:
+## A5 (V-73): 기동 % = 지휘 초과 불이익(G3) + 현재 진형 기동 %(변경 효율 반영값, G3-03).
+## 둘 다 기본 속도 대비 %이므로 더한 뒤 한 번만 내림한다(이중 반올림 없음). 진형 상태는
+## 진형 판정기가 권위이므로 호출자가 넘긴다. 넘기지 않으면 0으로 본다.
+func effective_speed(squadron_id: String, formation_mobility_percent: int = 0) -> Dictionary:
 	var squad := _find_squad(squadron_id)
 	if squad.is_empty(): return _error("미지 전대입니다: %s" % squadron_id)
 	var slowest := 0
@@ -61,13 +64,16 @@ func effective_speed(squadron_id: String) -> Dictionary:
 		if slowest == 0 or speed < slowest: slowest = speed
 	if slowest <= 0: return _error("operational 함종이 없는 전대입니다: %s" % squadron_id)
 	var metrics: Dictionary = _draft.squadron_metrics(squadron_id)
-	var mobility_percent := int(metrics.get("mobility_percent", 0))
+	var command_mobility_percent := int(metrics.get("mobility_percent", 0))
+	var mobility_percent := command_mobility_percent + formation_mobility_percent
 	var adjusted := maxi(1, int(floor(float(slowest) * float(100 + mobility_percent) / 100.0)))
 	return {"ok": true, "errors": [], "base_speed": slowest, "mobility_percent": mobility_percent,
+		"command_mobility_percent": command_mobility_percent, "formation_mobility_percent": formation_mobility_percent,
 		"effective_speed": adjusted}
 
 
-func movement_preview(squadron_id: String, waypoints: Array, facing_deg, live_navigation: Dictionary, temporary_zones: Array = []) -> Dictionary:
+func movement_preview(squadron_id: String, waypoints: Array, facing_deg, live_navigation: Dictionary, temporary_zones: Array = [],
+		formation_mobility_percent: int = 0) -> Dictionary:
 	if _setup.is_empty(): return _error("이동 판정기가 초기화되지 않았습니다.")
 	if not live_navigation.has(squadron_id): return _error("전대 live 위치가 없습니다: %s" % squadron_id)
 	var max_waypoints := int(_rules.get("max_waypoints", 5))
@@ -80,7 +86,7 @@ func movement_preview(squadron_id: String, waypoints: Array, facing_deg, live_na
 	var current_row = live_navigation[squadron_id]
 	if not current_row is Dictionary or not _valid_point(current_row.get("position"), bounds):
 		return _error("현재 전대 위치가 잘못되었습니다: %s" % squadron_id)
-	var speed := effective_speed(squadron_id)
+	var speed := effective_speed(squadron_id, formation_mobility_percent)
 	if not speed.ok: return speed
 	var cursor := Vector2(float(current_row.position[0]), float(current_row.position[1]))
 	var total_distance := 0.0
@@ -104,7 +110,7 @@ func movement_preview(squadron_id: String, waypoints: Array, facing_deg, live_na
 		"terrain_events": movement.terrain_events.duplicate(true)}
 
 
-func resolve_orders(orders: Array, live_navigation: Dictionary, temporary_zones: Array = []) -> Dictionary:
+func resolve_orders(orders: Array, live_navigation: Dictionary, temporary_zones: Array = [], formation_mobility: Dictionary = {}) -> Dictionary:
 	if _setup.is_empty(): return _error("이동 판정기가 초기화되지 않았습니다.")
 	var navigation_check := _validate_navigation(live_navigation)
 	if not navigation_check.ok: return navigation_check
@@ -122,11 +128,12 @@ func resolve_orders(orders: Array, live_navigation: Dictionary, temporary_zones:
 		elif String(order.get("action", "")) == "move":
 			if order.size() != 4 or not order.has("waypoints") or not order.has("facing_deg") or not order.waypoints is Array:
 				return _error("move 명령에는 waypoints와 facing_deg가 필요합니다.")
-			var preview := movement_preview(squadron_id, order.waypoints, order.facing_deg, live_navigation, temporary_zones)
+			var preview := movement_preview(squadron_id, order.waypoints, order.facing_deg, live_navigation, temporary_zones,
+				int(formation_mobility.get(squadron_id, 0)))
 			if not preview.ok: return preview
 		else:
 			return _error("hold 또는 move 명령만 허용합니다.")
-		var speed_result := effective_speed(squadron_id)
+		var speed_result := effective_speed(squadron_id, int(formation_mobility.get(squadron_id, 0)))
 		if not speed_result.ok: return speed_result
 		rows.append({"order": order.duplicate(true), "speed": speed_result})
 	if seen.size() != _operational_squadron_ids().size():

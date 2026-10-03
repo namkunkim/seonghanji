@@ -15,7 +15,7 @@
       "pursuit_step": 70,
       "no_contact_action": "hold",
       "patrol_offset": [0, 0],
-      "estimated_fire": {"enabled": true, "max_staleness_turns": 1, "minimum_confidence_basis_points": 6500, "minimum_resource_reserve_basis_points": 5000},
+      "estimated_fire": {"enabled": true, "max_staleness_turns": 1, "minimum_confidence_basis_points": 5000, "minimum_resource_reserve_basis_points": 5000},
       "chain_explosion_risk_response": {"enabled": false, "public_flow_zone_id": "TRN-NEBULA-01", "trigger_distance": 300, "turn_modulo_actions": ["hold"], "dispersed_formation_id": "FRM-03", "interception_preset_id": "screen", "evade_step": 0}
     },
     "cao_cao": {
