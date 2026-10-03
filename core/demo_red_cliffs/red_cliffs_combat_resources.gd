@@ -28,26 +28,43 @@ func rules_snapshot() -> Dictionary: return _rules.duplicate(true)
 func initial_state() -> Dictionary:
 	var result := {}; var weapon_state: Dictionary = _weapon.initial_state()
 	for squad in _operational_squadrons():
-		var squadron_id := String(squad.id); var total_ships := 0
-		for component in squad.composition: total_ships += int(component.count)
-		var energy_capacity := int(_rules.shared_base.energy_capacity) + total_ships * int(_rules.shared_initial_per_ship.energy)
-		var heat_capacity := int(_rules.shared_base.heat_capacity) + total_ships * int(_rules.shared_initial_per_ship.heat_capacity)
+		var squadron_id := String(squad.id); var capacities := _capacities(squad.composition)
 		var weapons := {}
-		for weapon_id in _rules.weapon_initial_per_platform:
-			var platform_count := _weapon_platform_count(squad, String(weapon_id)); var initial: Dictionary = _rules.weapon_initial_per_platform[weapon_id]
-			var carrier_capacity := 0
-			for key in _rules.platform_overrides:
-				var parts := String(key).split("@")
-				if parts[0] == weapon_id: carrier_capacity += _ship_count(squad, parts[1]) * int(_rules.platform_overrides[key].carrier_sorties_per_platform)
-			weapons[weapon_id] = {"ammo": platform_count * int(initial.ammo), "ammo_capacity": platform_count * int(initial.ammo),
-				"carrier_ready": carrier_capacity, "carrier_capacity": carrier_capacity,
-				"special": platform_count * int(initial.special), "special_capacity": platform_count * int(initial.special)}
+		for weapon_id in capacities.weapons:
+			var capacity: Dictionary = capacities.weapons[weapon_id]
+			weapons[weapon_id] = {"ammo": int(capacity.ammo_capacity), "ammo_capacity": int(capacity.ammo_capacity),
+				"carrier_ready": int(capacity.carrier_capacity), "carrier_capacity": int(capacity.carrier_capacity),
+				"special": int(capacity.special_capacity), "special_capacity": int(capacity.special_capacity)}
 		result[squadron_id] = {"squadron_id": squadron_id, "faction_id": String(squad.faction_id),
-			"shared": {"energy": energy_capacity, "energy_capacity": energy_capacity, "heat": 0, "heat_capacity": heat_capacity},
+			"shared": {"energy": int(capacities.energy_capacity), "energy_capacity": int(capacities.energy_capacity), "heat": 0, "heat_capacity": int(capacities.heat_capacity)},
 			"weapons": weapons, "effective_turn": 0, "last_consumed_event_ids": []}
 		# Weapon state is evaluated here so zero-weapon auto-hold remains one authority.
 		if weapon_state[squadron_id].available_categories.is_empty(): result[squadron_id]["auto_hold_fire"] = true
 	return result
+
+
+## V-73 검토 2 — 함선 손실 뒤 용량을 현재 편성으로 다시 산출하고, 현재량은 새 상한을 넘을 때만 자른다.
+## 함별 잔량은 추론하지 않는다(G8-00 never infer per-ship). 용량은 줄기만 한다.
+func apply_composition_losses(prior_state: Dictionary, current_compositions: Dictionary, turn_number: int) -> Dictionary:
+	var valid := _validate_state(prior_state)
+	if not valid.ok: return valid
+	if turn_number < 1: return _error("턴 번호는 1 이상이어야 합니다.")
+	var next := prior_state.duplicate(true); var events: Array = []; var ids: Array = next.keys(); ids.sort()
+	for squadron_id in ids:
+		if not current_compositions.has(squadron_id): continue
+		if not current_compositions[squadron_id] is Array: return _error("현재 편성이 잘못되었습니다: %s" % squadron_id)
+		var row: Dictionary = next[squadron_id]; var before := _public_row(row); var capacities := _capacities(current_compositions[squadron_id])
+		row.shared.energy_capacity = mini(int(row.shared.energy_capacity), int(capacities.energy_capacity)); row.shared.energy = mini(int(row.shared.energy), int(row.shared.energy_capacity))
+		row.shared.heat_capacity = mini(int(row.shared.heat_capacity), int(capacities.heat_capacity)); row.shared.heat = mini(int(row.shared.heat), int(row.shared.heat_capacity))
+		for weapon_id in row.weapons:
+			var weapon: Dictionary = row.weapons[weapon_id]; var capacity: Dictionary = capacities.weapons[weapon_id]
+			for pair in [["ammo", "ammo_capacity"], ["carrier_ready", "carrier_capacity"], ["special", "special_capacity"]]:
+				weapon[pair[1]] = mini(int(weapon[pair[1]]), int(capacity[pair[1]])); weapon[pair[0]] = mini(int(weapon[pair[0]]), int(weapon[pair[1]]))
+		var after := _public_row(row)
+		if after == before: continue
+		events.append({"event_type": "resource_capacity_reduced", "event_id": "CAP-%02d-%s" % [turn_number, squadron_id],
+			"turn": turn_number, "squadron_id": squadron_id, "before": before, "after": after})
+	return {"ok": true, "errors": [], "resource_state": next, "capacity_events": events}
 
 
 func resolve_shots(shot_events: Array, prior_state: Dictionary, turn_number: int) -> Dictionary:
@@ -235,16 +252,33 @@ func _pure_fast_craft(squad: Dictionary) -> bool:
 	return bool(squad.get("operational", true)) and squad.get("composition") is Array and squad.composition.size() == 1 and String(squad.composition[0].get("ship_type_id", "")) == Setup.FAST_CRAFT_ID
 
 
-func _weapon_platform_count(squad: Dictionary, weapon_id: String) -> int:
+func _capacities(composition: Array) -> Dictionary:
+	var total_ships := 0
+	for component in composition: total_ships += int(component.count)
+	var weapons := {}
+	for weapon_id in _rules.weapon_initial_per_platform:
+		var platform_count := _weapon_platform_count(composition, String(weapon_id)); var initial: Dictionary = _rules.weapon_initial_per_platform[weapon_id]
+		var carrier_capacity := 0
+		for key in _rules.platform_overrides:
+			var parts := String(key).split("@")
+			if parts[0] == weapon_id: carrier_capacity += _ship_count(composition, parts[1]) * int(_rules.platform_overrides[key].carrier_sorties_per_platform)
+		weapons[weapon_id] = {"ammo_capacity": platform_count * int(initial.ammo), "carrier_capacity": carrier_capacity,
+			"special_capacity": platform_count * int(initial.special)}
+	return {"energy_capacity": int(_rules.shared_base.energy_capacity) + total_ships * int(_rules.shared_initial_per_ship.energy),
+		"heat_capacity": int(_rules.shared_base.heat_capacity) + total_ships * int(_rules.shared_initial_per_ship.heat_capacity),
+		"weapons": weapons}
+
+
+func _weapon_platform_count(composition: Array, weapon_id: String) -> int:
 	var count := 0; var weapon_rule: Dictionary = _weapon.rules_snapshot().weapons[weapon_id]
-	for component in squad.composition:
+	for component in composition:
 		if weapon_rule.platforms.has(String(component.ship_type_id)) or weapon_rule.fast_equipment.has(String(component.get("mission_equipment_id", ""))): count += int(component.count)
 	return count
 
 
-func _ship_count(squad: Dictionary, ship_id: String) -> int:
+func _ship_count(composition: Array, ship_id: String) -> int:
 	var count := 0
-	for component in squad.composition:
+	for component in composition:
 		if String(component.ship_type_id) == ship_id: count += int(component.count)
 	return count
 

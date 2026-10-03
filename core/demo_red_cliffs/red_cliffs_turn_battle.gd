@@ -1076,9 +1076,14 @@ func resolve_turn() -> Dictionary:
 		triggered_chain_events, movement_result.live_navigation, sealed_targets, turn())
 	if not effect_result.ok: return effect_result
 	# A6: 같은 턴 사격은 피해 전 편성으로 이미 산출했다. 다음 턴 초안은 피해 반영 편성에서 시작한다.
+	var damaged_compositions: Dictionary = _combat_effects.current_compositions(effect_result.state)
 	var capability_result: Dictionary = _weapon_control.refresh_capabilities(weapon_result.weapon_allocation_state,
-		_combat_effects.current_compositions(effect_result.state), turn())
+		damaged_compositions, turn())
 	if not capability_result.ok: return capability_result
+	# V-73 검토 2: 자원 용량도 피해 반영 편성으로 줄인다. 고속정 보급(G6-03)보다 먼저 — 보급은 줄어든 용량까지만 채운다.
+	var capacity_result: Dictionary = _combat_resources.apply_composition_losses(resource_result.resource_state, damaged_compositions, turn())
+	if not capacity_result.ok: return capacity_result
+	resource_result.resource_state = capacity_result.resource_state.duplicate(true)
 	var inventory_before_supply: Dictionary = _state.supply_inventory_state.duplicate(true)
 	var inventory_status_events: Array = []
 	for status_row in effect_result.supply_ship_statuses:
@@ -1225,6 +1230,7 @@ func resolve_turn() -> Dictionary:
 	var log := _current_log()
 	log.resolution_receipt = receipt.duplicate(true)
 	log.weapon_capability_events = capability_result.weapon_capability_events.duplicate(true)
+	log.resource_capacity_events = capacity_result.capacity_events.duplicate(true)
 	log.victory_check_required = true
 	_state.resolved = true
 	_state.phase = "battle_concluded" if bool(victory_result.winner_present) else ("turn_limit_reached" if turn() >= MAX_TURNS else "victory_check")
@@ -1717,6 +1723,7 @@ func _new_turn_log(turn_number: int) -> Dictionary:
 		"cao_ai_decision": {},
 		"resolution_receipt": {},
 		"weapon_capability_events": [],
+		"resource_capacity_events": [],
 		"victory_check_required": false,
 	}
 

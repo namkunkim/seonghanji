@@ -935,9 +935,14 @@ func _update_preview_text(order: Dictionary) -> void:
 	if not bool(preview.get("ok", false)):
 		_preview_text.text = "이동 미리보기 오류: %s" % " · ".join(preview.get("errors", [])); return
 	if bool(preview.get("fuel_limited", false)):
-		_preview_text.text = "연료 제한 · 요청 거리 %.1f → 예상 실제 %.1f / 최대 %.1f · 가용 연료 %d bp\n예상 정지 (%.1f, %.1f) · 경로 미완료 · ETA 산출 불가\n코어 fuel clamp · 실제 판정과 동일%s" % [float(preview.get("requested_total_distance", 0.0)), float(preview.get("predicted_actual_distance", 0.0)), float(preview.get("maximum_fuel_distance", 0.0)), int(preview.get("available_fuel_basis_points", 0)), float(preview.predicted_position[0]), float(preview.predicted_position[1]), _terrain_preview_text(preview)]
+		_preview_text.text = "연료 제한 · 요청 거리 %.1f → 예상 실제 %.1f / 최대 %.1f · 가용 연료 %d bp\n예상 정지 (%.1f, %.1f) · 경로 미완료 · ETA 산출 불가\n%s\n코어 fuel clamp · 실제 판정과 동일%s" % [float(preview.get("requested_total_distance", 0.0)), float(preview.get("predicted_actual_distance", 0.0)), float(preview.get("maximum_fuel_distance", 0.0)), int(preview.get("available_fuel_basis_points", 0)), float(preview.predicted_position[0]), float(preview.predicted_position[1]), _speed_preview_text(preview), _terrain_preview_text(preview)]
 		return
-	_preview_text.text = "거리 %.1f / 이번 턴 예산 %d · ETA %d턴\n예상 도달 (%.1f, %.1f) · %s\n%s%s" % [float(preview.total_distance), int(preview.movement_budget), int(preview.eta_turns), float(preview.predicted_position[0]), float(preview.predicted_position[1]), "이번 턴 도달" if bool(preview.path_complete) else "예산 밖 경로 있음", "초록 실선: 이번 턴 · 주황 점선: 이후 턴", _terrain_preview_text(preview)]
+	_preview_text.text = "거리 %.1f / 이번 턴 예산 %d · ETA %d턴\n%s\n예상 도달 (%.1f, %.1f) · %s\n%s%s" % [float(preview.total_distance), int(preview.movement_budget), int(preview.eta_turns), _speed_preview_text(preview), float(preview.predicted_position[0]), float(preview.predicted_position[1]), "이번 턴 도달" if bool(preview.path_complete) else "예산 밖 경로 있음", "초록 실선: 이번 턴 · 주황 점선: 이후 턴", _terrain_preview_text(preview)]
+
+
+## A5 — 코어 속도 receipt의 기동 % 내역을 그대로 옮긴다. 합계·내림은 코어 값이다.
+func _speed_preview_text(preview: Dictionary) -> String:
+	return "속도 %d · 기동 %s (지휘 %s · 진형 %s) → 유효 %d" % [int(preview.get("base_speed", 0)), _signed_percent(int(preview.get("mobility_percent", 0))), _signed_percent(int(preview.get("command_mobility_percent", 0))), _signed_percent(int(preview.get("formation_mobility_percent", 0))), int(preview.get("effective_speed", 0))]
 
 
 func _on_interaction_rejected(message: String) -> void:

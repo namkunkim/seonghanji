@@ -101,7 +101,9 @@ func movement_preview(squadron_id: String, waypoints: Array, facing_deg, live_na
 		"movement_budget": int(speed.effective_speed), "within_budget": total_distance <= float(speed.effective_speed),
 		"eta_turns": eta_turns, "predicted_position": movement.to.duplicate(),
 		"path_complete": bool(movement.path_complete), "remaining_distance": float(movement.remaining_distance),
-		"effective_speed": int(speed.effective_speed), "terrain_segments": movement.terrain_segments.duplicate(true),
+		"effective_speed": int(speed.effective_speed), "base_speed": int(speed.base_speed),
+		"mobility_percent": int(speed.mobility_percent), "command_mobility_percent": int(speed.command_mobility_percent),
+		"formation_mobility_percent": int(speed.formation_mobility_percent), "terrain_segments": movement.terrain_segments.duplicate(true),
 		"terrain_events": movement.terrain_events.duplicate(true)}
 
 
