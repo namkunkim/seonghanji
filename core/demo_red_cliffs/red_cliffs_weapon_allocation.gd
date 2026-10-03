@@ -2,6 +2,9 @@ class_name RedCliffsWeaponAllocation
 extends RefCounted
 
 ## DEMO-RC-G4-05 — 편성 기반 무기 가용성·비율·사격 보류의 코어 권위.
+## A6 (V-73): 가용 무기·사거리·플랫폼은 현재(피해 반영) 편성으로 산출한다. setup 편성은
+## 불변(G8-00)이므로 현재 편성은 호출자가 G8-00 effect state에서 넘긴다(`current_compositions`).
+## 넘기지 않으면 setup 편성 = 무손실 상태로 본다.
 const Setup := preload("res://core/demo_red_cliffs/red_cliffs_demo_setup.gd")
 const RULES_PATH := "res://data/red-cliffs-weapon-allocation-rules.json"
 
@@ -35,11 +38,11 @@ func presets() -> Array:
 	return result
 
 
-func available_categories(squadron_id: String) -> Array:
+func available_categories(squadron_id: String, current_compositions: Dictionary = {}) -> Array:
 	var squad := _find_squad(squadron_id)
 	if squad.is_empty(): return []
 	var available := {}
-	for component in squad.composition:
+	for component in _composition(squadron_id, current_compositions):
 		if int(component.count) <= 0: continue
 		var ship_id := String(component.ship_type_id); var equipment_id := String(component.get("mission_equipment_id", ""))
 		for weapon_id in _rules.weapons:
@@ -78,7 +81,7 @@ func apply_preset(draft_state: Dictionary, squadron_id: String, preset_id: Strin
 	var checked := _validate_state_row(draft_state, squadron_id)
 	if not checked.ok: return checked
 	if not _rules.presets.has(preset_id): return _error("미지 무기 프리셋입니다: %s" % preset_id)
-	var next := draft_state.duplicate(true); next[squadron_id].allocations = _preset_allocations(squadron_id, preset_id)
+	var next := draft_state.duplicate(true); next[squadron_id].allocations = _preset_allocations(squadron_id, preset_id, next[squadron_id].available_categories)
 	return {"ok": true, "errors": [], "state": next, "row": next[squadron_id].duplicate(true)}
 
 
@@ -91,7 +94,7 @@ func set_hold_fire(draft_state: Dictionary, squadron_id: String, enabled: bool) 
 	return {"ok": true, "errors": [], "state": next, "row": next[squadron_id].duplicate(true)}
 
 
-func resolve_orders(orders: Array, prior_state: Dictionary, turn_number: int) -> Dictionary:
+func resolve_orders(orders: Array, prior_state: Dictionary, turn_number: int, current_compositions: Dictionary = {}) -> Dictionary:
 	if turn_number < 1: return _error("턴 번호는 1 이상이어야 합니다.")
 	var ids := _operational_ids()
 	if orders.size() != ids.size() or prior_state.size() != ids.size(): return _error("모든 operational 전대의 무기 명령과 상태가 필요합니다.")
@@ -101,7 +104,7 @@ func resolve_orders(orders: Array, prior_state: Dictionary, turn_number: int) ->
 		var squadron_id := String(value.get("squadron_id", ""))
 		if value.size() != 3 or seen.has(squadron_id) or not ids.has(squadron_id): return _error("미지·중복 또는 잘못된 무기 명령입니다: %s" % squadron_id)
 		var row := {"squadron_id": squadron_id, "allocations": value.get("allocations", {}).duplicate(true), "hold_fire": value.get("hold_fire")}
-		var valid := _validate_allocations(squadron_id, row.allocations, row.hold_fire)
+		var valid := _validate_allocations(row.allocations, row.hold_fire, available_categories(squadron_id, current_compositions))
 		if not valid.ok: return valid
 		seen[squadron_id] = true; normalized.append(row)
 	if seen.size() != ids.size(): return _error("모든 operational 전대의 무기 명령이 필요합니다.")
@@ -110,7 +113,7 @@ func resolve_orders(orders: Array, prior_state: Dictionary, turn_number: int) ->
 	for order in normalized:
 		var squadron_id := String(order.squadron_id)
 		next[squadron_id] = {"squadron_id": squadron_id, "faction_id": String(_find_squad(squadron_id).faction_id),
-			"available_categories": available_categories(squadron_id), "allocations": order.allocations.duplicate(true),
+			"available_categories": available_categories(squadron_id, current_compositions), "allocations": order.allocations.duplicate(true),
 			"hold_fire": bool(order.hold_fire), "effective_turn": turn_number, "source": "resolution_start"}
 		events.append({"event_type": "weapon_allocation_applied", "turn": turn_number, "squadron_id": squadron_id,
 			"allocations": order.allocations.duplicate(true), "hold_fire": bool(order.hold_fire),
@@ -118,12 +121,55 @@ func resolve_orders(orders: Array, prior_state: Dictionary, turn_number: int) ->
 	return {"ok": true, "errors": [], "weapon_allocation_state": next, "weapon_allocation_events": events}
 
 
-func interception_policy(state: Dictionary) -> Dictionary:
+func interception_policy(state: Dictionary, current_compositions: Dictionary = {}) -> Dictionary:
 	var result := {}
 	for squadron_id in state:
 		var row: Dictionary = state[squadron_id]
 		result[squadron_id] = {"hold_fire": bool(row.hold_fire), "allocations": row.allocations.duplicate(true),
-			"capabilities": _capabilities_for_squadron(String(squadron_id))}
+			"capabilities": _capabilities_for_squadron(String(squadron_id), current_compositions)}
+	return result
+
+
+## A6: 피해 확정 뒤 다음 턴 초안이 시작될 상태를 현재 편성에 맞춘다. 잃은 무기 종류의
+## 비율은 남은 가용 무기에 이전 비율대로 다시 나누고(동률이면 균등), 가용 무기가 0이면
+## 자동 사격 보류로 둔다. 가용 무기가 그대로인 전대는 바꾸지 않는다.
+func refresh_capabilities(prior_state: Dictionary, current_compositions: Dictionary, turn_number: int) -> Dictionary:
+	var next := prior_state.duplicate(true); var events: Array = []
+	var ids: Array = next.keys(); ids.sort()
+	for squadron_id in ids:
+		var row: Dictionary = next[squadron_id]
+		var available := available_categories(String(squadron_id), current_compositions)
+		if available == row.available_categories: continue
+		var previous: Array = row.available_categories.duplicate()
+		var allocations := _conform_allocations(row.allocations, available)
+		row.available_categories = available; row.allocations = allocations
+		row.hold_fire = true if available.is_empty() else bool(row.hold_fire)
+		row.effective_turn = turn_number; row.source = "current_composition_refresh"
+		events.append({"event_type": "weapon_capability_changed", "turn": turn_number, "squadron_id": String(squadron_id),
+			"previous_available_categories": previous, "available_categories": available.duplicate(),
+			"allocations": allocations.duplicate(true), "hold_fire": bool(row.hold_fire)})
+	return {"ok": true, "errors": [], "weapon_allocation_state": next, "weapon_capability_events": events}
+
+
+## A6: 제출된 명령을 해결 시점의 현재 편성에 맞춘다(refresh_capabilities와 같은 정규화).
+## 가용 무기가 그대로인 명령은 그대로 둔다. 형식 검증은 resolve_orders가 계속 맡는다.
+func conform_orders(orders: Array, current_compositions: Dictionary) -> Array:
+	var result: Array = []
+	for value in orders:
+		if not value is Dictionary or not value.get("allocations") is Dictionary: result.append(value); continue
+		var order: Dictionary = value.duplicate(true); var squadron_id := String(order.get("squadron_id", ""))
+		var available := available_categories(squadron_id, current_compositions); var original := available_categories(squadron_id)
+		if available == original: result.append(order); continue
+		var lost := false; var malformed := false
+		for category_id in order.allocations:
+			if not _integer_basis_points(order.allocations[category_id]): malformed = true; continue
+			if int(order.allocations[category_id]) == 0: continue
+			if not original.has(category_id): malformed = true
+			elif not available.has(category_id): lost = true
+		if not malformed and (lost or available.is_empty()):
+			order.allocations = _conform_allocations(order.allocations, available)
+			if available.is_empty(): order.hold_fire = true
+		result.append(order)
 	return result
 
 
@@ -144,8 +190,22 @@ func _normalize_after_change(previous: Dictionary, available: Array, changed: St
 	return result
 
 
-func _preset_allocations(squadron_id: String, preset_id: String) -> Dictionary:
-	var result := _zero_allocations(); var available := available_categories(squadron_id)
+func _conform_allocations(previous: Dictionary, available: Array) -> Dictionary:
+	var allocations := _zero_allocations()
+	if available.is_empty(): return allocations
+	var weights := {}; var weight_sum := 0
+	for category_id in available:
+		var weight := maxi(0, int(previous.get(category_id, 0))); weights[category_id] = weight; weight_sum += weight
+	if weight_sum == 0:
+		for category_id in available: weights[category_id] = 1
+		weight_sum = available.size()
+	_distribute(allocations, available, weights, weight_sum, 10000)
+	return allocations
+
+
+func _preset_allocations(squadron_id: String, preset_id: String, available = null) -> Dictionary:
+	var result := _zero_allocations()
+	if available == null: available = available_categories(squadron_id)
 	if available.is_empty(): return result
 	var weights: Dictionary = _rules.presets[preset_id].weights; var weight_sum := 0
 	for category_id in available: weight_sum += int(weights[category_id])
@@ -166,19 +226,21 @@ func _distribute(result: Dictionary, ids: Array, weights: Dictionary, weight_sum
 
 func _validate_state_row(state: Dictionary, squadron_id: String) -> Dictionary:
 	if not state.has(squadron_id) or not state[squadron_id] is Dictionary: return _error("무기 배분 전대가 없습니다: %s" % squadron_id)
-	return _validate_allocations(squadron_id, state[squadron_id].get("allocations", {}), state[squadron_id].get("hold_fire"))
+	var available = state[squadron_id].get("available_categories")
+	if not available is Array: return _error("무기 배분 스키마가 잘못되었습니다.")
+	return _validate_allocations(state[squadron_id].get("allocations", {}), state[squadron_id].get("hold_fire"), available)
 
 
-func _validate_allocations(squadron_id: String, allocations, hold_fire) -> Dictionary:
+func _validate_allocations(allocations, hold_fire, available: Array) -> Dictionary:
 	if not allocations is Dictionary or not hold_fire is bool: return _error("무기 배분 스키마가 잘못되었습니다.")
 	var category_ids: Array = _rules.weapons.keys(); category_ids.sort()
 	var keys: Array = allocations.keys(); keys.sort()
 	if keys != category_ids: return _error("모든 무기 종류 비율이 정확히 필요합니다.")
-	var available := available_categories(squadron_id); var total := 0
+	var total := 0
 	for category_id in category_ids:
 		var value = allocations[category_id]
 		if not _integer_basis_points(value): return _error("무기 비율은 0~10000 basis points 정수여야 합니다: %s" % category_id)
-		if not available.has(category_id) and int(value) != 0: return _error("사용 불가 무기는 0%여야 합니다: %s" % category_id)
+		if not available.has(category_id) and int(value) != 0: return _error("사용 불가 무기는 0%%여야 합니다: %s" % category_id)
 		total += int(value)
 	var expected_total := 0 if available.is_empty() else 10000
 	if total != expected_total: return _error("무기 비율 합계는 정확히 10000 basis points여야 합니다.")
@@ -191,9 +253,9 @@ func _zero_allocations() -> Dictionary:
 	return result
 
 
-func _capabilities_for_squadron(squadron_id: String) -> Array:
-	var squad := _find_squad(squadron_id); var best := {}
-	for component in squad.get("composition", []):
+func _capabilities_for_squadron(squadron_id: String, current_compositions: Dictionary = {}) -> Array:
+	var best := {}
+	for component in _composition(squadron_id, current_compositions):
 		if int(component.count) <= 0: continue
 		var ship_id := String(component.ship_type_id); var equipment_id := String(component.get("mission_equipment_id", ""))
 		for weapon_id in _rules.weapons:
@@ -245,6 +307,11 @@ func _operational_squadrons() -> Array:
 func _operational_ids() -> Array:
 	var result: Array = []; for squad in _operational_squadrons(): result.append(String(squad.id))
 	return result
+
+
+func _composition(squadron_id: String, current_compositions: Dictionary) -> Array:
+	if current_compositions.has(squadron_id): return current_compositions[squadron_id]
+	return _find_squad(squadron_id).get("composition", [])
 
 
 func _find_squad(squadron_id: String) -> Dictionary:

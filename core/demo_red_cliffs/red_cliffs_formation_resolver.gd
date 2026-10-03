@@ -86,7 +86,7 @@ func resolve_orders(formation_orders: Array, prior_state: Dictionary, turn_numbe
 		var requested := String(order.formation_id); var metrics := command_penalty_metrics(squadron_id)
 		if not metrics.ok: return metrics
 		var change_requested := previous != requested
-		var effectiveness := clampi(10000 + int(metrics.formation_change_percent) * 100, 0, 10000) if change_requested else 10000
+		var effectiveness := _change_effectiveness(metrics, change_requested)
 		next[squadron_id] = {"squadron_id": squadron_id, "faction_id": String(_find_squad(squadron_id).faction_id),
 			"formation_id": requested, "modifier_effectiveness_basis_points": effectiveness, "effective_turn": turn_number,
 			"source": "resolution_start"}
@@ -99,6 +99,26 @@ func resolve_orders(formation_orders: Array, prior_state: Dictionary, turn_numbe
 			"application_timing": String(_rules.application_timing)})
 	return {"ok": true, "errors": [], "formation_state": next, "formation_events": events,
 		"modifier_snapshots": modifier_snapshots(next)}
+
+
+## A5 (V-73): 명령 초안의 진형이 해결 시작에 적용되면 가질 기동 %를 미리 산출한다.
+## resolve_orders와 같은 변경 효율(지휘 초과 진형변경 불이익)을 쓴다. 이동 미리보기용.
+func planned_mobility_percent(squadron_id: String, requested_formation_id: String, prior_state: Dictionary) -> Dictionary:
+	var valid := validate_order(squadron_id, requested_formation_id)
+	if not valid.ok: return valid
+	if not prior_state.has(squadron_id) or not prior_state[squadron_id] is Dictionary: return _error("전대 진형 상태가 누락되었습니다: %s" % squadron_id)
+	var metrics := command_penalty_metrics(squadron_id)
+	if not metrics.ok: return metrics
+	var effectiveness := _change_effectiveness(metrics, String(prior_state[squadron_id].get("formation_id", "")) != requested_formation_id)
+	var scaled := _scaled_modifiers(_modifier_values(_rules.formations[requested_formation_id]), effectiveness)
+	return {"ok": true, "errors": [], "formation_id": requested_formation_id,
+		"modifier_effectiveness_basis_points": effectiveness, "mobility_percent": int(scaled.mobility_percent)}
+
+
+func mobility_percents(formation_state: Dictionary) -> Dictionary:
+	var result := {}; var snapshots := modifier_snapshots(formation_state)
+	for squadron_id in snapshots: result[squadron_id] = int(snapshots[squadron_id].modifiers.mobility_percent)
+	return result
 
 
 func apply_accuracy_penalty(events: Array, turn_number: int) -> Dictionary:
@@ -179,6 +199,10 @@ func decorate_shot_events(events: Array, formation_state: Dictionary, live_navig
 			"result_pending": _rules.result_contract.pending.duplicate()}
 		decorated.append(event)
 	return {"ok": true, "errors": [], "events": decorated}
+
+
+func _change_effectiveness(metrics: Dictionary, change_requested: bool) -> int:
+	return clampi(10000 + int(metrics.formation_change_percent) * 100, 0, 10000) if change_requested else 10000
 
 
 func _modifier_values(row: Dictionary) -> Dictionary:
