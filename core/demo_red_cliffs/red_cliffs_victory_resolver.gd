@@ -1,7 +1,7 @@
 class_name RedCliffsVictoryResolver
 extends RefCounted
 
-## DEMO-RC-G8-01~03 — 전투 효과·기함·탈출·20턴 비교로 매 턴 전체 승패를 결정한다.
+## DEMO-RC-G8-01~03·G8-04a — 전투 효과·기함·총사령관·탈출·20턴 비교로 매 턴 전체 승패를 결정한다.
 const RULES_PATH := "res://data/red-cliffs-victory-rules.json"
 
 var _rules: Dictionary = {}
@@ -77,8 +77,14 @@ func evaluate(victory_inputs: Dictionary) -> Dictionary:
 	if not (escapes.get("cao_cao") is bool) or not (escapes.get("liu_sun_alliance") is bool): return _error("탈출 승리 입력이 없습니다.")
 	var cao_escaped: bool = bool(escapes.cao_cao)
 	var alliance_escaped: bool = bool(escapes.liu_sun_alliance)
-	var alliance_defeated: bool = bool(defeated.liu_bei) or alliance_loss_reached or liu_flagship_destroyed
-	var cao_defeated: bool = bool(defeated.cao_cao) or cao_flagship_destroyed or cao_escaped
+	# DEMO-RC-G8-04a: 총사령관(유비·조조)의 전사·포로는 기함 격침과 동격의 즉시 종료 조건이다.
+	# 중상은 승계만 일으키고 전투는 계속된다. 입력이 없으면(G8-01~03 단독 시험) 상실 없음으로 본다.
+	var supremes: Dictionary = victory_inputs.get("supreme_commanders", {})
+	if not supremes is Dictionary: return _error("총사령관 승리 입력이 잘못되었습니다.")
+	var liu_supreme_lost: bool = bool(supremes.get("liu_bei", {}).get("lost", false))
+	var cao_supreme_lost: bool = bool(supremes.get("cao_cao", {}).get("lost", false))
+	var alliance_defeated: bool = bool(defeated.liu_bei) or alliance_loss_reached or liu_flagship_destroyed or liu_supreme_lost
+	var cao_defeated: bool = bool(defeated.cao_cao) or cao_flagship_destroyed or cao_escaped or cao_supreme_lost
 	var winner_faction_id := ""
 	var winner_side_id := ""
 	var reason_codes: Array = []
@@ -90,11 +96,13 @@ func evaluate(victory_inputs: Dictionary) -> Dictionary:
 	elif alliance_defeated:
 		winner_faction_id = "cao_cao"; winner_side_id = "cao_cao"
 		if liu_flagship_destroyed: reason_codes = ["liu_bei_flagship_destroyed"]
+		elif liu_supreme_lost: reason_codes = ["liu_bei_supreme_commander_lost"]
 		elif bool(defeated.liu_bei): reason_codes = ["liu_bei_terminal_condition"]
 		else: reason_codes = ["alliance_combined_loss_threshold"]
 	elif cao_defeated:
 		winner_faction_id = "liu_sun_alliance"; winner_side_id = "liu_sun_alliance"
 		if cao_flagship_destroyed: reason_codes = ["cao_cao_flagship_destroyed"]
+		elif cao_supreme_lost: reason_codes = ["cao_cao_supreme_commander_lost"]
 		elif cao_escaped: reason_codes = ["cao_cao_flagship_escaped"]
 		else: reason_codes = ["cao_cao_terminal_condition"]
 	elif alliance_escaped:

@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "profile_id": "normal-demo-commander-v1",
+  "statement": "DEMO-RC-G8-04a 장수·제독 부상·전사·포로와 지휘 승계 판정이다. 확률을 쓰지 않는다. G8-00 전투 효과 상태(선체 구간·사기 구간), 연쇄 폭발 적중, 턴 종료 위치, 고속정 나포 상태만 입력으로 쓰고 판정 순서는 표의 위에서 아래다. 결과는 악화 방향으로만 바뀐다. 거리·혼선 단계는 normal-demo 잠정값으로 아직 검증하지 않았다. 설계 근거: docs/07-production/demo-rc-g8-04-commander-casualties.md.",
+  "statuses": {
+    "unhurt": {"rank": 0, "label": "무사", "incapacitated": false, "terminal": false},
+    "light_injury": {"rank": 1, "label": "경상", "incapacitated": false, "terminal": false},
+    "severe_injury": {"rank": 2, "label": "중상", "incapacitated": true, "terminal": false},
+    "killed": {"rank": 3, "label": "전사", "incapacitated": true, "terminal": true},
+    "captured": {"rank": 3, "label": "포로", "incapacitated": true, "terminal": true}
+  },
+  "result_categories": {"unhurt": "survived", "light_injury": "injured", "severe_injury": "injured", "killed": "killed", "captured": "captured"},
+  "triggers": [
+    {"order": 1, "id": "surrendered", "when": "morale_status == surrendered", "aboard": "all", "outcome": "captured"},
+    {"order": 2, "id": "fast_craft_captured", "when": "fast_craft_recovery status == captured", "aboard": "all", "outcome": "captured"},
+    {"order": 3, "id": "destroyed", "when": "damage_state == destroyed", "aboard": "all", "outcome": "destroyed_branch"},
+    {"order": 4, "id": "heavy_damage", "when": "damage_state == heavy_damage", "aboard": "squadron_commander", "outcome": "severe_injury"},
+    {"order": 5, "id": "moderate_damage", "when": "damage_state == moderate_damage", "aboard": "squadron_commander", "outcome": "light_injury"},
+    {"order": 6, "id": "failed_retreat", "when": "battle concluded, forced_retreat, outside own side escape point, winner is the opposing side", "aboard": "all", "outcome": "captured"}
+  ],
+  "destroyed_branch": {
+    "chain_explosion_outcome": "killed",
+    "capture_radius": 120,
+    "rescue_mission_equipment_id": "FAST-EQ-RESCUE",
+    "captured_outcome": "captured",
+    "recovered_outcome": "severe_injury",
+    "policy": "1) 같은 턴 연쇄 폭발 피해를 받은 격침 → killed. 2) 반경 안 아군 작전 가능 구조 장비 전대 → recovered. 3) 반경 안 적 작전 가능 전대가 없거나, 가장 가까운 아군 작전 가능 전대가 가장 가까운 적 이하 거리 → recovered. 4) 그 외 → captured. 거리는 턴 종료 live_navigation 위치의 제곱 거리, 표류·나포·구조 완료 고속정은 작전 가능에서 제외."
+  },
+  "succession": {
+    "order": ["vice_commander", "fleet_squadron_commander_level_desc_command_desc_squadron_id_asc"],
+    "vice_commander_aboard": "fleet flagship squadron at battle start; shares surrendered/destroyed/failed_retreat outcomes, not damage-band injuries",
+    "new_flagship": "vice_commander keeps the flagship squadron; a squadron commander successor makes his own squadron the flagship",
+    "no_successor": "leaderless; command_confusion applies every turn until battle end",
+    "fleet_dissolves": false
+  },
+  "command_confusion": {
+    "duration_turns": 1,
+    "starts_turn_offset": 1,
+    "extra_penalty_tiers": 2,
+    "stacks_with_command_limit_tiers": true,
+    "tier_cap_source": "applied_setup.command_limit_rules.max_penalty_tier",
+    "effects_source": "applied_setup.command_limit_rules.penalty_per_tier (mobility_percent, accuracy_percent, formation_change_percent)"
+  },
+  "supreme_commander_loss": {
+    "statuses": ["killed", "captured"],
+    "liu_bei": "alliance_defeat",
+    "cao_cao": "alliance_victory",
+    "simultaneous": "existing victory rule simultaneous_winner_faction_id"
+  },
+  "result_contract": {"commander_casualties": "resolved", "succession": "resolved", "command_confusion": "resolved", "results_screen": "pending_G8_04"}
+}

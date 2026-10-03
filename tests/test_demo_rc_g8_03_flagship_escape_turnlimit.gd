@@ -124,14 +124,14 @@ func _test_escape_status_helper() -> void:
 		"alliance escape requires the flagship's whole fleet; both members arrived succeeds")
 
 	var only_flagship: Dictionary = battle._state.live_navigation.duplicate(true)
-	only_flagship["RC-LIU-SQ-02"] = {"position": [0.0, 650.0], "facing_deg": 0.0}
+	only_flagship["RC-LIU-SQ-01"] = {"position": [0.0, 650.0], "facing_deg": 0.0}
 	check(not battle._escape_status(rules, battle._state.applied_setup, squadrons, only_flagship).liu_sun_alliance,
 		"alliance escape fails when the flagship's fleet-mate has not also arrived")
 
 	var fleetmate_destroyed_squadrons: Dictionary = squadrons.duplicate(true)
-	fleetmate_destroyed_squadrons["RC-LIU-SQ-01"] = squadrons["RC-LIU-SQ-01"].duplicate(true)
-	fleetmate_destroyed_squadrons["RC-LIU-SQ-01"].capabilities = squadrons["RC-LIU-SQ-01"].capabilities.duplicate(true)
-	fleetmate_destroyed_squadrons["RC-LIU-SQ-01"].capabilities.operational = false
+	fleetmate_destroyed_squadrons["RC-LIU-SQ-02"] = squadrons["RC-LIU-SQ-02"].duplicate(true)
+	fleetmate_destroyed_squadrons["RC-LIU-SQ-02"].capabilities = squadrons["RC-LIU-SQ-02"].capabilities.duplicate(true)
+	fleetmate_destroyed_squadrons["RC-LIU-SQ-02"].capabilities.operational = false
 	check(not battle._escape_status(rules, battle._state.applied_setup, fleetmate_destroyed_squadrons, both_arrived).liu_sun_alliance,
 		"a non-operational (destroyed/surrendered) required squadron never counts as arrived even at the exact position")
 
@@ -146,12 +146,12 @@ func _test_turn_boundary_flagship_wiring() -> void:
 	var liu_flagship_down := Battle.new(); check(liu_flagship_down.initialize(loaded.setup).ok, "Liu flagship fixture initializes")
 	check(liu_flagship_down.submit_command_draft().ok, "Liu flagship fixture Liu order submits")
 	check(liu_flagship_down.submit_sun_control_choice("no", true).ok, "Liu flagship fixture Sun AI choice submits")
-	var liu_flagship_row: Dictionary = liu_flagship_down._state.combat_effect_state.squadrons["RC-LIU-SQ-02"]
+	var liu_flagship_row: Dictionary = liu_flagship_down._state.combat_effect_state.squadrons["RC-LIU-SQ-01"]
 	liu_flagship_row.current_composition = []; liu_flagship_row.hull_points = 0; liu_flagship_row.damage_state = "destroyed"; liu_flagship_row.capabilities.operational = false
 	var liu_flagship_receipt: Dictionary = liu_flagship_down.resolve_turn()
 	check(liu_flagship_receipt.ok and liu_flagship_receipt.victory_result.winner_faction_id == "cao_cao" \
 		and liu_flagship_receipt.victory_result.reason_codes == ["liu_bei_flagship_destroyed"] and liu_flagship_down.phase() == "battle_concluded",
-		"destroying Liu Bei's actual flagship squadron (RC-LIU-SQ-02) concludes the battle through the real pipeline")
+		"destroying Liu Bei's actual flagship squadron (RC-LIU-SQ-01, G8-04a 교정) concludes the battle through the real pipeline")
 
 	var cao_flagship_down := Battle.new(); check(cao_flagship_down.initialize(loaded.setup).ok, "Cao flagship fixture initializes")
 	check(cao_flagship_down.submit_command_draft().ok, "Cao flagship fixture Liu order submits")

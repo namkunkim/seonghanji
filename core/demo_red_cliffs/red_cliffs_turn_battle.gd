@@ -21,6 +21,7 @@ const FastCraftRecovery := preload("res://core/demo_red_cliffs/red_cliffs_fast_c
 const SupplyInventory := preload("res://core/demo_red_cliffs/red_cliffs_supply_inventory.gd")
 const CombatEffects := preload("res://core/demo_red_cliffs/red_cliffs_combat_effects.gd")
 const VictoryResolver := preload("res://core/demo_red_cliffs/red_cliffs_victory_resolver.gd")
+const CommanderResolver := preload("res://core/demo_red_cliffs/red_cliffs_commander_resolver.gd")
 const MAX_TURNS := 20
 const RULES_PENDING := ["commander_casualties", "victory"]
 const THREE_D_PROJECTION_PROFILE_ID := "S5-02"
@@ -44,6 +45,7 @@ var _fast_craft_recovery
 var _supply_inventory
 var _combat_effects
 var _victory_resolver
+var _commander
 var _viewer_receipts_by_turn: Dictionary = {}
 var _viewer_phase_ledgers_by_turn: Dictionary = {}
 
@@ -104,6 +106,8 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	if not effects_result.ok:return effects_result
 	var victory_resolver = VictoryResolver.new(); var victory_result: Dictionary = victory_resolver.initialize()
 	if not victory_result.ok: return victory_result
+	var commander = CommanderResolver.new(); var commander_init: Dictionary = commander.initialize(setup)
+	if not commander_init.ok: return commander_init
 	_movement = movement
 	_interception = interception
 	_formation = formation
@@ -121,6 +125,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 	_supply_inventory=supply_inventory
 	_combat_effects=combat_effects
 	_victory_resolver=victory_resolver
+	_commander = commander
 	_viewer_receipts_by_turn = {}
 	_viewer_phase_ledgers_by_turn = {}
 	_state = {
@@ -142,6 +147,7 @@ func initialize(applied_setup: Dictionary) -> Dictionary:
 		"supply_inventory_state":_supply_inventory.initial_state(),
 		"combat_effect_state": _combat_effects.initial_state(),
 		"victory_result": {},
+		"commander_state": _commander.initial_state(),
 		"fast_craft_supply_state": {},
 		"fast_craft_return_state": _fast_craft_return.initial_state(),
 		"fast_craft_recovery_state": _fast_craft_recovery.initial_state(),
@@ -946,6 +952,7 @@ func submit_sun_orders(orders: Array) -> Dictionary:
 func resolve_turn() -> Dictionary:
 	if phase() != "resolution":
 		return _error("현재 단계에서는 턴 판정을 확정할 수 없습니다.")
+	_apply_command_overrides(turn())
 	var temporary_zones: Array = _combat_effects.active_temporary_zones(_state.combat_effect_state, turn())
 	var combat_sensor_effects := {}
 	for squadron_id in _state.combat_effect_state.squadrons:
@@ -1125,8 +1132,20 @@ func resolve_turn() -> Dictionary:
 					stored["combat_resource_refill"] = refill.combat_resource_refill.duplicate(true)
 	var enriched_victory_inputs: Dictionary = effect_result.victory_inputs.duplicate(true)
 	enriched_victory_inputs["escapes"] = _escape_status(_victory_resolver.rules_snapshot(), _state.applied_setup, effect_result.state.squadrons, movement_result.live_navigation)
+	# DEMO-RC-G8-04a: 장수 판정은 전투 효과 직후, 승패 판정 직전이다. 총사령관 상실이 승패 입력이 된다.
+	var commander_result: Dictionary = _commander.resolve(_state.commander_state, effect_result.state, effect_result.events,
+		contact_result.state, movement_result.live_navigation, turn())
+	if not commander_result.ok: return commander_result
+	enriched_victory_inputs["supreme_commanders"] = commander_result.supreme_commanders.duplicate(true)
 	var victory_result: Dictionary = _victory_resolver.evaluate(enriched_victory_inputs)
 	if not victory_result.ok: return victory_result
+	var commander_events: Array = commander_result.events.duplicate(true)
+	var next_commander_state: Dictionary = commander_result.state
+	if bool(victory_result.winner_present):
+		var concluded: Dictionary = _commander.conclude(next_commander_state, effect_result.state, movement_result.live_navigation,
+			String(victory_result.winner_side_id), _victory_resolver.rules_snapshot().escape_points, turn())
+		if not concluded.ok: return concluded
+		next_commander_state = concluded.state; commander_events.append_array(concluded.events)
 	var receipt := {
 		"ok": true,
 		"turn": turn(),
@@ -1155,6 +1174,7 @@ func resolve_turn() -> Dictionary:
 		"resource_recovery_events": recovery_events.duplicate(true),
 		"victory_inputs": enriched_victory_inputs.duplicate(true),
 		"victory_result": victory_result.duplicate(true),
+		"commander_events": commander_events.duplicate(true),
 		"victory_check_required": true,
 	}
 	var ledger: Dictionary = _phase_ledger.build(turn(), receipt)
@@ -1205,6 +1225,7 @@ func resolve_turn() -> Dictionary:
 	_state.chain_explosion_state = chain_result.state.duplicate(true)
 	_state.combat_effect_state = effect_result.state.duplicate(true)
 	_state.victory_result = victory_result.duplicate(true)
+	_state.commander_state = next_commander_state.duplicate(true)
 	_state.fast_craft_supply_state = supply_result.state.duplicate(true)
 	_state.supply_inventory_state=supply_result.inventory_state.duplicate(true)
 	_state.fast_craft_return_state = return_result.state.duplicate(true)
@@ -1219,6 +1240,7 @@ func resolve_turn() -> Dictionary:
 	log.victory_check_required = true
 	_state.resolved = true
 	_state.phase = "battle_concluded" if bool(victory_result.winner_present) else ("turn_limit_reached" if turn() >= MAX_TURNS else "victory_check")
+	_apply_command_overrides(turn() + 1)
 	return receipt.duplicate(true)
 
 
@@ -1527,6 +1549,27 @@ func _public_chain_conditions(values: Array) -> Array:
 		condition.erase("blocking_event_ids")
 		result.append(condition)
 	return result
+
+
+## DEMO-RC-G8-04a: 해당 턴의 명령 혼선·부함장 승계 지휘 한도를 이동·진형·명중 불이익 계산에 반영한다.
+func _apply_command_overrides(turn_number: int) -> void:
+	var overrides: Dictionary = _commander.command_overrides(_state.commander_state, turn_number)
+	_formation.set_command_overrides(overrides); _movement.set_command_overrides(overrides)
+
+
+func commander_state() -> Dictionary:
+	return _state.get("commander_state", {}).duplicate(true)
+
+
+func viewer_commanders(viewer_faction_id: String) -> Dictionary:
+	if not _faction_ids().has(viewer_faction_id): return _error("미지 세력입니다: %s" % viewer_faction_id)
+	return _commander.visible(viewer_faction_id, _state.commander_state)
+
+
+## 결과 화면(G8-04)용 생존·부상·전사·포로 분류. 승패 확정 뒤에만 공개한다.
+func commander_report() -> Dictionary:
+	if phase() != "battle_concluded": return _error("장수 결과는 승패 확정 뒤에만 공개합니다.")
+	return _commander.report(_state.commander_state)
 
 
 func _escape_status(victory_rules: Dictionary, applied_setup: Dictionary, effect_squadrons: Dictionary, live_navigation: Dictionary) -> Dictionary:
