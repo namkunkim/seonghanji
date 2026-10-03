@@ -52,8 +52,9 @@ func initial_state() -> Dictionary:
 		var vice_id := ""
 		if fleet.get("vice_commander") is Dictionary:
 			vice_id = String(fleet.vice_commander.id)
-			if officers.has(vice_id): return {"error": "부함장은 전대 지휘관을 겸할 수 없습니다: %s" % vice_id}
-			officers[vice_id] = _officer(vice_id, roster.get(vice_id, {}), String(fleet.vice_commander.get("name", "")), String(fleet.faction_id), flagship_id, "vice_commander")
+			# 전대 지휘관으로 배치된 인물의 부함장 지위는 무효다(겸직 불가).
+			if officers.has(vice_id): vice_id = ""
+			else: officers[vice_id] = _officer(vice_id, roster.get(vice_id, {}), String(fleet.vice_commander.get("name", "")), String(fleet.faction_id), flagship_id, "vice_commander")
 		for squadron_id in fleet.squadron_ids:
 			for officer_id in officers:
 				if String(officers[officer_id].squadron_id) == String(squadron_id): officers[officer_id].fleet_id = fleet_id

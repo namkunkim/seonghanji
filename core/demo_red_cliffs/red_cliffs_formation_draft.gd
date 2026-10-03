@@ -93,6 +93,9 @@ func set_commander(squadron_id: String, commander_id: String) -> Dictionary:
 		if String(other.id) != squadron_id and String(other.faction_id) == String(target.squad.faction_id) and String(other.commander.id) == commander_id:
 			return _error("지휘관은 두 전대에 중복 배치할 수 없습니다.")
 	target.squad.commander = {"id": commander_id, "name": String(roster[commander_id].name)}
+	# DEMO-RC-G8-04a: 부함장을 전대 지휘관으로 옮기면 부함장 지위는 해제된다(겸직 불가).
+	for fleet in _draft.get("fleet_groups", []):
+		if fleet.get("vice_commander") is Dictionary and String(fleet.vice_commander.get("id", "")) == commander_id: fleet.erase("vice_commander")
 	_normalize_all_flagships()
 	return _ok()
 

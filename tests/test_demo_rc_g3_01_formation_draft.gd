@@ -211,8 +211,9 @@ func _test_permissions_and_atomic_apply() -> void:
 
 func _test_fleet_operations_and_flagship_order() -> void:
 	var editor = _new_draft()
-	_eq(_find_fleet(editor.draft_snapshot(), "RC-LIU-FLT-01").flagship_squadron_id, "RC-LIU-SQ-02",
-		"higher command automatically selects flagship")
+	# G8-04a(V-74): 세력 총사령관(유비)의 전대가 통솔과 무관하게 1순위 기함이다.
+	_eq(_find_fleet(editor.draft_snapshot(), "RC-LIU-FLT-01").flagship_squadron_id, "RC-LIU-SQ-01",
+		"faction supreme commander's squadron is flagship despite lower command")
 	_ok(editor.unassign_to_independent("RC-LIU-SQ-02").ok, "squadron can become independent")
 	var independent := _find_squad(editor.draft_snapshot(), "RC-LIU-SQ-02")
 	_eq(independent.deployment.kind, "independent", "independent deployment stored")
@@ -225,12 +226,15 @@ func _test_fleet_operations_and_flagship_order() -> void:
 	_ok(editor.assign_to_fleet("RC-LIU-SQ-01", fleet_id).ok, "same-faction fleet assignment succeeds")
 	var fleet := _find_fleet(editor.draft_snapshot(), fleet_id)
 	_eq(fleet.squadron_ids.size(), 2, "fleet has unique two-squadron membership")
-	_eq(fleet.flagship_squadron_id, "RC-LIU-SQ-02", "higher command wins after assignment")
+	_eq(fleet.flagship_squadron_id, "RC-LIU-SQ-01", "supreme commander's squadron wins after assignment")
 	_ok(not editor.assign_to_fleet("RC-SUN-SQ-01", fleet_id).ok, "cross-faction assignment rejected")
 	_ok(not editor.create_fleet("cao_cao", "금지", ["RC-CAO-SQ-01"]).ok, "Cao fleet create rejected")
 	_ok(editor.apply().ok, "fleet edit applies")
 
 	var level_setup := _valid_setup()
+	# 총사령관이 함대에 없을 때만 통솔 → 레벨 순서가 작동한다.
+	for faction in level_setup.factions:
+		if String(faction.id) == "liu_bei": faction.supreme_commander = "관우"
 	_set_roster_stat(level_setup, "liu_bei", "CHR-0128", 90, 8)
 	_set_roster_stat(level_setup, "liu_bei", "CHR-0134", 90, 9)
 	var level_editor = _new_draft(level_setup)

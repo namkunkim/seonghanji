@@ -183,13 +183,11 @@ static func _validate_fleets(fleets: Array, squads: Dictionary, errors: Array[St
 			elif String(squads[sid].get("faction_id", "")) != fid: errors.append("함대 내 세력 혼합: %s/%s" % [fleet_id, sid])
 			elif String(squads[sid].get("deployment", {}).get("fleet_id", "")) != fleet_id: errors.append("전대·함대 소속 불일치: %s" % sid)
 		if not local.has(String(fleet.get("flagship_squadron_id", ""))): errors.append("함대 기함 전대가 소속 목록에 없습니다: %s" % fleet_id)
-		# DEMO-RC-G8-04a: 부함장은 선택 필드다. 기함에 동승하므로 전대 지휘관을 겸할 수 없다.
+		# DEMO-RC-G8-04a: 부함장은 선택 필드다. 전대 지휘관으로 배치된 인물의 부함장 지위는
+		# 장수 판정기가 무효로 본다(겸직 불가) — 편성 경로가 어디든 막지 않는다.
 		if fleet.has("vice_commander"):
 			var vice = fleet.get("vice_commander")
 			if not vice is Dictionary or String(vice.get("id", "")).is_empty(): errors.append("부함장 행이 잘못되었습니다: %s" % fleet_id)
-			else:
-				for other_sid in squads:
-					if String(squads[other_sid].get("commander", {}).get("id", "")) == String(vice.id): errors.append("부함장은 전대 지휘관을 겸할 수 없습니다: %s" % fleet_id)
 	for sid in squads:
 		var deploy: Dictionary = squads[sid].get("deployment", {})
 		if String(deploy.get("kind", "")) == "fleet" and not assigned.has(sid): errors.append("함대 소속이 누락된 전대: %s" % sid)

@@ -64,8 +64,16 @@ func _test_flagship_and_vice(setup: Dictionary) -> void:
 	check(state.fleets["RC-LIU-FLT-01"].commander_id == "CHR-0128", "Liu fleet commander is Liu Bei")
 	var supremes: Dictionary = fx.resolver.supreme_commanders(state)
 	check(supremes.liu_bei.officer_id == "CHR-0128" and supremes.cao_cao.officer_id == "CHR-0034" and not supremes.liu_bei.lost and not supremes.cao_cao.lost, "supreme commanders map to roster ids and start unharmed")
-	var bad := setup.duplicate(true); bad.fleet_groups[0]["vice_commander"] = {"id": "CHR-0134", "name": "제갈량"}
-	check(not Setup.validate_document(bad).ok, "a squadron commander cannot double as vice commander")
+	var doubled := setup.duplicate(true)
+	for fleet_row in doubled.fleet_groups:
+		if fleet_row.id == "RC-LIU-FLT-01": fleet_row["vice_commander"] = {"id": "CHR-0134", "name": "제갈량"}
+	check(Setup.validate_document(doubled).ok, "a vice commander who also commands a squadron does not block the setup")
+	var doubled_resolver := Commander.new(); check(doubled_resolver.initialize(doubled).ok, "doubled-vice resolver initializes")
+	var doubled_state: Dictionary = doubled_resolver.initial_state()
+	check(doubled_state.fleets["RC-LIU-FLT-01"].vice_commander_id == "" and doubled_state.officers["CHR-0134"].role == "squadron_commander", "a squadron commander's vice post is void (no doubling)")
+	var editor := Draft.new(setup)
+	check(editor.set_commander("RC-LIU-SQ-02", "CHR-0107").ok and not editor.draft_snapshot().fleet_groups.filter(func(f): return f.id == "RC-LIU-FLT-01")[0].has("vice_commander"),
+		"assigning the vice commander to a squadron releases the vice post in the editor")
 
 
 func _test_damage_bands_and_vice_succession(setup: Dictionary) -> void:
