@@ -11,6 +11,11 @@ var _rules: Dictionary = {}
 var _draft
 
 
+## DEMO-RC-G8-04a: 지휘 승계·명령 혼선 불이익을 이번 턴 지휘 불이익 계산에 더한다.
+func set_command_overrides(overrides: Dictionary) -> void:
+	if _draft != null: _draft.set_command_overrides(overrides)
+
+
 func initialize(applied_setup: Dictionary) -> Dictionary:
 	var checked := Setup.validate_document(applied_setup)
 	if not checked.ok: return _error("유효한 G3 적용 편성이 필요합니다.")

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "profile_id": "normal-demo-victory-v1",
-  "statement": "DEMO-RC-G8-01·G8-02·G8-03의 매 턴 전체 승패 판정이다. 전투 효과가 만든 비용·사기 입력에 더해 G8-03은 기함 파괴, 지정 탈출 지점 도달, 20턴 시점 잔존 코스트 비율 비교를 추가해 모든 기본 종료 조건을 닫는다. 장수 casualty는 계속 후속(G8-04) 경계다.",
+  "statement": "DEMO-RC-G8-01·G8-02·G8-03의 매 턴 전체 승패 판정이다. 전투 효과가 만든 비용·사기 입력에 더해 G8-03은 기함 파괴, 지정 탈출 지점 도달, 20턴 시점 잔존 코스트 비율 비교를 추가해 모든 기본 종료 조건을 닫는다. G8-04a는 총사령관(유비·조조) 전사·포로를 기함 격침과 동격의 즉시 종료 조건으로 추가했다(장수 판정 자체는 red-cliffs-commander-rules.json).",
   "loss_threshold_basis_points": 7000,
   "morale_collapse_policy": "all_faction_squadrons_surrendered",
   "alliance": {"member_faction_ids": ["liu_bei", "sun_quan"], "player_anchor_faction_id": "liu_bei"},
@@ -11,5 +11,5 @@
     "cao_cao": {"position": [1600, 300], "arrival_radius": 60},
     "liu_sun_alliance": {"position": [0, 650], "arrival_radius": 60}
   },
-  "result_contract": {"commander_casualties": "pending", "victory": "resolved_G8_03_complete", "future_conditions": []}
+  "result_contract": {"commander_casualties": "resolved_G8_04a", "victory": "resolved_G8_03_complete", "future_conditions": []}
 }

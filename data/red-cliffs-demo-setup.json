@@ -84,7 +84,7 @@
       "faction_id": "liu_bei",
       "name": "유비 기함 전대",
       "commander": {"id": "CHR-0128", "name": "유비"},
-      "flagship": false,
+      "flagship": true,
       "initial_position": [310, 590],
       "formation_id": "FRM-01",
       "deployment": {"kind": "fleet", "fleet_id": "RC-LIU-FLT-01"},
@@ -101,7 +101,7 @@
       "faction_id": "liu_bei",
       "name": "제갈량 지원 전대",
       "commander": {"id": "CHR-0134", "name": "제갈량"},
-      "flagship": true,
+      "flagship": false,
       "initial_position": [250, 660],
       "formation_id": "FRM-03",
       "deployment": {"kind": "fleet", "fleet_id": "RC-LIU-FLT-01"},
@@ -175,8 +175,8 @@
     }
   ],
   "fleet_groups": [
-    {"id": "RC-LIU-FLT-01", "faction_id": "liu_bei", "name": "유비 연합 전단", "squadron_ids": ["RC-LIU-SQ-01", "RC-LIU-SQ-02"], "flagship_squadron_id": "RC-LIU-SQ-02"},
-    {"id": "RC-SUN-FLT-01", "faction_id": "sun_quan", "name": "주유 수군", "squadron_ids": ["RC-SUN-SQ-01"], "flagship_squadron_id": "RC-SUN-SQ-01"},
-    {"id": "RC-CAO-FLT-01", "faction_id": "cao_cao", "name": "조조 중군", "squadron_ids": ["RC-CAO-SQ-01"], "flagship_squadron_id": "RC-CAO-SQ-01"}
+    {"id": "RC-LIU-FLT-01", "faction_id": "liu_bei", "name": "유비 연합 전단", "squadron_ids": ["RC-LIU-SQ-01", "RC-LIU-SQ-02"], "flagship_squadron_id": "RC-LIU-SQ-01", "vice_commander": {"id": "CHR-0107", "name": "관우"}},
+    {"id": "RC-SUN-FLT-01", "faction_id": "sun_quan", "name": "주유 수군", "squadron_ids": ["RC-SUN-SQ-01"], "flagship_squadron_id": "RC-SUN-SQ-01", "vice_commander": {"id": "CHR-0186", "name": "노숙"}},
+    {"id": "RC-CAO-FLT-01", "faction_id": "cao_cao", "name": "조조 중군", "squadron_ids": ["RC-CAO-SQ-01"], "flagship_squadron_id": "RC-CAO-SQ-01", "vice_commander": {"id": "CHR-0033", "name": "조인"}}
   ]
 }

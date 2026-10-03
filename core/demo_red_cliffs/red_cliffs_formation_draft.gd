@@ -12,6 +12,8 @@ const PENALTY_APPLICATION := {
 var _historical: Dictionary = {}
 var _applied: Dictionary = {}
 var _draft: Dictionary = {}
+## DEMO-RC-G8-04a: 전투 중 지휘 승계·명령 혼선 덧셈. {squadron_id: {"extra_tiers": int, "command": int(선택)}}
+var _command_overrides: Dictionary = {}
 
 
 func _init(validated_setup: Dictionary = {}) -> void:
@@ -31,6 +33,9 @@ func configure(historical_setup: Dictionary, applied_setup: Dictionary = {}) -> 
 	_normalize_all_flagships()
 	_applied = _draft.duplicate(true)
 	return _ok()
+
+
+func set_command_overrides(overrides: Dictionary) -> void: _command_overrides = overrides.duplicate(true)
 
 
 func historical_snapshot() -> Dictionary: return _historical.duplicate(true)
@@ -88,6 +93,9 @@ func set_commander(squadron_id: String, commander_id: String) -> Dictionary:
 		if String(other.id) != squadron_id and String(other.faction_id) == String(target.squad.faction_id) and String(other.commander.id) == commander_id:
 			return _error("지휘관은 두 전대에 중복 배치할 수 없습니다.")
 	target.squad.commander = {"id": commander_id, "name": String(roster[commander_id].name)}
+	# DEMO-RC-G8-04a: 부함장을 전대 지휘관으로 옮기면 부함장 지위는 해제된다(겸직 불가).
+	for fleet in _draft.get("fleet_groups", []):
+		if fleet.get("vice_commander") is Dictionary and String(fleet.vice_commander.get("id", "")) == commander_id: fleet.erase("vice_commander")
 	_normalize_all_flagships()
 	return _ok()
 
@@ -187,13 +195,17 @@ func squadron_metrics(squadron_id: String) -> Dictionary:
 	if squad.is_empty(): return {}
 	var roster := _roster_index(String(squad.faction_id)); var commander: Dictionary = roster.get(String(squad.commander.id), {})
 	var rules: Dictionary = _draft.command_limit_rules
-	var recommended := int(rules.recommended_base_cost) + int(commander.get("command", 0)) * int(rules.recommended_cost_per_command)
+	var override: Dictionary = _command_overrides.get(squadron_id, {})
+	var command_value := int(override.get("command", commander.get("command", 0)))
+	var recommended := int(rules.recommended_base_cost) + command_value * int(rules.recommended_cost_per_command)
 	var total := int(squad.get("declared_total_cost", 0)); var ratio := maxf(0.0, float(total - recommended) / float(maxi(1, recommended)))
 	var tier := mini(int(ceil(ratio / float(rules.over_tier_ratio))), int(rules.max_penalty_tier)) if ratio > 0.0 else 0
+	var confusion_tiers := int(override.get("extra_tiers", 0))
+	tier = mini(tier + confusion_tiers, int(rules.max_penalty_tier))
 	var penalty: Dictionary = rules.penalty_per_tier
 	return {"total_cost": total, "recommended_cost": recommended, "over_ratio": ratio, "penalty_tier": tier,
 		"mobility_percent": -tier * int(penalty.mobility_percent), "accuracy_percent": -tier * int(penalty.accuracy_percent),
-		"formation_change_percent": -tier * int(penalty.formation_change_percent), "warning": tier > 0,
+		"formation_change_percent": -tier * int(penalty.formation_change_percent), "warning": tier > 0, "command_confusion_tiers": confusion_tiers,
 		"penalty_application": PENALTY_APPLICATION.duplicate(true), "pending_penalties": []}
 
 
@@ -274,11 +286,20 @@ func _normalize_all_flagships() -> void:
 
 func _flagship_precedes(a: String, b: String) -> bool:
 	var sa := _find_squad(a); var sb := _find_squad(b)
+	# DEMO-RC-G8-04a: 세력 총사령관이 지휘하는 전대가 우선 기함이다 (유비 함대 = 유비 기함 전대).
+	var supreme_a := _is_supreme_commander(sa); var supreme_b := _is_supreme_commander(sb)
+	if supreme_a != supreme_b: return supreme_a
 	var ra: Dictionary = _roster_index(String(sa.faction_id)).get(String(sa.commander.id), {})
 	var rb: Dictionary = _roster_index(String(sb.faction_id)).get(String(sb.commander.id), {})
 	if int(ra.get("command", 0)) != int(rb.get("command", 0)): return int(ra.get("command", 0)) > int(rb.get("command", 0))
 	if int(ra.get("level", 0)) != int(rb.get("level", 0)): return int(ra.get("level", 0)) > int(rb.get("level", 0))
 	return a < b
+
+
+func _is_supreme_commander(squad: Dictionary) -> bool:
+	for faction in _draft.get("factions", []):
+		if String(faction.get("id", "")) == String(squad.get("faction_id", "")): return String(faction.get("supreme_commander", "")) == String(squad.get("commander", {}).get("name", ""))
+	return false
 
 
 func _recalculate_all_costs() -> void:
